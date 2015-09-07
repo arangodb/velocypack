@@ -54,6 +54,13 @@ namespace triagens {
           JasonType type;
           size_t base;   // Start of object currently being built
           size_t pos;    // Current append position
+          size_t index;  // Index in array or object currently being worked on
+          bool   large;  // Flag, whether we use the large version
+
+          State (JasonType t) 
+            : type(t), base(0), pos(0), index(0), large(false) {
+          }
+
         };
 
         std::vector<State> _stack;   // Has always size() >= 1
@@ -84,7 +91,7 @@ namespace triagens {
           _alloc.push_back(0);
           _start = _alloc.data();
           _size = _alloc.size();
-          _stack.push_back( { JasonType::None, 0, 0 } );
+          _stack.emplace_back(JasonType::None);
         }
 
         JasonBuilder (JasonType type, size_t spaceHint) 
