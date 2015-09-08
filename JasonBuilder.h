@@ -87,19 +87,19 @@ namespace triagens {
 
       public:
 
-        JasonBuilder () : _externalMem(false), _sealed(false) {
+        JasonBuilder (JasonType type = JasonType::None, size_t spaceHint = 1) 
+          : _externalMem(false), _sealed(false) {
+          _alloc.reserve(spaceHint);
           _alloc.push_back(0);
           _start = _alloc.data();
           _size = _alloc.size();
-          _stack.emplace_back(JasonType::None);
+          _Stack.emplace_back(type);
         }
 
-        JasonBuilder (JasonType type, size_t spaceHint) 
-          : _externalMem(false), _start(nullptr), _size(0) {
-        }
-
-        JasonBuilder (uint8_t* start, size_t size) 
+        JasonBuilder (uint8_t* start, size_t size,
+                      JasonType type = JasonType::None) 
           : _externalMem(true), _start(start), _size(size) {
+          _Stack.emplace_back(type);
         }
       
         ~JasonBuilder () {
