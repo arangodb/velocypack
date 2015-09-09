@@ -72,6 +72,10 @@ namespace triagens {
           return false;
         }
 
+        size_t length () {
+          return 0;
+        }
+
         JasonSlice get (std::string& attribute) {
           return *this;
         }

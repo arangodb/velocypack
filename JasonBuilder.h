@@ -45,6 +45,12 @@ namespace triagens {
       //    ("hans", Jason("Wurst"))                          "hans": "wurst",
       //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
 
+        struct InternalError : std::exception {
+            const char* what() const noexcept {
+              return "Internal JasonBuilder error!\n";
+            }
+        };
+
         std::vector<uint8_t> _alloc;
         bool     _externalMem;          // true if buffer came from the outside
         uint8_t* _start;
@@ -63,13 +69,15 @@ namespace triagens {
 
         };
 
-        std::vector<State> _stack;   // Has always size() >= 1
-
-        bool _sealed;
+        std::vector<State> _stack;   // Has always size() >= 1 when still
+                                     // writable and 0 when sealed
 
         void reserveSpace (size_t len) {
           // Reserves len bytes at pos of the current state (top of stack)
           // or throws an exception
+          if (_stack.size() == 0) {
+            throw InternalError();
+          }
           if (_externalMem) {
             throw std::bad_alloc();
           }
@@ -78,9 +86,7 @@ namespace triagens {
             return;  // All OK, we can just increase tos->pos by len
           }
           _alloc.reserve(tos.pos + len);
-          for (size_t i = _size; i < tos.pos + len; i++) {
-            _alloc.push_back(0);
-          }
+          _alloc.insert(_alloc.end(), len, 0);
           _start = _alloc.data();
           _size = _alloc.size();
         }
@@ -105,25 +111,75 @@ namespace triagens {
         ~JasonBuilder () {
         }
 
-        JasonBuilder (JasonBuilder const& that) {
+        JasonBuilder (JasonBuilder const& that)
+          : _externalMem(false), _sealed(that._sealed) {
+          if (that._externalMem) {
+            _alloc.reserve(that._size);
+            _alloc.append(that._start, that._size);
+          }
+          else {
+            _alloc = that._alloc;
+          }
+          _start = _alloc.data();
+          _size = _alloc.size();
+          _stack = that._stack;
         }
 
         JasonBuilder& operator= (JasonBuilder const& that) {
-          return *this;
+          _externalMem = false;
+          _alloc.clear();
+          _alloc.reserve(that._size);
+          _alloc.append(that._start, that._size);
+          _start = _alloc.data();
+          _size = _alloc.size();
+          _stack = that._stack;
+          _sealed = that._sealed;
         }
 
         JasonBuilder (JasonBuilder&& that) {
+          _externalMem = that._externalMem;
+          if (_externalMem) {
+            _alloc.clear();
+            _start = that._start;
+            _size = that._size;
+          }
+          else {
+            _alloc.clear();
+            _alloc.swap(that._alloc);
+            _start = _alloc.data();
+            _size = _alloc.size();
+          }
+          _stack.clear();
+          _stack.swap(that._stack);
+          _sealed = that._sealed;
+          that._start = nullptr;
+          that._size = 0;
         }
 
         JasonBuilder& operator= (JasonBuilder&& that) {
+          _externalMem = that._externalMem;
+          if (_externalMem) {
+            _alloc.clear();
+            _start = that._start;
+            _size = that._size;
+          }
+          else {
+            _alloc.clear();
+            _alloc.swap(that._alloc);
+            _start = _alloc.data();
+            _size = _alloc.size();
+          }
+          _stack.clear();
+          _stack.swap(that._stack);
+          _sealed = that._sealed;
+          that._start = nullptr;
+          that._size = 0;
           return *this;
         }
 
-        void setType (JasonType type, bool large = false) {
-        }
-
-        size_t seal () {
-          return 0ul;
+        void clear () {
+          _stack.clear();
+          _stack.emplace_back(JasonType::None);
         }
 
         uint8_t* start () {
@@ -131,7 +187,17 @@ namespace triagens {
         }
 
         size_t size () {
+          // Compute the actual size here, but only when sealed
+          if (_stack.size() > 0) {
+            return 0;
+          }
           return 0ul;
+        }
+
+        void setType (JasonType type, bool large = false) {
+          if (_stack.size() == 0) {
+            throw std::exception();
+          }
         }
 
         void add (std::string attrName, Jason sub) {
@@ -140,7 +206,7 @@ namespace triagens {
         void add (Jason sub) {
         }
 
-        void close () {
+        size_t close () {
         }
 
         JasonBuilder& operator() (std::string attrName, Jason sub) {
