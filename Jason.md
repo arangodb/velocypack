@@ -62,7 +62,10 @@ indicates the type (and often the length) of the Jason value at hand:
                 string key, for example as a uint followed by a string,
                 or as 8 bytes little endian unsigned int followed by a
                 string
-  - 0x0a-0x0f : reserved
+  - 0x0a      : the value of ArangoDB's _id attribute, it is generated
+                out of the collection name, "/" and the value of the
+                _key attribute when JSON is generated
+  - 0x0b-0x0f : reserved
   - 0x10-0x1f : UTC-date in milliseconds since the epoch, stored as uint
                 as below number of bytes used is V - 0x0f
   - 0x20-0x2f : int, little endian, 2s-complement, 1-16 bytes, number is V-0x1f
