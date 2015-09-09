@@ -14,6 +14,7 @@ namespace triagens {
       Object,
       External,
       ID,
+      ArangoDB_id,
       UTCDate,
       Int,
       UInt,
