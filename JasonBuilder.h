@@ -5,6 +5,11 @@
 #include "Jason.h"
 
 #include <vector>
+#include <cstring>
+
+// Endianess of the system must be configured here:
+#undef BIG_ENDIAN
+// #define BIG_ENDIAN 1
 
 namespace triagens {
   namespace basics {
@@ -16,7 +21,8 @@ namespace triagens {
       // the object up recursively.
       //
       // Use as follows:                         to build Jason like this:
-      //   JasonBuilder b(JasonType::Object, 5);  b = {
+      //   JasonBuilder b;
+      //   b.set(Jason(5,(JasonType::Object)));   b = {
       //   b.add("a", Jason(1.0));                      "a": 1.0,
       //   b.add("b", Jason());                         "b": null,
       //   b.add("c", Jason(false));                    "c": false,
@@ -45,9 +51,14 @@ namespace triagens {
       //    ("hans", Jason("Wurst"))                          "hans": "wurst",
       //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
 
-        struct InternalError : std::exception {
-            const char* what() const noexcept {
-              return "Internal JasonBuilder error!\n";
+        struct JasonBuilderError : std::exception {
+          private:
+            std::string _msg;
+          public:
+            JasonBuilderError (std::string msg) : _msg(msg) {
+            }
+            char const* what() const noexcept {
+              return _msg.c_str();
             }
         };
 
@@ -55,16 +66,16 @@ namespace triagens {
         bool     _externalMem;          // true if buffer came from the outside
         uint8_t* _start;
         size_t   _size;
+        size_t   _pos;   // the current append position, always <= _size
 
         struct State {
           JasonType type;
           size_t base;   // Start of object currently being built
-          size_t pos;    // Current append position
           size_t index;  // Index in array or object currently being worked on
           bool   large;  // Flag, whether we use the large version
 
           State (JasonType t) 
-            : type(t), base(0), pos(0), index(0), large(false) {
+            : type(t), base(0), index(0), large(false) {
           }
 
         };
@@ -72,20 +83,33 @@ namespace triagens {
         std::vector<State> _stack;   // Has always size() >= 1 when still
                                      // writable and 0 when sealed
 
+        // Here are the mechanics of how this building process works:
+        // The whole Jason being built starts at where _start points to
+        // and uses at most _size bytes. The variable _pos keeps the 
+        // current write position. The method make simply writes a new
+        // Jason subobject at the current write position and advances it.
+        // Whenever one makes an array or object, a State is pushed onto
+        // the _stack, which remembers that we are in the process of building
+        // an array or object. If the stack is non-empty, the add methods
+        // are used to perform a make followed by keeping track of the 
+        // new subobject in the enclosing array or object. The close method
+        // seals the innermost array or object that is currently being
+        // built and pops a State off the _stack.
+        // In the beginning, the _stack is empty, which allows to build
+        // a sequence of unrelated Jason objects in the buffer.
+        // Whenever the stack is empty, one can use the start, size and
+        // stealTo methods to get out the ready built Jason object(s).
+
         void reserveSpace (size_t len) {
           // Reserves len bytes at pos of the current state (top of stack)
           // or throws an exception
-          if (_stack.size() == 0) {
-            throw InternalError();
-          }
-          if (_externalMem) {
-            throw std::bad_alloc();
-          }
-          State& tos = _stack.back();
-          if (tos.pos + len <= _size) {
+          if (_pos + len <= _size) {
             return;  // All OK, we can just increase tos->pos by len
           }
-          _alloc.reserve(tos.pos + len);
+          if (_externalMem) {
+            throw JasonBuilderError("Cannot allocate more memory.");
+          }
+          _alloc.reserve(_pos + len);
           _alloc.insert(_alloc.end(), len, 0);
           _start = _alloc.data();
           _size = _alloc.size();
@@ -94,34 +118,42 @@ namespace triagens {
       public:
 
         JasonBuilder (JasonType type = JasonType::None, size_t spaceHint = 1) 
-          : _externalMem(false), _sealed(false) {
+          : _externalMem(false), _pos(0) {
           _alloc.reserve(spaceHint);
           _alloc.push_back(0);
           _start = _alloc.data();
           _size = _alloc.size();
-          _Stack.emplace_back(type);
         }
 
         JasonBuilder (uint8_t* start, size_t size,
                       JasonType type = JasonType::None) 
-          : _externalMem(true), _start(start), _size(size) {
-          _Stack.emplace_back(type);
+          : _externalMem(true), _start(start), _size(size), _pos(0) {
         }
       
         ~JasonBuilder () {
         }
 
         JasonBuilder (JasonBuilder const& that)
-          : _externalMem(false), _sealed(that._sealed) {
+          : _externalMem(false) {
           if (that._externalMem) {
             _alloc.reserve(that._size);
-            _alloc.append(that._start, that._size);
+            if (! that._externalMem) {
+              _alloc.insert(_alloc.begin(),
+                            that._alloc.begin(), that._alloc.end());
+            }
+            else {
+              uint8_t* x = that._start;
+              for (size_t i = 0; i < that._size; i++) {
+                _alloc.push_back(*x++);
+              }
+            }
           }
           else {
             _alloc = that._alloc;
           }
           _start = _alloc.data();
           _size = _alloc.size();
+          _pos = that._pos;
           _stack = that._stack;
         }
 
@@ -129,11 +161,21 @@ namespace triagens {
           _externalMem = false;
           _alloc.clear();
           _alloc.reserve(that._size);
-          _alloc.append(that._start, that._size);
+          if (! that._externalMem) {
+            _alloc.insert(_alloc.begin(),
+                          that._alloc.begin(), that._alloc.end());
+          }
+          else {
+            uint8_t* x = that._start;
+            for (size_t i = 0; i < that._size; i++) {
+              _alloc.push_back(*x++);
+            }
+          }
           _start = _alloc.data();
           _size = _alloc.size();
+          _pos = that._pos;
           _stack = that._stack;
-          _sealed = that._sealed;
+          return *this;
         }
 
         JasonBuilder (JasonBuilder&& that) {
@@ -149,9 +191,9 @@ namespace triagens {
             _start = _alloc.data();
             _size = _alloc.size();
           }
+          _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
-          _sealed = that._sealed;
           that._start = nullptr;
           that._size = 0;
         }
@@ -169,17 +211,17 @@ namespace triagens {
             _start = _alloc.data();
             _size = _alloc.size();
           }
+          _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
-          _sealed = that._sealed;
           that._start = nullptr;
           that._size = 0;
           return *this;
         }
 
         void clear () {
+          _pos = 0;
           _stack.clear();
-          _stack.emplace_back(JasonType::None);
         }
 
         uint8_t* start () {
@@ -189,14 +231,105 @@ namespace triagens {
         size_t size () {
           // Compute the actual size here, but only when sealed
           if (_stack.size() > 0) {
-            return 0;
+            throw JasonBuilderError("Jason object not sealed.");
           }
-          return 0ul;
+          return _pos;
         }
 
-        void setType (JasonType type, bool large = false) {
-          if (_stack.size() == 0) {
-            throw std::exception();
+        void stealTo (std::vector<uint8_t>& target) {
+          if (_stack.size() > 0) {
+            throw JasonBuilderError("Jason object not sealed.");
+          }
+          if (! _externalMem) {
+            target.clear();
+            _alloc.swap(target);
+            clear();
+          }
+          else {
+            target.clear();
+            size_t s = size();
+            target.reserve(s);
+            uint8_t* x = _start;
+            for (size_t i = 0; i < s; i++) {
+              target.push_back(*x++);
+            }
+            clear();
+          }
+        }
+
+        void set (Jason item) {
+          // This method builds a single further Jason item at the current
+          // append position. If this is an array or object, then an index
+          // table is created and a new State is pushed onto the stack.
+          switch (item.jasonType()) {
+            case JasonType::None: {
+              throw JasonBuilderError("Cannot set a JasonType::None.");
+            }
+            case JasonType::Bool: {
+              if (item.cType() != Jason::CType::Bool) {
+                throw JasonBuilderError("Must give bool for JasonType::Bool.");
+              }
+              reserveSpace(1);
+              if (item.getBool()) {
+                _start[_pos++] = 0x02;
+              }
+              else {
+                _start[_pos++] = 0x01;
+              }
+              break;
+            }
+            case JasonType::Double: {
+              double v = 0.0;
+              switch (item.cType()) {
+                case Jason::CType::Double:
+                  v = item.getDouble();
+                  break;
+                case Jason::CType::Int64:
+                  v = static_cast<double>(item.getInt64());
+                  break;
+                case Jason::CType::UInt64:
+                  v = static_cast<double>(item.getUInt64());
+                  break;
+                default:
+                  throw JasonBuilderError("Must give number for JasonType::Double.");
+              }
+              reserveSpace(sizeof(double));
+              memcpy(_start + _pos, &v, sizeof(double));
+              _pos += sizeof(double);
+              break;
+            }
+            case JasonType::String: {
+              if (item.cType() != Jason::CType::String) {
+                throw JasonBuilderError("Must give a string for JasonType::String.");
+              }
+              std::string* s = item.getString();
+              size_t size = s->size();
+              if (size <= 127) {
+                reserveSpace(1+size);
+                _start[_pos++] = 0x40 + size;
+                memcpy(_start + _pos, s->c_str(), size);
+                _pos += size;
+              }
+              else {
+                unsigned int sizeSize = 0;
+                size_t x = size;
+                do {
+                  sizeSize++;
+                  x >>= 8;
+                } while (x != 0);
+                reserveSpace(1+sizeSize+size);
+                _start[_pos++] = 0xc0 + sizeSize;
+                for (x = size; sizeSize > 0; sizeSize--) {
+                  _start[_pos++] = x & 0xff;
+                  x >>= 8;
+                }
+                memcpy(_start + _pos, s->c_str(), size);
+              }
+              break;
+            }
+            default: {
+              throw JasonBuilderError("This JasonType is not yet implemented.");
+            }
           }
         }
 
@@ -207,6 +340,7 @@ namespace triagens {
         }
 
         size_t close () {
+          return 0;
         }
 
         JasonBuilder& operator() (std::string attrName, Jason sub) {

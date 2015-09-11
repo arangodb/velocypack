@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <cassert>
 
 #include "JasonType.h"
 
@@ -63,6 +64,40 @@ namespace triagens {
           : _jasonType(t), _cType(CType::String) {
           _value.s = &s;
         }
+
+        JasonType jasonType () {
+          return _jasonType;
+        }
+
+        CType cType () {
+          return _cType;
+        }
+
+        bool getBool () {
+          assert(_cType == Bool);
+          return _value.b;
+        }
+
+        double getDouble () {
+          assert(_cType == Double);
+          return _value.d;
+        }
+
+        int64_t getInt64 () {
+          assert(_cType == Int64);
+          return _value.i;
+        }
+
+        uint64_t getUInt64 () {
+          assert(_cType == UInt64);
+          return _value.u;
+        }
+
+        std::string* getString () {
+          assert(_cType == String);
+          return _value.s;
+        }
+
     };
 
   }  // namespace triagens::basics
