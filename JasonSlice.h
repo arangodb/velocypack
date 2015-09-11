@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <iostream>
 
 namespace triagens {
   namespace basics {
@@ -31,12 +32,10 @@ namespace triagens {
         // standard copy, and move constructors, behaves like a pointer.
 
         JasonType type () const {
-          return JasonType::Null; // TODO;
+          return TypeTable[*_start];
         }
 
-        size_t size () const {
-           return 0; // TODO
-        }
+        uint64_t byteSize () const;
 
         uint8_t const* start () const {
           return _start;
@@ -155,7 +154,7 @@ namespace triagens {
         void toJsonString (std::string& out) {
         }
 
-        void Initialize ();
+        static void Initialize ();
   
       private:
          
@@ -164,6 +163,25 @@ namespace triagens {
 #if 1
           assert(this->type() == type);
 #endif
+        }
+
+        uint64_t readLength (size_t numBytes) const {
+          return readLength(_start, numBytes);
+        }
+
+        uint64_t readLength (uint8_t const* start, size_t numBytes) const {
+          uint64_t length = 0;
+          uint8_t const* p = start + 1;
+          uint8_t const* e = p + numBytes;
+          int digit = 0;
+
+          while (p < e) {
+            length += *p << Powers[digit];
+            ++digit;
+            ++p;
+          }
+
+          return length;
         }
 
         template<typename T> T extractValue () const {
@@ -182,6 +200,8 @@ namespace triagens {
 ////////////////////////////////////////////////////////////////////////////////
 
         static std::array<JasonType, 256> TypeTable;
+
+        static std::array<uint64_t, 8> Powers;
 
     };
 
