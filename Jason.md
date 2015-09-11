@@ -1,7 +1,7 @@
 Jason
 =====
 
-Version 0.3
+Version 0.4
 
 Just Another SerializatiON
 
@@ -66,44 +66,52 @@ indicates the type (and often the length) of the Jason value at hand:
                 out of the collection name, "/" and the value of the
                 _key attribute when JSON is generated
   - 0x0b-0x0f : reserved
-  - 0x10-0x1f : UTC-date in milliseconds since the epoch, stored as uint
-                as below number of bytes used is V - 0x0f
-  - 0x20-0x2f : int, little endian, 2s-complement, 1-16 bytes, number is V-0x1f
-  - 0x30-0x3f : uint, little endian, 1 to 16 bytes, number is V - 0x2f
+  - 0x10-0x17 : UTC-date in milliseconds since the epoch, stored as uint
+                as below number of bytes used is V-0x0f
+  - 0x18-0x1f : reserved
+  - 0x20-0x27 : int, little endian, 2s-complement, 1-8 bytes, number is V-0x1f
+  - 0x28-0x2f : reserved
+  - 0x30-0x37 : uint, little endian, 1 to 8 bytes, number is V - 0x2f
+  - 0x38-0x3f : reserved
   - 0x40-0xbf : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 127
-  - 0xc0-0xcf : long UTF-8-string, next V-0xbf bytes are length of string 
+  - 0xc0-0xc7 : long UTF-8-string, next V-0xbf bytes are length of string 
                 in bytes
-  - 0xd0-0xdf : binary blob, next V-0xcf bytes are length of blob in bytes
+  - 0xc8-0xcf : reserved
+  - 0xd0-0xd7 : binary blob, next V-0xcf bytes are length of blob in bytes
+  - 0xd8-0xdf : reserved
   - 0xe0-0xff : reserved
 
 ### Arrays
 
-A short array (V=0x04) has one byte N following that contains the number of
-entries in the array. Then, it has N byte pairs for the offsets of the ends
-of the entries, measured from address A+2 + 2*N. The byte pairs are 
-unsigned little endian values for the offsets. The first entry is always
-at address A+2 + 2*N
+A short array (V=0x04) has one byte N following that contains the number
+of entries in the array. Then follows a byte pair for the offset of the
+end of the last item, that is, the position where the next Jason item
+begins, measured from address A. After that, it has N-1 byte pairs for
+the offsets of the starts of the entries with index 1 to N-1, again
+measured from address A. The byte pairs are unsigned little endian
+values for the offsets. The first entry is always at address A+4 +
+2*(N-1).
 
 *Example*:
 
 `[1,2,3]` has the hex dump 
 
-    04 03 02 00 04 00 06 00 20 01 20 02 20 03
+    04 03 0e 00 0a 00 0c 00 20 01 20 02 20 03
 
 A long array (V=0x05) is very similar, except that the number of entries
 is a 7-byte unsigned integer and the offsets are 8-byte unsigned integers.
-Thus, the first value is always at address A+8 + 8*N.
+Thus, the first value is always at address A+16 + 8*(N-1).
 
 *Example*:
 
 `[1,2,3]` as long-array has the hex dump
 
      05 03 00 00 00 00 00 00 
-     02 00 00 00 00 00 00 00
-     04 00 00 00 00 00 00 00
-     06 00 00 00 00 00 00 00
+     26 00 00 00 00 00 00 00
+     22 00 00 00 00 00 00 00
+     24 00 00 00 00 00 00 00
      20 01 20 02 20 03
 
 Note that it is not recommended to encode short arrays in the long format.
@@ -112,15 +120,14 @@ Note that it is not recommended to encode short arrays in the long format.
 ### Objects
 
 A short object (V=0x06) has one byte N following that contains the
-number of key/value pairs in the object. Then, it has N+1 byte pairs for
-the offsets of the ends of the entries, measured from address A+2 + 2*(N+1).
-The byte pairs are unsigned little endian values for the offsets of the
-starts of the attributes, and one for the offset of the end of the last
-attribute. The table of offsets is sorted so that they point to the
-attributes in alphabetical order to allow for binary search. Note that
-it is not necessary that the offsets are monotonically increasing! The
-last offset value (number N+1) always points behind the last attribute
-and is thus the largest value.
+number of key/value pairs in the object. Then, it has 1 byte pair for
+the offset of the next Jason item, that is, the end of the current one.
+Then follow N byte pairs for the offsets of the starts of the entries,
+measured from address A. The byte pairs are unsigned little endian
+values for the offsets of the starts of the attributes. The table of
+offsets is sorted so that they point to the attributes in alphabetical
+order to allow for binary search. Note that it is not necessary that the
+offsets are monotonically increasing!
 
 Each entry consists of two parts, the key and the value, they are
 encoded as normal JSON values as above, the first is always a short or
@@ -136,10 +143,13 @@ as a JSON-array as specified here.
 
 Example, the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    06 03 03 00 00 00 07 00 0d 00
+    06 03 17 00 0d 00 0a 00 11 00
     41 62 02 
     41 61 20 0c 
     41 63 43 78 79 7a
+
+Large objects are the same, only the number of entries is a 7-byte
+little-endian integer and the offsets are 8-byte little-endian integers.
 
 
 C++-Classes to handle Jason
