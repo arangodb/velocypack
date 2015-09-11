@@ -70,15 +70,13 @@ namespace triagens {
         size_t   _pos;   // the current append position, always <= _size
 
         struct State {
-          JasonType type;
           size_t base;   // Start of object currently being built
           size_t index;  // Index in array or object currently being worked on
-          bool   large;  // Flag, whether we use the large version
+          size_t len;    // Total length of array or object in entries.
 
-          State (JasonType t) 
-            : type(t), base(0), index(0), large(false) {
+          State (size_t l = 1, size_t b = 0, size_t i = 0) 
+            : base(b), index(i), len(l) {
           }
-
         };
 
         std::vector<State> _stack;   // Has always size() >= 1 when still
@@ -320,10 +318,47 @@ namespace triagens {
                   item.cType() != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::Array as length.");
               }
+              size_t len =   item.cType() == Jason::CType::UInt64 
+                           ? item.getUInt64()
+                           : static_cast<uint64_t>(item.getInt64());
+              if (len >= 256) {
+                throw JasonBuilderError("Length in JasonType::Array must be < 256.");
+              }
+              _stack.emplace_back(_pos, 0, len);
+              reserveSpace(2+len*2);
+              _start[_pos++] = 0x04;
+              _start[_pos++] = len & 0xff;
+              for (size_t i = 0; i < len; i++) {
+                _start[_pos++] = 0x00;
+                _start[_pos++] = 0x00;
+              }
               break;
             }
-
-              
+            case JasonType::ArrayLong: {
+              if (item.cType() != Jason::CType::Int64 &&
+                  item.cType() != Jason::CType::UInt64) {
+                throw JasonBuilderError("Must give an integer for JasonType::Array as length.");
+              }
+              size_t len =   item.cType() == Jason::CType::UInt64 
+                           ? item.getUInt64()
+                           : static_cast<uint64_t>(item.getInt64());
+              if (len >= 0x100000000000000) {
+                throw JasonBuilderError("Length in JasonType::Array must be < 2^56.");
+              }
+              _stack.emplace_back(_pos, 0, len);
+              reserveSpace(8+len*8);
+              _start[_pos++] = 0x05;
+              for (size_t i = 0; i < 7; i++) {
+                _start[_pos++] = len & 0xff;
+                len >>= 8;
+              }
+              for (size_t i = 0; i < len; i++) {
+                for (int j = 0; j < 8; j++) {
+                  _start[_pos++] = 0x00;
+                }
+              }
+              break;
+            }
             default: {
               throw JasonBuilderError("This JasonType is not yet implemented.");
             }
@@ -334,10 +369,57 @@ namespace triagens {
         }
 
         void add (Jason sub) {
+          if (_stack.size() == 0) {
+            throw JasonBuilderError("Need open array for add() call.");
+          }
+          State& tos = _stack.back();
+          if (_start[tos.base] != 0x04 &&
+              _start[tos.base] != 0x05) {
+            throw JasonBuilderError("Need open array for add() call.");
+          }
+          size_t save = _pos;
+          set(sub);
+          reportAdd(save);
         }
 
-        size_t close () {
-          return 0; // TODO
+        void close () {
+          if (_stack.size() == 0) {
+            throw JasonBuilderError("Need open array or object for close() call.");
+          }
+          State& tos = _stack.back();
+          if (_start[tos.base] < 0x04 || _start[tos.base] > 0x07) {
+            throw JasonBuilderError("Need open array or object for close() call.");
+          }
+          if (tos.index < tos.len) {
+            throw JasonBuilderError("Shrinking not yet implemented.");
+          }
+          // Note that the last add already checked that the length is OK.
+          if (_start[tos.base] == 0x04 || _start[tos.base] == 0x06) {
+            // short array or object:
+            size_t tableEntry = tos.base + 2;
+            size_t x = _pos - tos.base;
+            _start[tableEntry] = x & 0xff;
+            _start[tableEntry+1] = (x >> 8) & 0xff;
+            if (_start[tos.base] == 0x06) {
+              // TODO: Sort object entries by key, permute indexes
+              ;
+            }
+          }
+          else {
+            // long array or object:
+            size_t tableEntry = tos.base + 8;
+            size_t x = _pos - tos.base;
+            for (unsigned int i = 0; i < 8; i++) {
+              _start[tableEntry+i] = x & 0xff;
+              x >>= 8;
+            }
+          }
+          // Now the array or object is complete, we pop a State off the _stack
+          size_t base = tos.base;
+          _stack.pop_back();
+          if (_stack.size() > 0) {
+            reportAdd(base);
+          }
         }
 
         JasonBuilder& operator() (std::string attrName, Jason sub) {
@@ -381,6 +463,47 @@ namespace triagens {
           }
         }
 
+        void reportAdd(size_t itemStart) {
+          State& tos = _stack.back();
+          if (tos.index >= tos.len) {
+            throw JasonBuilderError("Open array or object is already full.");
+          }
+          if (_start[tos.base] == 0x04) {
+            // short array:
+            if (_pos - tos.base > 0xffff) {
+              throw JasonBuilderError("Short array has grown too long (>0xffff).");
+            }
+            if (tos.index > 0) {
+              size_t tableEntry = tos.base + 4 + (tos.index-1) * 2;
+              size_t x = itemStart - tos.base;
+              _start[tableEntry] = x & 0xff;
+              _start[tableEntry+1] = (x >> 8) & 0xff;
+            }
+          }
+          else if (_start[tos.base] == 0x05) {
+            // long array:
+            if (tos.index > 0) {
+              size_t tableEntry = tos.base + 16 + (tos.index-1) * 8;
+              size_t x = itemStart - tos.base;
+              for (unsigned int i = 0; i < 8; i++) {
+                _start[tableEntry+i] = x & 0xff;
+                x >>= 8;
+              }
+            }
+          }
+          else if (_start[tos.base] == 0x06) {
+            // short object
+            // ...
+          }
+          else if (_start[tos.base] == 0x07) {
+            // long object
+            // ...
+          }
+          else {
+            throw JasonBuilderError("Internal error, stack state does not point to object or array.");
+          }
+          tos.index++;
+        }
     };
 
   }  // namespace triagens::basics
