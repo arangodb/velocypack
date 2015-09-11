@@ -2,6 +2,12 @@
 #define JASON_SLICE_H 1
 
 #include "JasonType.h"
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <array>
 
 namespace triagens {
   namespace basics {
@@ -14,50 +20,88 @@ namespace triagens {
 
         friend class JasonBuilder;
 
-        uint8_t* _start;
+        uint8_t const* _start;
 
       public:
 
-        JasonSlice (uint8_t* start) : _start(start) {
+        JasonSlice (uint8_t const* start) : _start(start) {
         }
 
         // No destructor, does not take part in memory management,
         // standard copy, and move constructors, behaves like a pointer.
 
-        JasonType type () {
-          return JasonType::Null;
+        JasonType type () const {
+          return JasonType::Null; // TODO;
         }
 
-        size_t size () {
-          return 0ul;
+        size_t size () const {
+           return 0; // TODO
         }
 
-        uint8_t* start () {
+        uint8_t const* start () const {
           return _start;
         }
 
-        bool isNull () {
-          return false;
+        bool isNull () const {
+          return TypeTable[*_start] == JasonType::Null;
         }
 
-        bool isBool () {
-          return false;
+        bool isBool () const {
+          return TypeTable[*_start] == JasonType::Bool;
         }
 
-        bool getBool () {
-          return false;
+        bool isDouble () const {
+          return TypeTable[*_start] == JasonType::Double;
+        }
+        
+        bool isArray () const {
+          return TypeTable[*_start] == JasonType::Array;
         }
 
-        bool isDouble () {
-          return false;
+        bool isObject () const {
+          return TypeTable[*_start] == JasonType::Object;
         }
 
-        double getDouble () {
-          return 0.0;
+        bool isExternal () const {
+          return TypeTable[*_start] == JasonType::External;
         }
 
-        bool isArray () {
-          return false;
+        bool isID () const {
+          return TypeTable[*_start] == JasonType::ID;
+        }
+
+        bool isArangoDB_id () const {
+          return TypeTable[*_start] == JasonType::ArangoDB_id;
+        }
+
+        bool isUTCDate () const {
+          return TypeTable[*_start] == JasonType::UTCDate;
+        }
+
+        bool isInt () const {
+          return TypeTable[*_start] == JasonType::Int;
+        }
+        
+        bool isUInt () const {
+          return TypeTable[*_start] == JasonType::UInt;
+        }
+
+        bool isString () const {
+          return TypeTable[*_start] == JasonType::String;
+        }
+
+        bool isBinary () const {
+          return TypeTable[*_start] == JasonType::Binary;
+        }
+
+        bool getBool () const {
+          ensureType(JasonType::Bool);
+          return (*_start == 0x2);
+        }
+
+        double getDouble () const {
+          ensureType(JasonType::Double);
+          return extractValue<double>();
         }
 
         JasonSlice at (size_t index) {
@@ -66,10 +110,6 @@ namespace triagens {
 
         JasonSlice operator[] (size_t index) {
           return *this;
-        }
-
-        bool isObject () {
-          return false;
         }
 
         size_t length () {
@@ -84,32 +124,16 @@ namespace triagens {
           return *this;
         }
 
-        bool isUTCDate () {
-          return false;
-        }
-
         uint64_t getUTCDate () {
           return 0ul;
         }
 
-        bool isInt () {
-          return false;
-        }
-
-        int64_t getInt (size_t bytes) {
+        int64_t getInt (size_t bytes) const {
           return 0l;
-        }
-
-        bool isUInt () {
-          return false;
         }
 
         uint64_t getUInt (size_t& bytes) {
           return 0ul;
-        }
-
-        bool isString () {
-          return false;
         }
 
         char* getString (size_t& length) {
@@ -118,10 +142,6 @@ namespace triagens {
 
         std::string copyString () {
           return std::string("Hello");
-        }
-
-        bool isBinary () {
-          return false;
         }
 
         uint8_t* getBinary (size_t& length) {
@@ -134,6 +154,35 @@ namespace triagens {
 
         void toJsonString (std::string& out) {
         }
+
+        void Initialize ();
+  
+      private:
+         
+        void ensureType (JasonType type) const {
+          // can be used for debugging and removed in production
+#if 1
+          assert(this->type() == type);
+#endif
+        }
+
+        template<typename T> T extractValue () const {
+          union {
+            T value;
+            char binary[sizeof(T)];
+          }; 
+          memcpy(&binary[0], _start + 1, sizeof(T));
+          return value; 
+        }
+
+      private:
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief a lookup table for Jason types
+////////////////////////////////////////////////////////////////////////////////
+
+        static std::array<JasonType, 256> TypeTable;
+
     };
 
   }  // namespace triagens::basics

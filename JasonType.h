@@ -23,6 +23,8 @@ namespace triagens {
       Binary
     };
 
+    char const* JasonTypeName (JasonType);
+
   }  // namespace triagens::basics
 }  // namespace triagens
 
