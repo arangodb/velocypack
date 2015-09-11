@@ -33,19 +33,19 @@ void JasonSlice::Initialize () {
   TypeTable[0x9] = JasonType::ID;
   TypeTable[0xa] = JasonType::ArangoDB_id;
  
-  for (int i = 0x10; i <= 0x1f; ++i) { 
+  for (int i = 0x10; i <= 0x17; ++i) { 
     TypeTable[i] = JasonType::UTCDate;
   }
-  for (int i = 0x20; i <= 0x2f; ++i) { 
+  for (int i = 0x20; i <= 0x27; ++i) { 
     TypeTable[i] = JasonType::Int;
   }
-  for (int i = 0x30; i <= 0x3f; ++i) { 
+  for (int i = 0x30; i <= 0x37; ++i) { 
     TypeTable[i] = JasonType::UInt;
   }
-  for (int i = 0x40; i <= 0xcf; ++i) { 
+  for (int i = 0x40; i <= 0xc7; ++i) { 
     TypeTable[i] = JasonType::String;
   }
-  for (int i = 0xd0; i <= 0xdf; ++i) { 
+  for (int i = 0xd0; i <= 0xd7; ++i) { 
     TypeTable[i] = JasonType::Binary;
   }
 }
