@@ -64,6 +64,7 @@ namespace triagens {
 
         std::vector<uint8_t> _alloc;
         bool     _externalMem;          // true if buffer came from the outside
+        bool     _sealed;
         uint8_t* _start;
         size_t   _size;
         size_t   _pos;   // the current append position, always <= _size
@@ -135,21 +136,15 @@ namespace triagens {
 
         JasonBuilder (JasonBuilder const& that)
           : _externalMem(false) {
-          if (that._externalMem) {
-            _alloc.reserve(that._size);
-            if (! that._externalMem) {
-              _alloc.insert(_alloc.begin(),
-                            that._alloc.begin(), that._alloc.end());
-            }
-            else {
-              uint8_t* x = that._start;
-              for (size_t i = 0; i < that._size; i++) {
-                _alloc.push_back(*x++);
-              }
-            }
+          if (! that._externalMem) {
+            _alloc = that._alloc;
           }
           else {
-            _alloc = that._alloc;
+            _alloc.reserve(that._size);
+            uint8_t* x = that._start;
+            for (size_t i = 0; i < that._size; i++) {
+              _alloc.push_back(*x++);
+            }
           }
           _start = _alloc.data();
           _size = _alloc.size();
@@ -159,13 +154,12 @@ namespace triagens {
 
         JasonBuilder& operator= (JasonBuilder const& that) {
           _externalMem = false;
-          _alloc.clear();
-          _alloc.reserve(that._size);
           if (! that._externalMem) {
-            _alloc.insert(_alloc.begin(),
-                          that._alloc.begin(), that._alloc.end());
+            _alloc = that._alloc;
           }
           else {
+            _alloc.clear();
+            _alloc.reserve(that._size);
             uint8_t* x = that._start;
             for (size_t i = 0; i < that._size; i++) {
               _alloc.push_back(*x++);
@@ -340,7 +334,7 @@ namespace triagens {
         }
 
         size_t close () {
-          return 0;
+          return 0; // TODO
         }
 
         JasonBuilder& operator() (std::string attrName, Jason sub) {
