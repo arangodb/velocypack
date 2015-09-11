@@ -259,6 +259,11 @@ namespace triagens {
             case JasonType::None: {
               throw JasonBuilderError("Cannot set a JasonType::None.");
             }
+            case JasonType::Null: {
+              reserveSpace(1);
+              _start[_pos++] = 0x00;
+              break;
+            }
             case JasonType::Bool: {
               if (item.cType() != Jason::CType::Bool) {
                 throw JasonBuilderError("Must give bool for JasonType::Bool.");
@@ -305,22 +310,20 @@ namespace triagens {
                 _pos += size;
               }
               else {
-                unsigned int sizeSize = 0;
-                size_t x = size;
-                do {
-                  sizeSize++;
-                  x >>= 8;
-                } while (x != 0);
-                reserveSpace(1+sizeSize+size);
-                _start[_pos++] = 0xc0 + sizeSize;
-                for (x = size; sizeSize > 0; sizeSize--) {
-                  _start[_pos++] = x & 0xff;
-                  x >>= 8;
-                }
+                appendUInt(size, 0xbf);
                 memcpy(_start + _pos, s->c_str(), size);
               }
               break;
             }
+            case JasonType::Array: {
+              if (item.cType() != Jason::CType::Int64 &&
+                  item.cType() != Jason::CType::UInt64) {
+                throw JasonBuilderError("Must give an integer for JasonType::Array as length.");
+              }
+              break;
+            }
+
+              
             default: {
               throw JasonBuilderError("This JasonType is not yet implemented.");
             }
@@ -350,6 +353,32 @@ namespace triagens {
         JasonBuilder& operator() () {
           close();
           return *this;
+        }
+
+      private:
+
+        void appendUInt(uint64_t v, uint8_t base) {
+          unsigned int vSize = 0;
+          uint64_t x = v;
+          do {
+            vSize++;
+            x >>= 8;
+          } while (x != 0);
+          reserveSpace(1+vSize);
+          _start[_pos++] = base + vSize;
+          for (x = v; vSize > 0; vSize--) {
+            _start[_pos++] = x & 0xff;
+            x >>= 8;
+          }
+        }
+
+        void appendInt(int64_t v) {
+          if (v >= 0) {
+            appendUInt(static_cast<uint64_t>(v), 0x1f);
+          }
+          else {
+            appendUInt(static_cast<uint64_t>(-v), 0x27);
+          }
         }
 
     };
