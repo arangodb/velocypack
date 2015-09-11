@@ -53,6 +53,7 @@ namespace triagens {
 
         std::vector<uint8_t> _alloc;
         bool     _externalMem;          // true if buffer came from the outside
+        bool     _sealed;
         uint8_t* _start;
         size_t   _size;
 
@@ -99,13 +100,13 @@ namespace triagens {
           _alloc.push_back(0);
           _start = _alloc.data();
           _size = _alloc.size();
-          _Stack.emplace_back(type);
+          _stack.emplace_back(type);
         }
 
         JasonBuilder (uint8_t* start, size_t size,
                       JasonType type = JasonType::None) 
           : _externalMem(true), _start(start), _size(size) {
-          _Stack.emplace_back(type);
+          _stack.emplace_back(type);
         }
       
         ~JasonBuilder () {
@@ -115,7 +116,7 @@ namespace triagens {
           : _externalMem(false), _sealed(that._sealed) {
           if (that._externalMem) {
             _alloc.reserve(that._size);
-            _alloc.append(that._start, that._size);
+            _alloc.insert(_alloc.end(), that._start, that._start + that._size);
           }
           else {
             _alloc = that._alloc;
@@ -129,11 +130,12 @@ namespace triagens {
           _externalMem = false;
           _alloc.clear();
           _alloc.reserve(that._size);
-          _alloc.append(that._start, that._size);
+          _alloc.insert(_alloc.end(), that._start, that._start + that._size);
           _start = _alloc.data();
           _size = _alloc.size();
           _stack = that._stack;
           _sealed = that._sealed;
+          return *this;
         }
 
         JasonBuilder (JasonBuilder&& that) {
@@ -207,6 +209,7 @@ namespace triagens {
         }
 
         size_t close () {
+          return 0; // TODO
         }
 
         JasonBuilder& operator() (std::string attrName, Jason sub) {
