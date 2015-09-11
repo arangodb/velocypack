@@ -104,54 +104,72 @@ namespace triagens {
         }
 
         JasonSlice at (size_t index) {
+          // TODO
           return *this;
         }
 
         JasonSlice operator[] (size_t index) {
+          // TODO
           return *this;
         }
 
         size_t length () {
+          // TODO
           return 0;
         }
 
         JasonSlice get (std::string& attribute) {
+          // TODO
           return *this;
         }
 
         JasonSlice operator[] (std::string& attribute) {
+          // TODO
           return *this;
         }
 
-        uint64_t getUTCDate () {
+        uint64_t getUTCDate () const {
+          // TODO
           return 0ul;
         }
 
-        int64_t getInt (size_t bytes) const {
-          return 0l;
+        int64_t getInt () const {
+          ensureType(JasonType::Int);
+          if (*_start <= 0x27) {
+            // positive int
+            return readInteger<int64_t>(_start + 1, *_start - 0x1f);
+          }
+          // negative int
+          return - readInteger<int64_t>(_start + 1, *_start - 0x27);
         }
 
-        uint64_t getUInt (size_t& bytes) {
-          return 0ul;
+        uint64_t getUInt () const {
+          ensureType(JasonType::UInt);
+          return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
         }
 
         char* getString (size_t& length) {
+          // TODO
           return nullptr;
         }
 
         std::string copyString () {
+          // TODO
           return std::string("Hello");
         }
 
         uint8_t* getBinary (size_t& length) {
+          // TODO
           return nullptr;
         }
 
         std::vector<uint8_t> copyBinary () {
+          // TODO
           return std::vector<uint8_t>();
         }
 
         void toJsonString (std::string& out) {
+          // TODO
         }
 
         static void Initialize ();
@@ -165,23 +183,25 @@ namespace triagens {
 #endif
         }
 
-        uint64_t readLength (size_t numBytes) const {
-          return readLength(_start, numBytes);
+        template <typename T>
+        T readInteger (size_t numBytes) const {
+          return readInteger<T>(_start + 1, numBytes);
         }
 
-        uint64_t readLength (uint8_t const* start, size_t numBytes) const {
-          uint64_t length = 0;
-          uint8_t const* p = start + 1;
+        template <typename T>
+        T readInteger (uint8_t const* start, size_t numBytes) const {
+          T value = 0;
+          uint8_t const* p = start;
           uint8_t const* e = p + numBytes;
-          int digit = 0;
+          T digit = 0;
 
           while (p < e) {
-            length += *p << Powers[digit];
+            value += static_cast<T>(*p) << (digit * 8);
             ++digit;
             ++p;
           }
 
-          return length;
+          return value;
         }
 
         template<typename T> T extractValue () const {
@@ -200,8 +220,6 @@ namespace triagens {
 ////////////////////////////////////////////////////////////////////////////////
 
         static std::array<JasonType, 256> TypeTable;
-
-        static std::array<uint64_t, 8> Powers;
 
     };
 

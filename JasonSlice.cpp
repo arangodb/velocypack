@@ -12,12 +12,6 @@ using JasonType = triagens::basics::JasonType;
 std::array<JasonType, 256> JasonSlice::TypeTable;
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief cached powers
-////////////////////////////////////////////////////////////////////////////////
-
-std::array<uint64_t, 8> JasonSlice::Powers;
-
-////////////////////////////////////////////////////////////////////////////////
 /// @brief get the byte size of the payload
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,13 +26,13 @@ uint64_t JasonSlice::byteSize () const {
       return 8;
 
     case JasonType::Array:
-      return static_cast<uint64_t>(readLength(_start + 2, 2));
+      return readInteger<uint64_t>(_start + 2, 2);
        
     case JasonType::ArrayLong:
       return 0; // TODO
 
     case JasonType::Object:
-      return static_cast<uint64_t>(readLength(_start + 2, 2));
+      return readInteger<uint64_t>(_start + 2, 2);
 
     case JasonType::ObjectLong:
       return 0; // TODO
@@ -53,18 +47,18 @@ uint64_t JasonSlice::byteSize () const {
       return 0; // TODO
 
     case JasonType::UTCDate:
-      return readLength(*_start - 0xf);
+      return readInteger<uint64_t>(*_start - 0xf);
 
     case JasonType::Int:
       if (*_start <= 0x27) {
         // positive int
-        return readLength(*_start - 0x1f);
+        return (*_start - 0x1f);
       }
       // negative int
-      return readLength(*_start - 0x27);
+      return (*_start - 0x27);
 
     case JasonType::UInt:
-      return readLength(*_start - 0x2f);
+      return (*_start - 0x2f);
 
     case JasonType::String:
       if (*_start <= 0xbf) {
@@ -72,10 +66,10 @@ uint64_t JasonSlice::byteSize () const {
         return (*_start - 0x40);
       }
       // long string
-      return readLength(*_start - 0xbf);
+      return readInteger<uint64_t>(*_start - 0xbf);
 
     case JasonType::Binary: 
-      return readLength(*_start - 0xcf);
+      return readInteger<uint64_t>(*_start - 0xcf);
   }
 
   assert(false);
@@ -119,11 +113,5 @@ void JasonSlice::Initialize () {
   for (int i = 0xd0; i <= 0xd7; ++i) { 
     TypeTable[i] = JasonType::Binary;
   }
-
-  uint64_t value = 0;
-  for (int i = 0; i < 8; ++i) {
-    Powers[i] = value;
-    value = value << 8;
-  } 
 }
 
