@@ -304,7 +304,8 @@ namespace triagens {
                 default:
                   throw JasonBuilderError("Must give number for JasonType::Double.");
               }
-              reserveSpace(sizeof(double));
+              reserveSpace(1 + sizeof(double));
+              _start[_pos++] = 0x03;
               memcpy(_start + _pos, &v, sizeof(double));
               _pos += sizeof(double);
               break;
