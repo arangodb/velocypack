@@ -132,7 +132,7 @@ namespace triagens {
             case JasonType::ObjectLong:
               return readInteger<JasonLength>(7);
             default:
-              throw new JasonTypeError("unexpected type. expecting array or object");
+              throw JasonTypeError("unexpected type. expecting array or object");
           }
           return 0;
         }

@@ -6,7 +6,7 @@
 
 #include <vector>
 #include <cstring>
-
+           
 // Endianess of the system must be configured here:
 #undef BIG_ENDIAN
 // #define BIG_ENDIAN 1
@@ -310,6 +310,32 @@ namespace triagens {
               _pos += sizeof(double);
               break;
             }
+            case JasonType::UInt: {
+              uint64_t v = 0;
+              switch (item.cType()) {
+                case Jason::CType::Double:
+                  if (item.getDouble() < 0.0) {
+                    throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
+                  }
+                  v = static_cast<uint64_t>(item.getDouble());
+                  break;
+                case Jason::CType::Int64:
+                  if (item.getInt64() < 0) {
+                    throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
+                  }
+                  v = static_cast<uint64_t>(item.getInt64());
+                  break;
+                case Jason::CType::UInt64:
+                  v = item.getUInt64();
+                  break;
+                default:
+                  throw JasonBuilderError("Must give number for JasonType::UInt.");
+              }
+              JasonLength size = uintLength(v);
+              reserveSpace(1 + size);
+              appendUInt(size, 0x2f);
+              break;
+            }
             case JasonType::String: {
               if (item.cType() != Jason::CType::String) {
                 throw JasonBuilderError("Must give a string for JasonType::String.");
@@ -457,6 +483,17 @@ namespace triagens {
         }
 
       private:
+
+         // returns number of bytes required to store the value
+         JasonLength uintLength (uint64_t value) const {
+           JasonLength length = 0;
+           while (value) {
+             value >>= 8;
+             ++length;
+           }
+           // minimum length is 1
+           return length ? length : 1;
+         }
 
         void appendUInt (uint64_t v, uint8_t base) {
           unsigned int vSize = 0;

@@ -46,6 +46,7 @@ namespace triagens {
         explicit Jason (JasonType t = JasonType::Null) 
           : _jasonType(t), _cType(CType::None) {
         }
+
         explicit Jason (bool b, JasonType t = JasonType::Bool) 
           : _jasonType(t), _cType(CType::Bool) {
           _value.b = b;
@@ -54,9 +55,19 @@ namespace triagens {
           : _jasonType(t), _cType(CType::Double) {
           _value.d = d;
         }
+/*
         explicit Jason (int i, JasonType t = JasonType::Int)
           : _jasonType(t), _cType(CType::Int64) {
           _value.i = static_cast<int64_t>(i);
+        }
+*/
+        explicit Jason (int32_t i, JasonType t = JasonType::Int)
+          : _jasonType(t), _cType(CType::Int64) {
+          _value.i = static_cast<int64_t>(i);
+        }
+        explicit Jason (uint32_t u, JasonType t = JasonType::UInt)
+          : _jasonType(t), _cType(CType::UInt64) {
+          _value.u = static_cast<uint64_t>(u);
         }
         explicit Jason (int64_t i, JasonType t = JasonType::Int)
           : _jasonType(t), _cType(CType::Int64) {

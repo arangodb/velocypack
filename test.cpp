@@ -259,7 +259,8 @@ static void TestBuilderArrayEmpty () {
 
 static void TestBuilderArray3 () {
   JasonBuilder b;
-  b.set(Jason(3, JasonType::Array));
+  b.set(Jason(4, JasonType::Array));
+  b.add(Jason(uint64_t(1200)));
   b.add(Jason(2.3));
   b.add(Jason("abc"));
   b.add(Jason(true));
@@ -288,7 +289,7 @@ int main (int argc, char* argv[]) {
   TestArrayEmpty();
   TestBuilderArrayEmpty();
   TestBuilderArray3();
- 
+
   std::cout << "ye olde tests passeth.\n";
   return 0;
 }
