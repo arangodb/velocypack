@@ -1,0 +1,12 @@
+
+* External:
+  0x08      : external (only in memory): a char* and a size_t pointing to the
+              actual place in memory
+
+  Isn't it sufficient to use only the char* when handling Externals?
+  The length of an external can always be calculated by dereferencing the 
+  External's char* pointer and peeking at the referenced Jason.
+  Using just char* instead of a pair of char* and size_t allows for a more
+  compact representation. Omitting the length also allows keeping the Jason 
+  struct as small as it currently is. For storing the length it would need
+  to be extended by a size_t.

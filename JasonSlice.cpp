@@ -39,7 +39,7 @@ JasonLength JasonSlice::byteSize () const {
       return 0; // TODO
 
     case JasonType::External:
-      return 0; // TODO
+      return sizeof(char*);
 
     case JasonType::ID:
       return 0; // TODO

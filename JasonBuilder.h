@@ -310,6 +310,13 @@ namespace triagens {
               _pos += sizeof(double);
               break;
             }
+            case JasonType::External: {
+              reserveSpace(sizeof(char*));
+              // store pointer
+              memcpy(_start + _pos, item.getExternal(), sizeof(char*));
+              _pos += sizeof(char*);
+              break;
+            }
             case JasonType::UInt: {
               uint64_t v = 0;
               switch (item.cType()) {
@@ -484,28 +491,22 @@ namespace triagens {
 
       private:
 
-         // returns number of bytes required to store the value
-         JasonLength uintLength (uint64_t value) const {
-           JasonLength length = 0;
-           while (value) {
-             value >>= 8;
-             ++length;
-           }
-           // minimum length is 1
-           return length ? length : 1;
-         }
-
-        void appendUInt (uint64_t v, uint8_t base) {
-          unsigned int vSize = 0;
-          uint64_t x = v;
+        // returns number of bytes required to store the value
+        JasonLength uintLength (uint64_t value) const {
+          JasonLength vSize = 0;
           do {
             vSize++;
-            x >>= 8;
+            value >>= 8;
           } 
-          while (x != 0);
+          while (value != 0);
+          return vSize;
+        }
+
+        void appendUInt (uint64_t v, uint8_t base) {
+          JasonLength vSize = uintLength(v);
           reserveSpace(1 + vSize);
           _start[_pos++] = base + vSize;
-          for (x = v; vSize > 0; vSize--) {
+          for (uint64_t x = v; vSize > 0; vSize--) {
             _start[_pos++] = x & 0xff;
             x >>= 8;
           }

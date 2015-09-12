@@ -20,12 +20,12 @@ namespace triagens {
       public:
 
         enum CType {
-          None = 0,
-          Bool = 1,
-          Double = 2,
-          Int64 = 3,
-          UInt64 = 4,
-          String = 5
+          None     = 0,
+          Bool     = 1,
+          Double   = 2,
+          Int64    = 3,
+          UInt64   = 4,
+          String   = 5
         };
        
       private:
@@ -34,11 +34,12 @@ namespace triagens {
         CType     _cType;    // denotes variant used, 0: none
 
         union {
-          bool b;          // 1: bool
-          double d;        // 2: double
-          int64_t i;       // 3: int64_t
-          uint64_t u;      // 4: uint64_t
+          bool b;                // 1: bool
+          double d;              // 2: double
+          int64_t i;             // 3: int64_t
+          uint64_t u;            // 4: uint64_t
           std::string const* s;  // 5: std::string
+          char const* e;         // external
         } _value;
 
       public:
@@ -46,7 +47,6 @@ namespace triagens {
         explicit Jason (JasonType t = JasonType::Null) 
           : _jasonType(t), _cType(CType::None) {
         }
-
         explicit Jason (bool b, JasonType t = JasonType::Bool) 
           : _jasonType(t), _cType(CType::Bool) {
           _value.b = b;
@@ -55,12 +55,10 @@ namespace triagens {
           : _jasonType(t), _cType(CType::Double) {
           _value.d = d;
         }
-/*
-        explicit Jason (int i, JasonType t = JasonType::Int)
-          : _jasonType(t), _cType(CType::Int64) {
-          _value.i = static_cast<int64_t>(i);
+        explicit Jason (char const* e)
+          : _jasonType(JasonType::External), _cType(CType::None) {
+          _value.e = e;
         }
-*/
         explicit Jason (int32_t i, JasonType t = JasonType::Int)
           : _jasonType(t), _cType(CType::Int64) {
           _value.i = static_cast<int64_t>(i);
@@ -113,6 +111,11 @@ namespace triagens {
         std::string const* getString () const {
           assert(_cType == String);
           return _value.s;
+        }
+
+        char const* getExternal () const {
+          assert(_cType == None);
+          return _value.e;
         }
 
     };
