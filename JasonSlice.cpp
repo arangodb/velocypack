@@ -2,8 +2,9 @@
 #include "JasonSlice.h"
 #include "JasonType.h"
 
-using JasonSlice = triagens::basics::JasonSlice;
-using JasonType = triagens::basics::JasonType;
+using JasonLength = triagens::basics::JasonLength;
+using JasonSlice  = triagens::basics::JasonSlice;
+using JasonType   = triagens::basics::JasonType;
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief a lookup table for Jason types
@@ -15,7 +16,7 @@ std::array<JasonType, 256> JasonSlice::TypeTable;
 /// @brief get the byte size of the payload
 ////////////////////////////////////////////////////////////////////////////////
 
-uint64_t JasonSlice::byteSize () const {
+JasonLength JasonSlice::byteSize () const {
   switch (type()) {
     case JasonType::None:
     case JasonType::Null:
@@ -26,13 +27,13 @@ uint64_t JasonSlice::byteSize () const {
       return 8;
 
     case JasonType::Array:
-      return readInteger<uint64_t>(_start + 2, 2);
+      return readInteger<JasonLength>(_start + 2, 2);
        
     case JasonType::ArrayLong:
-      return readInteger<uint64_t>(_start + 7, 8);
+      return readInteger<JasonLength>(_start + 7, 8);
 
     case JasonType::Object:
-      return readInteger<uint64_t>(_start + 2, 2);
+      return readInteger<JasonLength>(_start + 2, 2);
 
     case JasonType::ObjectLong:
       return 0; // TODO
@@ -47,7 +48,7 @@ uint64_t JasonSlice::byteSize () const {
       return 0; // TODO
 
     case JasonType::UTCDate:
-      return readInteger<uint64_t>(*_start - 0x0f);
+      return readInteger<JasonLength>(*_start - 0x0f);
 
     case JasonType::Int:
       if (*_start <= 0x27) {
@@ -66,10 +67,10 @@ uint64_t JasonSlice::byteSize () const {
         return (*_start - 0x40);
       }
       // long string
-      return readInteger<uint64_t>(*_start - 0xbf);
+      return readInteger<JasonLength>(*_start - 0xbf);
 
     case JasonType::Binary: 
-      return readInteger<uint64_t>(*_start - 0xcf);
+      return readInteger<JasonLength>(*_start - 0xcf);
   }
 
   assert(false);

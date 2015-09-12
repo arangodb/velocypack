@@ -1,7 +1,6 @@
 #ifndef JASON_SLICE_H
 #define JASON_SLICE_H 1
 
-#include "JasonType.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -10,9 +9,12 @@
 #include <array>
 #include <iostream>
 
+#include "Jason.h"
+#include "JasonType.h"
+
 namespace triagens {
   namespace basics {
-    
+
     class JasonSlice {
 
       // This class provides read only access to a Jason value, it is
@@ -35,7 +37,7 @@ namespace triagens {
           return TypeTable[*_start];
         }
 
-        uint64_t byteSize () const;
+        JasonLength byteSize () const;
 
         uint8_t const* start () const {
           return _start;
@@ -111,24 +113,24 @@ namespace triagens {
           return extractValue<double>();
         }
 
-        JasonSlice at (size_t index) const {
+        JasonSlice at (JasonLength index) const {
           // TODO
           return *this;
         }
 
-        JasonSlice operator[] (size_t index) const {
+        JasonSlice operator[] (JasonLength index) const {
           // TODO
           return *this;
         }
 
-        uint64_t length () const {
+        JasonLength length () const {
           switch (type()) {
             case JasonType::Array:
             case JasonType::Object:
-              return readInteger<uint64_t>(1);
+              return readInteger<JasonLength>(1);
             case JasonType::ArrayLong:
             case JasonType::ObjectLong:
-              return readInteger<uint64_t>(7);
+              return readInteger<JasonLength>(7);
             default:
               throw new JasonTypeError("unexpected type. expecting array or object");
           }
@@ -165,7 +167,7 @@ namespace triagens {
           return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
         }
 
-        char const* getString (size_t& length) const {
+        char const* getString (JasonLength& length) const {
           // TODO
           return nullptr;
         }
@@ -175,7 +177,7 @@ namespace triagens {
           return std::string("Hello");
         }
 
-        uint8_t const* getBinary (size_t& length) const {
+        uint8_t const* getBinary (JasonLength& length) const {
           // TODO
           return nullptr;
         }
@@ -201,12 +203,12 @@ namespace triagens {
         }
 
         template <typename T>
-        T readInteger (size_t numBytes) const {
+        T readInteger (JasonLength numBytes) const {
           return readInteger<T>(_start + 1, numBytes);
         }
 
         template <typename T>
-        T readInteger (uint8_t const* start, size_t numBytes) const {
+        T readInteger (uint8_t const* start, JasonLength numBytes) const {
           T value = 0;
           uint8_t const* p = start;
           uint8_t const* e = p + numBytes;

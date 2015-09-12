@@ -13,7 +13,7 @@ namespace triagens {
       //   try {
       //     std::string error = p.parse(json);
       //     if (error.empty()) {
-      //       size_t len;
+      //       JasonLength len;
       //       uint8_t* jason = p.get(len);
       //       // copy away the Jason at jason with length len
       //     }
@@ -42,7 +42,7 @@ namespace triagens {
 
         // We probably want a parse from stream at some stage...
         
-        uint8_t* get (size_t& len) {
+        uint8_t* get (JasonLength& len) {
           return nullptr;
         }
     };

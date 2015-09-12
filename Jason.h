@@ -10,6 +10,8 @@
 namespace triagens {
   namespace basics {
 
+    typedef uint64_t JasonLength;
+
     class Jason {
       // Convenience class for more compact notation
 
