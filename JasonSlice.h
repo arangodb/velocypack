@@ -147,6 +147,10 @@ namespace triagens {
           return *this;
         }
 
+        char const* getExternal () const {
+          return extractValue<char const*>();
+        }
+
         int64_t getInt () const {
           ensureType(JasonType::Int);
           if (*_start <= 0x27) {

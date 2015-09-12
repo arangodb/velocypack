@@ -312,7 +312,7 @@ namespace triagens {
             }
             case JasonType::External: {
               reserveSpace(sizeof(char*));
-              // store pointer
+              // store pointer. this doesn't need to be portable
               memcpy(_start + _pos, item.getExternal(), sizeof(char*));
               _pos += sizeof(char*);
               break;
