@@ -1,12 +1,16 @@
+
+#include <iostream>
+
+#include "Jason.h"
 #include "JasonBuilder.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
 
-#include <iostream>
-
-using JasonSlice = triagens::basics::JasonSlice;
-using JasonType = triagens::basics::JasonType;
+using Jason        = triagens::basics::Jason;
+using JasonBuilder = triagens::basics::JasonBuilder;
+using JasonSlice   = triagens::basics::JasonSlice;
+using JasonType    = triagens::basics::JasonType;
   
 static char Buffer[4096];
 
@@ -232,6 +236,36 @@ static void TestUInt4 () {
   assert(slice.getUInt() == (0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL));
 }
 
+static void TestArrayEmpty () {
+  Buffer[0] = 0x04;
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = 0x00;
+  *p++ = 0x03;
+  *p++ = 0x00;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  assert(slice.type() == JasonType::Array);
+  assert(slice.isArray());
+  assert(slice.byteSize() == 3);
+  assert(slice.length() == 0);
+}
+
+static void TestBuilderArrayEmpty () {
+  JasonBuilder b;
+  b.set(Jason(0, JasonType::Array));
+  b.close();
+}
+
+static void TestBuilderArray3 () {
+  JasonBuilder b;
+  b.set(Jason(3, JasonType::Array));
+  b.add(Jason(2.3));
+  b.add(Jason("abc"));
+  b.add(Jason(true));
+  b.close();
+}
+
 int main (int argc, char* argv[]) {
   JasonSlice::Initialize();
 
@@ -251,6 +285,9 @@ int main (int argc, char* argv[]) {
   TestUInt2();
   TestUInt3();
   TestUInt4();
+  TestArrayEmpty();
+  TestBuilderArrayEmpty();
+  TestBuilderArray3();
  
   std::cout << "ye olde tests passeth.\n";
   return 0;

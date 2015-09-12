@@ -41,56 +41,64 @@ namespace triagens {
           return _start;
         }
 
+        bool isType (JasonType type) const {
+          return TypeTable[*_start] == type;
+        }
+
         bool isNull () const {
-          return TypeTable[*_start] == JasonType::Null;
+          return isType(JasonType::Null);
         }
 
         bool isBool () const {
-          return TypeTable[*_start] == JasonType::Bool;
+          return isType(JasonType::Bool);
         }
 
         bool isDouble () const {
-          return TypeTable[*_start] == JasonType::Double;
+          return isType(JasonType::Double);
         }
         
         bool isArray () const {
-          return TypeTable[*_start] == JasonType::Array;
+          return isType(JasonType::Array) || isType(JasonType::ArrayLong);
         }
 
         bool isObject () const {
-          return TypeTable[*_start] == JasonType::Object;
+          return isType(JasonType::Object) || isType(JasonType::ObjectLong);
         }
 
         bool isExternal () const {
-          return TypeTable[*_start] == JasonType::External;
+          return isType(JasonType::External);
         }
 
         bool isID () const {
-          return TypeTable[*_start] == JasonType::ID;
+          return isType(JasonType::ID);
         }
 
         bool isArangoDB_id () const {
-          return TypeTable[*_start] == JasonType::ArangoDB_id;
+          return isType(JasonType::ArangoDB_id);
         }
 
         bool isUTCDate () const {
-          return TypeTable[*_start] == JasonType::UTCDate;
+          return isType(JasonType::UTCDate);
         }
 
         bool isInt () const {
-          return TypeTable[*_start] == JasonType::Int;
+          return isType(JasonType::Int);
         }
         
         bool isUInt () const {
-          return TypeTable[*_start] == JasonType::UInt;
+          return isType(JasonType::UInt);
+        }
+
+        bool isNumber () const {
+          return isType(JasonType::Int) || isType(JasonType::UInt) || isType(JasonType::Double);
         }
 
         bool isString () const {
-          return TypeTable[*_start] == JasonType::String;
+          return isType(JasonType::String);
         }
 
         bool isBinary () const {
-          return TypeTable[*_start] == JasonType::Binary;
+          return isType(JasonType::Binary);
         }
 
         bool getBool () const {
@@ -103,34 +111,38 @@ namespace triagens {
           return extractValue<double>();
         }
 
-        JasonSlice at (size_t index) {
+        JasonSlice at (size_t index) const {
           // TODO
           return *this;
         }
 
-        JasonSlice operator[] (size_t index) {
+        JasonSlice operator[] (size_t index) const {
           // TODO
           return *this;
         }
 
-        size_t length () {
-          // TODO
+        uint64_t length () const {
+          switch (type()) {
+            case JasonType::Array:
+            case JasonType::Object:
+              return readInteger<uint64_t>(1);
+            case JasonType::ArrayLong:
+            case JasonType::ObjectLong:
+              return readInteger<uint64_t>(7);
+            default:
+              throw new JasonTypeError("unexpected type. expecting array or object");
+          }
           return 0;
         }
 
-        JasonSlice get (std::string& attribute) {
+        JasonSlice get (std::string const& attribute) const {
           // TODO
           return *this;
         }
 
-        JasonSlice operator[] (std::string& attribute) {
+        JasonSlice operator[] (std::string const& attribute) const {
           // TODO
           return *this;
-        }
-
-        uint64_t getUTCDate () const {
-          // TODO
-          return 0ul;
         }
 
         int64_t getInt () const {
@@ -148,27 +160,32 @@ namespace triagens {
           return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
         }
 
-        char* getString (size_t& length) {
+        uint64_t getUTCDate () const {
+          ensureType(JasonType::UTCDate);
+          return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
+        }
+
+        char const* getString (size_t& length) const {
           // TODO
           return nullptr;
         }
 
-        std::string copyString () {
+        std::string copyString () const {
           // TODO
           return std::string("Hello");
         }
 
-        uint8_t* getBinary (size_t& length) {
+        uint8_t const* getBinary (size_t& length) const {
           // TODO
           return nullptr;
         }
 
-        std::vector<uint8_t> copyBinary () {
+        std::vector<uint8_t> copyBinary () const {
           // TODO
           return std::vector<uint8_t>();
         }
 
-        void toJsonString (std::string& out) {
+        void toJsonString (std::string& out) const {
           // TODO
         }
 

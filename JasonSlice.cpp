@@ -29,7 +29,7 @@ uint64_t JasonSlice::byteSize () const {
       return readInteger<uint64_t>(_start + 2, 2);
        
     case JasonType::ArrayLong:
-      return 0; // TODO
+      return readInteger<uint64_t>(_start + 7, 8);
 
     case JasonType::Object:
       return readInteger<uint64_t>(_start + 2, 2);
@@ -47,7 +47,7 @@ uint64_t JasonSlice::byteSize () const {
       return 0; // TODO
 
     case JasonType::UTCDate:
-      return readInteger<uint64_t>(*_start - 0xf);
+      return readInteger<uint64_t>(*_start - 0x0f);
 
     case JasonType::Int:
       if (*_start <= 0x27) {
@@ -82,21 +82,21 @@ uint64_t JasonSlice::byteSize () const {
 
 void JasonSlice::Initialize () {
   // initialize lookup table to point to no specific type 
-  for (int i = 0x0; i <= 0xff; ++i) {
+  for (int i = 0x00; i <= 0xff; ++i) {
     TypeTable[i] = JasonType::None;
   }
 
-  TypeTable[0x0] = JasonType::Null;
-  TypeTable[0x1] = JasonType::Bool;
-  TypeTable[0x2] = JasonType::Bool;
-  TypeTable[0x3] = JasonType::Double;
-  TypeTable[0x4] = JasonType::Array;
-  TypeTable[0x5] = JasonType::ArrayLong;
-  TypeTable[0x6] = JasonType::Object;
-  TypeTable[0x7] = JasonType::ObjectLong;
-  TypeTable[0x8] = JasonType::External;
-  TypeTable[0x9] = JasonType::ID;
-  TypeTable[0xa] = JasonType::ArangoDB_id;
+  TypeTable[0x00] = JasonType::Null;
+  TypeTable[0x01] = JasonType::Bool;
+  TypeTable[0x02] = JasonType::Bool;
+  TypeTable[0x03] = JasonType::Double;
+  TypeTable[0x04] = JasonType::Array;
+  TypeTable[0x05] = JasonType::ArrayLong;
+  TypeTable[0x06] = JasonType::Object;
+  TypeTable[0x07] = JasonType::ObjectLong;
+  TypeTable[0x08] = JasonType::External;
+  TypeTable[0x09] = JasonType::ID;
+  TypeTable[0x0a] = JasonType::ArangoDB_id;
  
   for (int i = 0x10; i <= 0x17; ++i) { 
     TypeTable[i] = JasonType::UTCDate;

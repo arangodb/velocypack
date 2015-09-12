@@ -55,7 +55,7 @@ namespace triagens {
           private:
             std::string _msg;
           public:
-            JasonBuilderError (std::string msg) : _msg(msg) {
+            JasonBuilderError (std::string const& msg) : _msg(msg) {
             }
             char const* what() const noexcept {
               return _msg.c_str();
@@ -74,7 +74,7 @@ namespace triagens {
           size_t index;  // Index in array or object currently being worked on
           size_t len;    // Total length of array or object in entries.
 
-          State (size_t l = 1, size_t b = 0, size_t i = 0) 
+          State (size_t b = 0, size_t i = 0, size_t l = 1)
             : base(b), index(i), len(l) {
           }
         };
@@ -117,7 +117,7 @@ namespace triagens {
       public:
 
         JasonBuilder (JasonType type = JasonType::None, size_t spaceHint = 1) 
-          : _externalMem(false), _pos(0) {
+          : _externalMem(false), _sealed(false), _pos(0) {
           _alloc.reserve(spaceHint);
           _alloc.push_back(0);
           _start = _alloc.data();
@@ -126,7 +126,7 @@ namespace triagens {
 
         JasonBuilder (uint8_t* start, size_t size,
                       JasonType type = JasonType::None) 
-          : _externalMem(true), _start(start), _size(size), _pos(0) {
+          : _externalMem(true), _sealed(false), _start(start), _size(size), _pos(0) {
         }
       
         ~JasonBuilder () {
@@ -144,6 +144,7 @@ namespace triagens {
               _alloc.push_back(*x++);
             }
           }
+          _sealed = that._sealed;
           _start = _alloc.data();
           _size = _alloc.size();
           _pos = that._pos;
@@ -163,6 +164,7 @@ namespace triagens {
               _alloc.push_back(*x++);
             }
           }
+          _sealed = that._sealed;
           _start = _alloc.data();
           _size = _alloc.size();
           _pos = that._pos;
@@ -172,6 +174,7 @@ namespace triagens {
 
         JasonBuilder (JasonBuilder&& that) {
           _externalMem = that._externalMem;
+          _sealed = that._sealed;
           if (_externalMem) {
             _alloc.clear();
             _start = that._start;
@@ -186,12 +189,14 @@ namespace triagens {
           _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
+          that._sealed = false;
           that._start = nullptr;
           that._size = 0;
         }
 
         JasonBuilder& operator= (JasonBuilder&& that) {
           _externalMem = that._externalMem;
+          _sealed = that._sealed;
           if (_externalMem) {
             _alloc.clear();
             _start = that._start;
@@ -206,12 +211,15 @@ namespace triagens {
           _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
+          that._sealed = false;
           that._start = nullptr;
           that._size = 0;
           return *this;
         }
 
         void clear () {
+          // TODO: do we want to reset _sealed here?
+          _sealed = false;
           _pos = 0;
           _stack.clear();
         }
@@ -222,14 +230,14 @@ namespace triagens {
 
         size_t size () {
           // Compute the actual size here, but only when sealed
-          if (_stack.size() > 0) {
+          if (! _stack.empty()) {
             throw JasonBuilderError("Jason object not sealed.");
           }
           return _pos;
         }
 
         void stealTo (std::vector<uint8_t>& target) {
-          if (_stack.size() > 0) {
+          if (! _stack.empty()) {
             throw JasonBuilderError("Jason object not sealed.");
           }
           if (! _externalMem) {
@@ -299,10 +307,10 @@ namespace triagens {
               if (item.cType() != Jason::CType::String) {
                 throw JasonBuilderError("Must give a string for JasonType::String.");
               }
-              std::string* s = item.getString();
+              std::string const* s = item.getString();
               size_t size = s->size();
               if (size <= 127) {
-                reserveSpace(1+size);
+                reserveSpace(1 + size);
                 _start[_pos++] = 0x40 + size;
                 memcpy(_start + _pos, s->c_str(), size);
                 _pos += size;
@@ -325,7 +333,7 @@ namespace triagens {
                 throw JasonBuilderError("Length in JasonType::Array must be < 256.");
               }
               _stack.emplace_back(_pos, 0, len);
-              reserveSpace(2+len*2);
+              reserveSpace(2 + len * 2);
               _start[_pos++] = 0x04;
               _start[_pos++] = len & 0xff;
               for (size_t i = 0; i < len; i++) {
@@ -346,7 +354,7 @@ namespace triagens {
                 throw JasonBuilderError("Length in JasonType::Array must be < 2^56.");
               }
               _stack.emplace_back(_pos, 0, len);
-              reserveSpace(8+len*8);
+              reserveSpace(8 + len * 8);
               _start[_pos++] = 0x05;
               for (size_t i = 0; i < 7; i++) {
                 _start[_pos++] = len & 0xff;
@@ -365,11 +373,11 @@ namespace triagens {
           }
         }
 
-        void add (std::string attrName, Jason sub) {
+        void add (std::string const& attrName, Jason sub) {
         }
 
         void add (Jason sub) {
-          if (_stack.size() == 0) {
+          if (_stack.empty()) {
             throw JasonBuilderError("Need open array for add() call.");
           }
           State& tos = _stack.back();
@@ -399,7 +407,7 @@ namespace triagens {
             size_t tableEntry = tos.base + 2;
             size_t x = _pos - tos.base;
             _start[tableEntry] = x & 0xff;
-            _start[tableEntry+1] = (x >> 8) & 0xff;
+            _start[tableEntry + 1] = (x >> 8) & 0xff;
             if (_start[tos.base] == 0x06) {
               // TODO: Sort object entries by key, permute indexes
               ;
@@ -410,14 +418,14 @@ namespace triagens {
             size_t tableEntry = tos.base + 8;
             size_t x = _pos - tos.base;
             for (unsigned int i = 0; i < 8; i++) {
-              _start[tableEntry+i] = x & 0xff;
+              _start[tableEntry + i] = x & 0xff;
               x >>= 8;
             }
           }
           // Now the array or object is complete, we pop a State off the _stack
           size_t base = tos.base;
           _stack.pop_back();
-          if (_stack.size() > 0) {
+          if (! _stack.empty()) {
             reportAdd(base);
           }
         }
@@ -445,8 +453,9 @@ namespace triagens {
           do {
             vSize++;
             x >>= 8;
-          } while (x != 0);
-          reserveSpace(1+vSize);
+          } 
+          while (x != 0);
+          reserveSpace(1 + vSize);
           _start[_pos++] = base + vSize;
           for (x = v; vSize > 0; vSize--) {
             _start[_pos++] = x & 0xff;
@@ -463,7 +472,7 @@ namespace triagens {
           }
         }
 
-        void reportAdd(size_t itemStart) {
+        void reportAdd (size_t itemStart) {
           State& tos = _stack.back();
           if (tos.index >= tos.len) {
             throw JasonBuilderError("Open array or object is already full.");
@@ -474,19 +483,19 @@ namespace triagens {
               throw JasonBuilderError("Short array has grown too long (>0xffff).");
             }
             if (tos.index > 0) {
-              size_t tableEntry = tos.base + 4 + (tos.index-1) * 2;
+              size_t tableEntry = tos.base + 4 + (tos.index - 1) * 2;
               size_t x = itemStart - tos.base;
               _start[tableEntry] = x & 0xff;
-              _start[tableEntry+1] = (x >> 8) & 0xff;
+              _start[tableEntry + 1] = (x >> 8) & 0xff;
             }
           }
           else if (_start[tos.base] == 0x05) {
             // long array:
             if (tos.index > 0) {
-              size_t tableEntry = tos.base + 16 + (tos.index-1) * 8;
+              size_t tableEntry = tos.base + 16 + (tos.index - 1) * 8;
               size_t x = itemStart - tos.base;
               for (unsigned int i = 0; i < 8; i++) {
-                _start[tableEntry+i] = x & 0xff;
+                _start[tableEntry + i] = x & 0xff;
                 x >>= 8;
               }
             }

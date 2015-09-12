@@ -1,8 +1,21 @@
 #ifndef JASON_TYPE_H
 #define JASON_TYPE_H
 
+#include <string>
+
 namespace triagens {
   namespace basics {
+
+    struct JasonTypeError : std::exception {
+      private:
+        std::string _msg;
+      public:
+        JasonTypeError (std::string const& msg) : _msg(msg) {
+        }
+        char const* what() const noexcept {
+          return _msg.c_str();
+        }
+    };
     
     enum JasonType {
       None,           // not yet initialised
