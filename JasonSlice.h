@@ -118,7 +118,7 @@ namespace triagens {
           return extractValue<double>();
         }
 
-        JasonSlice at (JasonLength index) const {
+        JasonSlice at (JasonLength /*index*/) const {
           // TODO
           return *this;
         }
@@ -141,7 +141,7 @@ namespace triagens {
           return 0;
         }
 
-        JasonSlice get (std::string const& attribute) const {
+        JasonSlice get (std::string const& /*attribute*/) const {
           // TODO
           return *this;
         }
@@ -185,7 +185,7 @@ namespace triagens {
           }
           if (h >= 0xc0 && h <= 0xc7) {
             length = readInteger<JasonLength>(h - 0xbf); 
-            return reinterpret_cast<char const*>(_start + 1 + length);
+            return reinterpret_cast<char const*>(_start + 1 + h - 0xbf);
           }
           throw JasonTypeError("unexpected type. expecting string");
         }
@@ -202,22 +202,37 @@ namespace triagens {
           if (h >= 0xc0 && h <= 0xc7) {
             JasonLength length = readInteger<JasonLength>(h - 0xbf); 
             JasonUtils::CheckSize(length);
-            return std::string(reinterpret_cast<char const*>(_start + 1 + length), length);
+            return std::string(reinterpret_cast<char const*>(_start + 1 + h - 0xbf), length);
           }
           throw JasonTypeError("unexpected type. expecting string");
         }
 
         uint8_t const* getBinary (JasonLength& length) const {
-          // TODO
-          return nullptr;
+          assertType(JasonType::Binary);
+          uint8_t h = head();
+          if (h >= 0xd0 && h <= 0xd7) {
+            length = readInteger<JasonLength>(h - 0xcf); 
+            JasonUtils::CheckSize(length);
+            return _start + 1 + h - 0xcf;
+          }
+          throw JasonTypeError("unexpected type. expecting binary");
         }
 
         std::vector<uint8_t> copyBinary () const {
-          // TODO
-          return std::vector<uint8_t>();
+          assertType(JasonType::Binary);
+          uint8_t h = head();
+          if (h >= 0xd0 && h <= 0xd7) {
+            std::vector<uint8_t> out;
+            JasonLength length = readInteger<JasonLength>(h - 0xcf); 
+            JasonUtils::CheckSize(length);
+            out.reserve(static_cast<size_t>(length));
+            out.insert(out.end(), _start + 1 + h - 0xcf, _start + 1 + h - 0xcf + length);
+            return out; 
+          }
+          throw JasonTypeError("unexpected type. expecting binary");
         }
 
-        void toJsonString (std::string& out) const {
+        void toJsonString (std::string& /*out*/) const {
           // TODO
         }
 
