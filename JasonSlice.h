@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "Jason.h"
+#include "JasonUtils.h"
 #include "JasonType.h"
 
 namespace triagens {
@@ -43,8 +44,12 @@ namespace triagens {
           return _start;
         }
 
+        uint8_t head () const {
+          return *_start;
+        }
+
         bool isType (JasonType type) const {
-          return TypeTable[*_start] == type;
+          return TypeTable[head()] == type;
         }
 
         bool isNull () const {
@@ -104,12 +109,12 @@ namespace triagens {
         }
 
         bool getBool () const {
-          ensureType(JasonType::Bool);
-          return (*_start == 0x2);
+          assertType(JasonType::Bool);
+          return (head() == 0x2);
         }
 
         double getDouble () const {
-          ensureType(JasonType::Double);
+          assertType(JasonType::Double);
           return extractValue<double>();
         }
 
@@ -119,8 +124,7 @@ namespace triagens {
         }
 
         JasonSlice operator[] (JasonLength index) const {
-          // TODO
-          return *this;
+          return at(index);
         }
 
         JasonLength length () const {
@@ -143,8 +147,7 @@ namespace triagens {
         }
 
         JasonSlice operator[] (std::string const& attribute) const {
-          // TODO
-          return *this;
+          return get(attribute);
         }
 
         char const* getExternal () const {
@@ -152,33 +155,56 @@ namespace triagens {
         }
 
         int64_t getInt () const {
-          ensureType(JasonType::Int);
-          if (*_start <= 0x27) {
+          assertType(JasonType::Int);
+          uint8_t h = head();
+          if (h <= 0x27) {
             // positive int
-            return readInteger<int64_t>(_start + 1, *_start - 0x1f);
+            return readInteger<int64_t>(_start + 1, h - 0x1f);
           }
           // negative int
-          return - readInteger<int64_t>(_start + 1, *_start - 0x27);
+          return - readInteger<int64_t>(_start + 1, h - 0x27);
         }
 
         uint64_t getUInt () const {
-          ensureType(JasonType::UInt);
-          return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
+          assertType(JasonType::UInt);
+          return readInteger<uint64_t>(_start + 1, head() - 0x2f);
         }
 
         uint64_t getUTCDate () const {
-          ensureType(JasonType::UTCDate);
-          return readInteger<uint64_t>(_start + 1, *_start - 0x2f);
+          assertType(JasonType::UTCDate);
+          return readInteger<uint64_t>(_start + 1, head() - 0x2f);
         }
 
         char const* getString (JasonLength& length) const {
-          // TODO
-          return nullptr;
+          assertType(JasonType::String);
+          uint8_t h = head();
+          if (h >= 0x40 && h <= 0xbf) {
+            // short string
+            length = h - 0x40;
+            return reinterpret_cast<char const*>(_start + 1);
+          }
+          if (h >= 0xc0 && h <= 0xc7) {
+            length = readInteger<JasonLength>(h - 0xbf); 
+            return reinterpret_cast<char const*>(_start + 1 + length);
+          }
+          throw JasonTypeError("unexpected type. expecting string");
         }
 
         std::string copyString () const {
-          // TODO
-          return std::string("Hello");
+          assertType(JasonType::String);
+          uint8_t h = head();
+          if (h >= 0x40 && h <= 0xbf) {
+            // short string
+            JasonLength length = h - 0x40;
+            JasonUtils::CheckSize(length);
+            return std::string(reinterpret_cast<char const*>(_start + 1), static_cast<size_t>(length));
+          }
+          if (h >= 0xc0 && h <= 0xc7) {
+            JasonLength length = readInteger<JasonLength>(h - 0xbf); 
+            JasonUtils::CheckSize(length);
+            return std::string(reinterpret_cast<char const*>(_start + 1 + length), length);
+          }
+          throw JasonTypeError("unexpected type. expecting string");
         }
 
         uint8_t const* getBinary (JasonLength& length) const {
@@ -199,7 +225,7 @@ namespace triagens {
   
       private:
          
-        void ensureType (JasonType type) const {
+        void assertType (JasonType type) const {
           // can be used for debugging and removed in production
 #if 1
           assert(this->type() == type);

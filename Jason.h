@@ -10,7 +10,22 @@
 namespace triagens {
   namespace basics {
 
+    // unified size type for Jason, can be used on 32 and 64 bit
+    // though no Jason values exceeded the bounds of 32 bit can be
+    // used on a 32 bit system
     typedef uint64_t JasonLength;
+
+    // base exception class
+    struct JasonException : std::exception {
+      private:
+        std::string _msg;
+      public:
+        JasonException (std::string const& msg) : _msg(msg) {
+        }
+        char const* what() const noexcept {
+          return _msg.c_str();
+        }
+    };
 
     class Jason {
       // Convenience class for more compact notation

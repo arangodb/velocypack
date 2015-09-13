@@ -48,29 +48,29 @@ JasonLength JasonSlice::byteSize () const {
       return 0; // TODO
 
     case JasonType::UTCDate:
-      return readInteger<JasonLength>(*_start - 0x0f);
+      return readInteger<JasonLength>(head() - 0x0f);
 
     case JasonType::Int:
-      if (*_start <= 0x27) {
+      if (head() <= 0x27) {
         // positive int
-        return (*_start - 0x1f);
+        return (head() - 0x1f);
       }
       // negative int
-      return (*_start - 0x27);
+      return (head() - 0x27);
 
     case JasonType::UInt:
-      return (*_start - 0x2f);
+      return (head() - 0x2f);
 
     case JasonType::String:
-      if (*_start <= 0xbf) {
+      if (head() <= 0xbf) {
         // short string
-        return (*_start - 0x40);
+        return (head() - 0x40);
       }
       // long string
-      return readInteger<JasonLength>(*_start - 0xbf);
+      return readInteger<JasonLength>(head() - 0xbf);
 
     case JasonType::Binary: 
-      return readInteger<JasonLength>(*_start - 0xcf);
+      return readInteger<JasonLength>(head() - 0xcf);
   }
 
   assert(false);

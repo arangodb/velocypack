@@ -1,8 +1,9 @@
 #ifndef JASON_BUILDER_H
 #define JASON_BUILDER_H
 
-#include "JasonType.h"
 #include "Jason.h"
+#include "JasonType.h"
+#include "JasonUtils.h"
 
 #include <vector>
 #include <cstring>
@@ -108,9 +109,7 @@ namespace triagens {
           if (_externalMem) {
             throw JasonBuilderError("Cannot allocate more memory.");
           }
-          if (_pos + len > static_cast<JasonLength>(SIZE_MAX)) {
-            throw JasonBuilderError("Cannot allocate this much memory.");
-          }
+          JasonUtils::CheckSize(_pos + len);
           _alloc.reserve(static_cast<size_t>(_pos + len));
           _alloc.insert(_alloc.end(), static_cast<size_t>(len), 0);
           _start = _alloc.data();
@@ -121,9 +120,7 @@ namespace triagens {
 
         JasonBuilder (JasonType type = JasonType::None, JasonLength spaceHint = 1) 
           : _externalMem(false), _sealed(false), _pos(0) {
-          if (spaceHint > static_cast<JasonLength>(SIZE_MAX)) {
-            throw JasonBuilderError("Cannot allocate this much memory.");
-          }
+          JasonUtils::CheckSize(spaceHint);
           _alloc.reserve(static_cast<size_t>(spaceHint));
           _alloc.push_back(0);
           _start = _alloc.data();
@@ -435,7 +432,7 @@ namespace triagens {
         }
 
         void close () {
-          if (_stack.size() == 0) {
+          if (_stack.empty()) {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
           State& tos = _stack.back();
