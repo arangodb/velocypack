@@ -10,3 +10,20 @@
   compact representation. Omitting the length also allows keeping the Jason 
   struct as small as it currently is. For storing the length it would need
   to be extended by a size_t.
+
+
+* Strings:  
+  0x40-0xbf : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
+              length 0 is possible, so 0x40 is the empty string,
+              maximal length is 127
+  0xc0-0xc7 : long UTF-8-string, next V-0xbf bytes are length of string 
+              in bytes
+
+  There are two string types, but internally they share the same enum value 
+  JasonType::String. This is different to arrays and objects, where there
+  are separate types for short and long array/objects. Is this intentional?
+
+
+* Strings:
+  specification should state that string and binary value are not null-
+  terminated.

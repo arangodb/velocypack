@@ -9,6 +9,7 @@
 
 using Jason        = triagens::basics::Jason;
 using JasonBuilder = triagens::basics::JasonBuilder;
+using JasonLength  = triagens::basics::JasonLength;
 using JasonSlice   = triagens::basics::JasonSlice;
 using JasonType    = triagens::basics::JasonType;
   
@@ -21,7 +22,7 @@ static void TestNull () {
 
   assert(slice.type() == JasonType::Null);
   assert(slice.isNull());
-  assert(slice.byteSize() == 0);
+  assert(slice.byteSize() == 1);
 }
 
 static void TestFalse () {
@@ -31,7 +32,7 @@ static void TestFalse () {
 
   assert(slice.type() == JasonType::Bool);
   assert(slice.isBool());
-  assert(slice.byteSize() == 0);
+  assert(slice.byteSize() == 1);
   assert(slice.getBool() == false);
 }
 
@@ -42,7 +43,7 @@ static void TestTrue () {
 
   assert(slice.type() == JasonType::Bool);
   assert(slice.isBool());
-  assert(slice.byteSize() == 0);
+  assert(slice.byteSize() == 1);
   assert(slice.getBool() == true);
 }
 
@@ -55,7 +56,7 @@ static void TestDouble () {
 
   assert(slice.type() == JasonType::Double);
   assert(slice.isDouble());
-  assert(slice.byteSize() == 8);
+  assert(slice.byteSize() == 9);
   assert(slice.getDouble() == value);
 }
 
@@ -68,7 +69,7 @@ static void TestInt1 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 1);
+  assert(slice.byteSize() == 2);
 
   assert(slice.getInt() == value);
 }
@@ -83,7 +84,7 @@ static void TestInt2 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 2);
+  assert(slice.byteSize() == 3);
   assert(slice.getInt() == 0x23 + 0x100 * 0x42);
 }
 
@@ -98,7 +99,7 @@ static void TestInt3 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 3);
+  assert(slice.byteSize() == 4);
   assert(slice.getInt() == 0x23 + 0x100 * 0x42 + 0x10000 * 0x66);
 }
 
@@ -114,7 +115,7 @@ static void TestInt4 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 4);
+  assert(slice.byteSize() == 5);
   assert(slice.getInt() == 0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL);
 }
 
@@ -127,7 +128,7 @@ static void TestNegInt1 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 1);
+  assert(slice.byteSize() == 2);
 
   assert(slice.getInt() == - value);
 }
@@ -142,7 +143,7 @@ static void TestNegInt2 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 2);
+  assert(slice.byteSize() == 3);
   assert(slice.getInt() == - (0x23 + 0x100 * 0x42));
 }
 
@@ -157,7 +158,7 @@ static void TestNegInt3 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 3);
+  assert(slice.byteSize() == 4);
   assert(slice.getInt() == - (0x23 + 0x100 * 0x42 + 0x10000 * 0x66));
 }
 
@@ -173,7 +174,7 @@ static void TestNegInt4 () {
 
   assert(slice.type() == JasonType::Int);
   assert(slice.isInt());
-  assert(slice.byteSize() == 4);
+  assert(slice.byteSize() == 5);
   assert(slice.getInt() == - (0x23 + 0x100LL * 0x42LL + 0x10000LL * 0x66LL + 0x1000000LL * 0xacLL));
 }
 
@@ -186,7 +187,7 @@ static void TestUInt1 () {
 
   assert(slice.type() == JasonType::UInt);
   assert(slice.isUInt());
-  assert(slice.byteSize() == 1);
+  assert(slice.byteSize() == 2);
 
   assert(slice.getUInt() == value);
 }
@@ -201,7 +202,7 @@ static void TestUInt2 () {
 
   assert(slice.type() == JasonType::UInt);
   assert(slice.isUInt());
-  assert(slice.byteSize() == 2);
+  assert(slice.byteSize() == 3);
   assert(slice.getUInt() == (0x23 + 0x100 * 0x42));
 }
 
@@ -216,7 +217,7 @@ static void TestUInt3 () {
 
   assert(slice.type() == JasonType::UInt);
   assert(slice.isUInt());
-  assert(slice.byteSize() == 3);
+  assert(slice.byteSize() == 4);
   assert(slice.getUInt() == (0x23 + 0x100 * 0x42 + 0x10000 * 0x66));
 }
 
@@ -232,7 +233,7 @@ static void TestUInt4 () {
 
   assert(slice.type() == JasonType::UInt);
   assert(slice.isUInt());
-  assert(slice.byteSize() == 4);
+  assert(slice.byteSize() == 5);
   assert(slice.getUInt() == (0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL));
 }
 
@@ -249,6 +250,127 @@ static void TestArrayEmpty () {
   assert(slice.isArray());
   assert(slice.byteSize() == 3);
   assert(slice.length() == 0);
+}
+
+static void TestStringEmpty () {
+  Buffer[0] = 0x40;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  assert(slice.type() == JasonType::String);
+  assert(slice.isString());
+  assert(slice.byteSize() == 1);
+  JasonLength len;
+  char const* s = slice.getString(len);
+  assert(len == 0);
+  assert(strncmp(s, "", len) == 0);
+
+  assert(slice.copyString() == "");
+}
+
+static void TestString1 () {
+  Buffer[0] = 0x40 + strlen("foobar");
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = (uint8_t) 'f';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'b';
+  *p++ = (uint8_t) 'a';
+  *p++ = (uint8_t) 'r';
+
+  assert(slice.type() == JasonType::String);
+  assert(slice.isString());
+  assert(slice.byteSize() == 7);
+  JasonLength len;
+  char const* s = slice.getString(len);
+  assert(len == 6);
+  assert(strncmp(s, "foobar", len) == 0);
+
+  assert(slice.copyString() == "foobar");
+}
+
+static void TestString2 () {
+  Buffer[0] = 0x48;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = (uint8_t) '1';
+  *p++ = (uint8_t) '2';
+  *p++ = (uint8_t) '3';
+  *p++ = (uint8_t) 'f';
+  *p++ = (uint8_t) '\r';
+  *p++ = (uint8_t) '\t';
+  *p++ = (uint8_t) '\n';
+  *p++ = (uint8_t) 'x';
+
+  assert(slice.type() == JasonType::String);
+  assert(slice.isString());
+  assert(slice.byteSize() == 9);
+  JasonLength len;
+  char const* s = slice.getString(len);
+  assert(len == 8);
+  assert(strncmp(s, "123f\r\t\nx", len) == 0);
+
+  assert(slice.copyString() == "123f\r\t\nx");
+}
+
+static void TestStringNull () {
+  Buffer[0] = 0x48;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = (uint8_t) '\0';
+  *p++ = (uint8_t) '1';
+  *p++ = (uint8_t) '2';
+  *p++ = (uint8_t) '\0';
+  *p++ = (uint8_t) '3';
+  *p++ = (uint8_t) '4';
+  *p++ = (uint8_t) '\0';
+  *p++ = (uint8_t) 'x';
+
+  assert(slice.type() == JasonType::String);
+  assert(slice.isString());
+  assert(slice.byteSize() == 9);
+  JasonLength len;
+  slice.getString(len);
+  assert(len == 8);
+
+  std::string s(slice.copyString());
+  assert(s.size() == 8);
+  assert(s[0] == '\0');
+  assert(s[1] == '1');
+  assert(s[2] == '2');
+  assert(s[3] == '\0');
+  assert(s[4] == '3');
+  assert(s[5] == '4');
+  assert(s[6] == '\0');
+  assert(s[7] == 'x');
+}
+
+static void TestStringLong1 () {
+  Buffer[0] = 0xc0;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = (uint8_t) 6;
+  *p++ = (uint8_t) 'f';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'b';
+  *p++ = (uint8_t) 'a';
+  *p++ = (uint8_t) 'r';
+
+  assert(slice.type() == JasonType::String);
+  assert(slice.isString());
+  assert(slice.byteSize() == 8);
+  JasonLength len;
+  char const* s = slice.getString(len);
+  assert(len == 6);
+  assert(strncmp(s, "foobar", len) == 0);
+
+  assert(slice.copyString() == "foobar");
 }
 
 static void TestBuilderArrayEmpty () {
@@ -286,6 +408,11 @@ int main (int argc, char* argv[]) {
   TestUInt2();
   TestUInt3();
   TestUInt4();
+  TestStringEmpty();
+  TestString1();
+  TestString2();
+  TestStringNull();
+  TestStringLong1();
   TestArrayEmpty();
   TestBuilderArrayEmpty();
   TestBuilderArray3();

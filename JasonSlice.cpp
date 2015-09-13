@@ -6,71 +6,75 @@ using JasonLength = triagens::basics::JasonLength;
 using JasonSlice  = triagens::basics::JasonSlice;
 using JasonType   = triagens::basics::JasonType;
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief a lookup table for Jason types
-////////////////////////////////////////////////////////////////////////////////
-
+// a lookup table for Jason types
 std::array<JasonType, 256> JasonSlice::TypeTable;
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief get the byte size of the payload
-////////////////////////////////////////////////////////////////////////////////
-
+// get the total byte size for the object, including the head byte
 JasonLength JasonSlice::byteSize () const {
   switch (type()) {
     case JasonType::None:
     case JasonType::Null:
     case JasonType::Bool:
-      return 0;
+      return 1;
 
     case JasonType::Double:
-      return 8;
+      return 1 + sizeof(double);
 
     case JasonType::Array:
+      // TODO
       return readInteger<JasonLength>(_start + 2, 2);
        
     case JasonType::ArrayLong:
+      // TODO
       return readInteger<JasonLength>(_start + 7, 8);
 
     case JasonType::Object:
+      // TODO
       return readInteger<JasonLength>(_start + 2, 2);
 
     case JasonType::ObjectLong:
       return 0; // TODO
 
     case JasonType::External:
-      return sizeof(char*);
+      return 1 + sizeof(char*);
 
     case JasonType::ID:
-      return 0; // TODO
+      return 1; // TODO
 
     case JasonType::ArangoDB_id:
-      return 0; // TODO
+      return 1; 
 
     case JasonType::UTCDate:
-      return readInteger<JasonLength>(head() - 0x0f);
+      return 1 + readInteger<JasonLength>(head() - 0x0f);
 
-    case JasonType::Int:
-      if (head() <= 0x27) {
+    case JasonType::Int: {
+      uint8_t h = head();
+      if (h <= 0x27) {
         // positive int
-        return (head() - 0x1f);
+        return 1 + (h - 0x1f);
       }
       // negative int
-      return (head() - 0x27);
+      return 1 + (h - 0x27);
+    }
 
-    case JasonType::UInt:
-      return (head() - 0x2f);
+    case JasonType::UInt: {
+      return 1 + (head() - 0x2f);
+    }
 
-    case JasonType::String:
-      if (head() <= 0xbf) {
+    case JasonType::String: {
+      uint8_t h = head();
+      if (h <= 0xbf) {
         // short string
-        return (head() - 0x40);
+        return 1 + (h - 0x40);
       }
       // long string
-      return readInteger<JasonLength>(head() - 0xbf);
+      return 1 + (h - 0xbf) + readInteger<JasonLength>(h - 0xbf);
+    }
 
-    case JasonType::Binary: 
-      return readInteger<JasonLength>(head() - 0xcf);
+    case JasonType::Binary: {
+      uint8_t h = head();
+      return 1 + (h - 0xcf) + readInteger<JasonLength>(h - 0xcf);
+    }
   }
 
   assert(false);
