@@ -318,6 +318,53 @@ namespace triagens {
               _pos += sizeof(char*);
               break;
             }
+            case JasonType::Int: {
+              uint64_t v = 0;
+              int64_t vv = 0;
+              bool positive = true;
+              switch (item.cType()) {
+                case Jason::CType::Double:
+                  if (item.getDouble() < 0.0) {
+                    throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
+                  }
+                  vv = static_cast<int64_t>(item.getDouble());
+                  if (vv >= 0) {
+                    v = static_cast<uint64_t>(vv);
+                    positive = true;
+                  }
+                  else {
+                    v = static_cast<uint64_t>(-vv);
+                    positive = false;
+                  }
+                  break;
+                case Jason::CType::Int64:
+                  vv = item.getInt64();
+                  if (vv >= 0) {
+                    v = static_cast<uint64_t>(vv);
+                    positive = true;
+                  }
+                  else {
+                    v = static_cast<uint64_t>(-vv);
+                    positive = false;
+                  }
+                  break;
+                case Jason::CType::UInt64:
+                  v = item.getUInt64();
+                  positive = true;
+                  break;
+                default:
+                  throw JasonBuilderError("Must give number for JasonType::UInt.");
+              }
+              JasonLength size = uintLength(v);
+              reserveSpace(1 + size);
+              if (positive) {
+                appendUInt(v, 0x1f);
+              }
+              else {
+                appendUInt(v, 0x27);
+              }
+              break;
+            }
             case JasonType::UInt: {
               uint64_t v = 0;
               switch (item.cType()) {
@@ -341,7 +388,7 @@ namespace triagens {
               }
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
-              appendUInt(size, 0x2f);
+              appendUInt(v, 0x2f);
               break;
             }
             case JasonType::String:
@@ -387,9 +434,13 @@ namespace triagens {
               reserveSpace(2 + len * 2);
               _start[_pos++] = 0x04;
               _start[_pos++] = len & 0xff;
-              for (JasonLength i = 0; i < len; i++) {
-                _start[_pos++] = 0x00;
-                _start[_pos++] = 0x00;
+              _start[_pos++] = 0x00;   // these two bytes will be set at the end
+              _start[_pos++] = 0x00;
+              if (len > 0) {
+                for (JasonLength i = 0; i < len-1; i++) {
+                  _start[_pos++] = 0x00;
+                  _start[_pos++] = 0x00;
+                }
               }
               break;
             }
@@ -418,8 +469,10 @@ namespace triagens {
                 temp >>= 8;
               }
               // offsets
-              memset(_start + _pos, 0x00, len * 8);
-              _pos += len * 8;
+              if (len > 1) {
+                memset(_start + _pos, 0x00, (len-1) * 8);
+                _pos += (len-1) * 8;
+              }
               break;
             }
             default: {

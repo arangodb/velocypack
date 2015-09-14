@@ -96,7 +96,8 @@ begins, measured from address A. After that, it has N-1 byte pairs for
 the offsets of the starts of the entries with index 1 to N-1, again
 measured from address A. The byte pairs are unsigned little endian
 values for the offsets. The first entry is always at address A+4 +
-2*(N-1).
+2*(N-1). If N=0, then there is only one byte pair after the length byte
+containing hex bytes 04 00 to indicate a total length of 4 bytes.
 
 *Example*:
 

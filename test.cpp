@@ -241,14 +241,14 @@ static void TestArrayEmpty () {
   Buffer[0] = 0x04;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x00;
-  *p++ = 0x03;
+  *p++ = 0x04;
   *p++ = 0x00;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   assert(slice.type() == JasonType::Array);
   assert(slice.isArray());
-  assert(slice.byteSize() == 3);
+  assert(slice.byteSize() == 4);
   assert(slice.length() == 0);
 }
 
@@ -448,16 +448,40 @@ static void TestBuilderArrayEmpty () {
   JasonBuilder b;
   b.set(Jason(0, JasonType::Array));
   b.close();
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x04, 0x00, 0x04, 0x00 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
 }
 
-static void TestBuilderArray3 () {
+static void TestBuilderArray4 () {
+  double value = 2.3;
   JasonBuilder b;
   b.set(Jason(4, JasonType::Array));
   b.add(Jason(uint64_t(1200)));
-  b.add(Jason(2.3));
+  b.add(Jason(value));
   b.add(Jason("abc"));
   b.add(Jason(true));
   b.close();
+
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x04, 0x04, 0x1b, 0x00,
+        0x0d, 0x00, 0x16, 0x00, 0x1a, 0x00,
+        0x31, 0xb0, 0x04,   // uint(1200) = 0x4b0
+        0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
+        0x43, 0x61, 0x62, 0x63,
+        0x02 };
+  memcpy(correctResult + 14, &value, 8);
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
 }
 
 int main (int argc, char* argv[]) {
@@ -491,7 +515,7 @@ int main (int argc, char* argv[]) {
   TestBuilderDouble();
   TestBuilderString();
   TestBuilderArrayEmpty();
-  TestBuilderArray3();
+  TestBuilderArray4();
 
   std::cout << "ye olde tests passeth.\n";
   return 0;
