@@ -8,6 +8,7 @@
 #include "JasonType.h"
 
 using Jason        = triagens::basics::Jason;
+using JasonPair    = triagens::basics::JasonPair;
 using JasonBuilder = triagens::basics::JasonBuilder;
 using JasonLength  = triagens::basics::JasonLength;
 using JasonSlice   = triagens::basics::JasonSlice;
@@ -484,6 +485,110 @@ static void TestBuilderArray4 () {
   assert(memcmp(result, correctResult, len) == 0);
 }
 
+static void TestBuilderExternal () {
+  uint8_t externalStuff[] = { 0x01 };
+  JasonBuilder b;
+  b.set(Jason(const_cast<void const*>(static_cast<void*>(externalStuff)), 
+              JasonType::External));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[1+sizeof(char*)] 
+    = { 0x00 };
+  correctResult[0] = 0x08;
+  uint8_t* p = externalStuff;
+  memcpy(correctResult + 1, &p, sizeof(uint8_t*));
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderUInt() {
+  uint64_t value = 0x12345678abcdef;
+  JasonBuilder b;
+  b.set(Jason(value));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[]
+    = { 0x36, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderIntPos() {
+  int64_t value = 0x12345678abcdef;
+  JasonBuilder b;
+  b.set(Jason(value));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[]
+    = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderIntNeg() {
+  int64_t value = -0x12345678abcdef;
+  JasonBuilder b;
+  b.set(Jason(value));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[]
+    = { 0x2e, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderBinary() {
+  uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
+
+  JasonBuilder b;
+  b.set(JasonPair(binaryStuff, sizeof(binaryStuff)));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[]
+    = { 0xd0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderID() {
+  uint8_t key[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
+
+  JasonBuilder b;
+  b.set(JasonPair(key, 0x12345678, JasonType::ID));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[]
+    = { 0x09, 0x33, 0x78, 0x56, 0x34, 0x12,
+        0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderArangoDB_id() {
+  JasonBuilder b;
+  b.set(Jason(JasonType::ArangoDB_id));
+
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] = { 0x0a };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
 int main (int argc, char* argv[]) {
   JasonSlice::Initialize();
 
@@ -516,6 +621,13 @@ int main (int argc, char* argv[]) {
   TestBuilderString();
   TestBuilderArrayEmpty();
   TestBuilderArray4();
+  TestBuilderExternal();
+  TestBuilderUInt();
+  TestBuilderIntPos();
+  TestBuilderIntNeg();
+  TestBuilderBinary();
+  TestBuilderID();
+  TestBuilderArangoDB_id();
 
   std::cout << "ye olde tests passeth.\n";
   return 0;

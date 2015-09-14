@@ -73,12 +73,12 @@ namespace triagens {
           : _jasonType(t), _cType(CType::Double) {
           _value.d = d;
         }
-        explicit Jason (void const* e)
-          : _jasonType(JasonType::External), _cType(CType::VoidPtr) {
+        explicit Jason (void const* e, JasonType t = JasonType::External)
+          : _jasonType(t), _cType(CType::VoidPtr) {
           _value.e = e;
         }
-        explicit Jason (char const* c)
-          : _jasonType(JasonType::String), _cType(CType::CharPtr) {
+        explicit Jason (char const* c, JasonType t = JasonType::String)
+          : _jasonType(t), _cType(CType::CharPtr) {
           _value.c = c;
         }
         explicit Jason (int32_t i, JasonType t = JasonType::Int)
@@ -145,6 +145,31 @@ namespace triagens {
           return _value.c;
         }
 
+    };
+
+    class JasonPair {
+        uint8_t* _start;
+        uint64_t _size;
+        JasonType _type;
+
+      public:
+
+        explicit JasonPair (uint8_t* start, uint64_t size,
+                            JasonType type = JasonType::Binary)
+          : _start(start), _size(size), _type(type) {
+        }
+
+        uint8_t* getStart () {
+          return _start;
+        }
+
+        uint64_t getSize () {
+          return _size;
+        }
+
+        JasonType getType () {
+          return _type;
+        }
     };
 
   }  // namespace triagens::basics

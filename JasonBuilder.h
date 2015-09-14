@@ -311,11 +311,12 @@ namespace triagens {
               if (item.cType() != Jason::CType::VoidPtr) {
                 throw JasonBuilderError("Must give void pointer for JasonType::External.");
               }
-              reserveSpace(sizeof(void*));
+              reserveSpace(1+sizeof(void*));
               // store pointer. this doesn't need to be portable
+              _start[_pos++] = 0x08;
               void const* value = item.getExternal();
-              memcpy(_start + _pos, &value, sizeof(char*));
-              _pos += sizeof(char*);
+              memcpy(_start + _pos, &value, sizeof(void*));
+              _pos += sizeof(void*);
               break;
             }
             case JasonType::Int: {
@@ -365,7 +366,8 @@ namespace triagens {
               }
               break;
             }
-            case JasonType::UInt: {
+            case JasonType::UInt:
+            case JasonType::UTCDate: {
               uint64_t v = 0;
               switch (item.cType()) {
                 case Jason::CType::Double:
@@ -384,11 +386,16 @@ namespace triagens {
                   v = item.getUInt64();
                   break;
                 default:
-                  throw JasonBuilderError("Must give number for JasonType::UInt.");
+                  throw JasonBuilderError("Must give number for JasonType::UInt and JasonType::UTCDate.");
               }
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
-              appendUInt(v, 0x2f);
+              if (item.jasonType() == JasonType::UInt) {
+                appendUInt(v, 0x2f);
+              }
+              else {
+                appendUInt(v, 0x0f);
+              }
               break;
             }
             case JasonType::String:
@@ -475,16 +482,81 @@ namespace triagens {
               }
               break;
             }
-            default: {
-              throw JasonBuilderError("This JasonType is not yet implemented.");
+            case JasonType::Binary: {
+              uint64_t v = 0;
+              if (item.cType() != Jason::CType::UInt64) {
+                throw JasonBuilderError("Must give unsigned integer for length of binary blob.");
+              }
+              v = item.getUInt64();
+              JasonLength size = uintLength(v);
+              reserveSpace(1 + size + v);
+              appendUInt(v, 0xcf);
+              _pos += v;
+              break;
             }
+            case JasonType::ArangoDB_id: {
+              reserveSpace(1);
+              _start[_pos++] = 0x0a;
+              break;
+            }
+            case JasonType::ID: {
+              throw JasonBuilderError("Need a JasonPair to build a JasonType::ID.");
+            }
+            case JasonType::Object: {
+              break;
+            }
+            case JasonType::ObjectLong: {
+              break;
+            }
+          }
+        }
+
+        void set (JasonPair pair) {
+          // This method builds a single further Jason item at the current
+          // append position. This is the case for JasonType::ID or
+          // JasonType::Binary, which both need two pieces of information
+          // to build.
+          if (pair.getType() == JasonType::ID) {
+            reserveSpace(1);
+            _start[_pos++] = 0x09;
+            set(Jason(pair.getSize(), JasonType::UInt));
+            set(Jason(reinterpret_cast<char*>(pair.getStart()),
+                      JasonType::String));
+          }
+          else if (pair.getType() == JasonType::Binary) {
+            uint64_t v = pair.getSize();
+            JasonLength size = uintLength(v);
+            reserveSpace(1 + size + v);
+            appendUInt(v, 0xcf);
+            memcpy(_start + _pos, pair.getStart(), v);
+            _pos += v;
+          }
+          else {
+            throw JasonBuilderError("Only JasonType::ID and JasonType::Binary valid for JasonPair argument.");
           }
         }
 
         void add (std::string const& attrName, Jason sub) {
         }
 
+        void add (std::string const& attrName, JasonPair sub) {
+        }
+
         void add (Jason sub) {
+          if (_stack.empty()) {
+            throw JasonBuilderError("Need open array for add() call.");
+          }
+          State& tos = _stack.back();
+          if (_start[tos.base] != 0x04 &&
+              _start[tos.base] != 0x05) {
+            throw JasonBuilderError("Need open array for add() call.");
+          }
+          JasonLength save = _pos;
+          set(sub);
+          reportAdd(save);
+        }
+
+        void add (JasonPair sub) {
           if (_stack.empty()) {
             throw JasonBuilderError("Need open array for add() call.");
           }
