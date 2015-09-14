@@ -373,6 +373,19 @@ static void TestStringLong1 () {
   assert(slice.copyString() == "foobar");
 }
 
+static void TestBuilderNull () {
+  JasonBuilder b;
+  b.set(Jason(JasonType::Null));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t const correctResult[] 
+    = { 0x00 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
 static void TestBuilderArrayEmpty () {
   JasonBuilder b;
   b.set(Jason(0, JasonType::Array));
@@ -414,6 +427,7 @@ int main (int argc, char* argv[]) {
   TestStringNull();
   TestStringLong1();
   TestArrayEmpty();
+  TestBuilderNull();
   TestBuilderArrayEmpty();
   TestBuilderArray3();
 

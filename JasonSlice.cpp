@@ -61,7 +61,8 @@ JasonLength JasonSlice::byteSize () const {
       return 1 + (head() - 0x2f);
     }
 
-    case JasonType::String: {
+    case JasonType::String:
+    case JasonType::StringLong: {
       uint8_t h = head();
       if (h <= 0xbf) {
         // short string

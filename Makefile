@@ -1,9 +1,16 @@
 all:	test
 
-test:	Makefile test.cpp JasonBuilder.h Jason.h JasonUtils.h JasonUtils.cpp JasonParser.h JasonSlice.h JasonSlice.cpp JasonType.h JasonType.cpp
+JasonUtils.o:	Makefile JasonUtils.cpp Jason.h JasonType.h
 	g++ JasonUtils.cpp -Wall -Wextra -g -std=c++11 -c -o JasonUtils.o
+
+JasonSlice.o:	Makefile JasonSlice.cpp Jason.h JasonType.h
 	g++ JasonSlice.cpp -Wall -Wextra -g -std=c++11 -c -o JasonSlice.o
+
+JasonType.o:	Makefile JasonType.h Jason.h
 	g++ JasonType.cpp -Wall -Wextra -g -std=c++11 -c -o JasonType.o
+
+test:	Makefile test.cpp JasonBuilder.h Jason.h JasonUtils.o JasonParser.h \
+        JasonSlice.o JasonType.h JasonType.o
 	g++ test.cpp JasonSlice.o JasonType.o JasonUtils.o -Wall -g -std=c++11 -o test
 
 clean:	

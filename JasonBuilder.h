@@ -340,9 +340,10 @@ namespace triagens {
               appendUInt(size, 0x2f);
               break;
             }
-            case JasonType::String: {
+            case JasonType::String:
+            case JasonType::StringLong: {
               if (item.cType() != Jason::CType::String) {
-                throw JasonBuilderError("Must give a string for JasonType::String.");
+                throw JasonBuilderError("Must give a string for JasonType::String or JasonType::StringLong.");
               }
               std::string const* s = item.getString();
               size_t size = s->size();

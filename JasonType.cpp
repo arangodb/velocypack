@@ -14,6 +14,7 @@ char const* triagens::basics::JasonTypeName (JasonType type) {
     case JasonType::Bool:        return "bool";
     case JasonType::Double:      return "double";
     case JasonType::String:      return "string";
+    case JasonType::StringLong:  return "string_long";
     case JasonType::Array:       return "array";
     case JasonType::ArrayLong:   return "array_long";
     case JasonType::Object:      return "object";

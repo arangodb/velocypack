@@ -1,7 +1,7 @@
 Jason
 =====
 
-Version 0.4
+Version 0.5
 
 Just Another SerializatiON
 
@@ -56,8 +56,8 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x05      : long array (< 2^56 entries, < 2^64 bytes in length)
   - 0x06      : short object (< 256 entries, < 65536 bytes in length)
   - 0x07      : long object (< 2^56 entries, < 2^64 bytes in length)
-  - 0x08      : external (only in memory): a char* and a size_t pointing to the
-                actual place in memory
+  - 0x08      : external (only in memory): a char* pointing to the actual
+                place in memory, where another Jason item resides
   - 0x09      : ID, to be specified, contains a collection ID and a
                 string key, for example as a uint followed by a string,
                 or as 8 bytes little endian unsigned int followed by a
@@ -76,11 +76,14 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x38-0x3f : reserved
   - 0x40-0xbf : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
                 length 0 is possible, so 0x40 is the empty string,
-                maximal length is 127
+                maximal length is 127, note that strings here are not
+                zero-terminated
   - 0xc0-0xc7 : long UTF-8-string, next V-0xbf bytes are length of string 
-                in bytes
+                in bytes, note that long strings here are not
+                zero-terminated
   - 0xc8-0xcf : reserved
-  - 0xd0-0xd7 : binary blob, next V-0xcf bytes are length of blob in bytes
+  - 0xd0-0xd7 : binary blob, next V-0xcf bytes are length of blob in bytes,
+                note that binary blobs are not zero-terminated
   - 0xd8-0xdf : reserved
   - 0xe0-0xff : reserved
 

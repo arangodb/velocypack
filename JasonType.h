@@ -23,6 +23,7 @@ namespace triagens {
       Bool,
       Double,
       String,
+      StringLong,
       Array,
       ArrayLong,
       Object,

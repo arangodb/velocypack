@@ -11,6 +11,7 @@
   struct as small as it currently is. For storing the length it would need
   to be extended by a size_t.
 
+  Right, done.
 
 * Strings:  
   0x40-0xbf : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
@@ -23,7 +24,10 @@
   JasonType::String. This is different to arrays and objects, where there
   are separate types for short and long array/objects. Is this intentional?
 
+  Right, done.
 
 * Strings:
   specification should state that string and binary value are not null-
   terminated.
+
+  Right, done.
