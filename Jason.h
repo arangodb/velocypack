@@ -40,7 +40,9 @@ namespace triagens {
           Double   = 2,
           Int64    = 3,
           UInt64   = 4,
-          String   = 5
+          String   = 5,
+          CharPtr  = 6,
+          VoidPtr  = 7
         };
        
       private:
@@ -54,7 +56,8 @@ namespace triagens {
           int64_t i;             // 3: int64_t
           uint64_t u;            // 4: uint64_t
           std::string const* s;  // 5: std::string
-          char const* e;         // external
+          char const* c;         // 6: char const*
+          void const* e;         // external
         } _value;
 
       public:
@@ -70,9 +73,13 @@ namespace triagens {
           : _jasonType(t), _cType(CType::Double) {
           _value.d = d;
         }
-        explicit Jason (char const* e)
-          : _jasonType(JasonType::External), _cType(CType::None) {
+        explicit Jason (void const* e)
+          : _jasonType(JasonType::External), _cType(CType::VoidPtr) {
           _value.e = e;
+        }
+        explicit Jason (char const* c)
+          : _jasonType(JasonType::String), _cType(CType::CharPtr) {
+          _value.c = c;
         }
         explicit Jason (int32_t i, JasonType t = JasonType::Int)
           : _jasonType(t), _cType(CType::Int64) {
@@ -128,9 +135,14 @@ namespace triagens {
           return _value.s;
         }
 
-        char const* getExternal () const {
-          assert(_cType == None);
+        void const* getExternal () const {
+          assert(_cType == VoidPtr);
           return _value.e;
+        }
+
+        char const* getCharPtr () const {
+          assert(_cType == CharPtr);
+          return _value.c;
         }
 
     };

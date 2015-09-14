@@ -308,9 +308,13 @@ namespace triagens {
               break;
             }
             case JasonType::External: {
-              reserveSpace(sizeof(char*));
+              if (item.cType() != Jason::CType::VoidPtr) {
+                throw JasonBuilderError("Must give void pointer for JasonType::External.");
+              }
+              reserveSpace(sizeof(void*));
               // store pointer. this doesn't need to be portable
-              memcpy(_start + _pos, item.getExternal(), sizeof(char*));
+              void const* value = item.getExternal();
+              memcpy(_start + _pos, &value, sizeof(char*));
               _pos += sizeof(char*);
               break;
             }
@@ -342,10 +346,19 @@ namespace triagens {
             }
             case JasonType::String:
             case JasonType::StringLong: {
-              if (item.cType() != Jason::CType::String) {
-                throw JasonBuilderError("Must give a string for JasonType::String or JasonType::StringLong.");
+              if (item.cType() != Jason::CType::String &&
+                  item.cType() != Jason::CType::CharPtr) {
+                throw JasonBuilderError("Must give a string or char const* for JasonType::String or JasonType::StringLong.");
               }
-              std::string const* s = item.getString();
+              std::string const* s;
+              std::string value;
+              if (item.cType() == Jason::CType::String) {
+                s = item.getString();
+              }
+              else {
+                value = item.getCharPtr();
+                s = &value;
+              }
               size_t size = s->size();
               if (size <= 127) {
                 reserveSpace(1 + size);

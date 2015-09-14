@@ -375,12 +375,70 @@ static void TestStringLong1 () {
 
 static void TestBuilderNull () {
   JasonBuilder b;
-  b.set(Jason(JasonType::Null));
+  b.set(Jason());
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
     = { 0x00 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderFalse () {
+  JasonBuilder b;
+  b.set(Jason(false));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t const correctResult[] 
+    = { 0x01 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderTrue () {
+  JasonBuilder b;
+  b.set(Jason(true));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t const correctResult[] 
+    = { 0x02 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderDouble () {
+  static double value = 123.456;
+  JasonBuilder b;
+  b.set(Jason(value));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[9] 
+    = { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  assert(sizeof(double) == 8);
+  memcpy(correctResult + 1, &value, sizeof(value));
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderString () {
+  JasonBuilder b;
+  b.set(Jason("abcdefghijklmnopqrstuvwxyz"));
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x5a, 
+        0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b,
+        0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76,
+        0x77, 0x78, 0x79, 0x7a };
 
   assert(len == sizeof(correctResult));
   assert(memcmp(result, correctResult, len) == 0);
@@ -428,6 +486,10 @@ int main (int argc, char* argv[]) {
   TestStringLong1();
   TestArrayEmpty();
   TestBuilderNull();
+  TestBuilderFalse();
+  TestBuilderTrue();
+  TestBuilderDouble();
+  TestBuilderString();
   TestBuilderArrayEmpty();
   TestBuilderArray3();
 
