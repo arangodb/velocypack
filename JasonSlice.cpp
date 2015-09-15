@@ -61,14 +61,12 @@ JasonLength JasonSlice::byteSize () const {
       return 1 + (head() - 0x2f);
     }
 
-    case JasonType::String:
+    case JasonType::String: {
+      return 1 + (head() - 0x40);
+    }
+
     case JasonType::StringLong: {
       uint8_t h = head();
-      if (h <= 0xbf) {
-        // short string
-        return 1 + (h - 0x40);
-      }
-      // long string
       return 1 + (h - 0xbf) + readInteger<JasonLength>(h - 0xbf);
     }
 
@@ -113,8 +111,11 @@ void JasonSlice::Initialize () {
   for (int i = 0x30; i <= 0x37; ++i) { 
     TypeTable[i] = JasonType::UInt;
   }
-  for (int i = 0x40; i <= 0xc7; ++i) { 
+  for (int i = 0x40; i <= 0xbf; ++i) { 
     TypeTable[i] = JasonType::String;
+  }
+  for (int i = 0xc0; i <= 0xc7; ++i) { 
+    TypeTable[i] = JasonType::StringLong;
   }
   for (int i = 0xd0; i <= 0xd7; ++i) { 
     TypeTable[i] = JasonType::Binary;

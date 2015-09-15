@@ -363,7 +363,7 @@ static void TestStringLong1 () {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  assert(slice.type() == JasonType::String);
+  assert(slice.type() == JasonType::StringLong);
   assert(slice.isString());
   assert(slice.byteSize() == 8);
   JasonLength len;

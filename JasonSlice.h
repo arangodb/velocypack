@@ -112,19 +112,19 @@ namespace triagens {
           return isType(JasonType::UInt);
         }
 
-        // check if slice is a Number object
-        bool isNumber () const {
-          return isType(JasonType::Int) || isType(JasonType::UInt) || isType(JasonType::Double);
-        }
-
         // check if slice is a String object
         bool isString () const {
-          return isType(JasonType::String);
+          return isType(JasonType::String) || isType(JasonType::StringLong);
         }
 
         // check if slice is a Binary object
         bool isBinary () const {
           return isType(JasonType::Binary);
+        }
+
+        // check if slice is any Number-type object
+        bool isNumber () const {
+          return isType(JasonType::Int) || isType(JasonType::UInt) || isType(JasonType::Double);
         }
 
         // return the value for a Bool object
@@ -200,9 +200,8 @@ namespace triagens {
           return readInteger<uint64_t>(_start + 1, head() - 0x2f);
         }
 
-        // return the value for a String object
+        // return the value for a String or StringLong object
         char const* getString (JasonLength& length) const {
-          assertType(JasonType::String);
           uint8_t h = head();
           if (h >= 0x40 && h <= 0xbf) {
             // short string
@@ -218,7 +217,6 @@ namespace triagens {
 
         // return a copy of the value for a String object
         std::string copyString () const {
-          assertType(JasonType::String);
           uint8_t h = head();
           if (h >= 0x40 && h <= 0xbf) {
             // short string
