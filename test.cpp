@@ -485,6 +485,47 @@ static void TestBuilderArray4 () {
   assert(memcmp(result, correctResult, len) == 0);
 }
 
+static void TestBuilderObjectEmpty () {
+  JasonBuilder b;
+  b.set(Jason(0, JasonType::Object));
+  b.close();
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x06, 0x00, 0x04, 0x00 };
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
+static void TestBuilderObject4 () {
+  double value = 2.3;
+  JasonBuilder b;
+  b.set(Jason(4, JasonType::Object));
+  b.add("a", Jason(uint64_t(1200)));
+  b.add("b", Jason(value));
+  b.add("c", Jason("abc"));
+  b.add("d", Jason(true));
+  b.close();
+
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x06, 0x04, 0x25, 0x00,
+        0x0c, 0x00, 0x11, 0x00, 0x1c, 0x00, 0x22, 0x00,
+        0x41, 0x61, 0x31, 0xb0, 0x04,   // "a": uint(1200) = 0x4b0
+        0x41, 0x62, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
+                                        // "b": double(2.3)
+        0x41, 0x63, 0x43, 0x61, 0x62, 0x63,  // "c": "abc"
+        0x41, 0x64, 0x02 };
+  memcpy(correctResult + 20, &value, 8);
+
+  assert(len == sizeof(correctResult));
+  assert(memcmp(result, correctResult, len) == 0);
+}
+
 static void TestBuilderExternal () {
   uint8_t externalStuff[] = { 0x01 };
   JasonBuilder b;
@@ -621,6 +662,8 @@ int main (int argc, char* argv[]) {
   TestBuilderString();
   TestBuilderArrayEmpty();
   TestBuilderArray4();
+  TestBuilderObjectEmpty();
+  TestBuilderObject4();
   TestBuilderExternal();
   TestBuilderUInt();
   TestBuilderIntPos();
