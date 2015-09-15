@@ -1,11 +1,11 @@
 
-#include <iostream>
-
 #include "Jason.h"
 #include "JasonBuilder.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
+
+#include "gtest/gtest.h"
 
 using Jason        = triagens::basics::Jason;
 using JasonPair    = triagens::basics::JasonPair;
@@ -16,66 +16,81 @@ using JasonType    = triagens::basics::JasonType;
   
 static char Buffer[4096];
 
-static void TestNull () {
+TEST(SliceTest, Null) {
   Buffer[0] = 0x0;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Null);
-  assert(slice.isNull());
-  assert(slice.byteSize() == 1);
+  EXPECT_EQ(JasonType::Null, slice.type());
+  EXPECT_TRUE(slice.isNull());
+  EXPECT_EQ(1ULL, slice.byteSize());
 }
 
-static void TestFalse () {
+TEST(SliceTest, False) {
   Buffer[0] = 0x1;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Bool);
-  assert(slice.isBool());
-  assert(slice.byteSize() == 1);
-  assert(slice.getBool() == false);
+  EXPECT_EQ(JasonType::Bool, slice.type());
+  EXPECT_TRUE(slice.isBool());
+  EXPECT_EQ(1ULL, slice.byteSize());
+  EXPECT_FALSE(slice.getBool());
 }
 
-static void TestTrue () {
+TEST(SliceTest, True) {
   Buffer[0] = 0x2;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Bool);
-  assert(slice.isBool());
-  assert(slice.byteSize() == 1);
-  assert(slice.getBool() == true);
+  EXPECT_EQ(JasonType::Bool, slice.type());
+  EXPECT_TRUE(slice.isBool());
+  EXPECT_EQ(1ULL, slice.byteSize());
+  EXPECT_TRUE(slice.getBool());
 }
 
-static void TestDouble () {
+TEST(SliceTest, Double) {
   Buffer[0] = 0x3;
+
   double value = 23.5;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Double);
-  assert(slice.isDouble());
-  assert(slice.byteSize() == 9);
-  assert(slice.getDouble() == value);
+  EXPECT_EQ(JasonType::Double, slice.type());
+  EXPECT_TRUE(slice.isDouble());
+  EXPECT_EQ(9ULL, slice.byteSize());
+  EXPECT_FLOAT_EQ(value, slice.getDouble());
 }
 
-static void TestInt1 () {
+TEST(SliceTest, DoubleNegative) {
+  Buffer[0] = 0x3;
+
+  double value = -999.91355;
+  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  EXPECT_EQ(JasonType::Double, slice.type());
+  EXPECT_TRUE(slice.isDouble());
+  EXPECT_EQ(9ULL, slice.byteSize());
+  EXPECT_FLOAT_EQ(value, slice.getDouble());
+}
+
+TEST(SliceTest, Int1) {
   Buffer[0] = 0x20;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 2);
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(2ULL, slice.byteSize());
 
-  assert(slice.getInt() == value);
+  EXPECT_EQ(value, slice.getInt());
 }
 
-static void TestInt2 () {
+TEST(SliceTest, Int2) {
   Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -83,13 +98,13 @@ static void TestInt2 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 3);
-  assert(slice.getInt() == 0x23 + 0x100 * 0x42);
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(3ULL, slice.byteSize());
+  EXPECT_EQ(0x23 + 0x100 * 0x42, slice.getInt());
 }
 
-static void TestInt3 () {
+TEST(SliceTest, Int3) {
   Buffer[0] = 0x22;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -98,13 +113,13 @@ static void TestInt3 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 4);
-  assert(slice.getInt() == 0x23 + 0x100 * 0x42 + 0x10000 * 0x66);
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(4ULL, slice.byteSize());
+  EXPECT_EQ(0x23 + 0x100 * 0x42 + 0x10000 * 0x66, slice.getInt());
 }
 
-static void TestInt4 () {
+TEST(SliceTest, Int4) {
   Buffer[0] = 0x23;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -114,27 +129,27 @@ static void TestInt4 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 5);
-  assert(slice.getInt() == 0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL);
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(5ULL, slice.byteSize());
+  EXPECT_EQ(static_cast<int64_t>(0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL), slice.getInt());
 }
 
-static void TestNegInt1 () {
+TEST(SliceTest, NegInt1) {
   Buffer[0] = 0x28;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 2);
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(2ULL, slice.byteSize());
 
-  assert(slice.getInt() == - value);
+  EXPECT_EQ(-value, slice.getInt());
 }
 
-static void TestNegInt2 () {
+TEST(SliceTest, NegInt2) {
   Buffer[0] = 0x29;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -142,13 +157,13 @@ static void TestNegInt2 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 3);
-  assert(slice.getInt() == - (0x23 + 0x100 * 0x42));
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(3ULL, slice.byteSize());
+  EXPECT_EQ(- (0x23 + 0x100 * 0x42), slice.getInt());
 }
 
-static void TestNegInt3 () {
+TEST(SliceTest, NegInt3) {
   Buffer[0] = 0x2a;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -157,13 +172,13 @@ static void TestNegInt3 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 4);
-  assert(slice.getInt() == - (0x23 + 0x100 * 0x42 + 0x10000 * 0x66));
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(4ULL, slice.byteSize());
+  EXPECT_EQ(static_cast<int64_t>(- (0x23 + 0x100 * 0x42 + 0x10000 * 0x66)), slice.getInt());
 }
 
-static void TestNegInt4 () {
+TEST(SliceTest, NegInt4) {
   Buffer[0] = 0x2b;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -173,27 +188,27 @@ static void TestNegInt4 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Int);
-  assert(slice.isInt());
-  assert(slice.byteSize() == 5);
-  assert(slice.getInt() == - (0x23 + 0x100LL * 0x42LL + 0x10000LL * 0x66LL + 0x1000000LL * 0xacLL));
+  EXPECT_EQ(JasonType::Int, slice.type());
+  EXPECT_TRUE(slice.isInt());
+  EXPECT_EQ(5ULL, slice.byteSize());
+  EXPECT_EQ(static_cast<int64_t>(- (0x23 + 0x100LL * 0x42LL + 0x10000LL * 0x66LL + 0x1000000LL * 0xacLL)), slice.getInt());
 }
 
-static void TestUInt1 () {
+TEST(SliceTest, UInt1) {
   Buffer[0] = 0x30;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::UInt);
-  assert(slice.isUInt());
-  assert(slice.byteSize() == 2);
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(2ULL, slice.byteSize());
 
-  assert(slice.getUInt() == value);
+  EXPECT_EQ(value, slice.getUInt());
 }
 
-static void TestUInt2 () {
+TEST(SliceTest, UInt2) {
   Buffer[0] = 0x31;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -201,13 +216,13 @@ static void TestUInt2 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::UInt);
-  assert(slice.isUInt());
-  assert(slice.byteSize() == 3);
-  assert(slice.getUInt() == (0x23 + 0x100 * 0x42));
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(3ULL, slice.byteSize());
+  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL, slice.getUInt());
 }
 
-static void TestUInt3 () {
+TEST(SliceTest, UInt3) {
   Buffer[0] = 0x32;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -216,13 +231,13 @@ static void TestUInt3 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::UInt);
-  assert(slice.isUInt());
-  assert(slice.byteSize() == 4);
-  assert(slice.getUInt() == (0x23 + 0x100 * 0x42 + 0x10000 * 0x66));
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(4ULL, slice.byteSize());
+  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL, slice.getUInt());
 }
 
-static void TestUInt4 () {
+TEST(SliceTest, UInt4) {
   Buffer[0] = 0x33;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
@@ -232,13 +247,13 @@ static void TestUInt4 () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::UInt);
-  assert(slice.isUInt());
-  assert(slice.byteSize() == 5);
-  assert(slice.getUInt() == (0x23 + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL));
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(5ULL, slice.byteSize());
+  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL, slice.getUInt());
 }
 
-static void TestArrayEmpty () {
+TEST(SliceTest, ArrayEmpty) {
   Buffer[0] = 0x04;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x00;
@@ -247,29 +262,29 @@ static void TestArrayEmpty () {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::Array);
-  assert(slice.isArray());
-  assert(slice.byteSize() == 4);
-  assert(slice.length() == 0);
+  EXPECT_EQ(JasonType::Array, slice.type());
+  EXPECT_TRUE(slice.isArray());
+  EXPECT_EQ(4ULL, slice.byteSize());
+  EXPECT_EQ(0ULL, slice.length());
 }
 
-static void TestStringEmpty () {
+TEST(SliceTest, StringEmpty) {
   Buffer[0] = 0x40;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  assert(slice.type() == JasonType::String);
-  assert(slice.isString());
-  assert(slice.byteSize() == 1);
+  EXPECT_EQ(JasonType::String, slice.type());
+  EXPECT_TRUE(slice.isString());
+  EXPECT_EQ(1ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
-  assert(len == 0);
-  assert(strncmp(s, "", len) == 0);
+  EXPECT_EQ(0ULL, len);
+  EXPECT_EQ(0, strncmp(s, "", len));
 
-  assert(slice.copyString() == "");
+  EXPECT_EQ("", slice.copyString());
 }
 
-static void TestString1 () {
+TEST(SliceTest, String1) {
   Buffer[0] = 0x40 + strlen("foobar");
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -281,18 +296,18 @@ static void TestString1 () {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  assert(slice.type() == JasonType::String);
-  assert(slice.isString());
-  assert(slice.byteSize() == 7);
+  EXPECT_EQ(JasonType::String, slice.type());
+  EXPECT_TRUE(slice.isString());
+  EXPECT_EQ(7ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
-  assert(len == 6);
-  assert(strncmp(s, "foobar", len) == 0);
+  EXPECT_EQ(6ULL, len);
+  EXPECT_EQ(0, strncmp(s, "foobar", len));
 
-  assert(slice.copyString() == "foobar");
+  EXPECT_EQ("foobar", slice.copyString());
 }
 
-static void TestString2 () {
+TEST(SliceTest, String2) {
   Buffer[0] = 0x48;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -306,18 +321,18 @@ static void TestString2 () {
   *p++ = (uint8_t) '\n';
   *p++ = (uint8_t) 'x';
 
-  assert(slice.type() == JasonType::String);
-  assert(slice.isString());
-  assert(slice.byteSize() == 9);
+  EXPECT_EQ(JasonType::String, slice.type());
+  EXPECT_TRUE(slice.isString());
+  EXPECT_EQ(9ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
-  assert(len == 8);
-  assert(strncmp(s, "123f\r\t\nx", len) == 0);
+  EXPECT_EQ(8ULL, len);
+  EXPECT_EQ(0, strncmp(s, "123f\r\t\nx", len));
 
-  assert(slice.copyString() == "123f\r\t\nx");
+  EXPECT_EQ("123f\r\t\nx", slice.copyString());
 }
 
-static void TestStringNull () {
+TEST(SliceTest, StringNullBytes) {
   Buffer[0] = 0x48;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -331,26 +346,26 @@ static void TestStringNull () {
   *p++ = (uint8_t) '\0';
   *p++ = (uint8_t) 'x';
 
-  assert(slice.type() == JasonType::String);
-  assert(slice.isString());
-  assert(slice.byteSize() == 9);
+  EXPECT_EQ(JasonType::String, slice.type());
+  EXPECT_TRUE(slice.isString());
+  EXPECT_EQ(9ULL, slice.byteSize());
   JasonLength len;
   slice.getString(len);
-  assert(len == 8);
+  EXPECT_EQ(8ULL, len);
 
   std::string s(slice.copyString());
-  assert(s.size() == 8);
-  assert(s[0] == '\0');
-  assert(s[1] == '1');
-  assert(s[2] == '2');
-  assert(s[3] == '\0');
-  assert(s[4] == '3');
-  assert(s[5] == '4');
-  assert(s[6] == '\0');
-  assert(s[7] == 'x');
+  EXPECT_EQ(8ULL, s.size());
+  EXPECT_EQ('\0', s[0]);
+  EXPECT_EQ('1', s[1]);
+  EXPECT_EQ('2', s[2]);
+  EXPECT_EQ('\0', s[3]);
+  EXPECT_EQ('3', s[4]);
+  EXPECT_EQ('4', s[5]);
+  EXPECT_EQ('\0', s[6]);
+  EXPECT_EQ('x', s[7]);
 }
 
-static void TestStringLong1 () {
+TEST(SliceTest, StringLong1) {
   Buffer[0] = 0xc0;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -363,18 +378,18 @@ static void TestStringLong1 () {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  assert(slice.type() == JasonType::StringLong);
-  assert(slice.isString());
-  assert(slice.byteSize() == 8);
+  EXPECT_EQ(JasonType::StringLong, slice.type());
+  EXPECT_TRUE(slice.isString());
+  EXPECT_EQ(8ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
-  assert(len == 6);
-  assert(strncmp(s, "foobar", len) == 0);
+  EXPECT_EQ(6ULL, len);
+  EXPECT_EQ(0, strncmp(s, "foobar", len));
 
-  assert(slice.copyString() == "foobar");
+  EXPECT_EQ("foobar", slice.copyString());
 }
 
-static void TestBuilderNull () {
+TEST(BuilderTest, Null) {
   JasonBuilder b;
   b.set(Jason());
   uint8_t* result = b.start();
@@ -383,11 +398,11 @@ static void TestBuilderNull () {
   static uint8_t const correctResult[] 
     = { 0x00 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderFalse () {
+TEST(BuilderTest, False) {
   JasonBuilder b;
   b.set(Jason(false));
   uint8_t* result = b.start();
@@ -396,11 +411,11 @@ static void TestBuilderFalse () {
   static uint8_t const correctResult[] 
     = { 0x01 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderTrue () {
+TEST(BuilderTest, True) {
   JasonBuilder b;
   b.set(Jason(true));
   uint8_t* result = b.start();
@@ -409,11 +424,11 @@ static void TestBuilderTrue () {
   static uint8_t const correctResult[] 
     = { 0x02 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderDouble () {
+TEST(BuilderTest, Double) {
   static double value = 123.456;
   JasonBuilder b;
   b.set(Jason(value));
@@ -422,14 +437,14 @@ static void TestBuilderDouble () {
 
   static uint8_t correctResult[9] 
     = { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  assert(sizeof(double) == 8);
+  EXPECT_EQ(8ULL, sizeof(double));
   memcpy(correctResult + 1, &value, sizeof(value));
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderString () {
+TEST(BuilderTest, String) {
   JasonBuilder b;
   b.set(Jason("abcdefghijklmnopqrstuvwxyz"));
   uint8_t* result = b.start();
@@ -441,11 +456,11 @@ static void TestBuilderString () {
         0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76,
         0x77, 0x78, 0x79, 0x7a };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderArrayEmpty () {
+TEST(BuilderTest, ArrayEmpty) {
   JasonBuilder b;
   b.set(Jason(0, JasonType::Array));
   b.close();
@@ -455,11 +470,11 @@ static void TestBuilderArrayEmpty () {
   static uint8_t correctResult[] 
     = { 0x04, 0x00, 0x04, 0x00 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderArray4 () {
+TEST(BuilderTest, Array4) {
   double value = 2.3;
   JasonBuilder b;
   b.set(Jason(4, JasonType::Array));
@@ -481,11 +496,11 @@ static void TestBuilderArray4 () {
         0x02 };
   memcpy(correctResult + 14, &value, 8);
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderObjectEmpty () {
+TEST(BuilderTest, ObjectEmpty) {
   JasonBuilder b;
   b.set(Jason(0, JasonType::Object));
   b.close();
@@ -495,11 +510,11 @@ static void TestBuilderObjectEmpty () {
   static uint8_t correctResult[] 
     = { 0x06, 0x00, 0x04, 0x00 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderObject4 () {
+TEST(BuilderTest, Object4) {
   double value = 2.3;
   JasonBuilder b;
   b.set(Jason(4, JasonType::Object));
@@ -522,11 +537,11 @@ static void TestBuilderObject4 () {
         0x41, 0x64, 0x02 };
   memcpy(correctResult + 20, &value, 8);
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderExternal () {
+TEST(BuilderTest, External) {
   uint8_t externalStuff[] = { 0x01 };
   JasonBuilder b;
   b.set(Jason(const_cast<void const*>(static_cast<void*>(externalStuff)), 
@@ -540,11 +555,11 @@ static void TestBuilderExternal () {
   uint8_t* p = externalStuff;
   memcpy(correctResult + 1, &p, sizeof(uint8_t*));
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderUInt() {
+TEST(BuilderTest, UInt) {
   uint64_t value = 0x12345678abcdef;
   JasonBuilder b;
   b.set(Jason(value));
@@ -554,11 +569,11 @@ static void TestBuilderUInt() {
   static uint8_t correctResult[]
     = { 0x36, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderIntPos() {
+TEST(BuilderTest, IntPos) {
   int64_t value = 0x12345678abcdef;
   JasonBuilder b;
   b.set(Jason(value));
@@ -568,11 +583,11 @@ static void TestBuilderIntPos() {
   static uint8_t correctResult[]
     = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderIntNeg() {
+TEST(BuilderTest, IntNeg) {
   int64_t value = -0x12345678abcdef;
   JasonBuilder b;
   b.set(Jason(value));
@@ -582,11 +597,11 @@ static void TestBuilderIntNeg() {
   static uint8_t correctResult[]
     = { 0x2e, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderBinary() {
+TEST(BuilderTest, Binary) {
   uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   JasonBuilder b;
@@ -597,11 +612,11 @@ static void TestBuilderBinary() {
   static uint8_t correctResult[]
     = { 0xd0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderID() {
+TEST(BuilderTest, ID) {
   uint8_t key[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   JasonBuilder b;
@@ -609,15 +624,15 @@ static void TestBuilderID() {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[]
+  static uint8_t const correctResult[]
     = { 0x09, 0x33, 0x78, 0x56, 0x34, 0x12,
         0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-static void TestBuilderArangoDB_id() {
+TEST(BuilderTest, ArangoDB_id) {
   JasonBuilder b;
   b.set(Jason(JasonType::ArangoDB_id));
 
@@ -626,52 +641,14 @@ static void TestBuilderArangoDB_id() {
 
   static uint8_t correctResult[] = { 0x0a };
 
-  assert(len == sizeof(correctResult));
-  assert(memcmp(result, correctResult, len) == 0);
+  EXPECT_EQ(sizeof(correctResult), len);
+  EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
 int main (int argc, char* argv[]) {
   JasonSlice::Initialize();
 
-  TestNull();
-  TestFalse();
-  TestTrue();
-  TestDouble();
-  TestInt1();
-  TestInt2();
-  TestInt3();
-  TestInt4();
-  TestNegInt1();
-  TestNegInt2();
-  TestNegInt3();
-  TestNegInt4();
-  TestUInt1();
-  TestUInt2();
-  TestUInt3();
-  TestUInt4();
-  TestStringEmpty();
-  TestString1();
-  TestString2();
-  TestStringNull();
-  TestStringLong1();
-  TestArrayEmpty();
-  TestBuilderNull();
-  TestBuilderFalse();
-  TestBuilderTrue();
-  TestBuilderDouble();
-  TestBuilderString();
-  TestBuilderArrayEmpty();
-  TestBuilderArray4();
-  TestBuilderObjectEmpty();
-  TestBuilderObject4();
-  TestBuilderExternal();
-  TestBuilderUInt();
-  TestBuilderIntPos();
-  TestBuilderIntNeg();
-  TestBuilderBinary();
-  TestBuilderID();
-  TestBuilderArangoDB_id();
+  ::testing::InitGoogleTest(&argc, argv);
 
-  std::cout << "ye olde tests passeth.\n";
-  return 0;
+  return RUN_ALL_TESTS();
 }

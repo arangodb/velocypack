@@ -1,3 +1,4 @@
 test
 core 
 *.o
+googletest
