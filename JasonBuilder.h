@@ -707,6 +707,17 @@ namespace triagens {
           return *this;
         }
 
+        void reserve (JasonLength size) {
+          if (_size < size) {
+            try {
+              reserveSpace(size - _pos);
+            }
+            catch (...) {
+              // Ignore exception here, let it crash later.
+            }
+          }
+        }
+
       private:
 
         // returns number of bytes required to store the value
