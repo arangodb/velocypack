@@ -617,7 +617,7 @@ TEST(BuilderTest, Binary) {
 }
 
 TEST(BuilderTest, ID) {
-  uint8_t key[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
+  char const* key = "\x02\x03\x05\x08\x0d";
 
   JasonBuilder b;
   b.set(JasonPair(key, 0x12345678, JasonType::ID));

@@ -156,18 +156,24 @@ namespace triagens {
     };
 
     class JasonPair {
-        uint8_t* _start;
-        uint64_t _size;
-        JasonType _type;
+        uint8_t const* _start;
+        uint64_t       _size;
+        JasonType      _type;
 
       public:
 
-        explicit JasonPair (uint8_t* start, uint64_t size,
+        explicit JasonPair (uint8_t const* start, uint64_t size,
                             JasonType type = JasonType::Binary)
           : _start(start), _size(size), _type(type) {
         }
 
-        uint8_t* getStart () {
+        explicit JasonPair (char const* start, uint64_t size,
+                            JasonType type = JasonType::Binary)
+          : _start(reinterpret_cast<uint8_t const*>(start)),
+            _size(size), _type(type) {
+        }
+
+        uint8_t const* getStart () {
           return _start;
         }
 

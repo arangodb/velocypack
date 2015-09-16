@@ -578,7 +578,7 @@ namespace triagens {
             reserveSpace(1);
             _start[_pos++] = 0x09;
             set(Jason(pair.getSize(), JasonType::UInt));
-            set(Jason(reinterpret_cast<char*>(pair.getStart()),
+            set(Jason(reinterpret_cast<char const*>(pair.getStart()),
                       JasonType::String));
           }
           else if (pair.getType() == JasonType::Binary) {
