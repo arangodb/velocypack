@@ -123,7 +123,7 @@ namespace triagens {
 
       public:
 
-        JasonBuilder (JasonType type = JasonType::None, JasonLength spaceHint = 1) 
+        JasonBuilder (JasonType /*type*/ = JasonType::None, JasonLength spaceHint = 1) 
           : _externalMem(false), _sealed(false), _pos(0) {
           JasonUtils::CheckSize(spaceHint);
           _alloc.reserve(static_cast<size_t>(spaceHint));
@@ -133,7 +133,7 @@ namespace triagens {
         }
 
         JasonBuilder (uint8_t* start, JasonLength size,
-                      JasonType type = JasonType::None) 
+                      JasonType /*type*/ = JasonType::None) 
           : _externalMem(true), _sealed(false), _start(start), _size(size), _pos(0) {
         }
       

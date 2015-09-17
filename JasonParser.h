@@ -125,7 +125,7 @@ namespace triagens {
           int64_t nr = 0;
           JasonLength len = 0;
           scanJson(temp, nr, len);
-          while (_pos < _size && isWhiteSpace(_start[_pos])) {
+          while (_pos < _size && isWhiteSpace(static_cast<int>(_start[_pos]))) {
             ++_pos;
           }
           if (_pos != _size) {
@@ -565,7 +565,7 @@ namespace triagens {
           }
         }
 
-        void buildJason (std::vector<int64_t>& temp) {
+        void buildJason (std::vector<int64_t>& /*temp*/) {
 #if 0
           int i;
           uint8_t c;
