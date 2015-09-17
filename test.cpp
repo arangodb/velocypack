@@ -685,6 +685,97 @@ TEST(BuilderTest, ArangoDB_id) {
   EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(ParserTest, Garbage1) {
+  std::string const value("z");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage2) {
+  std::string const value("foo");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage3) {
+  std::string const value("truth");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage4) {
+  std::string const value("tru");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage5) {
+  std::string const value("truebar");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage6) {
+  std::string const value("fals");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage7) {
+  std::string const value("falselaber");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Garbage8) {
+  std::string const value("zauberzauber");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Punctuation1) {
+  std::string const value(",");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Punctuation2) {
+  std::string const value("/");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Punctuation3) {
+  std::string const value("@");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Punctuation4) {
+  std::string const value(":");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Punctuation5) {
+  std::string const value("!");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
 TEST(ParserTest, Null) {
   std::string const value("null");
 
@@ -719,6 +810,13 @@ TEST(ParserTest, Zero) {
 
 TEST(ParserTest, ZeroInvalid) {
   std::string const value("00");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, NumberIncomplete) {
+  std::string const value("-");
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
@@ -796,7 +894,7 @@ TEST(ParserTest, DoubleScientific4) {
   EXPECT_EQ(1ULL, len);
 }
 
-TEST(ParserTest, EmptyString) {
+TEST(ParserTest, Empty) {
   std::string const value("");
 
   JasonParser parser;
@@ -1127,6 +1225,44 @@ TEST(ParserTest, ObjectSimple2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ObjectDenseNotation) {
+  std::string const value("{\"a\":\"b\",\"c\":\"d\"}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ObjectReservedKeys) {
+  std::string const value("{ \"null\" : \"true\", \"false\":\"bar\", \"true\":\"foo\"}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ObjectMixed) {
+  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ObjectInvalidQuotes) {
+  std::string const value("{'foo':'bar' }");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, ObjectMissingQuotes) {
+  std::string const value("{foo:\"bar\" }");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
 
