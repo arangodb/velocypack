@@ -451,12 +451,15 @@ namespace triagens {
             if (i != '"') {
               throw JasonParserError("scanObject: \" or } expected");
             }
+            // get past the initial '"'
+            consume();
+
             scanString(len);
             skipWhiteSpace("scanObject: : expected");
             // always expecting the ':' here
             i = consume();
             if (i != ':') {
-              throw JasonParserError("scanObject: : expected");
+              throw JasonParserError("scanObject: 2: expected");
             }
 
             int64_t nr1 = 0;

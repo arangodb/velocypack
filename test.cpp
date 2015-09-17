@@ -685,6 +685,117 @@ TEST(BuilderTest, ArangoDB_id) {
   EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(ParserTest, Null) {
+  std::string const value("null");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, False) {
+  std::string const value("false");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, True) {
+  std::string const value("true");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Zero) {
+  std::string const value("0");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ZeroInvalid) {
+  std::string const value("00");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, Int1) {
+  std::string const value("1");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Int2) {
+  std::string const value("100000");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Int3) {
+  std::string const value("-100000");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Double1) {
+  std::string const value("1.0124");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Double2) {
+  std::string const value("-1.0124");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, DoubleScientific1) {
+  std::string const value("-1.0124e42");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, DoubleScientific2) {
+  std::string const value("-1.0124e+42");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, DoubleScientific3) {
+  std::string const value("3122243.0124e-42");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, DoubleScientific4) {
+  std::string const value("2335431.0124E-42");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
 TEST(ParserTest, EmptyString) {
   std::string const value("");
 
@@ -952,6 +1063,72 @@ TEST(ParserTest, BrokenObject3) {
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
+
+TEST(ParserTest, BrokenObject4) {
+  std::string const value("{\"foo");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject5) {
+  std::string const value("{\"foo\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject6) {
+  std::string const value("{\"foo\":");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject7) {
+  std::string const value("{\"foo\":\"foo");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject8) {
+  std::string const value("{\"foo\":\"foo\", ");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject9) {
+  std::string const value("{\"foo\":\"foo\", }");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject10) {
+  std::string const value("{\"foo\" }");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, ObjectSimple1) {
+  std::string const value("{ \"foo\" : 1}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, ObjectSimple2) {
+  std::string const value("{ \"foo\" : \"bar\", \"baz\":true}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
 
 int main (int argc, char* argv[]) {
   JasonSlice::Initialize();
