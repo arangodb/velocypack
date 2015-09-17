@@ -308,6 +308,7 @@ namespace triagens {
                     byteLen++;
                     break;
                   case 'u': {
+                    // TODO: do surrogate pairs need to be handled specially here?
                     uint32_t v = 0;
                     for (int j = 0; j < 4; j++) {
                       i = consume();
@@ -344,7 +345,45 @@ namespace triagens {
                 }
                 break;
               default:
-                byteLen++;
+                if (c < 0x20 && c != 0x09) {
+                  // control character
+                  throw JasonParserError("scanString: Found control character.");
+                }
+                if ((c & 0x80) == 0) {
+                  // non-UTF-8 sequence
+                  byteLen++;
+                }
+                else {
+                  // UTF-8 sequence!
+                  int follow = 0;
+                  if ((c & 0xe0) == 0xc0) {
+                    // two-byte sequence
+                    follow = 1;
+                  }
+                  else if ((c & 0xf0) == 0xe0) {
+                    // three-byte sequence
+                    follow = 2;
+                  }
+                  else if ((c & 0xf8) == 0xf0) {
+                    // four-byte sequence
+                    follow = 3;
+                  }
+
+                  // validate follow up characters
+                  for (i = 0; i < follow; ++i) {
+                    c = getOneOrThrow("scanString: truncated UTF-8 sequence");
+                    if ((c & 0xc0) != 0x80) {
+                      follow = 0;
+                      break;
+                    }
+                  }
+
+                  if (follow == 0) {
+                    throw JasonParserError("scanString: invalid UTF-8 sequence");
+                  } 
+
+                  byteLen += follow;
+                }
                 break;
             }
           }

@@ -714,7 +714,87 @@ TEST(ParserTest, StringLiteral) {
   EXPECT_EQ(1ULL, len);
 }
 
-TEST(ParserTest, StringLiteralUtf8) {
+TEST(ParserTest, StringLiteralEmpty) {
+  std::string const value("\"\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, StringLiteralInvalidUtfValue1) {
+  std::string value;
+  value.push_back('"');
+  value.push_back(static_cast<unsigned char>(0x80));
+  value.push_back('"');
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralInvalidUtfValue2) {
+  std::string value;
+  value.push_back('"');
+  value.push_back(static_cast<unsigned char>(0xff));
+  value.push_back(static_cast<unsigned char>(0xff));
+  value.push_back('"');
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
+  std::string const value("\"\\u\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
+  std::string const value("\"\\u0\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
+  std::string const value("\"\\u01\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
+  std::string const value("\"\\u012\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUnfinishedUtfSequence5) {
+  std::string const value("\"\\u012\"");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
+  std::string const value("\"der m\\u00d6ter\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, StringLiteralUtf8SequenceUpperCase) {
+  std::string const value("\"der m\\u00D6ter\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, StringLiteralUtf8Chars) {
   std::string const value("\"der mötör klötörte mät dän fößen\"");
 
   JasonParser parser;
@@ -723,7 +803,7 @@ TEST(ParserTest, StringLiteralUtf8) {
 }
 
 TEST(ParserTest, StringLiteralWithSpecials) {
-  std::string const value("  \"der\thund\nging\rin\tden\\\\wald\\\"und\b\nden'fux\"  ");
+  std::string const value("  \"der\\thund\\nging\\rin\tden\\\\wald\\\"und\\b\\nden'fux\"  ");
 
   JasonParser parser;
   JasonLength len = parser.parse(value);
