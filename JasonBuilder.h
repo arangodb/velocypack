@@ -111,7 +111,12 @@ namespace triagens {
           }
           JasonUtils::CheckSize(_pos + len);
           _alloc.reserve(static_cast<size_t>(_pos + len));
-          _alloc.insert(_alloc.end(), static_cast<size_t>(len), 0);
+
+          // fill the (potentially) newly allocated are with zeros
+          // TODO: use more optimized method
+          for (JasonLength i = 0; i < len; ++i) {
+            _alloc.push_back(0);
+          }
           _start = _alloc.data();
           _size = _alloc.size();
         }

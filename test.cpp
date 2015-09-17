@@ -1,4 +1,6 @@
 
+#include <iostream>
+
 #include "Jason.h"
 #include "JasonBuilder.h"
 #include "JasonParser.h"
@@ -7,12 +9,13 @@
 
 #include "gtest/gtest.h"
 
-using Jason        = triagens::basics::Jason;
-using JasonPair    = triagens::basics::JasonPair;
-using JasonBuilder = triagens::basics::JasonBuilder;
-using JasonLength  = triagens::basics::JasonLength;
-using JasonSlice   = triagens::basics::JasonSlice;
-using JasonType    = triagens::basics::JasonType;
+using Jason            = triagens::basics::Jason;
+using JasonBuilder     = triagens::basics::JasonBuilder;
+using JasonLength      = triagens::basics::JasonLength;
+using JasonPair        = triagens::basics::JasonPair;
+using JasonParser      = triagens::basics::JasonParser;
+using JasonSlice       = triagens::basics::JasonSlice;
+using JasonType        = triagens::basics::JasonType;
   
 static char Buffer[4096];
 
@@ -601,6 +604,43 @@ TEST(BuilderTest, IntNeg) {
   EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, StringChar) {
+  char const* value = "der fuxx ging in den wald und aß pilze";
+  size_t const valueLen = strlen(value);
+  JasonBuilder b;
+  b.set(Jason(value));
+
+  JasonSlice slice = JasonSlice(b.start());
+  EXPECT_TRUE(slice.isString());
+ 
+  JasonLength len;
+  char const* s = slice.getString(len);
+  EXPECT_EQ(valueLen, len);
+  EXPECT_EQ(0, strncmp(s, value, valueLen));
+
+  std::string c = slice.copyString();
+  EXPECT_EQ(valueLen, c.size());
+  EXPECT_EQ(0, strncmp(value, c.c_str(), valueLen));
+}
+
+TEST(BuilderTest, StringString) {
+  std::string const value("der fuxx ging in den wald und aß pilze");
+  JasonBuilder b;
+  b.set(Jason(value));
+
+  JasonSlice slice = JasonSlice(b.start());
+  EXPECT_TRUE(slice.isString());
+ 
+  JasonLength len;
+  char const* s = slice.getString(len);
+  EXPECT_EQ(value.size(), len);
+  EXPECT_EQ(0, strncmp(s, value.c_str(), value.size()));
+
+  std::string c = slice.copyString();
+  EXPECT_EQ(value.size(), c.size());
+  EXPECT_EQ(value, c);
+}
+
 TEST(BuilderTest, Binary) {
   uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
 
@@ -643,6 +683,194 @@ TEST(BuilderTest, ArangoDB_id) {
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(ParserTest, EmptyString) {
+  std::string const value("");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, WhitespaceOnly) {
+  std::string const value("  ");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, UnterminatedStringLiteral) {
+  std::string const value("\"der hund");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, StringLiteral) {
+  std::string const value("\"der hund ging in den wald und aß den fuxx\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, StringLiteralUtf8) {
+  std::string const value("\"der mötör klötörte mät dän fößen\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, StringLiteralWithSpecials) {
+  std::string const value("  \"der\thund\nging\rin\tden\\\\wald\\\"und\b\nden'fux\"  ");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, EmptyArray) {
+  std::string const value("[]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, WhitespacedArray) {
+  std::string const value("  [    ]   ");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Array1) {
+  std::string const value("[1]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Array2) {
+  std::string const value("[1,2]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Array3) {
+  std::string const value("[-1,2, 4.5, 3, -99.99]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, Array4) {
+  std::string const value("[\"foo\", \"bar\", \"baz\", null, true, false, -42.23 ]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, NestedArray1) {
+  std::string const value("[ [ ] ]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, NestedArray2) {
+  std::string const value("[ [ ],[[]],[],[ [[ [], [ ], [ ] ], [ ] ] ], [] ]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, NestedArray3) {
+  std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ], true, false ], -42.23 ]");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, NestedArrayInvalid1) {
+  std::string const value("[ [ ]");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, NestedArrayInvalid2) {
+  std::string const value("[ ] ]");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, NestedArrayInvalid3) {
+  std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ] ]");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenArray1) {
+  std::string const value("[");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenArray2) {
+  std::string const value("[,");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenArray3) {
+  std::string const value("[1,");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, EmptyObject) {
+  std::string const value("{}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+}
+
+TEST(ParserTest, BrokenObject1) {
+  std::string const value("{");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject2) {
+  std::string const value("{,");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, BrokenObject3) {
+  std::string const value("{1,");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
 int main (int argc, char* argv[]) {

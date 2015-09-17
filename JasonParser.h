@@ -47,6 +47,9 @@ namespace triagens {
             }
         };
 
+        JasonParser (JasonParser const&) = delete;
+        JasonParser& operator= (JasonParser const&) = delete;
+
         JasonParser () : _start(nullptr), _size(0), _pos(0) {
         }
 
@@ -82,6 +85,13 @@ namespace triagens {
 
       private:
 
+        int peek () const {
+          if (_pos >= _size) {
+            return -1;
+          }
+          return static_cast<int>(_start[_pos]);
+        }
+
         int consume () {
           if (_pos >= _size) {
             return -1;
@@ -115,6 +125,12 @@ namespace triagens {
           int64_t nr = 0;
           JasonLength len = 0;
           scanJson(temp, nr, len);
+          while (_pos < _size && isWhiteSpace(_start[_pos])) {
+            ++_pos;
+          }
+          if (_pos != _size) {
+            throw JasonParserError("expecting EOF");
+          }
           _pos = 0;
           _b.reserve(len);
           buildJason(temp);
@@ -123,18 +139,22 @@ namespace triagens {
         }
 
         static inline bool isWhiteSpace (int i) {
-          return i == ' ' || i == '\t' || i == '\n' || i == '\r' || i == '\f';
+          return i == ' ' || i == '\t' || i == '\n' || i == '\r' || i == '\f' || i == '\b';
         }
 
+        // skips over all following whitespace tokens but does not consume the
+        // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
-          int i;
-          do {
-            i = consume();
+          while (true) {
+            int i = peek();
             if (i < 0) {
               throw JasonParserError(err);
             }
-          } while (isWhiteSpace(i));
-          return i;
+            if (! isWhiteSpace(i)) { 
+              return i;
+            }
+            consume();
+          } 
         }
 
         void scanTrue (JasonLength& len) {
@@ -163,15 +183,13 @@ namespace triagens {
         }
 
         uint64_t scanDigits () {
-          int i;
-          uint8_t c;
           uint64_t x = 0;
           while (true) {
-            i = consume();
+            int i = consume();
             if (i < 0) {
               return x;
             }
-            c = static_cast<uint8_t>(i);
+            uint8_t c = static_cast<uint8_t>(i);
             if (c < '0' || c > '9') {
               unconsume();
               return x;
@@ -180,7 +198,7 @@ namespace triagens {
           }
         }
 
-        inline uint8_t getOneOrThrow(char const* msg) {
+        inline uint8_t getOneOrThrow (char const* msg) {
           int i = consume();
           if (i < 0) {
             throw JasonParserError(msg);
@@ -190,8 +208,7 @@ namespace triagens {
 
         void scanNumber (JasonLength& len) {
           int i;
-          uint8_t c;
-          c = static_cast<uint8_t>(consume());
+          uint8_t c = static_cast<uint8_t>(consume());
           // We know that a character is coming, and we know it is '-' or a
           // digit, otherwise we would not have been called.
           if (c == '-') {
@@ -249,14 +266,14 @@ namespace triagens {
           // representation and the return value is the number of bytes
           // in the actual string.
           int i;
-          uint8_t c;
           int64_t byteLen = 0;
 
           while (true) {
-            c = getOneOrThrow("scanString: Unfinished string detected.");
-            if (c < 32) {
-              throw JasonParserError("scanString: Control character detected.");
-            }
+            uint8_t c = getOneOrThrow("scanString: Unfinished string detected.");
+            // note: control chars in strings are actually valid 
+            // if (c < 32) {
+            //   throw JasonParserError("scanString: Control character detected.");
+            // }
             switch (c) {
               case '"':
                 len += byteLen;
@@ -333,19 +350,21 @@ namespace triagens {
           }
         }
 
-        void scanArray(std::vector<int64_t>& temp,
-                       int64_t& nr, JasonLength& len) {
+        void scanArray (std::vector<int64_t>& temp,
+                        int64_t& nr, JasonLength& len) {
           nr = 0;
-          int i;
           
           JasonLength startLen = len;
 
           while (true) {
-            i = skipWhiteSpace("scanArray: item or ] expected");
-            if (i == ']') {
+            int i = skipWhiteSpace("scanArray: item or ] expected");
+            if (i == ']' && nr == 0) { 
+              // ']' is only valid here if we haven't seen a ',' last time
+              consume();
               break;
             }
             int64_t nr1 = 0;
+            // parse array element itself
             scanJson(temp, nr1, len);
             if (nr1 != 1) {
               throw JasonParserError("scanArray: exactly one item expected");
@@ -353,13 +372,18 @@ namespace triagens {
             nr++;
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
+              // end of array
+              consume();
               break;
             }
             if (i != ',') {
               throw JasonParserError("scanArray: , or ] expected");
             }
+            // skip over ','
+            consume();
           }
             
+          // TODO: what is the meaning of magic number 514? 2 * 256 + 2, but why??
           if (nr > 255 || len - startLen + 514 > 65535) {
             // ArrayLong
             len += (nr > 1) ? 8 * (nr + 1) : 16;
@@ -371,23 +395,27 @@ namespace triagens {
           }
         }
                        
-        void scanObject(std::vector<int64_t>& temp,
-                        int64_t& nr, JasonLength& len) {
+        void scanObject (std::vector<int64_t>& temp,
+                         int64_t& nr, JasonLength& len) {
           nr = 0;
-          int i;
           
           JasonLength startLen = len;
 
           while (true) {
-            i = skipWhiteSpace("scanObject: \" or } expected");
-            if (i == '}') {
+            int i = skipWhiteSpace("scanObject: \" or } expected");
+            if (i == '}' && nr == 0) {
+              // '}' is only valid here if we haven't seen a ',' last time
+              consume();
               break;
             }
+            // always expecting a string attribute name here
             if (i != '"') {
               throw JasonParserError("scanObject: \" or } expected");
             }
             scanString(len);
-            i = skipWhiteSpace("scanObject: : expected");
+            skipWhiteSpace("scanObject: : expected");
+            // always expecting the ':' here
+            i = consume();
             if (i != ':') {
               throw JasonParserError("scanObject: : expected");
             }
@@ -400,13 +428,18 @@ namespace triagens {
             nr++;
             i = skipWhiteSpace("scanObject: , or } expected");
             if (i == '}') {
+              // end of object
+              consume();
               break;
             }
             if (i != ',') {
               throw JasonParserError("scanObject: , or } expected");
-            }
+            } 
+            // skip over ','
+            consume();
           }
             
+          // TODO: what is the meaning of magic number 516? 2 * 256 + 4, but why??
           if (nr > 255 || len - startLen + 516 > 65535) {
             // ObjectLong
             len += 8 * (nr + 2);
@@ -421,75 +454,74 @@ namespace triagens {
         void scanJson (std::vector<int64_t>& temp,
                        int64_t& nr, JasonLength& len) {
           nr = 0;
-          int i;
-          uint8_t c;
-          while (true) {
-            i = consume();
-            if (i < 0) {
-              break;  // OK to stop here
+          skipWhiteSpace("expecting item");
+          int i = consume();
+          if (i < 0) {
+            return; 
+          }
+          uint8_t c = static_cast<uint8_t>(i);
+          switch (c) {
+            case '{': {
+              size_t tempPos = temp.size();
+              temp.push_back(0);      // Here we will put the size       
+              int64_t tempNr; 
+              // pass local variable tempNr to scanObject because passing
+              // temp[tempPos] is unsafe if the vector gets resized. then
+              // &temp[tempPos] may point into the void
+              scanObject(temp, tempNr, len);
+              temp[tempPos] = tempNr;
+                           // this consumes the closing '}' or throws
+              nr++;
+              break;
             }
-            c = static_cast<uint8_t>(i);
-            switch (c) {
-              case ',':   // OK to stop here, do not consume the comma
-              case ']':
-              case '}':
-                unconsume();
-                break;
-              case ' ':   // WHITESPACE is ignored here
-              case '\n':
-              case '\r':
-              case '\t':
-              case '\f':
-                continue;
-              case '{': {
-                size_t tempPos = temp.size();
-                temp.push_back(0);      // Here we will put the size        
-                scanObject(temp, temp[tempPos], len);
-                             // this consumes the closing '}' or throws
-                nr++;
-                break;
-              }
-              case '[': {
-                size_t tempPos = temp.size();
-                temp.push_back(0);      // Here we will put the size
-                scanArray(temp, temp[tempPos], len);  
-                             // this consumes the closing '}' or throws
-                nr++;
-                break;
-              }
-              case 't':
-                scanTrue(len);  // this consumes "rue" or throws
-                nr++;
-                break;
-              case 'f':
-                scanFalse(len);  // this consumes "alse" or throws
-                nr++;
-                break;
-              case 'n':
-                scanNull(len);  // this consumes "ull" or throws
-                nr++;
-                break;
-              case '-':
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                unconsume();
-                scanNumber(len);  // this consumes the number or throws
-                // Maybe we should do better here and detect integers?
-                nr++;
-                break;
-              case '"': {
-                temp.push_back(scanString(len));
-                nr++;
-                break;
-              }
+            case '[': {
+              size_t tempPos = temp.size();
+              temp.push_back(0);      // Here we will put the size
+              int64_t tempNr;
+              // pass local variable tempNr to scanArray because passing
+              // temp[tempPos] is unsafe if the vector gets resized. then
+              // &temp[tempPos] may point into the void
+              scanArray(temp, tempNr, len);  
+              temp[tempPos] = tempNr;
+                           // this consumes the closing '}' or throws
+              nr++;
+              break;
+            }
+            case 't':
+              scanTrue(len);  // this consumes "rue" or throws
+              nr++;
+              break;
+            case 'f':
+              scanFalse(len);  // this consumes "alse" or throws
+              nr++;
+              break;
+            case 'n':
+              scanNull(len);  // this consumes "ull" or throws
+              nr++;
+              break;
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+              unconsume();
+              scanNumber(len);  // this consumes the number or throws
+              // Maybe we should do better here and detect integers?
+              nr++;
+              break;
+            case '"': {
+              temp.push_back(scanString(len));
+              nr++;
+              break;
+            }
+            default: {
+              throw JasonParserError("value expected");
             }
           }
         }
@@ -511,6 +543,7 @@ namespace triagens {
               case '\r':
               case '\t':
               case '\f':
+              case '\b':
                 continue;
               case '{':
                 _b.set(Jason(10,
