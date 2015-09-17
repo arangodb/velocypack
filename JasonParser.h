@@ -137,20 +137,206 @@ namespace triagens {
           return i;
         }
 
-        void scanNumber (JasonLength& len) {
-          // ...
-          len += 9;   // this is an upper bound
+        void scanTrue (JasonLength& len) {
+          // Called, when main mode has just seen a 't', need to see "rue" next
+          if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
+            throw JasonParserError("true expected");
+          }
+          len++;
         }
 
-        void scanString (JasonLength& len) {
-          // ...
+        void scanFalse (JasonLength& len) {
+          // Called, when main mode has just seen a 'f', need to see "alse" next
+          if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
+              consume() != 'e') {
+            throw JasonParserError("false expected");
+          }
+          len++;
+        }
+
+        void scanNull (JasonLength& len) {
+          // Called, when main mode has just seen a 'n', need to see "ull" next
+          if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
+            throw JasonParserError("null expected");
+          }
+          len++;
+        }
+
+        uint64_t scanDigits () {
+          int i;
+          uint8_t c;
+          uint64_t x = 0;
+          while (true) {
+            i = consume();
+            if (i < 0) {
+              return x;
+            }
+            c = static_cast<uint8_t>(i);
+            if (c < '0' || c > '9') {
+              unconsume();
+              return x;
+            }
+            x = x * 10 + c - '0';
+          }
+        }
+
+        inline uint8_t getOneOrThrow(char const* msg) {
+          int i = consume();
+          if (i < 0) {
+            throw JasonParserError(msg);
+          }
+          return static_cast<uint8_t>(i);
+        }
+
+        void scanNumber (JasonLength& len) {
+          int i;
+          uint8_t c;
+          c = static_cast<uint8_t>(consume());
+          // We know that a character is coming, and we know it is '-' or a
+          // digit, otherwise we would not have been called.
+          if (c == '-') {
+            c = getOneOrThrow("scanNumber: incomplete number");
+          }
+          if (c != '0') {
+            if (c < '1' || c > '9') {
+              throw JasonParserError("scanNumber: incomplete number");
+            }
+            unconsume();
+            scanDigits();
+          }
+          i = consume();
+          if (i < 0) {
+            len += 9;   // FIXME: make this more accurate?
+            return;
+          }
+          c = static_cast<uint8_t>(i);
+          if (c != '.') {
+            unconsume();
+            len += 9;   // FIXME: make this more accurate?
+            return;
+          }
+          c = getOneOrThrow("scanNumber: incomplete number");
+          if (c < '0' || c > '9') {
+            throw JasonParserError("scanNumber: incomplete number");
+          }
+          scanDigits();
+          i = consume();
+          if (i < 0) {
+            len += 9;   // FIXME: make this more accurate
+            return;
+          }
+          c = static_cast<uint8_t>(i);
+          if (c != 'e' && c != 'E') {
+            unconsume();
+            len += 9;   // FIXME: make this more accurate
+            return;
+          }
+          c = getOneOrThrow("scanNumber: incomplete number");
+          if (c == '+' || c == '-') {
+            c = getOneOrThrow("scanNumber: incomplete number");
+          }
+          if (c < '0' || c > '9') {
+            throw JasonParserError("scanNumber: incomplete number");
+          }
+          scanDigits();
+          len += 9;   // FIXME: make this more accurate
+        }
+
+        int64_t scanString (JasonLength& len) {
+          // When we get here, we have seen a " character and now want to
+          // find the end of the string and count the number of bytes.
+          // len is increased by the amount of bytes needed in the Jason
+          // representation and the return value is the number of bytes
+          // in the actual string.
+          int i;
+          uint8_t c;
+          int64_t byteLen = 0;
+
+          while (true) {
+            c = getOneOrThrow("scanString: Unfinished string detected.");
+            if (c < 32) {
+              throw JasonParserError("scanString: Control character detected.");
+            }
+            switch (c) {
+              case '"':
+                len += byteLen;
+                if (byteLen < 128) {
+                  len += 1;
+                }
+                else {
+                  uint64_t x = static_cast<uint32_t>(byteLen);
+                  len += 1;
+                  while (x != 0) {
+                    len++;
+                    x >>= 8;
+                  }
+                }
+                return byteLen;
+              case '\\':
+                // Handle cases or throw error
+                i = consume();
+                if (i < 0) {
+                  throw JasonParserError("scanString: Unfinished string detected.");
+                }
+                c = static_cast<uint8_t>(i);
+                switch (c) {
+                  case '"':
+                  case '\\':
+                  case '/':
+                  case 'b':
+                  case 'f':
+                  case 'n':
+                  case 'r':
+                  case 't':
+                    byteLen++;
+                    break;
+                  case 'u': {
+                    uint32_t v = 0;
+                    for (int j = 0; j < 4; j++) {
+                      i = consume();
+                      if (i < 0) {
+                        throw JasonParserError("scanString: Unfinished \\uXXXX.");
+                      }
+                      c = static_cast<uint8_t>(i);
+                      if (c >= '0' && c <= '9') {
+                        v = (v << 8) + c - '0';
+                      }
+                      else if (c >= 'a' && c <= 'f') {
+                        v = (v << 8) + c - 'a' + 10;
+                      }
+                      else if (c >= 'A' && c <= 'F') {
+                        v = (v << 8) + c - 'A' + 10;
+                      }
+                      else {
+                        throw JasonParserError("scanString: Illegal hash digit.");
+                      }
+                    }
+                    if (v >= 0x4000) {
+                      byteLen += 3;
+                    }
+                    else if (v >= 0x80) {
+                      byteLen += 2;
+                    }
+                    else {
+                      byteLen++;
+                    }
+                    break;
+                  }
+                  default:
+                    throw JasonParserError("scanString: Illegal \\ sequence.");
+                }
+                break;
+              default:
+                byteLen++;
+                break;
+            }
+          }
         }
 
         void scanArray(std::vector<int64_t>& temp,
                        int64_t& nr, JasonLength& len) {
           nr = 0;
           int i;
-          uint8_t c;
           
           JasonLength startLen = len;
 
@@ -189,7 +375,6 @@ namespace triagens {
                         int64_t& nr, JasonLength& len) {
           nr = 0;
           int i;
-          uint8_t c;
           
           JasonLength startLen = len;
 
@@ -295,14 +480,16 @@ namespace triagens {
               case '7':
               case '8':
               case '9':
+                unconsume();
                 scanNumber(len);  // this consumes the number or throws
                 // Maybe we should do better here and detect integers?
                 nr++;
                 break;
-              case '"':
-                scanString(len);
+              case '"': {
+                temp.push_back(scanString(len));
                 nr++;
                 break;
+              }
             }
           }
         }
@@ -377,31 +564,6 @@ namespace triagens {
             }
           }
 #endif
-        }
-
-        void scanTrue (JasonLength& len) {
-          // Called, when main mode has just seen a 't', need to see "rue" next
-          if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
-            throw JasonParserError("true expected");
-          }
-          len++;
-        }
-
-        void scanFalse (JasonLength& len) {
-          // Called, when main mode has just seen a 'f', need to see "alse" next
-          if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
-              consume() != 'e') {
-            throw JasonParserError("false expected");
-          }
-          len++;
-        }
-
-        void scanNull (JasonLength& len) {
-          // Called, when main mode has just seen a 'n', need to see "ull" next
-          if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
-            throw JasonParserError("null expected");
-          }
-          len++;
         }
 
     };
