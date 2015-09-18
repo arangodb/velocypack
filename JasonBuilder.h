@@ -285,9 +285,13 @@ namespace triagens {
               throw JasonBuilderError("Need open object for add() call.");
             }
             JasonLength save = _pos;
+            size_t saveStack = _stack.size();
             set(Jason(attrName, JasonType::String));
             set(sub);
-            reportAdd(save);
+            if (saveStack == _stack.size()) {
+              // If we have opened another array or object, do not report
+              reportAdd(save);
+            }
           }
         }
 
@@ -307,9 +311,13 @@ namespace triagens {
               throw JasonBuilderError("Need open object for add() call.");
             }
             JasonLength save = _pos;
+            size_t saveStack = _stack.size();
             set(Jason(attrName, JasonType::String));
             ret = set(sub);
-            reportAdd(save);
+            if (saveStack == _stack.size()) {
+              // If we have opened another array or object, do not report
+              reportAdd(save);
+            }
           }
           return ret;
         }
@@ -334,17 +342,20 @@ namespace triagens {
               isObject = true;
             }
             JasonLength save = _pos;
+            size_t saveStack = _stack.size();
             set(sub);
             if (isObject) {
               if (_attrWritten) {
-                reportAdd(save);
                 _attrWritten = false;
+                // fall through here intentionally, since we must do reportAdd
               }
               else {
                 _attrWritten = true;
+                return;  // to skip reportAdd
               }
             }
-            else {
+            if (saveStack == _stack.size()) {
+              // If we have opened another array or object, do not report
               reportAdd(save);
             }
           }
@@ -371,17 +382,20 @@ namespace triagens {
               isObject = true;
             }
             JasonLength save = _pos;
+            size_t saveStack = _stack.size();
             ret = set(sub);
             if (isObject) {
               if (_attrWritten) {
-                reportAdd(save);
                 _attrWritten = false;
+                // intentionally fall through here because we must do reportAdd
               }
               else {
                 _attrWritten = true;
+                return ret;   // skip reportAdd in any case
               }
             }
-            else {
+            if (saveStack == _stack.size()) {
+              // If we have opened another array or object, do not report
               reportAdd(save);
             }
           }

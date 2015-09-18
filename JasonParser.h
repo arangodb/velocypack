@@ -652,6 +652,12 @@ namespace triagens {
           c = static_cast<uint8_t>(i);
           if (c != '.') {
             unconsume();
+            if (negative) {
+              _b.add(Jason(-static_cast<uint64_t>(integerPart)));
+            }
+            else {
+              _b.add(Jason(integerPart));
+            }
             return;
           }
           c = getOne();
