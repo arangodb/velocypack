@@ -53,28 +53,30 @@ namespace triagens {
         JasonParser () : _start(nullptr), _size(0), _pos(0) {
         }
 
-        JasonLength parse (std::string const& json) {
+        JasonLength parse (std::string const& json, bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(json.c_str());
           _size  = json.size();
           _pos   = 0;
           _b.clear();
-          return parseInternal();
+          return parseInternal(multi);
         }
 
-        JasonLength parse (uint8_t const* start, size_t size) {
+        JasonLength parse (uint8_t const* start, size_t size,
+                           bool multi = false) {
           _start = start;
           _size = size;
           _pos = 0;
           _b.clear();
-          return parseInternal();
+          return parseInternal(multi);
         }
 
-        JasonLength parse (char const* start, size_t size) {
+        JasonLength  parse (char const* start, size_t size,
+                            bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(start);
           _size = size;
           _pos = 0;
           _b.clear();
-          return parseInternal();
+          return parseInternal(multi);
         }
 
         // We probably want a parse from stream at some stage...
@@ -114,7 +116,7 @@ namespace triagens {
         // check for parse errors (scan phase) and then one to actually
         // build the result (build phase).
 
-        JasonLength parseInternal () {
+        JasonLength parseInternal (bool multi) {
           std::vector<int64_t> temp;
           if (_size > 1024) {
             temp.reserve(_size / 32);
@@ -122,20 +124,29 @@ namespace triagens {
           else {
             temp.reserve(8);
           }
-          int64_t nr = 0;
           JasonLength len = 0;
-          scanJson(temp, nr, len);
-          while (_pos < _size && isWhiteSpace(static_cast<int>(_start[_pos]))) {
-            ++_pos;
-          }
-          if (_pos != _size) {
-            throw JasonParserError("expecting EOF");
-          }
-          _pos = 0;
-          _b.reserve(len);
-          buildJason(temp);
-          assert(nr >= 0);
-          return static_cast<JasonLength>(nr);
+          JasonLength nr = 0;
+          size_t savePos;
+          do {
+            savePos = _pos;
+            scanJson(temp, len);
+            while (_pos < _size && 
+                   isWhiteSpace(static_cast<int>(_start[_pos]))) {
+              ++_pos;
+            }
+            if (! multi && _pos != _size) {
+              throw JasonParserError("expecting EOF");
+            }
+            _pos = savePos;
+            _b.reserve(len);
+            buildJason(temp);
+            while (_pos < _size && 
+                   isWhiteSpace(static_cast<int>(_start[_pos]))) {
+              ++_pos;
+            }
+            nr++;
+          } while (multi && _pos < _size);
+          return nr;
         }
 
         static inline bool isWhiteSpace (int i) {
@@ -402,12 +413,8 @@ namespace triagens {
               consume();
               break;
             }
-            int64_t nr1 = 0;
             // parse array element itself
-            scanJson(temp, nr1, len);
-            if (nr1 != 1) {
-              throw JasonParserError("scanArray: exactly one item expected");
-            }
+            scanJson(temp, len);
             nr++;
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
@@ -462,11 +469,7 @@ namespace triagens {
               throw JasonParserError("scanObject: 2: expected");
             }
 
-            int64_t nr1 = 0;
-            scanJson(temp, nr1, len);
-            if (nr1 != 1) {
-              throw JasonParserError("scanObject: exactly one item expected");
-            }
+            scanJson(temp, len);
             nr++;
             i = skipWhiteSpace("scanObject: , or } expected");
             if (i == '}') {
@@ -494,8 +497,7 @@ namespace triagens {
         }
                        
         void scanJson (std::vector<int64_t>& temp,
-                       int64_t& nr, JasonLength& len) {
-          nr = 0;
+                       JasonLength& len) {
           skipWhiteSpace("expecting item");
           int i = consume();
           if (i < 0) {
@@ -513,7 +515,6 @@ namespace triagens {
               scanObject(temp, tempNr, len);
               temp[tempPos] = tempNr;
                            // this consumes the closing '}' or throws
-              nr++;
               break;
             }
             case '[': {
@@ -526,20 +527,16 @@ namespace triagens {
               scanArray(temp, tempNr, len);  
               temp[tempPos] = tempNr;
                            // this consumes the closing '}' or throws
-              nr++;
               break;
             }
             case 't':
               scanTrue(len);  // this consumes "rue" or throws
-              nr++;
               break;
             case 'f':
               scanFalse(len);  // this consumes "alse" or throws
-              nr++;
               break;
             case 'n':
               scanNull(len);  // this consumes "ull" or throws
-              nr++;
               break;
             case '-':
             case '0':
@@ -555,11 +552,10 @@ namespace triagens {
               unconsume();
               scanNumber(len);  // this consumes the number or throws
               // Maybe we should do better here and detect integers?
-              nr++;
+              // Yes, we will, in buildNumber.
               break;
             case '"': {
               temp.push_back(scanString(len));
-              nr++;
               break;
             }
             default: {
