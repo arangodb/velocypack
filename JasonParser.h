@@ -24,6 +24,7 @@ namespace triagens {
       //   }
       //   catch (JasonParserError e) {
       //     std::cout << "Parse error: " << e.what() << std::endl;
+      //     std::cout << "Position of error: " << p.errorPos() << std::endl;
       //   }
       //   JasonBuilder b = p.steal();
       //
@@ -80,9 +81,16 @@ namespace triagens {
         }
 
         // We probably want a parse from stream at some stage...
+        // Not with this high-performance two-pass approach. :-(
         
         JasonBuilder&& steal () {
           return std::move(_b);
+        }
+
+        // Returns the position at the time when the just reported error
+        // occurred, only use when handling an exception.
+        size_t errorPos () {
+          return _pos > 0 ? _pos-1 : _pos;
         }
 
       private:
@@ -135,6 +143,7 @@ namespace triagens {
               ++_pos;
             }
             if (! multi && _pos != _size) {
+              consume();  // to get error reporting right
               throw JasonParserError("expecting EOF");
             }
             _pos = savePos;

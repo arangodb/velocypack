@@ -690,6 +690,7 @@ TEST(ParserTest, Garbage1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage2) {
@@ -697,6 +698,7 @@ TEST(ParserTest, Garbage2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage3) {
@@ -704,6 +706,7 @@ TEST(ParserTest, Garbage3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(3u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage4) {
@@ -711,6 +714,7 @@ TEST(ParserTest, Garbage4) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(2u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage5) {
@@ -718,6 +722,7 @@ TEST(ParserTest, Garbage5) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage6) {
@@ -725,6 +730,7 @@ TEST(ParserTest, Garbage6) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(3u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage7) {
@@ -732,6 +738,7 @@ TEST(ParserTest, Garbage7) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(5u, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage8) {
@@ -739,6 +746,7 @@ TEST(ParserTest, Garbage8) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation1) {
@@ -746,6 +754,7 @@ TEST(ParserTest, Punctuation1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation2) {
@@ -753,6 +762,7 @@ TEST(ParserTest, Punctuation2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation3) {
@@ -760,6 +770,7 @@ TEST(ParserTest, Punctuation3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation4) {
@@ -767,6 +778,7 @@ TEST(ParserTest, Punctuation4) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation5) {
@@ -774,6 +786,7 @@ TEST(ParserTest, Punctuation5) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Null) {
@@ -813,6 +826,7 @@ TEST(ParserTest, ZeroInvalid) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, NumberIncomplete) {
@@ -820,6 +834,7 @@ TEST(ParserTest, NumberIncomplete) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, Int1) {
@@ -899,6 +914,7 @@ TEST(ParserTest, Empty) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, WhitespaceOnly) {
@@ -906,6 +922,7 @@ TEST(ParserTest, WhitespaceOnly) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, UnterminatedStringLiteral) {
@@ -913,6 +930,7 @@ TEST(ParserTest, UnterminatedStringLiteral) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(8u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteral) {
@@ -939,6 +957,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue2) {
@@ -950,6 +969,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
@@ -957,6 +977,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(3u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
@@ -964,6 +985,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
@@ -971,6 +993,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(5u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
@@ -978,13 +1001,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
-}
-
-TEST(ParserTest, StringLiteralUnfinishedUtfSequence5) {
-  std::string const value("\"\\u012\"");
-
-  JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(6u, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
@@ -1096,6 +1113,7 @@ TEST(ParserTest, NestedArrayInvalid1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, NestedArrayInvalid2) {
@@ -1103,6 +1121,7 @@ TEST(ParserTest, NestedArrayInvalid2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, NestedArrayInvalid3) {
@@ -1110,6 +1129,7 @@ TEST(ParserTest, NestedArrayInvalid3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(34u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray1) {
@@ -1117,6 +1137,7 @@ TEST(ParserTest, BrokenArray1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray2) {
@@ -1124,6 +1145,7 @@ TEST(ParserTest, BrokenArray2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(1u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray3) {
@@ -1131,6 +1153,7 @@ TEST(ParserTest, BrokenArray3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(2u, parser.errorPos());
 }
 
 TEST(ParserTest, EmptyObject) {
@@ -1146,6 +1169,7 @@ TEST(ParserTest, BrokenObject1) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject2) {
@@ -1153,6 +1177,7 @@ TEST(ParserTest, BrokenObject2) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject3) {
@@ -1160,6 +1185,7 @@ TEST(ParserTest, BrokenObject3) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(0u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject4) {
@@ -1167,6 +1193,7 @@ TEST(ParserTest, BrokenObject4) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject5) {
@@ -1174,6 +1201,7 @@ TEST(ParserTest, BrokenObject5) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(5u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject6) {
@@ -1181,6 +1209,7 @@ TEST(ParserTest, BrokenObject6) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(6u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject7) {
@@ -1188,6 +1217,7 @@ TEST(ParserTest, BrokenObject7) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(10u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject8) {
@@ -1195,6 +1225,7 @@ TEST(ParserTest, BrokenObject8) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(13u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject9) {
@@ -1202,6 +1233,7 @@ TEST(ParserTest, BrokenObject9) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(13u, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject10) {
@@ -1209,6 +1241,7 @@ TEST(ParserTest, BrokenObject10) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+  EXPECT_EQ(7u, parser.errorPos());
 }
 
 TEST(ParserTest, ObjectSimple1) {
