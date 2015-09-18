@@ -274,7 +274,7 @@ namespace triagens {
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
-          if (_stack.empty() == 0) {
+          if (_stack.empty()) {
             set(Jason(attrName, JasonType::String));
             set(sub);
           }
@@ -284,14 +284,9 @@ namespace triagens {
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            JasonLength save = _pos;
-            size_t saveStack = _stack.size();
+            reportAdd(_pos);
             set(Jason(attrName, JasonType::String));
             set(sub);
-            if (saveStack == _stack.size()) {
-              // If we have opened another array or object, do not report
-              reportAdd(save);
-            }
           }
         }
 
@@ -310,14 +305,9 @@ namespace triagens {
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            JasonLength save = _pos;
-            size_t saveStack = _stack.size();
+            reportAdd(_pos);
             set(Jason(attrName, JasonType::String));
             ret = set(sub);
-            if (saveStack == _stack.size()) {
-              // If we have opened another array or object, do not report
-              reportAdd(save);
-            }
           }
           return ret;
         }
@@ -334,30 +324,23 @@ namespace triagens {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
             if (_start[tos.base] >= 0x06) {   // object or long object
-              if (_attrWritten ||
-                  (sub.jasonType() != JasonType::String &&
-                   sub.jasonType() != JasonType::StringLong)) {
+              if (! _attrWritten &&
+                  sub.jasonType() != JasonType::String &&
+                  sub.jasonType() != JasonType::StringLong) {
                 throw JasonBuilderError("Need open array for this add() call.");
               }
               isObject = true;
             }
-            JasonLength save = _pos;
-            size_t saveStack = _stack.size();
-            set(sub);
             if (isObject) {
-              if (_attrWritten) {
-                _attrWritten = false;
-                // fall through here intentionally, since we must do reportAdd
+              if (! _attrWritten) {
+                reportAdd(_pos);
               }
-              else {
-                _attrWritten = true;
-                return;  // to skip reportAdd
-              }
+              _attrWritten = ! _attrWritten;
             }
-            if (saveStack == _stack.size()) {
-              // If we have opened another array or object, do not report
-              reportAdd(save);
+            else {
+              reportAdd(_pos);
             }
+            set(sub);
           }
         }
 
@@ -374,30 +357,23 @@ namespace triagens {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
             if (_start[tos.base] >= 0x06) {   // object or long object
-              if (_attrWritten ||
-                  (sub.jasonType() != JasonType::String &&
-                   sub.jasonType() != JasonType::StringLong)) {
+              if (! _attrWritten &&
+                  sub.jasonType() != JasonType::String &&
+                  sub.jasonType() != JasonType::StringLong) {
                 throw JasonBuilderError("Need open array for this add() call.");
               }
               isObject = true;
             }
-            JasonLength save = _pos;
-            size_t saveStack = _stack.size();
-            ret = set(sub);
             if (isObject) {
-              if (_attrWritten) {
-                _attrWritten = false;
-                // intentionally fall through here because we must do reportAdd
+              if (! _attrWritten) {
+                reportAdd(_pos);
               }
-              else {
-                _attrWritten = true;
-                return ret;   // skip reportAdd in any case
-              }
+              _attrWritten = ! _attrWritten;
             }
-            if (saveStack == _stack.size()) {
-              // If we have opened another array or object, do not report
-              reportAdd(save);
+            else {
+              reportAdd(_pos);
             }
+            ret = set(sub);
           }
           return ret;
         }
@@ -435,11 +411,7 @@ namespace triagens {
             }
           }
           // Now the array or object is complete, we pop a State off the _stack
-          JasonLength base = tos.base;
           _stack.pop_back();
-          if (! _stack.empty()) {
-            reportAdd(base);
-          }
         }
 
         JasonBuilder& operator() (std::string const& attrName, Jason sub) {
