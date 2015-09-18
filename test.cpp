@@ -972,6 +972,19 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
   EXPECT_EQ(1u, parser.errorPos());
 }
 
+TEST(ParserTest, StringLiteralInvalidUtfValue3) {
+  for (char c = 0; c < 0x20; c++) {
+    std::string value;
+    value.push_back('"');
+    value.push_back(c);
+    value.push_back('"');
+
+    JasonParser parser;
+    EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+    EXPECT_EQ(1u, parser.errorPos());
+  }
+}
+
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
   std::string const value("\"\\u\"");
 
@@ -1029,7 +1042,7 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
 }
 
 TEST(ParserTest, StringLiteralWithSpecials) {
-  std::string const value("  \"der\\thund\\nging\\rin\tden\\\\wald\\\"und\\b\\nden'fux\"  ");
+  std::string const value("  \"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"  ");
 
   JasonParser parser;
   JasonLength len = parser.parse(value);

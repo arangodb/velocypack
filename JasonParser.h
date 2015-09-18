@@ -1,6 +1,8 @@
 #ifndef JASON_PARSER_H
 #define JASON_PARSER_H 1
 
+#include <math.h>
+
 #include "JasonType.h"
 #include "Jason.h"
 #include "JasonBuilder.h"
@@ -137,6 +139,7 @@ namespace triagens {
           size_t savePos;
           do {
             savePos = _pos;
+            temp.clear();
             scanJson(temp, len);
             while (_pos < _size && 
                    isWhiteSpace(static_cast<int>(_start[_pos]))) {
@@ -148,7 +151,8 @@ namespace triagens {
             }
             _pos = savePos;
             _b.reserve(len);
-            buildJason(temp);
+            size_t tempPos = 0;
+            buildJason(temp, tempPos);
             while (_pos < _size && 
                    isWhiteSpace(static_cast<int>(_start[_pos]))) {
               ++_pos;
@@ -170,6 +174,17 @@ namespace triagens {
             if (i < 0) {
               throw JasonParserError(err);
             }
+            if (! isWhiteSpace(i)) { 
+              return i;
+            }
+            consume();
+          } 
+        }
+
+        // The fast non-checking variant:
+        inline int skipWhiteSpaceNoCheck () {
+          while (true) {
+            int i = peek();
             if (! isWhiteSpace(i)) { 
               return i;
             }
@@ -218,12 +233,35 @@ namespace triagens {
           }
         }
 
+        double scanDigitsFractional () {
+          double pot = 0.1;
+          double x = 0.0;
+          while (true) {
+            int i = consume();
+            if (i < 0) {
+              return x;
+            }
+            uint8_t c = static_cast<uint8_t>(i);
+            if (c < '0' || c > '9') {
+              unconsume();
+              return x;
+            }
+            x = x + pot * (c - '0');
+            pot /= 10.0;
+          }
+        }
+
         inline uint8_t getOneOrThrow (char const* msg) {
           int i = consume();
           if (i < 0) {
             throw JasonParserError(msg);
           }
           return static_cast<uint8_t>(i);
+        }
+
+        inline uint8_t getOne () {
+          // unchecked version of the above
+          return static_cast<uint8_t>(consume());
         }
 
         void scanNumber (JasonLength& len) {
@@ -290,10 +328,6 @@ namespace triagens {
 
           while (true) {
             uint8_t c = getOneOrThrow("scanString: Unfinished string detected.");
-            // note: control chars in strings are actually valid 
-            // if (c < 32) {
-            //   throw JasonParserError("scanString: Control character detected.");
-            // }
             switch (c) {
               case '"':
                 len += byteLen;
@@ -349,14 +383,14 @@ namespace triagens {
                         throw JasonParserError("scanString: Illegal hash digit.");
                       }
                     }
-                    if (v >= 0x4000) {
-                      byteLen += 3;
+                    if (v < 0x80) {
+                      byteLen++;
                     }
-                    else if (v >= 0x80) {
+                    else if (v < 0x800) {
                       byteLen += 2;
                     }
                     else {
-                      byteLen++;
+                      byteLen += 3;
                     }
                     break;
                   }
@@ -365,7 +399,7 @@ namespace triagens {
                 }
                 break;
               default:
-                if (c < 0x20 && c != 0x09) {
+                if (c < 0x20) {
                   // control character
                   throw JasonParserError("scanString: Found control character.");
                 }
@@ -376,7 +410,10 @@ namespace triagens {
                 else {
                   // UTF-8 sequence!
                   int follow = 0;
-                  if ((c & 0xe0) == 0xc0) {
+                  if ((c & 0xe0) == 0x80) {
+                    throw JasonParserError("scanString: Illegal UTF-8 byte.");
+                  }
+                  else if ((c & 0xe0) == 0xc0) {
                     // two-byte sequence
                     follow = 1;
                   }
@@ -388,20 +425,17 @@ namespace triagens {
                     // four-byte sequence
                     follow = 3;
                   }
+                  else {
+                    throw JasonParserError("scanString: Illegal 5- or 6-byte sequence found in UTF-8 string.");
+                  }
 
                   // validate follow up characters
                   for (i = 0; i < follow; ++i) {
                     c = getOneOrThrow("scanString: truncated UTF-8 sequence");
                     if ((c & 0xc0) != 0x80) {
-                      follow = 0;
-                      break;
+                      throw JasonParserError("scanString: invalid UTF-8 sequence");
                     }
                   }
-
-                  if (follow == 0) {
-                    throw JasonParserError("scanString: invalid UTF-8 sequence");
-                  } 
-
                   byteLen += follow;
                 }
                 break;
@@ -438,8 +472,16 @@ namespace triagens {
             consume();
           }
             
-          // TODO: what is the meaning of magic number 514? 2 * 256 + 2, but why??
-          if (nr > 255 || len - startLen + 514 > 65535) {
+          // If we have more than 255 entries, then it must be a long array.
+          // If we have less than 256, then we need to make sure that all
+          // offsets are 16 bit. len-startLen is the size we need for the
+          // actual objects, and then we need the header: if there are
+          // <= 255 entries, we need 1 byte for the type, 1 byte for the
+          // number of entries, 2 bytes for the offset to the end and
+          // then nr-1 byte pairs for the offsets, thus 4 + 2*(nr-1).
+          // Note that for nr==0 we actually need 4 bytes of header, but
+          // then we are in the small case anyway.
+          if (nr > 255 || len - startLen + 4 + 2*(nr-1) > 65535) {
             // ArrayLong
             len += (nr > 1) ? 8 * (nr + 1) : 16;
             nr = -nr;
@@ -470,7 +512,7 @@ namespace triagens {
             // get past the initial '"'
             consume();
 
-            scanString(len);
+            temp.push_back(scanString(len));
             skipWhiteSpace("scanObject: : expected");
             // always expecting the ':' here
             i = consume();
@@ -493,8 +535,15 @@ namespace triagens {
             consume();
           }
             
-          // TODO: what is the meaning of magic number 516? 2 * 256 + 4, but why??
-          if (nr > 255 || len - startLen + 516 > 65535) {
+          // If we have more than 255 entries, then it must be a long object.
+          // If we have less than 256, then we need to make sure that all
+          // offsets are 16 bit. len-startLen is the size we need for the
+          // actual objects, and then we need the header:
+          // if there are <= 255 entries, we need
+          // 1 byte for the type, 1 byte for the number of entries, 2
+          // bytes for the offset to the end and then nr byte
+          // pairs for the offsets, thus 4 + 2*nr
+          if (nr > 255 || len - startLen + 4 + 2*nr > 65535) {
             // ObjectLong
             len += 8 * (nr + 2);
             nr = -nr;
@@ -573,77 +622,300 @@ namespace triagens {
           }
         }
 
-        void buildJason (std::vector<int64_t>& /*temp*/) {
-#if 0
+        void buildNumber () {
           int i;
-          uint8_t c;
-
-          while (true) {
-            i = consume();
-            if (i < 0) {
-              break;  // OK to stop here
+          uint8_t c = static_cast<uint8_t>(consume());
+          uint64_t integerPart;
+          double   fractionalPart;
+          uint64_t expPart;
+          // We know that a character is coming, and we know it is '-' or a
+          // digit, otherwise we would not have been called.
+          bool negative = false;
+          if (c == '-') {
+            c = getOne();
+            negative = true;
+          }
+          if (c != '0') {
+            unconsume();
+            integerPart = scanDigits();
+          }
+          i = consume();
+          if (i < 0) {
+            if (negative) {
+              _b.set(Jason(-static_cast<uint64_t>(integerPart)));
             }
-            c = static_cast<uint8_t>(i);
+            else {
+              _b.set(Jason(integerPart));
+            }
+            return;
+          }
+          c = static_cast<uint8_t>(i);
+          if (c != '.') {
+            unconsume();
+            return;
+          }
+          c = getOne();
+          fractionalPart = scanDigitsFractional();
+          if (negative) {
+            fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
+          }
+          else {
+            fractionalPart = static_cast<double>(integerPart) + fractionalPart;
+          }
+          i = consume();
+          if (i < 0) {
+            _b.set(Jason(fractionalPart));
+            return;
+          }
+          c = static_cast<uint8_t>(i);
+          if (c != 'e' && c != 'E') {
+            unconsume();
+            _b.set(Jason(fractionalPart));
+            return;
+          }
+          c = getOneOrThrow("scanNumber: incomplete number");
+          negative = false;
+          if (c == '+' || c == '-') {
+            negative = (c == '-');
+            c = getOne();
+          }
+          // We know c is another digit here.
+          expPart = scanDigits();
+          if (negative) {
+            fractionalPart *= pow(10, -static_cast<double>(expPart));
+          }
+          else {
+            fractionalPart *= pow(10, static_cast<double>(expPart));
+          }
+          _b.set(Jason(fractionalPart));
+        }
+
+        void buildString (std::vector<int64_t>& temp, size_t& tempPos) {
+          // When we get here, we have seen a " character and now want to
+          // actually build the string from what we see. All error checking
+          // has already been done. And: temp[tempPos] is the length of the
+          // string that will be created.
+
+          int64_t strLen = temp[tempPos++];
+          uint8_t* target;
+          if (strLen > 127) {
+            target = _b.set(JasonPair(static_cast<uint8_t const*>(nullptr), 
+                                      static_cast<uint64_t>(strLen),
+                                      JasonType::StringLong));
+          }
+          else {
+            target = _b.set(JasonPair(static_cast<uint8_t const*>(nullptr),
+                                      static_cast<uint64_t>(strLen),
+                                      JasonType::String));
+          }
+
+          int i;
+          while (true) {
+            uint8_t c = getOne();
             switch (c) {
-              case ' ':   // WHITESPACE is ignored here
-              case '\n':
-              case '\r':
-              case '\t':
-              case '\f':
-              case '\b':
-                continue;
-              case '{':
-                _b.set(Jason(10,
-                             // NEED SIZE HERE
-                             JasonType::Object)); 
-                             // NEED TO KNOW IF LONG HERE
-                parseObject();  // this consumes the closing '}' or throws
-                break;
-              case '[':
-                _b.set(Jason(10,
-                             // NEED SIZE HERE
-                             JasonType::Array)); 
-                             // NEED TO KNOW IF LONG HERE
-                scanObject();  // this consumes the closing '}' or throws
-                break;
-              case 't':
-                scanTrue();  // this consumes "rue" or throws
-                _b.set(Jason(true));
-                count++;
-                break;
-              case 'f':
-                scanFalse();  // this consumes "alse" or throws
-                _b.set(Jason(false));
-                count++;
-                break;
-              case 'n':
-                scanNull();  // this consumes "ull" or throws
-                _b.set(Jason());
-                count++;
-                break;
-              case '-':
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                scanNumber();  // this consumes the number or throws
-                // Maybe we should do better here and detect integers?
-                _b.set(Jason(n, JasonType::Double));
-                count++;
-                break;
               case '"':
-                scanString();  // consumes the string, determines the length
-                count++;
+                return;
+              case '\\':
+                i = consume();
+                c = static_cast<uint8_t>(i);
+                switch (c) {
+                  case '"':
+                    *target++ = '"';
+                    break;
+                  case '\\':
+                    *target++ = '\\';
+                    break;
+                  case '/':
+                    *target++ = '/';
+                    break;
+                  case 'b':
+                    *target++ = '\b';
+                    break;
+                  case 'f':
+                    *target++ = '\f';
+                    break;
+                  case 'n':
+                    *target++ = '\n';
+                    break;
+                  case 'r':
+                    *target++ = '\r';
+                    break;
+                  case 't':
+                    *target++ = '\t';
+                    break;
+                  case 'u': {
+                    // TODO: do surrogate pairs need to be handled specially here?
+                    // TODO: unfortunately, yes, leave this for later now:
+                    uint32_t v = 0;
+                    for (int j = 0; j < 4; j++) {
+                      i = consume();
+                      c = static_cast<uint8_t>(i);
+                      if (c >= '0' && c <= '9') {
+                        v = (v << 8) + c - '0';
+                      }
+                      else if (c >= 'a' && c <= 'f') {
+                        v = (v << 8) + c - 'a' + 10;
+                      }
+                      else if (c >= 'A' && c <= 'F') {
+                        v = (v << 8) + c - 'A' + 10;
+                      }
+                    }
+                    if (v < 0x80) {
+                      *target++ = v;
+                    }
+                    else if (v < 0x800) {
+                      *target++ = 0xc0 + (v >> 6);
+                      *target++ = 0x80 + (v & 0x3f);
+                    }
+                    else {    // if (v < 0x10000)  automatic
+                      *target++ = 0xe0 + (v >> 12);
+                      *target++ = 0x80 + ((v >> 6) & 0x3f);
+                      *target++ = 0x80 + (v & 0x3f);
+                    }
+                    break;
+                  }
+                  default:
+                    break;
+                }
+                break;
+              default:
+                *target++ = c;
                 break;
             }
           }
-#endif
+        }
+
+        void buildObject (std::vector<int64_t>& temp, size_t tempPos) {
+          // Remembered from previous pass:
+          int64_t nrAttrs = temp[tempPos++];
+          if (nrAttrs < 0) {
+            // Long Object:
+            _b.set(Jason(-nrAttrs, JasonType::ObjectLong));
+          }
+          else {
+            _b.set(Jason(nrAttrs, JasonType::Object));
+          }
+          int64_t nr = 0;
+          while (true) {
+            int i = skipWhiteSpaceNoCheck();
+            if (i == '}' && nr == 0) {
+              // '}' is only valid here if we haven't seen a ',' last time
+              consume();
+              break;
+            }
+            // always expecting a string attribute name here
+            // get past the initial '"'
+            consume();
+
+            JasonLength save = _b.getPos();
+            buildString(temp, tempPos);
+            skipWhiteSpaceNoCheck();
+            // always expecting the ':' here
+            i = consume();
+
+            buildJason(temp, tempPos);
+            _b.reportAdd(save);
+            nr++;
+            i = skipWhiteSpaceNoCheck();
+            if (i == '}') {
+              // end of object
+              consume();
+              break;
+            }
+            // skip over ','
+            consume();
+          }
+          _b.close();
+        }
+                       
+        void buildArray (std::vector<int64_t>& temp, size_t& tempPos) {
+          // Remembered from previous pass:
+          int64_t nrEntries = temp[tempPos++];
+          if (nrEntries < 0) {
+            // Long Array:
+            _b.set(Jason(-nrEntries, JasonType::ArrayLong));
+          }
+          else {
+            _b.set(Jason(nrEntries, JasonType::Array));
+          }
+          int64_t nr = 0;
+          while (true) {
+            int i = skipWhiteSpaceNoCheck();
+            if (i == ']' && nr == 0) { 
+              // ']' is only valid here if we haven't seen a ',' last time
+              consume();
+              break;
+            }
+            // parse array element itself
+            JasonLength save = _b.getPos();
+            buildJason(temp, tempPos);
+            _b.reportAdd(save);
+            nr++;
+            i = skipWhiteSpaceNoCheck();
+            if (i == ']') {
+              // end of array
+              consume();
+              break;
+            }
+            // skip over ','
+            consume();
+          }
+          _b.close();
+        }
+                       
+        void buildJason (std::vector<int64_t>& temp, size_t& tempPos) {
+          skipWhiteSpaceNoCheck();
+          int i = consume();
+          if (i < 0) {
+            return; 
+          }
+          uint8_t c = static_cast<uint8_t>(i);
+          switch (c) {
+            case '{': {
+              buildObject(temp, tempPos);   // this consumes the closing '}'
+              break;
+            }
+            case '[': {
+              buildArray(temp, tempPos);  // this consumes the closing '}'
+              break;
+            }
+            case 't':
+              // consume "rue"
+              consume(); consume(); consume();
+              _b.set(Jason(true));
+              break;
+            case 'f':
+              // consume "alse"
+              consume(); consume(); consume(); consume();
+              _b.set(Jason(false));
+              break;
+            case 'n':
+              // consume "ull"
+              consume(); consume(); consume();
+              _b.set(Jason());
+              break;
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+              unconsume();
+              buildNumber();  // this consumes the number
+              break;
+            case '"': {
+              buildString(temp, tempPos);
+              break;
+            }
+            default: {
+              throw JasonParserError("value expected");
+            }
+          }
         }
 
     };

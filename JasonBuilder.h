@@ -574,7 +574,7 @@ namespace triagens {
           }
         }
 
-        void set (JasonPair pair) {
+        uint8_t* set (JasonPair pair) {
           // This method builds a single further Jason item at the current
           // append position. This is the case for JasonType::ID or
           // JasonType::Binary, which both need two pieces of information
@@ -585,6 +585,7 @@ namespace triagens {
             set(Jason(pair.getSize(), JasonType::UInt));
             set(Jason(reinterpret_cast<char const*>(pair.getStart()),
                       JasonType::String));
+            return nullptr;  // unused here
           }
           else if (pair.getType() == JasonType::Binary) {
             uint64_t v = pair.getSize();
@@ -593,9 +594,30 @@ namespace triagens {
             appendUInt(v, 0xcf);
             memcpy(_start + _pos, pair.getStart(), v);
             _pos += v;
+            return nullptr;  // unused here
+          }
+          else if (pair.getType() == JasonType::String ||
+                   pair.getType() == JasonType::StringLong) {
+            uint64_t size = pair.getSize();
+            if (size > 127) {
+              JasonLength lenSize = uintLength(size);
+              reserveSpace(1 + lenSize + size);
+              appendUInt(size, 0xbf);
+              _pos += size;
+            }
+            else {
+              reserveSpace(1 + size);
+              _start[_pos++] = 0x40 + size;
+              _pos += size;
+            }
+            // Note that the data is not filled in! It is the responsibility
+            // of the caller to fill in 
+            //   _start + _pos - size .. _start + _pos - 1
+            // with valid UTF-8!
+            return _start + _pos - size;
           }
           else {
-            throw JasonBuilderError("Only JasonType::ID and JasonType::Binary valid for JasonPair argument.");
+            throw JasonBuilderError("Only JasonType::ID, JasonType::Binary, JasonType::String and JasonType::StringLong are valid for JasonPair argument.");
           }
         }
 
@@ -614,7 +636,7 @@ namespace triagens {
           reportAdd(save);
         }
 
-        void add (std::string const& attrName, JasonPair sub) {
+        uint8_t* add (std::string const& attrName, JasonPair sub) {
           if (_stack.empty()) {
             throw JasonBuilderError("Need open object for add(a,s) call.");
           }
@@ -625,8 +647,9 @@ namespace triagens {
           }
           JasonLength save = _pos;
           set(Jason(attrName, JasonType::String));
-          set(sub);
+          uint8_t* ret = set(sub);
           reportAdd(save);
+          return ret;
         }
 
         void add (Jason sub) {
@@ -643,7 +666,7 @@ namespace triagens {
           reportAdd(save);
         }
 
-        void add (JasonPair sub) {
+        uint8_t* add (JasonPair sub) {
           if (_stack.empty()) {
             throw JasonBuilderError("Need open array for add() call.");
           }
@@ -653,8 +676,9 @@ namespace triagens {
             throw JasonBuilderError("Need open array for add() call.");
           }
           JasonLength save = _pos;
-          set(sub);
+          uint8_t* ret = set(sub);
           reportAdd(save);
+          return ret;
         }
 
         void close () {
@@ -702,7 +726,17 @@ namespace triagens {
           return *this;
         }
 
+        JasonBuilder& operator() (std::string const& attrName, JasonPair sub) {
+          add(attrName, sub);
+          return *this;
+        }
+
         JasonBuilder& operator() (Jason sub) {
+          add(sub);
+          return *this;
+        }
+
+        JasonBuilder& operator() (JasonPair sub) {
           add(sub);
           return *this;
         }
@@ -723,36 +757,9 @@ namespace triagens {
           }
         }
 
-      private:
-
-        // returns number of bytes required to store the value
-        JasonLength uintLength (uint64_t value) const {
-          JasonLength vSize = 0;
-          do {
-            vSize++;
-            value >>= 8;
-          } 
-          while (value != 0);
-          return vSize;
-        }
-
-        void appendUInt (uint64_t v, uint8_t base) {
-          JasonLength vSize = uintLength(v);
-          reserveSpace(1 + vSize);
-          _start[_pos++] = base + vSize;
-          for (uint64_t x = v; vSize > 0; vSize--) {
-            _start[_pos++] = x & 0xff;
-            x >>= 8;
-          }
-        }
-
-        void appendInt (int64_t v) {
-          if (v >= 0) {
-            appendUInt(static_cast<uint64_t>(v), 0x1f);
-          }
-          else {
-            appendUInt(static_cast<uint64_t>(-v), 0x27);
-          }
+        // Only useful for external reportAdd:
+        JasonLength getPos () {
+          return _pos;
         }
 
         void reportAdd (JasonLength itemStart) {
@@ -807,6 +814,39 @@ namespace triagens {
           }
           tos.index++;
         }
+        
+      private:
+
+        // returns number of bytes required to store the value
+        JasonLength uintLength (uint64_t value) const {
+          JasonLength vSize = 0;
+          do {
+            vSize++;
+            value >>= 8;
+          } 
+          while (value != 0);
+          return vSize;
+        }
+
+        void appendUInt (uint64_t v, uint8_t base) {
+          JasonLength vSize = uintLength(v);
+          reserveSpace(1 + vSize);
+          _start[_pos++] = base + vSize;
+          for (uint64_t x = v; vSize > 0; vSize--) {
+            _start[_pos++] = x & 0xff;
+            x >>= 8;
+          }
+        }
+
+        void appendInt (int64_t v) {
+          if (v >= 0) {
+            appendUInt(static_cast<uint64_t>(v), 0x1f);
+          }
+          else {
+            appendUInt(static_cast<uint64_t>(-v), 0x27);
+          }
+        }
+
     };
 
   }  // namespace triagens::basics
