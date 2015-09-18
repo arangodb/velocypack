@@ -25,11 +25,9 @@ JasonLength JasonSlice::byteSize () const {
       return readInteger<JasonLength>(_start + 2, 2);
        
     case JasonType::ArrayLong:
-      // TODO
       return readInteger<JasonLength>(_start + 7, 8);
 
     case JasonType::Object:
-      // TODO
       return readInteger<JasonLength>(_start + 2, 2);
 
     case JasonType::ObjectLong:
