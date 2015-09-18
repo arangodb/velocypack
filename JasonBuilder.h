@@ -23,7 +23,7 @@ namespace triagens {
       //
       // Use as follows:                         to build Jason like this:
       //   JasonBuilder b;
-      //   b.set(Jason(5, JasonType::Object));   b = {
+      //   b.add(Jason(5, JasonType::Object));    b = {
       //   b.add("a", Jason(1.0));                      "a": 1.0,
       //   b.add("b", Jason());                         "b": null,
       //   b.add("c", Jason(false));                    "c": false,
@@ -39,8 +39,9 @@ namespace triagens {
       //   b.close();                                        }
       //
       // Or, if you like fancy syntactic sugar:
-      //   JasonBuilder b(JasonType::Object, 5); b = {
-      //   b("a", Jason(1.0))                          "a": 1.0,
+      //   JasonBuilder b;
+      //   b(Jason(5, JasonType::Object))        b = {
+      //    ("a", Jason(1.0))                          "a": 1.0,
       //    ("b", Jason())                             "b": null,
       //    ("c", Jason(false))                        "c": false,
       //    ("d", Jason("xyz"))                        "d": "xyz",
@@ -65,10 +66,11 @@ namespace triagens {
 
         std::vector<uint8_t> _alloc;
         bool         _externalMem;          // true if buffer came from the outside
-        bool         _sealed;
         uint8_t*     _start;
         JasonLength  _size;
         JasonLength  _pos;   // the current append position, always <= _size
+        bool         _attrWritten;  // indicates that an attribute name
+                                    // in an object has been written
 
         struct State {
           JasonLength base;   // Start of object currently being built
@@ -123,8 +125,9 @@ namespace triagens {
 
       public:
 
-        JasonBuilder (JasonType /*type*/ = JasonType::None, JasonLength spaceHint = 1) 
-          : _externalMem(false), _sealed(false), _pos(0) {
+        JasonBuilder (JasonType /*type*/ = JasonType::None,
+                      JasonLength spaceHint = 1) 
+          : _externalMem(false), _pos(0), _attrWritten(false) {
           JasonUtils::CheckSize(spaceHint);
           _alloc.reserve(static_cast<size_t>(spaceHint));
           _alloc.push_back(0);
@@ -134,7 +137,8 @@ namespace triagens {
 
         JasonBuilder (uint8_t* start, JasonLength size,
                       JasonType /*type*/ = JasonType::None) 
-          : _externalMem(true), _sealed(false), _start(start), _size(size), _pos(0) {
+          : _externalMem(true), _start(start), _size(size), _pos(0),
+            _attrWritten(false) {
         }
       
         ~JasonBuilder () {
@@ -152,10 +156,10 @@ namespace triagens {
               _alloc.push_back(*x++);
             }
           }
-          _sealed = that._sealed;
           _start = _alloc.data();
           _size = _alloc.size();
           _pos = that._pos;
+          _attrWritten = that._attrWritten;
           _stack = that._stack;
         }
 
@@ -172,17 +176,16 @@ namespace triagens {
               _alloc.push_back(*x++);
             }
           }
-          _sealed = that._sealed;
           _start = _alloc.data();
           _size = _alloc.size();
           _pos = that._pos;
+          _attrWritten = that._attrWritten;
           _stack = that._stack;
           return *this;
         }
 
         JasonBuilder (JasonBuilder&& that) {
           _externalMem = that._externalMem;
-          _sealed = that._sealed;
           if (_externalMem) {
             _alloc.clear();
             _start = that._start;
@@ -195,16 +198,17 @@ namespace triagens {
             _size = _alloc.size();
           }
           _pos = that._pos;
+          _attrWritten = that._attrWritten;
           _stack.clear();
           _stack.swap(that._stack);
-          that._sealed = false;
           that._start = nullptr;
           that._size = 0;
+          that._pos = 0;
+          that._attrWritten = false;
         }
 
         JasonBuilder& operator= (JasonBuilder&& that) {
           _externalMem = that._externalMem;
-          _sealed = that._sealed;
           if (_externalMem) {
             _alloc.clear();
             _start = that._start;
@@ -217,18 +221,19 @@ namespace triagens {
             _size = _alloc.size();
           }
           _pos = that._pos;
+          _attrWritten = that._attrWritten;
           _stack.clear();
           _stack.swap(that._stack);
-          that._sealed = false;
           that._start = nullptr;
           that._size = 0;
+          that._pos = 0;
+          that._attrWritten = false;
           return *this;
         }
 
         void clear () {
-          // TODO: do we want to reset _sealed here?
-          _sealed = false;
           _pos = 0;
+          _attrWritten = false;
           _stack.clear();
         }
 
@@ -264,6 +269,202 @@ namespace triagens {
             clear();
           }
         }
+
+        void add (std::string const& attrName, Jason sub) {
+          if (_attrWritten) {
+            throw JasonBuilderError("Attribute name already written.");
+          }
+          if (_stack.empty() == 0) {
+            set(Jason(attrName, JasonType::String));
+            set(sub);
+          }
+          else {
+            State& tos = _stack.back();
+            if (_start[tos.base] != 0x06 &&
+                _start[tos.base] != 0x07) {
+              throw JasonBuilderError("Need open object for add() call.");
+            }
+            JasonLength save = _pos;
+            set(Jason(attrName, JasonType::String));
+            set(sub);
+            reportAdd(save);
+          }
+        }
+
+        uint8_t* add (std::string const& attrName, JasonPair sub) {
+          uint8_t* ret;
+          if (_attrWritten) {
+            throw JasonBuilderError("Attribute name already written.");
+          }
+          if (_stack.empty()) {
+            set(Jason(attrName, JasonType::String));
+            ret = set(sub);
+          }
+          else {
+            State& tos = _stack.back();
+            if (_start[tos.base] != 0x06 &&
+                _start[tos.base] != 0x07) {
+              throw JasonBuilderError("Need open object for add() call.");
+            }
+            JasonLength save = _pos;
+            set(Jason(attrName, JasonType::String));
+            ret = set(sub);
+            reportAdd(save);
+          }
+          return ret;
+        }
+
+        void add (Jason sub) {
+          if (_stack.empty()) {
+            set(sub);
+          }
+          else {
+            bool isObject = false;
+            State& tos = _stack.back();
+            if (_start[tos.base] < 0x04 ||
+                _start[tos.base] > 0x07) {
+              throw JasonBuilderError("Need open array or object for add() call.");
+            }
+            if (_start[tos.base] >= 0x06) {   // object or long object
+              if (_attrWritten ||
+                  (sub.jasonType() != JasonType::String &&
+                   sub.jasonType() != JasonType::StringLong)) {
+                throw JasonBuilderError("Need open array for this add() call.");
+              }
+              isObject = true;
+            }
+            JasonLength save = _pos;
+            set(sub);
+            if (isObject) {
+              if (_attrWritten) {
+                reportAdd(save);
+                _attrWritten = false;
+              }
+              else {
+                _attrWritten = true;
+              }
+            }
+            else {
+              reportAdd(save);
+            }
+          }
+        }
+
+        uint8_t* add (JasonPair sub) {
+          uint8_t* ret;
+          if (_stack.empty()) {
+            ret = set(sub);
+          }
+          else {
+            bool isObject = false;
+            State& tos = _stack.back();
+            if (_start[tos.base] < 0x04 ||
+                _start[tos.base] > 0x07) {
+              throw JasonBuilderError("Need open array or object for add() call.");
+            }
+            if (_start[tos.base] >= 0x06) {   // object or long object
+              if (_attrWritten ||
+                  (sub.jasonType() != JasonType::String &&
+                   sub.jasonType() != JasonType::StringLong)) {
+                throw JasonBuilderError("Need open array for this add() call.");
+              }
+              isObject = true;
+            }
+            JasonLength save = _pos;
+            ret = set(sub);
+            if (isObject) {
+              if (_attrWritten) {
+                reportAdd(save);
+                _attrWritten = false;
+              }
+              else {
+                _attrWritten = true;
+              }
+            }
+            else {
+              reportAdd(save);
+            }
+          }
+          return ret;
+        }
+
+        void close () {
+          if (_stack.empty()) {
+            throw JasonBuilderError("Need open array or object for close() call.");
+          }
+          State& tos = _stack.back();
+          if (_start[tos.base] < 0x04 || _start[tos.base] > 0x07) {
+            throw JasonBuilderError("Need open array or object for close() call.");
+          }
+          if (tos.index < tos.len) {
+            throw JasonBuilderError("Shrinking not yet implemented.");
+          }
+          // Note that the last add already checked that the length is OK.
+          if (_start[tos.base] == 0x04 || _start[tos.base] == 0x06) {
+            // short array or object:
+            JasonLength tableEntry = tos.base + 2;
+            JasonLength x = _pos - tos.base;
+            _start[tableEntry] = x & 0xff;
+            _start[tableEntry + 1] = (x >> 8) & 0xff;
+            if (_start[tos.base] == 0x06) {
+              // TODO: Sort object entries by key, permute indexes
+              ;
+            }
+          }
+          else {
+            // long array or object:
+            JasonLength tableEntry = tos.base + 8;
+            JasonLength x = _pos - tos.base;
+            for (size_t i = 0; i < 8; i++) {
+              _start[tableEntry + i] = x & 0xff;
+              x >>= 8;
+            }
+          }
+          // Now the array or object is complete, we pop a State off the _stack
+          JasonLength base = tos.base;
+          _stack.pop_back();
+          if (! _stack.empty()) {
+            reportAdd(base);
+          }
+        }
+
+        JasonBuilder& operator() (std::string const& attrName, Jason sub) {
+          add(attrName, sub);
+          return *this;
+        }
+
+        JasonBuilder& operator() (std::string const& attrName, JasonPair sub) {
+          add(attrName, sub);
+          return *this;
+        }
+
+        JasonBuilder& operator() (Jason sub) {
+          add(sub);
+          return *this;
+        }
+
+        JasonBuilder& operator() (JasonPair sub) {
+          add(sub);
+          return *this;
+        }
+
+        JasonBuilder& operator() () {
+          close();
+          return *this;
+        }
+
+        void reserve (JasonLength size) {
+          if (_size < size) {
+            try {
+              reserveSpace(size - _pos);
+            }
+            catch (...) {
+              // Ignore exception here, let it crash later.
+            }
+          }
+        }
+
+      private:
 
         void set (Jason item) {
           // This method builds a single further Jason item at the current
@@ -579,7 +780,7 @@ namespace triagens {
           // append position. This is the case for JasonType::ID or
           // JasonType::Binary, which both need two pieces of information
           // to build.
-          if (pair.getType() == JasonType::ID) {
+          if (pair.jasonType() == JasonType::ID) {
             reserveSpace(1);
             _start[_pos++] = 0x09;
             set(Jason(pair.getSize(), JasonType::UInt));
@@ -587,7 +788,7 @@ namespace triagens {
                       JasonType::String));
             return nullptr;  // unused here
           }
-          else if (pair.getType() == JasonType::Binary) {
+          else if (pair.jasonType() == JasonType::Binary) {
             uint64_t v = pair.getSize();
             JasonLength size = uintLength(v);
             reserveSpace(1 + size + v);
@@ -596,8 +797,8 @@ namespace triagens {
             _pos += v;
             return nullptr;  // unused here
           }
-          else if (pair.getType() == JasonType::String ||
-                   pair.getType() == JasonType::StringLong) {
+          else if (pair.jasonType() == JasonType::String ||
+                   pair.jasonType() == JasonType::StringLong) {
             uint64_t size = pair.getSize();
             if (size > 127) {
               JasonLength lenSize = uintLength(size);
@@ -619,147 +820,6 @@ namespace triagens {
           else {
             throw JasonBuilderError("Only JasonType::ID, JasonType::Binary, JasonType::String and JasonType::StringLong are valid for JasonPair argument.");
           }
-        }
-
-        void add (std::string const& attrName, Jason sub) {
-          if (_stack.empty()) {
-            throw JasonBuilderError("Need open object for add(a,s) call.");
-          }
-          State& tos = _stack.back();
-          if (_start[tos.base] != 0x06 &&
-              _start[tos.base] != 0x07) {
-            throw JasonBuilderError("Need open object for add() call.");
-          }
-          JasonLength save = _pos;
-          set(Jason(attrName, JasonType::String));
-          set(sub);
-          reportAdd(save);
-        }
-
-        uint8_t* add (std::string const& attrName, JasonPair sub) {
-          if (_stack.empty()) {
-            throw JasonBuilderError("Need open object for add(a,s) call.");
-          }
-          State& tos = _stack.back();
-          if (_start[tos.base] != 0x06 &&
-              _start[tos.base] != 0x07) {
-            throw JasonBuilderError("Need open object for add() call.");
-          }
-          JasonLength save = _pos;
-          set(Jason(attrName, JasonType::String));
-          uint8_t* ret = set(sub);
-          reportAdd(save);
-          return ret;
-        }
-
-        void add (Jason sub) {
-          if (_stack.empty()) {
-            throw JasonBuilderError("Need open array for add() call.");
-          }
-          State& tos = _stack.back();
-          if (_start[tos.base] != 0x04 &&
-              _start[tos.base] != 0x05) {
-            throw JasonBuilderError("Need open array for add() call.");
-          }
-          JasonLength save = _pos;
-          set(sub);
-          reportAdd(save);
-        }
-
-        uint8_t* add (JasonPair sub) {
-          if (_stack.empty()) {
-            throw JasonBuilderError("Need open array for add() call.");
-          }
-          State& tos = _stack.back();
-          if (_start[tos.base] != 0x04 &&
-              _start[tos.base] != 0x05) {
-            throw JasonBuilderError("Need open array for add() call.");
-          }
-          JasonLength save = _pos;
-          uint8_t* ret = set(sub);
-          reportAdd(save);
-          return ret;
-        }
-
-        void close () {
-          if (_stack.empty()) {
-            throw JasonBuilderError("Need open array or object for close() call.");
-          }
-          State& tos = _stack.back();
-          if (_start[tos.base] < 0x04 || _start[tos.base] > 0x07) {
-            throw JasonBuilderError("Need open array or object for close() call.");
-          }
-          if (tos.index < tos.len) {
-            throw JasonBuilderError("Shrinking not yet implemented.");
-          }
-          // Note that the last add already checked that the length is OK.
-          if (_start[tos.base] == 0x04 || _start[tos.base] == 0x06) {
-            // short array or object:
-            JasonLength tableEntry = tos.base + 2;
-            JasonLength x = _pos - tos.base;
-            _start[tableEntry] = x & 0xff;
-            _start[tableEntry + 1] = (x >> 8) & 0xff;
-            if (_start[tos.base] == 0x06) {
-              // TODO: Sort object entries by key, permute indexes
-              ;
-            }
-          }
-          else {
-            // long array or object:
-            JasonLength tableEntry = tos.base + 8;
-            JasonLength x = _pos - tos.base;
-            for (size_t i = 0; i < 8; i++) {
-              _start[tableEntry + i] = x & 0xff;
-              x >>= 8;
-            }
-          }
-          // Now the array or object is complete, we pop a State off the _stack
-          JasonLength base = tos.base;
-          _stack.pop_back();
-          if (! _stack.empty()) {
-            reportAdd(base);
-          }
-        }
-
-        JasonBuilder& operator() (std::string const& attrName, Jason sub) {
-          add(attrName, sub);
-          return *this;
-        }
-
-        JasonBuilder& operator() (std::string const& attrName, JasonPair sub) {
-          add(attrName, sub);
-          return *this;
-        }
-
-        JasonBuilder& operator() (Jason sub) {
-          add(sub);
-          return *this;
-        }
-
-        JasonBuilder& operator() (JasonPair sub) {
-          add(sub);
-          return *this;
-        }
-
-        JasonBuilder& operator() () {
-          close();
-          return *this;
-        }
-
-        void reserve (JasonLength size) {
-          if (_size < size) {
-            try {
-              reserveSpace(size - _pos);
-            }
-            catch (...) {
-              // Ignore exception here, let it crash later.
-            }
-          }
-        }
-
-        // Only useful for external reportAdd:
-        JasonLength getPos () {
-          return _pos;
         }
 
         void reportAdd (JasonLength itemStart) {
@@ -815,8 +875,6 @@ namespace triagens {
           tos.index++;
         }
         
-      private:
-
         // returns number of bytes required to store the value
         JasonLength uintLength (uint64_t value) const {
           JasonLength vSize = 0;

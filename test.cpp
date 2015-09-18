@@ -394,7 +394,7 @@ TEST(SliceTest, StringLong1) {
 
 TEST(BuilderTest, Null) {
   JasonBuilder b;
-  b.set(Jason());
+  b.add(Jason());
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -407,7 +407,7 @@ TEST(BuilderTest, Null) {
 
 TEST(BuilderTest, False) {
   JasonBuilder b;
-  b.set(Jason(false));
+  b.add(Jason(false));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -420,7 +420,7 @@ TEST(BuilderTest, False) {
 
 TEST(BuilderTest, True) {
   JasonBuilder b;
-  b.set(Jason(true));
+  b.add(Jason(true));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -434,7 +434,7 @@ TEST(BuilderTest, True) {
 TEST(BuilderTest, Double) {
   static double value = 123.456;
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -449,7 +449,7 @@ TEST(BuilderTest, Double) {
 
 TEST(BuilderTest, String) {
   JasonBuilder b;
-  b.set(Jason("abcdefghijklmnopqrstuvwxyz"));
+  b.add(Jason("abcdefghijklmnopqrstuvwxyz"));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -465,7 +465,7 @@ TEST(BuilderTest, String) {
 
 TEST(BuilderTest, ArrayEmpty) {
   JasonBuilder b;
-  b.set(Jason(0, JasonType::Array));
+  b.add(Jason(0, JasonType::Array));
   b.close();
   uint8_t* result = b.start();
   JasonLength len = b.size();
@@ -480,7 +480,7 @@ TEST(BuilderTest, ArrayEmpty) {
 TEST(BuilderTest, Array4) {
   double value = 2.3;
   JasonBuilder b;
-  b.set(Jason(4, JasonType::Array));
+  b.add(Jason(4, JasonType::Array));
   b.add(Jason(uint64_t(1200)));
   b.add(Jason(value));
   b.add(Jason("abc"));
@@ -505,7 +505,7 @@ TEST(BuilderTest, Array4) {
 
 TEST(BuilderTest, ObjectEmpty) {
   JasonBuilder b;
-  b.set(Jason(0, JasonType::Object));
+  b.add(Jason(0, JasonType::Object));
   b.close();
   uint8_t* result = b.start();
   JasonLength len = b.size();
@@ -520,7 +520,7 @@ TEST(BuilderTest, ObjectEmpty) {
 TEST(BuilderTest, Object4) {
   double value = 2.3;
   JasonBuilder b;
-  b.set(Jason(4, JasonType::Object));
+  b.add(Jason(4, JasonType::Object));
   b.add("a", Jason(uint64_t(1200)));
   b.add("b", Jason(value));
   b.add("c", Jason("abc"));
@@ -547,7 +547,7 @@ TEST(BuilderTest, Object4) {
 TEST(BuilderTest, External) {
   uint8_t externalStuff[] = { 0x01 };
   JasonBuilder b;
-  b.set(Jason(const_cast<void const*>(static_cast<void*>(externalStuff)), 
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(externalStuff)), 
               JasonType::External));
   uint8_t* result = b.start();
   JasonLength len = b.size();
@@ -565,7 +565,7 @@ TEST(BuilderTest, External) {
 TEST(BuilderTest, UInt) {
   uint64_t value = 0x12345678abcdef;
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -579,7 +579,7 @@ TEST(BuilderTest, UInt) {
 TEST(BuilderTest, IntPos) {
   int64_t value = 0x12345678abcdef;
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -593,7 +593,7 @@ TEST(BuilderTest, IntPos) {
 TEST(BuilderTest, IntNeg) {
   int64_t value = -0x12345678abcdef;
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -608,7 +608,7 @@ TEST(BuilderTest, StringChar) {
   char const* value = "der fuxx ging in den wald und aß pilze";
   size_t const valueLen = strlen(value);
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
 
   JasonSlice slice = JasonSlice(b.start());
   EXPECT_TRUE(slice.isString());
@@ -626,7 +626,7 @@ TEST(BuilderTest, StringChar) {
 TEST(BuilderTest, StringString) {
   std::string const value("der fuxx ging in den wald und aß pilze");
   JasonBuilder b;
-  b.set(Jason(value));
+  b.add(Jason(value));
 
   JasonSlice slice = JasonSlice(b.start());
   EXPECT_TRUE(slice.isString());
@@ -645,7 +645,7 @@ TEST(BuilderTest, Binary) {
   uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   JasonBuilder b;
-  b.set(JasonPair(binaryStuff, sizeof(binaryStuff)));
+  b.add(JasonPair(binaryStuff, sizeof(binaryStuff)));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -660,7 +660,7 @@ TEST(BuilderTest, ID) {
   char const* key = "\x02\x03\x05\x08\x0d";
 
   JasonBuilder b;
-  b.set(JasonPair(key, 0x12345678, JasonType::ID));
+  b.add(JasonPair(key, 0x12345678, JasonType::ID));
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
@@ -674,7 +674,7 @@ TEST(BuilderTest, ID) {
 
 TEST(BuilderTest, ArangoDB_id) {
   JasonBuilder b;
-  b.set(Jason(JasonType::ArangoDB_id));
+  b.add(Jason(JasonType::ArangoDB_id));
 
   uint8_t* result = b.start();
   JasonLength len = b.size();

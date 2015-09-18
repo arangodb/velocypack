@@ -642,10 +642,10 @@ namespace triagens {
           i = consume();
           if (i < 0) {
             if (negative) {
-              _b.set(Jason(-static_cast<uint64_t>(integerPart)));
+              _b.add(Jason(-static_cast<uint64_t>(integerPart)));
             }
             else {
-              _b.set(Jason(integerPart));
+              _b.add(Jason(integerPart));
             }
             return;
           }
@@ -664,13 +664,13 @@ namespace triagens {
           }
           i = consume();
           if (i < 0) {
-            _b.set(Jason(fractionalPart));
+            _b.add(Jason(fractionalPart));
             return;
           }
           c = static_cast<uint8_t>(i);
           if (c != 'e' && c != 'E') {
             unconsume();
-            _b.set(Jason(fractionalPart));
+            _b.add(Jason(fractionalPart));
             return;
           }
           c = getOneOrThrow("scanNumber: incomplete number");
@@ -687,7 +687,7 @@ namespace triagens {
           else {
             fractionalPart *= pow(10, static_cast<double>(expPart));
           }
-          _b.set(Jason(fractionalPart));
+          _b.add(Jason(fractionalPart));
         }
 
         void buildString (std::vector<int64_t>& temp, size_t& tempPos) {
@@ -699,12 +699,12 @@ namespace triagens {
           int64_t strLen = temp[tempPos++];
           uint8_t* target;
           if (strLen > 127) {
-            target = _b.set(JasonPair(static_cast<uint8_t const*>(nullptr), 
+            target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
                                       static_cast<uint64_t>(strLen),
                                       JasonType::StringLong));
           }
           else {
-            target = _b.set(JasonPair(static_cast<uint8_t const*>(nullptr),
+            target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr),
                                       static_cast<uint64_t>(strLen),
                                       JasonType::String));
           }
@@ -790,10 +790,10 @@ namespace triagens {
           int64_t nrAttrs = temp[tempPos++];
           if (nrAttrs < 0) {
             // Long Object:
-            _b.set(Jason(-nrAttrs, JasonType::ObjectLong));
+            _b.add(Jason(-nrAttrs, JasonType::ObjectLong));
           }
           else {
-            _b.set(Jason(nrAttrs, JasonType::Object));
+            _b.add(Jason(nrAttrs, JasonType::Object));
           }
           int64_t nr = 0;
           while (true) {
@@ -807,14 +807,12 @@ namespace triagens {
             // get past the initial '"'
             consume();
 
-            JasonLength save = _b.getPos();
             buildString(temp, tempPos);
             skipWhiteSpaceNoCheck();
             // always expecting the ':' here
             i = consume();
 
             buildJason(temp, tempPos);
-            _b.reportAdd(save);
             nr++;
             i = skipWhiteSpaceNoCheck();
             if (i == '}') {
@@ -833,10 +831,10 @@ namespace triagens {
           int64_t nrEntries = temp[tempPos++];
           if (nrEntries < 0) {
             // Long Array:
-            _b.set(Jason(-nrEntries, JasonType::ArrayLong));
+            _b.add(Jason(-nrEntries, JasonType::ArrayLong));
           }
           else {
-            _b.set(Jason(nrEntries, JasonType::Array));
+            _b.add(Jason(nrEntries, JasonType::Array));
           }
           int64_t nr = 0;
           while (true) {
@@ -847,9 +845,7 @@ namespace triagens {
               break;
             }
             // parse array element itself
-            JasonLength save = _b.getPos();
             buildJason(temp, tempPos);
-            _b.reportAdd(save);
             nr++;
             i = skipWhiteSpaceNoCheck();
             if (i == ']') {
@@ -882,17 +878,17 @@ namespace triagens {
             case 't':
               // consume "rue"
               consume(); consume(); consume();
-              _b.set(Jason(true));
+              _b.add(Jason(true));
               break;
             case 'f':
               // consume "alse"
               consume(); consume(); consume(); consume();
-              _b.set(Jason(false));
+              _b.add(Jason(false));
               break;
             case 'n':
               // consume "ull"
               consume(); consume(); consume();
-              _b.set(Jason());
+              _b.add(Jason());
               break;
             case '-':
             case '0':

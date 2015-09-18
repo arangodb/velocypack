@@ -181,7 +181,7 @@ namespace triagens {
           return _size;
         }
 
-        JasonType getType () {
+        JasonType jasonType () {
           return _type;
         }
     };
