@@ -85,7 +85,18 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0xd0-0xd7 : binary blob, next V-0xcf bytes are length of blob in bytes,
                 note that binary blobs are not zero-terminated
   - 0xd8-0xdf : reserved
-  - 0xe0-0xff : reserved
+  - 0xe0-0xe7 : positive long packed BCD-encoded integer, V-0xdf bytes follow
+                that encode in a little-endian way the length of the
+                long int in bytes. After that, that many bytes follow,
+                each byte encodes two digits in little-endian packed BCD
+                Example: 12345 decimal is encoded as
+                         0xe0 0x03 0x45 0x23 0x01
+  - 0xe8-0xef : negative long packed BCD-encoded integer, V-0xe7 bytes
+                follow that encode in a little-endian way the length of
+                the long int in bytes. After that, that many bytes
+                follow, each byte encodes two digits in little-endian
+                packed BCD representation.
+  - 0xf0-0xff : reserved
 
 ### Arrays
 
