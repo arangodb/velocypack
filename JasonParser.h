@@ -73,8 +73,8 @@ namespace triagens {
           return parseInternal(multi);
         }
 
-        JasonLength  parse (char const* start, size_t size,
-                            bool multi = false) {
+        JasonLength parse (char const* start, size_t size,
+                           bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(start);
           _size = size;
           _pos = 0;
