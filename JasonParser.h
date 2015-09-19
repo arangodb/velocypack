@@ -625,7 +625,7 @@ namespace triagens {
         void buildNumber () {
           int i;
           uint8_t c = static_cast<uint8_t>(consume());
-          uint64_t integerPart;
+          uint64_t integerPart = 0;
           double   fractionalPart;
           uint64_t expPart;
           // We know that a character is coming, and we know it is '-' or a
