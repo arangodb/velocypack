@@ -139,9 +139,30 @@ namespace triagens {
           return extractValue<double>();
         }
 
-        JasonSlice at (JasonLength /*index*/) const {
-          // TODO
-          return *this;
+        JasonSlice at (JasonLength index) const {
+          JasonLength offsetSize;
+          if (isType(JasonType::Array)) {
+            // short array
+            offsetSize = 2;
+          }
+          else if (isType(JasonType::ArrayLong)) {
+            // long array
+            offsetSize = 8;
+          }
+          else {
+            throw JasonTypeError("unexpected type - expecting array");
+          }
+
+          JasonLength const n = readInteger<JasonLength>(offsetSize - 1);
+          if (index >= n) {
+            throw JasonTypeError("index out of bounds");
+          }
+          // TODO: check if this works with long arrays
+          if (index == 0) {
+            return JasonSlice(start() + 2 * offsetSize + offsetSize * (n - 1));
+          }
+          JasonLength const offsetPosition = 1 + (offsetSize - 1) + offsetSize * index;
+          return JasonSlice(start() + readInteger<JasonLength>(start() + offsetPosition, offsetSize));
         }
 
         JasonSlice operator[] (JasonLength index) const {

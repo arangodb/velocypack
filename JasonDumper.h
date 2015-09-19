@@ -51,6 +51,10 @@ namespace triagens {
 
       private:
 
+        void internalDump (JasonSlice const& slice) {
+          internalDump(&slice);
+        }
+
         void internalDump (JasonSlice const* slice) {
           switch (slice->type()) {
             case JasonType::None:
@@ -74,13 +78,18 @@ namespace triagens {
               break; 
             }
             case JasonType::Array:
-              // TODO
-              handleUnsupportedType(slice);
+            case JasonType::ArrayLong: {
+              JasonLength const n = slice->length();
+              _buffer->append('[');
+              for (JasonLength i = 0; i < n; ++i) {
+                if (i > 0) {
+                  _buffer->append(',');
+                }
+                internalDump(slice->at(i));
+              }
+              _buffer->append(']');
               break;
-            case JasonType::ArrayLong:
-              // TODO
-              handleUnsupportedType(slice);
-              break;
+            }
             case JasonType::Object:
               // TODO
               handleUnsupportedType(slice);

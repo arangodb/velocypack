@@ -19,7 +19,7 @@ Jason.o:	Makefile JasonType.h Jason.h
 JasonUtils.o:	Makefile JasonUtils.cpp Jason.h JasonType.h
 	$(CC) JasonUtils.cpp -Wall -Wextra -g -std=c++11 -c -o JasonUtils.o
 
-JasonSlice.o:	Makefile JasonSlice.cpp Jason.h JasonType.h
+JasonSlice.o:	Makefile JasonSlice.cpp JasonSlice.h Jason.h JasonType.h
 	$(CC) JasonSlice.cpp -Wall -Wextra -g -std=c++11 -c -o JasonSlice.o
 
 JasonType.o:	Makefile JasonType.h Jason.h
