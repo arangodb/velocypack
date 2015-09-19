@@ -1,6 +1,7 @@
 #ifndef JASON_BUFFER_H
 #define JASON_BUFFER_H 1
 
+#include <cstring>
 #include "Jason.h"
 
 namespace triagens {
