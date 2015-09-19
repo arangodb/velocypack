@@ -6,6 +6,8 @@ using JasonLength = triagens::basics::JasonLength;
 using JasonSlice  = triagens::basics::JasonSlice;
 using JasonType   = triagens::basics::JasonType;
 
+static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
+
 // a lookup table for Jason types
 std::array<JasonType, 256> JasonSlice::TypeTable;
 

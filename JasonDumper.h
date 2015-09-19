@@ -34,11 +34,11 @@ namespace triagens {
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (JasonSlice const& slice, JasonBuffer* buffer, UnsupportedTypeStrategy strategy) 
+        JasonDumper (JasonSlice slice, JasonBuffer* buffer, UnsupportedTypeStrategy strategy) 
           : _slice(slice), _buffer(buffer), _strategy(strategy) {
         }
         
-        JasonDumper (JasonSlice const& slice, JasonBuffer& buffer, UnsupportedTypeStrategy strategy) 
+        JasonDumper (JasonSlice slice, JasonBuffer& buffer, UnsupportedTypeStrategy strategy) 
           : _slice(slice), _buffer(&buffer), _strategy(strategy) {
         }
 
@@ -51,7 +51,7 @@ namespace triagens {
 
       private:
 
-        void internalDump (JasonSlice const& slice) {
+        void internalDump (JasonSlice slice) {
           switch (slice.type()) {
             case JasonType::None:
               handleUnsupportedType(slice);
@@ -138,7 +138,7 @@ namespace triagens {
           }
         }
 
-        void handleUnsupportedType (JasonSlice const& /*slice*/) {
+        void handleUnsupportedType (JasonSlice /*slice*/) {
           if (_strategy == STRATEGY_SUPPRESS) {
             return;
           }

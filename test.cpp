@@ -810,7 +810,7 @@ TEST(ParserTest, Null) {
 
   // Redump it:
   JasonBuffer buffer;
-  JasonDumper dumper(&s, buffer, JasonDumper::STRATEGY_FAIL);
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
   dumper.dump();
   EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
