@@ -52,8 +52,9 @@ namespace triagens {
 
         void internalDump (JasonSlice);
 
-        void dumpString (char const*, JasonLength);
+        void dumpInteger (JasonSlice);
 
+        void dumpString (char const*, JasonLength);
         void dumpEscapedCharacter (uint32_t);
         void dumpHexCharacter (uint16_t);
 

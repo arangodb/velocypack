@@ -78,11 +78,8 @@ void JasonDumper::internalDump (JasonSlice slice) {
       // TODO
       break;
     case JasonType::Int:
-      // TODO
-      handleUnsupportedType(slice);
-      break;
     case JasonType::UInt:
-      // TODO
+      dumpInteger(slice);
       break;
     case JasonType::String: 
     case JasonType::StringLong: {
@@ -97,6 +94,68 @@ void JasonDumper::internalDump (JasonSlice slice) {
       // TODO
       handleUnsupportedType(slice);
       break;
+  }
+}
+
+void JasonDumper::dumpInteger (JasonSlice slice) {
+  if (slice.isType(JasonType::UInt)) {
+    uint64_t v = slice.getUInt();
+
+    if (10000000000000000000ULL <= v) { _buffer->append('0' + (v / 10000000000000000000ULL) % 10); }
+    if ( 1000000000000000000ULL <= v) { _buffer->append('0' + (v /  1000000000000000000ULL) % 10); }
+    if (  100000000000000000ULL <= v) { _buffer->append('0' + (v /   100000000000000000ULL) % 10); }
+    if (   10000000000000000ULL <= v) { _buffer->append('0' + (v /    10000000000000000ULL) % 10); }
+    if (    1000000000000000ULL <= v) { _buffer->append('0' + (v /     1000000000000000ULL) % 10); }
+    if (     100000000000000ULL <= v) { _buffer->append('0' + (v /      100000000000000ULL) % 10); }
+    if (      10000000000000ULL <= v) { _buffer->append('0' + (v /       10000000000000ULL) % 10); }
+    if (       1000000000000ULL <= v) { _buffer->append('0' + (v /        1000000000000ULL) % 10); }
+    if (        100000000000ULL <= v) { _buffer->append('0' + (v /         100000000000ULL) % 10); }
+    if (         10000000000ULL <= v) { _buffer->append('0' + (v /          10000000000ULL) % 10); }
+    if (          1000000000ULL <= v) { _buffer->append('0' + (v /           1000000000ULL) % 10); }
+    if (           100000000ULL <= v) { _buffer->append('0' + (v /            100000000ULL) % 10); }
+    if (            10000000ULL <= v) { _buffer->append('0' + (v /             10000000ULL) % 10); }
+    if (             1000000ULL <= v) { _buffer->append('0' + (v /              1000000ULL) % 10); }
+    if (              100000ULL <= v) { _buffer->append('0' + (v /               100000ULL) % 10); }
+    if (               10000ULL <= v) { _buffer->append('0' + (v /                10000ULL) % 10); }
+    if (                1000ULL <= v) { _buffer->append('0' + (v /                 1000ULL) % 10); }
+    if (                 100ULL <= v) { _buffer->append('0' + (v /                  100ULL) % 10); }
+    if (                  10ULL <= v) { _buffer->append('0' + (v /                   10ULL) % 10); }
+
+    _buffer->append('0' + (v % 10));
+  } 
+  else if (slice.isType(JasonType::Int)) {
+    int64_t v = slice.getInt();
+    if (v < 0) {
+      _buffer->append('-');
+    }
+    if (v == INT64_MIN) {
+      _buffer->append("9223372036854775808", 19);
+      return;
+    }
+  
+    if (1000000000000000000LL <= v) { _buffer->append('0' + (v / 1000000000000000000LL) % 10); }
+    if ( 100000000000000000LL <= v) { _buffer->append('0' + (v /  100000000000000000LL) % 10); }
+    if (  10000000000000000LL <= v) { _buffer->append('0' + (v /   10000000000000000LL) % 10); }
+    if (   1000000000000000LL <= v) { _buffer->append('0' + (v /    1000000000000000LL) % 10); }
+    if (    100000000000000LL <= v) { _buffer->append('0' + (v /     100000000000000LL) % 10); }
+    if (     10000000000000LL <= v) { _buffer->append('0' + (v /      10000000000000LL) % 10); }
+    if (      1000000000000LL <= v) { _buffer->append('0' + (v /       1000000000000LL) % 10); }
+    if (       100000000000LL <= v) { _buffer->append('0' + (v /        100000000000LL) % 10); }
+    if (        10000000000LL <= v) { _buffer->append('0' + (v /         10000000000LL) % 10); }
+    if (         1000000000LL <= v) { _buffer->append('0' + (v /          1000000000LL) % 10); }
+    if (          100000000LL <= v) { _buffer->append('0' + (v /           100000000LL) % 10); }
+    if (           10000000LL <= v) { _buffer->append('0' + (v /            10000000LL) % 10); }
+    if (            1000000LL <= v) { _buffer->append('0' + (v /             1000000LL) % 10); }
+    if (             100000LL <= v) { _buffer->append('0' + (v /              100000LL) % 10); }
+    if (              10000LL <= v) { _buffer->append('0' + (v /               10000LL) % 10); }
+    if (               1000LL <= v) { _buffer->append('0' + (v /                1000LL) % 10); }
+    if (                100LL <= v) { _buffer->append('0' + (v /                 100LL) % 10); }
+    if (                 10LL <= v) { _buffer->append('0' + (v /                  10LL) % 10); }
+
+    _buffer->append('0' + (v % 10));
+  }
+  else {
+    throw JasonDumper::JasonDumperError("unexpected number type");
   }
 }
 
