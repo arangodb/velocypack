@@ -159,9 +159,9 @@ namespace triagens {
           }
           // TODO: check if this works with long arrays
           if (index == 0) {
-            return JasonSlice(start() + 2 * offsetSize + offsetSize * (n - 1));
+            return JasonSlice(start() + (n + 1) * offsetSize);
           }
-          JasonLength const offsetPosition = 1 + (offsetSize - 1) + offsetSize * index;
+          JasonLength const offsetPosition = (index + 1) * offsetSize;
           return JasonSlice(start() + readInteger<JasonLength>(start() + offsetPosition, offsetSize));
         }
 
@@ -181,6 +181,37 @@ namespace triagens {
             default:
               throw JasonTypeError("unexpected type. expecting array or object");
           }
+        }
+
+        JasonSlice keyAt (JasonLength index) const {
+          JasonLength offsetSize;
+          if (isType(JasonType::Object)) {
+            // short object
+            offsetSize = 2;
+          }
+          else if (isType(JasonType::ObjectLong)) {
+            // long object
+            offsetSize = 8;
+          }
+          else {
+            throw JasonTypeError("unexpected type - expecting object");
+          }
+
+          JasonLength const n = readInteger<JasonLength>(offsetSize - 1);
+          if (index >= n) {
+            throw JasonTypeError("index out of bounds");
+          }
+          // TODO: check if this works with long objects
+          if (index == 0) {
+            return JasonSlice(start() + (2 + n) * offsetSize);
+          }
+          JasonLength const offsetPosition = (index + 2) * offsetSize;
+          return JasonSlice(start() + readInteger<JasonLength>(start() + offsetPosition, offsetSize));
+        }
+
+        JasonSlice valueAt (JasonLength index) const {
+          JasonSlice key = keyAt(index);
+          return JasonSlice(key.start() + key.byteSize());
         }
 
         JasonSlice get (std::string const& /*attribute*/) const {

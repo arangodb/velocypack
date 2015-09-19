@@ -29,7 +29,7 @@ JasonType.o:	Makefile JasonType.h Jason.h
 	$(CC) JasonType.cpp -Wall -Wextra -g -std=c++11 -c -o JasonType.o
 
 test:	Makefile test.cpp fpconv.o JasonBuilder.h Jason.h Jason.o JasonUtils.o JasonBuffer.h JasonParser.h JasonDumper.h \
-        JasonDumper.o JasonSlice.o JasonType.h JasonType.o
+        JasonDumper.o JasonSlice.h JasonSlice.o JasonType.h JasonType.o
 	$(CC) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonDumper.o JasonSlice.o JasonType.o JasonUtils.o googletest/googletest/libgtest.a -pthread -Wall -Wextra -g -std=c++11 -o test
 
 clean:	

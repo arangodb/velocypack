@@ -54,13 +54,20 @@ void JasonDumper::internalDump (JasonSlice slice) {
       break;
     }
     case JasonType::Object:
-      // TODO
-      handleUnsupportedType(slice);
+    case JasonType::ObjectLong: {
+      JasonLength const n = slice.length();
+      _buffer->append('{');
+      for (JasonLength i = 0; i < n; ++i) {
+        if (i > 0) {
+          _buffer->append(',');
+        }
+        internalDump(slice.keyAt(i));
+        _buffer->append(':');
+        internalDump(slice.valueAt(i));
+      }
+      _buffer->append('}');
       break;
-    case JasonType::ObjectLong:
-      // TODO
-      handleUnsupportedType(slice);
-      break;
+    }
     case JasonType::External:
       // TODO
       handleUnsupportedType(slice);
