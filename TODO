@@ -1,7 +1,15 @@
+* improve tests for parser, actually checking the results with Slice and Dumper
+
 * Handle strange special case in \uXXXX for the non-standard planes,
   which do two adjacent \uXXXX to produce two UTF-16 surrogates.
 
 * Finish implementation of JasonSlice for all types
+
 * Finish implementation of JasonDumper for all types, especially strings and objects
+
 * handle unsupported JSON types in JasonDumper 
+
+* implement BCD in Builder, Slice, Parser and Dumper
+
+* implement optional lookup table suport in Builder, Slice, Parser and Dumper
 

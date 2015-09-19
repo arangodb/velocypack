@@ -89,6 +89,12 @@ namespace triagens {
           return std::move(_b);
         }
 
+        // Beware, only valid as long as you do not parse more, use steal
+        // to move the data out!
+        uint8_t const* jason () {
+          return _b.start();
+        }
+
         // Returns the position at the time when the just reported error
         // occurred, only use when handling an exception.
         size_t errorPos () {

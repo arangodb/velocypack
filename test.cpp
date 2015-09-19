@@ -795,9 +795,24 @@ TEST(ParserTest, Punctuation5) {
 TEST(ParserTest, Null) {
   std::string const value("null");
 
+  // Parse it:
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  // Check it:
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_EQ(true, s.isNull());
+  EXPECT_EQ(JasonType::Null, s.type());
+  EXPECT_EQ(true, s.isType(JasonType::Null));
+  EXPECT_EQ(1ULL, s.byteSize());
+
+  // Redump it:
+  JasonBuffer buffer;
+  JasonDumper dumper(&s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, False) {
