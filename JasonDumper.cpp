@@ -139,6 +139,7 @@ void JasonDumper::dumpInteger (JasonSlice slice) {
       _buffer->append("9223372036854775808", 19);
       return;
     }
+    v = -v;
   
     if (1000000000000000000LL <= v) { _buffer->append('0' + (v / 1000000000000000000LL) % 10); }
     if ( 100000000000000000LL <= v) { _buffer->append('0' + (v /  100000000000000000LL) % 10); }

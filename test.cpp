@@ -795,20 +795,17 @@ TEST(ParserTest, Punctuation5) {
 TEST(ParserTest, Null) {
   std::string const value("null");
 
-  // Parse it:
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
 
-  // Check it:
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_EQ(true, s.isNull());
+  EXPECT_TRUE(s.isNull());
   EXPECT_EQ(JasonType::Null, s.type());
-  EXPECT_EQ(true, s.isType(JasonType::Null));
+  EXPECT_TRUE(s.isType(JasonType::Null));
   EXPECT_EQ(1ULL, s.byteSize());
 
-  // Redump it:
   JasonBuffer buffer;
   JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
   dumper.dump();
@@ -821,6 +818,19 @@ TEST(ParserTest, False) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isBool());
+  EXPECT_FALSE(s.getBool());
+  EXPECT_EQ(JasonType::Bool, s.type());
+  EXPECT_TRUE(s.isType(JasonType::Bool));
+  EXPECT_EQ(1ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, True) {
@@ -829,6 +839,19 @@ TEST(ParserTest, True) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isBool());
+  EXPECT_TRUE(s.getBool());
+  EXPECT_EQ(JasonType::Bool, s.type());
+  EXPECT_TRUE(s.isType(JasonType::Bool));
+  EXPECT_EQ(1ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, Zero) {
@@ -837,6 +860,20 @@ TEST(ParserTest, Zero) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isUInt());
+  EXPECT_TRUE(s.isNumber());
+  EXPECT_EQ(static_cast<uint64_t>(0u), s.getUInt());
+  EXPECT_EQ(JasonType::UInt, s.type());
+  EXPECT_TRUE(s.isType(JasonType::UInt));
+  EXPECT_EQ(2ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, ZeroInvalid) {
@@ -861,6 +898,20 @@ TEST(ParserTest, Int1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isUInt());
+  EXPECT_TRUE(s.isNumber());
+  EXPECT_EQ(static_cast<uint64_t>(1u), s.getUInt());
+  EXPECT_EQ(JasonType::UInt, s.type());
+  EXPECT_TRUE(s.isType(JasonType::UInt));
+  EXPECT_EQ(2ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, Int2) {
@@ -869,6 +920,20 @@ TEST(ParserTest, Int2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isUInt());
+  EXPECT_TRUE(s.isNumber());
+  EXPECT_EQ(static_cast<uint64_t>(100000u), s.getUInt());
+  EXPECT_EQ(JasonType::UInt, s.type());
+  EXPECT_TRUE(s.isType(JasonType::UInt));
+  EXPECT_EQ(4ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, Int3) {
@@ -877,6 +942,20 @@ TEST(ParserTest, Int3) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isInt());
+  EXPECT_TRUE(s.isNumber());
+  EXPECT_EQ(static_cast<int64_t>(-100000), s.getInt());
+  EXPECT_EQ(JasonType::Int, s.type());
+  EXPECT_TRUE(s.isType(JasonType::Int));
+  EXPECT_EQ(4ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, Double1) {
@@ -885,6 +964,20 @@ TEST(ParserTest, Double1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  EXPECT_TRUE(s.isDouble());
+  EXPECT_TRUE(s.isNumber());
+  EXPECT_EQ(1.0124, s.getDouble());
+  EXPECT_EQ(JasonType::Double, s.type());
+  EXPECT_TRUE(s.isType(JasonType::Double));
+  EXPECT_EQ(9ULL, s.byteSize());
+
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
 }
 
 TEST(ParserTest, Double2) {

@@ -300,6 +300,7 @@ namespace triagens {
           if (c < '0' || c > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
+          unconsume();
           scanDigits();
           i = consume();
           if (i < 0) {
@@ -648,7 +649,7 @@ namespace triagens {
           i = consume();
           if (i < 0) {
             if (negative) {
-              _b.add(Jason(-static_cast<uint64_t>(integerPart)));
+              _b.add(Jason(-static_cast<int64_t>(integerPart)));
             }
             else {
               _b.add(Jason(integerPart));
@@ -666,7 +667,6 @@ namespace triagens {
             }
             return;
           }
-          c = getOne();
           fractionalPart = scanDigitsFractional();
           if (negative) {
             fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
