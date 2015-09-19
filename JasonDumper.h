@@ -34,11 +34,11 @@ namespace triagens {
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (JasonSlice const* slice, JasonBuffer* buffer, UnsupportedTypeStrategy strategy) 
+        JasonDumper (JasonSlice const& slice, JasonBuffer* buffer, UnsupportedTypeStrategy strategy) 
           : _slice(slice), _buffer(buffer), _strategy(strategy) {
         }
         
-        JasonDumper (JasonSlice const* slice, JasonBuffer& buffer, UnsupportedTypeStrategy strategy) 
+        JasonDumper (JasonSlice const& slice, JasonBuffer& buffer, UnsupportedTypeStrategy strategy) 
           : _slice(slice), _buffer(&buffer), _strategy(strategy) {
         }
 
@@ -52,11 +52,7 @@ namespace triagens {
       private:
 
         void internalDump (JasonSlice const& slice) {
-          internalDump(&slice);
-        }
-
-        void internalDump (JasonSlice const* slice) {
-          switch (slice->type()) {
+          switch (slice.type()) {
             case JasonType::None:
               handleUnsupportedType(slice);
               break;
@@ -64,7 +60,7 @@ namespace triagens {
               _buffer->append("null", 4);
               break;
             case JasonType::Bool: 
-              if (slice->getBool()) {
+              if (slice.getBool()) {
                 _buffer->append("true", 4);
               } 
               else {
@@ -73,19 +69,19 @@ namespace triagens {
               break;
             case JasonType::Double: {
               char temp[24];
-              int len = fpconv_dtoa(slice->getDouble(), &temp[0]);
+              int len = fpconv_dtoa(slice.getDouble(), &temp[0]);
               _buffer->append(&temp[0], static_cast<JasonLength>(len));
               break; 
             }
             case JasonType::Array:
             case JasonType::ArrayLong: {
-              JasonLength const n = slice->length();
+              JasonLength const n = slice.length();
               _buffer->append('[');
               for (JasonLength i = 0; i < n; ++i) {
                 if (i > 0) {
                   _buffer->append(',');
                 }
-                internalDump(slice->at(i));
+                internalDump(slice.at(i));
               }
               _buffer->append(']');
               break;
@@ -142,7 +138,7 @@ namespace triagens {
           }
         }
 
-        void handleUnsupportedType (JasonSlice const* /*slice*/) {
+        void handleUnsupportedType (JasonSlice const& /*slice*/) {
           if (_strategy == STRATEGY_SUPPRESS) {
             return;
           }
@@ -152,7 +148,7 @@ namespace triagens {
 
       private:
 
-        JasonSlice const* _slice;
+        JasonSlice const _slice;
 
         JasonBuffer* _buffer;
 
