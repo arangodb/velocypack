@@ -5,7 +5,6 @@
 #include "JasonSlice.h"
 #include "JasonType.h"
 #include "Jason.h"
-#include "fpconv.h"
 
 namespace triagens {
   namespace basics {
@@ -52,6 +51,11 @@ namespace triagens {
       private:
 
         void internalDump (JasonSlice);
+
+        void dumpString (char const*, JasonLength);
+
+        void dumpEscapedCharacter (uint32_t);
+        void dumpHexCharacter (uint16_t);
 
         void handleUnsupportedType (JasonSlice /*slice*/) {
           if (_strategy == STRATEGY_SUPPRESS) {
