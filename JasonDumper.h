@@ -121,10 +121,16 @@ namespace triagens {
             case JasonType::UInt:
               // TODO
               break;
-            case JasonType::String:
+            case JasonType::String: {
+              // JasonLength len;
+              // char const* p = slice->getString(len);
+              // char const* e = p + len; 
+              _buffer->append('"');
               // TODO
-              handleUnsupportedType(slice);
+              _buffer->append("strings are not yet supported", strlen("strings are not yet supported"));
+              _buffer->append('"');
               break;
+            }
             case JasonType::StringLong:
               // TODO
               handleUnsupportedType(slice);
