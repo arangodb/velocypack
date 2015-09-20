@@ -1934,6 +1934,22 @@ TEST(ParserTest, ObjectSimple1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 12);
+  EXPECT_EQ(1ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(1ULL, ss.getUInt());
+
+  std::string valueOut = "{\"foo\":1}";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, ObjectSimple2) {
@@ -1942,6 +1958,31 @@ TEST(ParserTest, ObjectSimple2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 21);
+  EXPECT_EQ(2ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "bar";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s.keyAt(1);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "baz";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(1);
+  checkBuild(ss, JasonType::Bool, 1);
+  EXPECT_TRUE(ss.getBool());
+
+  std::string valueOut = "{\"foo\":\"bar\",\"baz\":true}";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, ObjectDenseNotation) {
@@ -1950,6 +1991,31 @@ TEST(ParserTest, ObjectDenseNotation) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 16);
+  EXPECT_EQ(2ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 2);
+  std::string correct = "a";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::String, 2);
+  correct = "b";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s.keyAt(1);
+  checkBuild(ss, JasonType::String, 2);
+  correct = "c";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(1);
+  checkBuild(ss, JasonType::String, 2);
+  correct = "d";
+  EXPECT_EQ(correct, ss.copyString());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, ObjectReservedKeys) {
@@ -1958,6 +2024,41 @@ TEST(ParserTest, ObjectReservedKeys) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 39);
+  EXPECT_EQ(3ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 5);
+  std::string correct = "null";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::String, 5);
+  correct = "true";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s.keyAt(1);
+  checkBuild(ss, JasonType::String, 6);
+  correct = "false";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(1);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "bar";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s.keyAt(2);
+  checkBuild(ss, JasonType::String, 5);
+  correct = "true";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(2);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+
+  std::string const valueOut = "{\"null\":\"true\",\"false\":\"bar\",\"true\":\"foo\"}";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, ObjectMixed) {

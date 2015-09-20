@@ -13,3 +13,6 @@
 
 * implement optional lookup table suport in Builder, Slice, Parser and Dumper
 
+* implement sorting of objects by alphabetical attribute name
+
+* binary search in JasonSlice within an object
