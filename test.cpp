@@ -1321,7 +1321,7 @@ TEST(ParserTest, StringLiteral) {
   std::string out = s.copyString();
   EXPECT_EQ(correct, out);
 
-  std::string valueOut = "\"der hund ging in den wald und a\\u00DF den fuxx\"";
+  std::string valueOut = "\"der hund ging in den wald und aß den fuxx\"";
   checkDump(s, valueOut);
 }
 
@@ -1430,7 +1430,7 @@ TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
   std::string out = s.copyString();
   EXPECT_EQ(correct, out);
 
-  std::string const valueOut("\"der m\\u00D6ter\"");
+  std::string const valueOut("\"der mÖter\"");
   checkDump(s, valueOut);
 }
 
@@ -1451,7 +1451,7 @@ TEST(ParserTest, StringLiteralUtf8SequenceUpperCase) {
   std::string out = s.copyString();
   EXPECT_EQ(correct, out);
 
-  checkDump(s, value);
+  checkDump(s, std::string("\"der mÖter\""));
 }
 
 TEST(ParserTest, StringLiteralUtf8Chars) {
@@ -1471,8 +1471,8 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
   std::string out = s.copyString();
   EXPECT_EQ(correct, out);
 
-  std::string const valueOut("\"der m\\u00F6t\\u00F6r kl\\u00F6t\\u00F6rte m\\u00E4t d\\u00E4n f\\u00F6\\u00DFen\"");
-  checkDump(s, valueOut);
+//  std::string const valueOut("\"der mötör kö\\u00F6t\\u00F6r kl\\u00F6t\\u00F6rte m\\u00E4t d\\u00E4n f\\u00F6\\u00DFen\"");
+  checkDump(s, value);
 }
 
 TEST(ParserTest, StringLiteralWithSpecials) {

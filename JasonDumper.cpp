@@ -200,6 +200,8 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
         throw JasonDumper::JasonDumperError("unexpected end of string");
       }
 
+      _buffer->append(p, 2);
+#if 0
       uint8_t d = *(p + 1);
 
       if ((d & 0xc0) != 0x80) {
@@ -207,6 +209,7 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
       }
 
       dumpEscapedCharacter(((c & 0x1f) << 6) | (d & 0x3f));
+#endif
       ++p;
     }
     else if ((c & 0xf0) == 0xe0) {
@@ -215,6 +218,8 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
         throw JasonDumper::JasonDumperError("unexpected end of string");
       }
 
+      _buffer->append(p, 3);
+#if 0
       uint8_t d = *(p + 1);
       uint8_t e = *(p + 2);
 
@@ -223,6 +228,7 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
       }
     
       dumpEscapedCharacter(((c & 0x0f) << 12) | ((d & 0x3f) << 6) | (e & 0x3f));
+#endif
       p += 2;
     }
     else if ((c & 0xf8) == 0xf0) {
@@ -231,6 +237,8 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
         throw JasonDumper::JasonDumperError("unexpected end of string");
       }
 
+      _buffer->append(p, 4);
+#if 0
       uint8_t d = *(p + 1);
       uint8_t e = *(p + 2);
       uint8_t f = *(p + 3);
@@ -244,6 +252,7 @@ void JasonDumper::dumpString (char const* src, JasonLength len) {
     
       dumpEscapedCharacter(((n & 0xffc00) >> 10) + 0xd800);
       dumpEscapedCharacter((n & 0x3ff) + 0xdc00);
+#endif
       p += 3;
     }
 
