@@ -1,6 +1,6 @@
 CC=g++
 
-all:	test
+all:	test bench
 
 .PHONY: googletest
 
@@ -32,5 +32,9 @@ test:	Makefile test.cpp fpconv.o JasonBuilder.h Jason.h Jason.o JasonUtils.o Jas
         JasonDumper.o JasonSlice.h JasonSlice.o JasonType.h JasonType.o
 	$(CC) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonDumper.o JasonSlice.o JasonType.o JasonUtils.o googletest/googletest/libgtest.a -pthread -Wall -Wextra -g -std=c++11 -o test
 
+bench:	Makefile bench.cpp fpconv.o JasonBuilder.h Jason.h Jason.o JasonUtils.o JasonBuffer.h JasonParser.h JasonDumper.h \
+        JasonDumper.o JasonSlice.h JasonSlice.o JasonType.h JasonType.o
+	$(CC) bench.cpp fpconv.o Jason.o JasonDumper.o JasonSlice.o JasonType.o JasonUtils.o -pthread -Wall -Wextra -g -O3 -std=c++11 -o bench
+
 clean:	
-	rm -rf *.o test
+	rm -rf *.o test bench
