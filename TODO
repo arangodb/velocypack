@@ -5,8 +5,6 @@
 
 * Finish implementation of JasonSlice for all types
 
-* Finish implementation of JasonDumper for all types, especially strings and objects
-
 * handle unsupported JSON types in JasonDumper 
 
 * implement BCD in Builder, Slice, Parser and Dumper
