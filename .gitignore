@@ -1,4 +1,5 @@
 test
+bench
 core 
 *.o
 googletest
