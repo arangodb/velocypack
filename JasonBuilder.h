@@ -389,14 +389,24 @@ namespace triagens {
           if (tos.index < tos.len) {
             throw JasonBuilderError("Shrinking not yet implemented.");
           }
-          // Note that the last add already checked that the length is OK.
           if (_start[tos.base] == 0x04 || _start[tos.base] == 0x06) {
             // short array or object:
             JasonLength tableEntry = tos.base + 2;
             JasonLength x = _pos - tos.base;
+            if (x >= 65536) {
+              throw JasonBuilderError("Offsets too large for small array or object");
+            }
             _start[tableEntry] = x & 0xff;
             _start[tableEntry + 1] = (x >> 8) & 0xff;
             if (_start[tos.base] == 0x06) {
+#if 0
+              tableEntry += 2;
+              std::vector<uint16_t> toSort;
+              toSort.reserve(tos.index);
+              for (JasonLength i = 0; i < tos.index; i++) {
+                toSort.push(_start[tableEntry + 2*i] + 
+                      static_cast<uint16_t>(_start[tableEntry + 2*i+1]) << 8);
+#endif
               // TODO: Sort object entries by key, permute indexes
               ;
             }
