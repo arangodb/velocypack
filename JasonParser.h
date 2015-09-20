@@ -272,46 +272,46 @@ namespace triagens {
         }
 
         void scanNumber (JasonLength& len) {
-          int i;
           uint8_t c = static_cast<uint8_t>(consume());
           // We know that a character is coming, and we know it is '-' or a
           // digit, otherwise we would not have been called.
           if (c == '-') {
             c = getOneOrThrow("scanNumber: incomplete number");
           }
+          uint64_t value = 0;
           if (c != '0') {
             if (c < '1' || c > '9') {
               throw JasonParserError("scanNumber: incomplete number");
             }
             unconsume();
-            scanDigits();
+            value = scanDigits();
           }
-          i = consume();
+          int i = consume();
           if (i < 0) {
-            len += 9;   // FIXME: make this more accurate?
+            len += 1 + _b.uintLength(value);
             return;
           }
           c = static_cast<uint8_t>(i);
           if (c != '.') {
             unconsume();
-            len += 9;   // FIXME: make this more accurate?
+            len += 1 + _b.uintLength(value);
             return;
           }
           c = getOneOrThrow("scanNumber: incomplete number");
           if (c < '0' || c > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
+          len += 1 + sizeof(double);
+
           unconsume();
           scanDigits();
           i = consume();
           if (i < 0) {
-            len += 9;   // FIXME: make this more accurate
             return;
           }
           c = static_cast<uint8_t>(i);
           if (c != 'e' && c != 'E') {
             unconsume();
-            len += 9;   // FIXME: make this more accurate
             return;
           }
           c = getOneOrThrow("scanNumber: incomplete number");
@@ -322,7 +322,6 @@ namespace triagens {
             throw JasonParserError("scanNumber: incomplete number");
           }
           scanDigits();
-          len += 9;   // FIXME: make this more accurate
         }
 
         int64_t scanString (JasonLength& len) {
@@ -343,7 +342,7 @@ namespace triagens {
                   len += 1;
                 }
                 else {
-                  uint64_t x = static_cast<uint32_t>(byteLen);
+                  uint64_t x = static_cast<uint64_t>(byteLen);
                   len += 1;
                   while (x != 0) {
                     len++;

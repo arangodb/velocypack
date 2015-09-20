@@ -450,6 +450,17 @@ namespace triagens {
           }
         }
 
+        // returns number of bytes required to store the value
+        static JasonLength uintLength (uint64_t value) {
+          JasonLength vSize = 0;
+          do {
+            vSize++;
+            value >>= 8;
+          } 
+          while (value != 0);
+          return vSize;
+        }
+
       private:
 
         void set (Jason item) {
@@ -861,17 +872,6 @@ namespace triagens {
           tos.index++;
         }
         
-        // returns number of bytes required to store the value
-        JasonLength uintLength (uint64_t value) const {
-          JasonLength vSize = 0;
-          do {
-            vSize++;
-            value >>= 8;
-          } 
-          while (value != 0);
-          return vSize;
-        }
-
         void appendUInt (uint64_t v, uint8_t base) {
           JasonLength vSize = uintLength(v);
           reserveSpace(1 + vSize);
