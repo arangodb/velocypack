@@ -2067,6 +2067,55 @@ TEST(ParserTest, ObjectMixed) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 55);
+  EXPECT_EQ(5ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::Null, 1);
+
+  ss = s.keyAt(1);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "bar";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(1);
+  checkBuild(ss, JasonType::Bool, 1);
+  EXPECT_TRUE(ss.getBool());
+
+  ss = s.keyAt(2);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "baz";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(2);
+  checkBuild(ss, JasonType::Double, 9);
+  EXPECT_EQ(13.53, ss.getDouble());
+
+  ss = s.keyAt(3);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "qux";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(3);
+  checkBuild(ss, JasonType::Array, 6);
+
+  JasonSlice sss = ss[0];
+  checkBuild(sss, JasonType::UInt, 2);
+  EXPECT_EQ(1ULL, sss.getUInt());
+
+  ss = s.keyAt(4);
+  checkBuild(ss, JasonType::String, 4);
+  correct = "quz";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(4);
+  checkBuild(ss, JasonType::Object, 4);
+  EXPECT_EQ(0ULL, ss.length());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, ObjectInvalidQuotes) {
