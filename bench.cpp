@@ -29,7 +29,6 @@ using JasonType        = triagens::basics::JasonType;
 using namespace std;
 
 int main (int argc, char* argv[]) {
-  JasonParser::Initialize();
   JasonSlice::Initialize();
 
   if (argc < 4) {
