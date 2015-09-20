@@ -291,10 +291,10 @@ namespace triagens {
         }
 
         uint8_t* add (std::string const& attrName, JasonPair sub) {
-          uint8_t* ret;
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
+          uint8_t* ret;
           if (_stack.empty()) {
             set(Jason(attrName, JasonType::String));
             ret = set(sub);

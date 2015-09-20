@@ -98,26 +98,26 @@ namespace triagens {
         // Returns the position at the time when the just reported error
         // occurred, only use when handling an exception.
         size_t errorPos () {
-          return _pos > 0 ? _pos-1 : _pos;
+          return _pos > 0 ? _pos - 1 : _pos;
         }
 
       private:
 
-        int peek () const {
+        inline int peek () const {
           if (_pos >= _size) {
             return -1;
           }
           return static_cast<int>(_start[_pos]);
         }
 
-        int consume () {
+        inline int consume () {
           if (_pos >= _size) {
             return -1;
           }
           return static_cast<int>(_start[_pos++]);
         }
 
-        void unconsume () {
+        inline void unconsume () {
           _pos--;
         }
 
@@ -164,7 +164,8 @@ namespace triagens {
               ++_pos;
             }
             nr++;
-          } while (multi && _pos < _size);
+          } 
+          while (multi && _pos < _size);
           return nr;
         }
 
@@ -453,16 +454,17 @@ namespace triagens {
         void scanArray (std::vector<int64_t>& temp,
                         int64_t& nr, JasonLength& len) {
           nr = 0;
+          int i = skipWhiteSpace("scanArray: item or ] expected");
+          if (i == ']') {
+            // empty array
+            consume();
+            len = 4;
+            return;
+          }
           
           JasonLength startLen = len;
 
           while (true) {
-            int i = skipWhiteSpace("scanArray: item or ] expected");
-            if (i == ']' && nr == 0) { 
-              // ']' is only valid here if we haven't seen a ',' last time
-              consume();
-              break;
-            }
             // parse array element itself
             scanJson(temp, len);
             nr++;
@@ -488,7 +490,7 @@ namespace triagens {
           // then nr-1 byte pairs for the offsets, thus 4 + 2*(nr-1).
           // Note that for nr==0 we actually need 4 bytes of header, but
           // then we are in the small case anyway.
-          if (nr > 255 || len - startLen + 4 + 2*(nr-1) > 65535) {
+          if (nr > 255 || len - startLen + 4 + 2 * (nr - 1) > 65535) {
             // ArrayLong
             len += (nr > 1) ? 8 * (nr + 1) : 16;
             nr = -nr;
@@ -502,7 +504,6 @@ namespace triagens {
         void scanObject (std::vector<int64_t>& temp,
                          int64_t& nr, JasonLength& len) {
           nr = 0;
-          
           JasonLength startLen = len;
 
           while (true) {
@@ -512,6 +513,7 @@ namespace triagens {
               consume();
               break;
             }
+
             // always expecting a string attribute name here
             if (i != '"') {
               throw JasonParserError("scanObject: \" or } expected");
@@ -550,7 +552,7 @@ namespace triagens {
           // 1 byte for the type, 1 byte for the number of entries, 2
           // bytes for the offset to the end and then nr byte
           // pairs for the offsets, thus 4 + 2*nr
-          if (nr > 255 || len - startLen + 4 + 2*nr > 65535) {
+          if (nr > 255 || len - startLen + 4 + 2 * nr > 65535) {
             // ObjectLong
             len += 8 * (nr + 2);
             nr = -nr;
@@ -702,7 +704,7 @@ namespace triagens {
           _b.add(Jason(fractionalPart));
         }
 
-        void buildString (std::vector<int64_t>& temp, size_t& tempPos) {
+        void buildString (std::vector<int64_t> const& temp, size_t& tempPos) {
           // When we get here, we have seen a " character and now want to
           // actually build the string from what we see. All error checking
           // has already been done. And: temp[tempPos] is the length of the
@@ -797,7 +799,7 @@ namespace triagens {
           }
         }
 
-        void buildObject (std::vector<int64_t>& temp, size_t tempPos) {
+        void buildObject (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrAttrs = temp[tempPos++];
           if (nrAttrs < 0) {
@@ -838,7 +840,7 @@ namespace triagens {
           _b.close();
         }
                        
-        void buildArray (std::vector<int64_t>& temp, size_t& tempPos) {
+        void buildArray (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrEntries = temp[tempPos++];
           if (nrEntries < 0) {
@@ -871,7 +873,7 @@ namespace triagens {
           _b.close();
         }
                        
-        void buildJason (std::vector<int64_t>& temp, size_t& tempPos) {
+        void buildJason (std::vector<int64_t> const& temp, size_t& tempPos) {
           skipWhiteSpaceNoCheck();
           int i = consume();
           if (i < 0) {
