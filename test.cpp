@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <string>
 
 #include "Jason.h"
 #include "JasonBuilder.h"
@@ -21,6 +22,265 @@ using JasonSlice       = triagens::basics::JasonSlice;
 using JasonType        = triagens::basics::JasonType;
   
 static char Buffer[4096];
+
+// This function is used to use the dumper to produce JSON and verify
+// the result. When we have parsed previously, we usually can take the
+// original input, otherwise we provide a knownGood result.
+
+static void checkDump (JasonSlice s, std::string const& knownGood) {
+  JasonBuffer buffer;
+  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  dumper.dump();
+  std::string output(buffer.data(), buffer.size());
+  EXPECT_EQ(knownGood, output);
+}
+
+// With the following function we check type determination and size
+// of the produced Jason value:
+
+static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
+  EXPECT_EQ(t, s.type());
+  EXPECT_TRUE(s.isType(t));
+  JasonType other = (t == JasonType::String) ? JasonType::Int
+                                             : JasonType::String;
+  EXPECT_FALSE(s.isType(other));
+  EXPECT_FALSE(other == s.type());
+
+  EXPECT_EQ(byteSize, s.byteSize());
+
+  switch (t) {
+    case JasonType::None:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Null:
+      EXPECT_TRUE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Bool:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_TRUE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Double:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_TRUE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_TRUE(s.isNumber());
+      break;
+    case JasonType::Array:
+    case JasonType::ArrayLong:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_TRUE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Object:
+    case JasonType::ObjectLong:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_TRUE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::External:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_TRUE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::ID:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_TRUE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::ArangoDB_id:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_TRUE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::UTCDate:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_TRUE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Int:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_TRUE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_TRUE(s.isNumber());
+      break;
+    case JasonType::UInt:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_TRUE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_TRUE(s.isNumber());
+      break;
+    case JasonType::String:
+    case JasonType::StringLong:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_TRUE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+    case JasonType::Binary:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_TRUE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      break;
+  }
+}
+
+
+// Let the tests begin...
 
 TEST(SliceTest, Null) {
   Buffer[0] = 0x0;
@@ -801,15 +1061,9 @@ TEST(ParserTest, Null) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isNull());
-  EXPECT_EQ(JasonType::Null, s.type());
-  EXPECT_TRUE(s.isType(JasonType::Null));
-  EXPECT_EQ(1ULL, s.byteSize());
+  checkBuild(s, JasonType::Null, 1ULL);
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, False) {
@@ -821,16 +1075,10 @@ TEST(ParserTest, False) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isBool());
+  checkBuild(s, JasonType::Bool, 1ULL);
   EXPECT_FALSE(s.getBool());
-  EXPECT_EQ(JasonType::Bool, s.type());
-  EXPECT_TRUE(s.isType(JasonType::Bool));
-  EXPECT_EQ(1ULL, s.byteSize());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, True) {
@@ -842,16 +1090,10 @@ TEST(ParserTest, True) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isBool());
+  checkBuild(s, JasonType::Bool, 1ULL);
   EXPECT_TRUE(s.getBool());
-  EXPECT_EQ(JasonType::Bool, s.type());
-  EXPECT_TRUE(s.isType(JasonType::Bool));
-  EXPECT_EQ(1ULL, s.byteSize());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Zero) {
@@ -863,17 +1105,10 @@ TEST(ParserTest, Zero) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isUInt());
-  EXPECT_TRUE(s.isNumber());
-  EXPECT_EQ(static_cast<uint64_t>(0u), s.getUInt());
-  EXPECT_EQ(JasonType::UInt, s.type());
-  EXPECT_TRUE(s.isType(JasonType::UInt));
-  EXPECT_EQ(2ULL, s.byteSize());
+  checkBuild(s, JasonType::UInt, 2ULL);
+  EXPECT_EQ(0ULL, s.getUInt());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, ZeroInvalid) {
@@ -901,17 +1136,25 @@ TEST(ParserTest, Int1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isUInt());
-  EXPECT_TRUE(s.isNumber());
-  EXPECT_EQ(static_cast<uint64_t>(1u), s.getUInt());
-  EXPECT_EQ(JasonType::UInt, s.type());
-  EXPECT_TRUE(s.isType(JasonType::UInt));
-  EXPECT_EQ(2ULL, s.byteSize());
+  checkBuild(s, JasonType::UInt, 2ULL);
+  EXPECT_EQ(1ULL, s.getUInt());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
+}
+
+TEST(ParserTest, IntM1) {
+  std::string const value("-1");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Int, 2ULL);
+  EXPECT_EQ(-1LL, s.getInt());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Int2) {
@@ -923,17 +1166,10 @@ TEST(ParserTest, Int2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isUInt());
-  EXPECT_TRUE(s.isNumber());
-  EXPECT_EQ(static_cast<uint64_t>(100000u), s.getUInt());
-  EXPECT_EQ(JasonType::UInt, s.type());
-  EXPECT_TRUE(s.isType(JasonType::UInt));
-  EXPECT_EQ(4ULL, s.byteSize());
+  checkBuild(s, JasonType::UInt, 4ULL);
+  EXPECT_EQ(100000ULL, s.getUInt());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Int3) {
@@ -945,17 +1181,10 @@ TEST(ParserTest, Int3) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isInt());
-  EXPECT_TRUE(s.isNumber());
-  EXPECT_EQ(static_cast<int64_t>(-100000), s.getInt());
-  EXPECT_EQ(JasonType::Int, s.type());
-  EXPECT_TRUE(s.isType(JasonType::Int));
-  EXPECT_EQ(4ULL, s.byteSize());
+  checkBuild(s, JasonType::Int, 4ULL);
+  EXPECT_EQ(-100000LL, s.getInt());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Double1) {
@@ -967,17 +1196,10 @@ TEST(ParserTest, Double1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  EXPECT_TRUE(s.isDouble());
-  EXPECT_TRUE(s.isNumber());
+  checkBuild(s, JasonType::Double, 9ULL);
   EXPECT_EQ(1.0124, s.getDouble());
-  EXPECT_EQ(JasonType::Double, s.type());
-  EXPECT_TRUE(s.isType(JasonType::Double));
-  EXPECT_EQ(9ULL, s.byteSize());
 
-  JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
-  dumper.dump();
-  EXPECT_EQ(0, memcmp(value.c_str(), buffer.data(), buffer.size()));
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Double2) {
@@ -986,6 +1208,13 @@ TEST(ParserTest, Double2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  EXPECT_EQ(-1.0124, s.getDouble());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, DoubleScientific1) {
@@ -994,6 +1223,14 @@ TEST(ParserTest, DoubleScientific1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  EXPECT_EQ(-1.0124e42, s.getDouble());
+
+  std::string const valueOut("-1.0124e+42");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, DoubleScientific2) {
@@ -1002,6 +1239,13 @@ TEST(ParserTest, DoubleScientific2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  EXPECT_EQ(-1.0124e42, s.getDouble());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, DoubleScientific3) {
@@ -1010,6 +1254,14 @@ TEST(ParserTest, DoubleScientific3) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  EXPECT_EQ(3122243.0124e-42, s.getDouble());
+
+  std::string const valueOut("3.1222430124e-36");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, DoubleScientific4) {
@@ -1018,6 +1270,14 @@ TEST(ParserTest, DoubleScientific4) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  EXPECT_EQ(2335431.0124E-42, s.getDouble());
+
+  std::string const valueOut("2.3354310124e-36");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, Empty) {
@@ -1050,6 +1310,19 @@ TEST(ParserTest, StringLiteral) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  std::string const correct = "der hund ging in den wald und aß den fuxx";
+  checkBuild(s, JasonType::String, 1 + correct.size());
+  char const* p = s.getString(len);
+  EXPECT_EQ(correct.size(), len);
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  std::string valueOut = "\"der hund ging in den wald und a\\u00DF den fuxx\"";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, StringLiteralEmpty) {
@@ -1058,6 +1331,18 @@ TEST(ParserTest, StringLiteralEmpty) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::String, 1ULL);
+  char const* p = s.getString(len);
+  EXPECT_EQ(0, strncmp("", p, len));
+  EXPECT_EQ(0ULL, len);
+  std::string out = s.copyString();
+  std::string empty;
+  EXPECT_EQ(empty, out);
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue1) {
@@ -1134,6 +1419,19 @@ TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::String, 11ULL);
+  char const* p = s.getString(len);
+  EXPECT_EQ(10ULL, len);
+  std::string correct = "der m\xc3\x96ter";
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  std::string const valueOut("\"der m\\u00D6ter\"");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, StringLiteralUtf8SequenceUpperCase) {
@@ -1142,6 +1440,18 @@ TEST(ParserTest, StringLiteralUtf8SequenceUpperCase) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  std::string correct = "der mÖter";
+  checkBuild(s, JasonType::String, 1 + correct.size());
+  char const* p = s.getString(len);
+  EXPECT_EQ(correct.size(), len);
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, StringLiteralUtf8Chars) {
@@ -1150,6 +1460,19 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  std::string correct = "der mötör klötörte mät dän fößen";
+  checkBuild(s, JasonType::String, 1 + correct.size());
+  char const* p = s.getString(len);
+  EXPECT_EQ(correct.size(), len);
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  std::string const valueOut("\"der m\\u00F6t\\u00F6r kl\\u00F6t\\u00F6rte m\\u00E4t d\\u00E4n f\\u00F6\\u00DFen\"");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, StringLiteralWithSpecials) {
@@ -1158,6 +1481,19 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  std::string correct = "der\thund\nging\rin\fden\\wald\"und\b\nden'fux";
+  checkBuild(s, JasonType::String, 1 + correct.size());
+  char const* p = s.getString(len);
+  EXPECT_EQ(correct.size(), len);
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  std::string const valueOut("\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, EmptyArray) {
@@ -1166,6 +1502,13 @@ TEST(ParserTest, EmptyArray) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, s.length());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, WhitespacedArray) {
@@ -1174,6 +1517,14 @@ TEST(ParserTest, WhitespacedArray) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, s.length());
+
+  std::string const valueOut = "[]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, Array1) {
@@ -1182,6 +1533,16 @@ TEST(ParserTest, Array1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 6);
+  EXPECT_EQ(1ULL, s.length());
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(1ULL, ss.getUInt());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Array2) {
@@ -1190,14 +1551,54 @@ TEST(ParserTest, Array2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 10);
+  EXPECT_EQ(2ULL, s.length());
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(1ULL, ss.getUInt());
+  ss = s[1];
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(2ULL, ss.getUInt());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, Array3) {
   std::string const value("[-1,2, 4.5, 3, -99.99]");
-
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 36);
+  EXPECT_EQ(5ULL, s.length());
+
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::Int, 2);
+  EXPECT_EQ(-1LL, ss.getInt());
+
+  ss = s[1];
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(2ULL, ss.getUInt());
+
+  ss = s[2];
+  checkBuild(ss, JasonType::Double, 9);
+  EXPECT_EQ(4.5, ss.getDouble());
+
+  ss = s[3];
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(3ULL, ss.getUInt());
+
+  ss = s[4];
+  checkBuild(ss, JasonType::Double, 9);
+  EXPECT_EQ(-99.99, ss.getDouble());
+
+  std::string const valueOut = "[-1,2,4.5,3,-99.99]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, Array4) {
@@ -1206,6 +1607,44 @@ TEST(ParserTest, Array4) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 40);
+  EXPECT_EQ(7ULL, s.length());
+
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s[1];
+  checkBuild(ss, JasonType::String, 4);
+  correct = "bar";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s[2];
+  checkBuild(ss, JasonType::String, 4);
+  correct = "baz";
+  EXPECT_EQ(correct, ss.copyString());
+
+  ss = s[3];
+  checkBuild(ss, JasonType::Null, 1);
+
+  ss = s[4];
+  checkBuild(ss, JasonType::Bool, 1);
+  EXPECT_TRUE(ss.getBool());
+
+  ss = s[5];
+  checkBuild(ss, JasonType::Bool, 1);
+  EXPECT_FALSE(ss.getBool());
+
+  ss = s[6];
+  checkBuild(ss, JasonType::Double, 9);
+  EXPECT_EQ(-42.23, ss.getDouble());
+
+  std::string const valueOut = "[\"foo\",\"bar\",\"baz\",null,true,false,-42.23]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, NestedArray1) {
@@ -1214,6 +1653,18 @@ TEST(ParserTest, NestedArray1) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 8);
+  EXPECT_EQ(1ULL, s.length());
+
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, ss.length());
+
+  std::string const valueOut = "[[]]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, NestedArray2) {
@@ -1222,6 +1673,62 @@ TEST(ParserTest, NestedArray2) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 66);
+  EXPECT_EQ(5ULL, s.length());
+
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, ss.length());
+
+  ss = s[1];
+  checkBuild(ss, JasonType::Array, 8);
+  EXPECT_EQ(1ULL, ss.length());
+
+  JasonSlice sss = ss[0];
+  checkBuild(sss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, sss.length());
+
+  ss = s[2];
+  checkBuild(ss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, ss.length());
+
+  ss = s[3];
+  checkBuild(ss, JasonType::Array, 34);
+  EXPECT_EQ(1ULL, ss.length());
+
+  sss = ss[0];
+  checkBuild(sss, JasonType::Array, 30);
+  EXPECT_EQ(2ULL, sss.length());
+
+  JasonSlice ssss = sss[0];
+  checkBuild(ssss, JasonType::Array, 20);
+  EXPECT_EQ(3ULL, ssss.length());
+
+  JasonSlice sssss = ssss[0];
+  checkBuild(sssss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, sssss.length());
+
+  sssss = ssss[1];
+  checkBuild(sssss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, sssss.length());
+
+  sssss = ssss[2];
+  checkBuild(sssss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, sssss.length());
+
+  ssss = sss[1];
+  checkBuild(ssss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, ssss.length());
+
+  ss = s[4];
+  checkBuild(ss, JasonType::Array, 4);
+  EXPECT_EQ(0ULL, ss.length());
+
+  std::string const valueOut = "[[],[[]],[],[[[[],[],[]],[]]],[]]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, NestedArray3) {
@@ -1230,6 +1737,52 @@ TEST(ParserTest, NestedArray3) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 48);
+  EXPECT_EQ(2ULL, s.length());
+
+  JasonSlice ss = s[0];
+  checkBuild(ss, JasonType::Array, 33);
+  EXPECT_EQ(4ULL, ss.length());
+
+  JasonSlice sss = ss[0];
+  checkBuild(sss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, sss.copyString());
+
+  sss = ss[1];
+  checkBuild(sss, JasonType::Array, 17);
+  EXPECT_EQ(3ULL, sss.length());
+
+  JasonSlice ssss = sss[0];
+  checkBuild(ssss, JasonType::String, 4);
+  correct = "bar";
+  EXPECT_EQ(correct, ssss.copyString());
+
+  ssss = sss[1];
+  checkBuild(ssss, JasonType::String, 4);
+  correct = "baz";
+  EXPECT_EQ(correct, ssss.copyString());
+
+  ssss = sss[2];
+  checkBuild(ssss, JasonType::Null, 1);
+
+  sss = ss[2];
+  checkBuild(sss, JasonType::Bool, 1);
+  EXPECT_TRUE(sss.getBool());
+
+  sss = ss[3];
+  checkBuild(sss, JasonType::Bool, 1);
+  EXPECT_FALSE(sss.getBool());
+
+  ss = s[1];
+  checkBuild(ss, JasonType::Double, 9);
+  EXPECT_EQ(-42.23, ss.getDouble());
+
+  std::string const valueOut = "[[\"foo\",[\"bar\",\"baz\",null],true,false],-42.23]";
+  checkDump(s, valueOut);
 }
 
 TEST(ParserTest, NestedArrayInvalid1) {
@@ -1286,6 +1839,13 @@ TEST(ParserTest, EmptyObject) {
   JasonParser parser;
   JasonLength len = parser.parse(value);
   EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 4);
+  EXPECT_EQ(0ULL, s.length());
+
+  checkDump(s, value);
 }
 
 TEST(ParserTest, BrokenObject1) {

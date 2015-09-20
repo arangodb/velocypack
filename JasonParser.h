@@ -378,13 +378,13 @@ namespace triagens {
                       }
                       c = static_cast<uint8_t>(i);
                       if (c >= '0' && c <= '9') {
-                        v = (v << 8) + c - '0';
+                        v = (v << 4) + c - '0';
                       }
                       else if (c >= 'a' && c <= 'f') {
-                        v = (v << 8) + c - 'a' + 10;
+                        v = (v << 4) + c - 'a' + 10;
                       }
                       else if (c >= 'A' && c <= 'F') {
-                        v = (v << 8) + c - 'A' + 10;
+                        v = (v << 4) + c - 'A' + 10;
                       }
                       else {
                         throw JasonParserError("scanString: Illegal hash digit.");
@@ -443,7 +443,7 @@ namespace triagens {
                       throw JasonParserError("scanString: invalid UTF-8 sequence");
                     }
                   }
-                  byteLen += follow;
+                  byteLen += follow+1;
                 }
                 break;
             }
@@ -616,8 +616,6 @@ namespace triagens {
             case '9':
               unconsume();
               scanNumber(len);  // this consumes the number or throws
-              // Maybe we should do better here and detect integers?
-              // Yes, we will, in buildNumber.
               break;
             case '"': {
               temp.push_back(scanString(len));
@@ -660,7 +658,7 @@ namespace triagens {
           if (c != '.') {
             unconsume();
             if (negative) {
-              _b.add(Jason(-static_cast<uint64_t>(integerPart)));
+              _b.add(Jason(-static_cast<int64_t>(integerPart)));
             }
             else {
               _b.add(Jason(integerPart));
@@ -689,7 +687,9 @@ namespace triagens {
           negative = false;
           if (c == '+' || c == '-') {
             negative = (c == '-');
-            c = getOne();
+          }
+          else {
+            unconsume();  // The first digit
           }
           // We know c is another digit here.
           expPart = scanDigits();
@@ -763,13 +763,13 @@ namespace triagens {
                       i = consume();
                       c = static_cast<uint8_t>(i);
                       if (c >= '0' && c <= '9') {
-                        v = (v << 8) + c - '0';
+                        v = (v << 4) + c - '0';
                       }
                       else if (c >= 'a' && c <= 'f') {
-                        v = (v << 8) + c - 'a' + 10;
+                        v = (v << 4) + c - 'a' + 10;
                       }
                       else if (c >= 'A' && c <= 'F') {
-                        v = (v << 8) + c - 'A' + 10;
+                        v = (v << 4) + c - 'A' + 10;
                       }
                     }
                     if (v < 0x80) {
