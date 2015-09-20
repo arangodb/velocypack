@@ -56,6 +56,8 @@ namespace triagens {
         JasonParser () : _start(nullptr), _size(0), _pos(0) {
         }
 
+        static void Initialize ();
+
         JasonLength parse (std::string const& json, bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(json.c_str());
           _size  = json.size();
@@ -170,7 +172,7 @@ namespace triagens {
         }
 
         static inline bool isWhiteSpace (int i) {
-          return i == ' ' || i == '\t' || i == '\n' || i == '\r' || i == '\f' || i == '\b';
+          return WhiteSpaceTable[i];
         }
 
         // skips over all following whitespace tokens but does not consume the
@@ -926,6 +928,10 @@ namespace triagens {
             }
           }
         }
+
+      private:
+
+        static bool WhiteSpaceTable[256];
 
     };
 

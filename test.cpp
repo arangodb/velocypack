@@ -2134,6 +2134,7 @@ TEST(ParserTest, ObjectMissingQuotes) {
 
 
 int main (int argc, char* argv[]) {
+  JasonParser::Initialize();
   JasonSlice::Initialize();
 
   ::testing::InitGoogleTest(&argc, argv);

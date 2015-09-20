@@ -29,6 +29,9 @@ using JasonType        = triagens::basics::JasonType;
 using namespace std;
 
 int main (int argc, char* argv[]) {
+  JasonParser::Initialize();
+  JasonSlice::Initialize();
+
   if (argc < 4) {
     cout << "Usage: FILENAME.json RUNTIME_IN_SECONDS COPIES" << endl;
     cout << "This program reads the file into a string, makes COPIES copies" << endl;
