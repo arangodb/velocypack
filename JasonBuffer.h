@@ -13,7 +13,7 @@ namespace triagens {
 
       public:
 
-        JasonBuffer () : _buf(nullptr), _alloc(0), _pos(0) {
+        JasonBuffer () : _buf(_local), _alloc(sizeof(_local)), _pos(0) {
         } 
 
         explicit JasonBuffer (JasonLength expectedLength) : JasonBuffer() {
@@ -21,7 +21,7 @@ namespace triagens {
         }
 
         ~JasonBuffer () {
-          if (_buf != nullptr) {
+          if (_buf != nullptr && _buf != _local) {
             delete[] _buf;
           }
         }
@@ -32,14 +32,6 @@ namespace triagens {
 
         JasonLength size () const {
           return _pos;
-        }
-
-        char* steal () {
-          char* buf = _buf;
-          _buf = nullptr;
-          _pos = 0;
-          _alloc = 0;
-          return buf;
         }
 
         void append (char c) {
@@ -61,7 +53,7 @@ namespace triagens {
 
         void reserve (JasonLength len) {
           if (_pos + len >= _alloc) {
-            static JasonLength const MinLength = 128;
+            static JasonLength const MinLength = sizeof(_local);
             static double const GrowthFactor = 1.2;
 
             // need reallocation
@@ -80,7 +72,9 @@ namespace triagens {
             if (_buf != nullptr) {
               // copy old data
               memcpy(p, _buf, _pos);
-              delete[] _buf;
+              if (_buf != _local) {
+                delete[] _buf;
+              }
             }
             _buf = p;
             _alloc = newLen;
@@ -92,6 +86,8 @@ namespace triagens {
         char*       _buf;
         JasonLength _alloc;
         JasonLength _pos;
+
+        char        _local[160];
 
     };
 

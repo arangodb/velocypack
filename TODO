@@ -11,8 +11,8 @@
 
 * implement optional lookup table suport in Builder, Slice, Parser and Dumper
 
-* binary search in JasonSlice within an object
-
 * optionally check for repeated attribute names in the same subobject
 
 * test long variants (presumably just use > 255 entries)
+
+* decide if JasonBuffer should be used in JasonBuilder
