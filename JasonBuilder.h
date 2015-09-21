@@ -216,8 +216,8 @@ namespace triagens {
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntrySmall e;
-            e.offset = static_cast<uint16_t>(objBase[4+2*i]) +
-                       (static_cast<uint16_t>(objBase[5+2*i]) << 8);
+            e.offset = static_cast<uint16_t>(objBase[4 + 2 * i]) +
+                       (static_cast<uint16_t>(objBase[5 + 2 * i]) << 8);
             uint64_t attrLen;
             uint8_t* nameStart = findAttrName(objBase + e.offset, attrLen);
             if (attrLen <= 0xffff && nameStart - objBase <= 0xffff) {
@@ -234,8 +234,8 @@ namespace triagens {
             doActualSortSmall(entries, objBase);
             // And now write info back:
             for (JasonLength i = 0; i < len; i++) {
-              objBase[4+2*i] = entries[i].offset & 0xff;
-              objBase[5+2*i] = entries[i].offset >> 8;
+              objBase[4 + 2 * i] = entries[i].offset & 0xff;
+              objBase[5 + 2 * i] = entries[i].offset >> 8;
             }
             return;
           }
@@ -245,16 +245,16 @@ namespace triagens {
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntryLarge e;
-            e.offset = static_cast<uint64_t>(objBase[4+2*i]) +
-                       (static_cast<uint64_t>(objBase[5+2*i]) << 8);
+            e.offset = static_cast<uint64_t>(objBase[4 + 2 * i]) +
+                       (static_cast<uint64_t>(objBase[5 + 2 * i]) << 8);
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries2.push_back(e);
           }
           doActualSortLarge(entries2);
           // And now write info back:
           for (JasonLength i = 0; i < len; i++) {
-            objBase[4+2*i] = entries[i].offset & 0xff;
-            objBase[5+2*i] = entries[i].offset >> 8;
+            objBase[4 + 2 * i] = entries[i].offset & 0xff;
+            objBase[5 + 2 * i] = entries[i].offset >> 8;
           }
         }
 
@@ -263,28 +263,28 @@ namespace triagens {
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntryLarge e;
-            e.offset = static_cast<uint64_t>(objBase[16+8*i]) +
-                       (static_cast<uint64_t>(objBase[17+8*i]) << 8) +
-                       (static_cast<uint64_t>(objBase[18+8*i]) << 16) +
-                       (static_cast<uint64_t>(objBase[19+8*i]) << 24) +
-                       (static_cast<uint64_t>(objBase[20+8*i]) << 32) +
-                       (static_cast<uint64_t>(objBase[21+8*i]) << 40) +
-                       (static_cast<uint64_t>(objBase[22+8*i]) << 48) +
-                       (static_cast<uint64_t>(objBase[23+8*i]) << 56);
+            e.offset = (static_cast<uint64_t>(objBase[16 + 8 * i])) +
+                       (static_cast<uint64_t>(objBase[17 + 8 * i]) << 8) +
+                       (static_cast<uint64_t>(objBase[18 + 8 * i]) << 16) +
+                       (static_cast<uint64_t>(objBase[19 + 8 * i]) << 24) +
+                       (static_cast<uint64_t>(objBase[20 + 8 * i]) << 32) +
+                       (static_cast<uint64_t>(objBase[21 + 8 * i]) << 40) +
+                       (static_cast<uint64_t>(objBase[22 + 8 * i]) << 48) +
+                       (static_cast<uint64_t>(objBase[23 + 8 * i]) << 56);
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries.push_back(e);
           }
           doActualSortLarge(entries);
           // And now write info back:
           for (JasonLength i = 0; i < len; i++) {
-            objBase[16+8*i] = entries[i].offset & 0xff;
-            objBase[17+8*i] = (entries[i].offset >> 8) & 0xff;
-            objBase[18+8*i] = (entries[i].offset >> 16) & 0xff;
-            objBase[19+8*i] = (entries[i].offset >> 24) & 0xff;
-            objBase[20+8*i] = (entries[i].offset >> 32) & 0xff;
-            objBase[21+8*i] = (entries[i].offset >> 40) & 0xff;
-            objBase[22+8*i] = (entries[i].offset >> 48) & 0xff;
-            objBase[23+8*i] = entries[i].offset >> 56;
+            objBase[16 + 8 * i] = (entries[i].offset)       & 0xff;
+            objBase[17 + 8 * i] = (entries[i].offset >> 8)  & 0xff;
+            objBase[18 + 8 * i] = (entries[i].offset >> 16) & 0xff;
+            objBase[19 + 8 * i] = (entries[i].offset >> 24) & 0xff;
+            objBase[20 + 8 * i] = (entries[i].offset >> 32) & 0xff;
+            objBase[21 + 8 * i] = (entries[i].offset >> 40) & 0xff;
+            objBase[22 + 8 * i] = (entries[i].offset >> 48) & 0xff;
+            objBase[23 + 8 * i] = (entries[i].offset >> 56);
           }
         }
 
@@ -564,6 +564,7 @@ namespace triagens {
             _start[tableEntry] = x & 0xff;
             _start[tableEntry + 1] = (x >> 8) & 0xff;
             if (_start[tos.base] == 0x06 && tos.len >= 2) {
+              // sort object attributes
               sortObjectIndexShort(_start + tos.base, tos.len);
             }
           }
@@ -576,6 +577,7 @@ namespace triagens {
               x >>= 8;
             }
             if (_start[tos.base] == 0x07 && tos.len >= 2) {
+              // sort object attributes
               sortObjectIndexLong(_start + tos.base, tos.len);
             }
           }
