@@ -201,10 +201,6 @@ namespace triagens {
           if (index >= n) {
             throw JasonTypeError("index out of bounds");
           }
-          // TODO: check if this works with long objects
-          if (index == 0) {
-            return JasonSlice(start() + (2 + n) * offsetSize);
-          }
           JasonLength const offsetPosition = (index + 2) * offsetSize;
           return JasonSlice(start() + readInteger<JasonLength>(start() + offsetPosition, offsetSize));
         }

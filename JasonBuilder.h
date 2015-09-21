@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <cstring>
+#include <algorithm>
            
 // Endianess of the system must be configured here:
 #undef BIG_ENDIAN
@@ -121,6 +122,170 @@ namespace triagens {
           }
           _start = _alloc.data();
           _size = _alloc.size();
+        }
+
+        // Here comes infrastructure to sort object index tables:
+
+        struct SortEntrySmall {
+          int32_t  nameStartOffset;
+          uint16_t nameSize;
+          uint16_t offset;
+        };
+
+        static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
+                                       uint8_t* objBase) {
+          auto comp = [objBase] (SortEntrySmall& a, SortEntrySmall& b) {
+            // return true iff a < b:
+            uint8_t* pa = objBase + a.nameStartOffset;
+            uint16_t sizea = a.nameSize;
+            uint8_t* pb = objBase + b.nameStartOffset;
+            uint16_t sizeb = b.nameSize;
+            while (sizea > 0 && sizeb > 0) {
+              if (*pa < *pb) {
+                return true;
+              }
+              else if (*pa > *pb) {
+                return false;
+              }
+              pa++; pb++; sizea--; sizeb--;
+            }
+            if (sizeb > 0) {
+              return true;
+            }
+            return false;
+          };
+          std::sort(entries.begin(), entries.end(), comp);
+        }
+
+        struct SortEntryLarge {
+          uint8_t* nameStart;
+          uint64_t nameSize;
+          uint64_t offset;
+        };
+
+        static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
+          auto comp = [] (SortEntryLarge& a, SortEntryLarge& b) {
+            // return true iff a < b:
+            uint8_t* pa = a.nameStart;
+            uint64_t sizea = a.nameSize;
+            uint8_t* pb = b.nameStart;
+            uint64_t sizeb = b.nameSize;
+            while (sizea > 0 && sizeb > 0) {
+              if (*pa < *pb) {
+                return true;
+              }
+              else if (*pa > *pb) {
+                return false;
+              }
+              pa++; pb++; sizea--; sizeb--;
+            }
+            if (sizeb > 0) {
+              return true;
+            }
+            return false;
+          };
+          std::sort(entries.begin(), entries.end(), comp);
+        };
+
+        static uint8_t* findAttrName (uint8_t* base, uint64_t& len) {
+          if (*base >= 0x40 && *base <= 0xbf) {
+            len = *base - 0x40;
+            return base+1;
+          }
+          else if (*base >= 0xc0 && *base <= 0xcf) {
+            len = 0;
+            uint8_t lenLen = *base - 0xbf;
+            for (uint8_t i = 1; i <= *base - 0xbf; i++) {
+              len = (len << 8) + base[i];
+            }
+            return base + lenLen + 1;
+          }
+          else {
+            throw JasonBuilderError("Unimplemented attribute name type.");
+          }
+        }
+
+        static void sortObjectIndexShort (uint8_t* objBase, JasonLength len) {
+          // We know that objBase[0] is 0x06 and objBase[1] is len
+          // and that len >= 2 and that the table is there, it only needs
+          // to be sorted.
+
+          bool alert = false;   // is set to true when we find an attribute
+                                // name longer than 0xffff
+          std::vector<SortEntrySmall> entries;
+          entries.reserve(len);
+          for (JasonLength i = 0; i < len; i++) {
+            SortEntrySmall e;
+            e.offset = static_cast<uint16_t>(objBase[4+2*i]) +
+                       (static_cast<uint16_t>(objBase[5+2*i]) << 8);
+            uint64_t attrLen;
+            uint8_t* nameStart = findAttrName(objBase + e.offset, attrLen);
+            if (attrLen <= 0xffff && nameStart - objBase <= 0xffff) {
+              e.nameStartOffset = static_cast<uint16_t>(nameStart - objBase);
+              e.nameSize = static_cast<uint16_t>(attrLen);
+            }
+            else {
+              alert = true;
+              break;
+            }
+            entries.push_back(e);
+          }
+          if (!alert) {
+            doActualSortSmall(entries, objBase);
+            // And now write info back:
+            for (JasonLength i = 0; i < len; i++) {
+              objBase[4+2*i] = entries[i].offset & 0xff;
+              objBase[5+2*i] = entries[i].offset >> 8;
+            }
+            return;
+          }
+          // If we get here, we have to start over, because an attribute name
+          // was too long:
+          std::vector<SortEntryLarge> entries2;
+          entries.reserve(len);
+          for (JasonLength i = 0; i < len; i++) {
+            SortEntryLarge e;
+            e.offset = static_cast<uint64_t>(objBase[4+2*i]) +
+                       (static_cast<uint64_t>(objBase[5+2*i]) << 8);
+            e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
+            entries2.push_back(e);
+          }
+          doActualSortLarge(entries2);
+          // And now write info back:
+          for (JasonLength i = 0; i < len; i++) {
+            objBase[4+2*i] = entries[i].offset & 0xff;
+            objBase[5+2*i] = entries[i].offset >> 8;
+          }
+        }
+
+        static void sortObjectIndexLong (uint8_t* objBase, JasonLength len) {
+          std::vector<SortEntryLarge> entries;
+          entries.reserve(len);
+          for (JasonLength i = 0; i < len; i++) {
+            SortEntryLarge e;
+            e.offset = static_cast<uint64_t>(objBase[16+8*i]) +
+                       (static_cast<uint64_t>(objBase[17+8*i]) << 8) +
+                       (static_cast<uint64_t>(objBase[18+8*i]) << 16) +
+                       (static_cast<uint64_t>(objBase[19+8*i]) << 24) +
+                       (static_cast<uint64_t>(objBase[20+8*i]) << 32) +
+                       (static_cast<uint64_t>(objBase[21+8*i]) << 40) +
+                       (static_cast<uint64_t>(objBase[22+8*i]) << 48) +
+                       (static_cast<uint64_t>(objBase[23+8*i]) << 56);
+            e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
+            entries.push_back(e);
+          }
+          doActualSortLarge(entries);
+          // And now write info back:
+          for (JasonLength i = 0; i < len; i++) {
+            objBase[16+8*i] = entries[i].offset & 0xff;
+            objBase[17+8*i] = (entries[i].offset >> 8) & 0xff;
+            objBase[18+8*i] = (entries[i].offset >> 16) & 0xff;
+            objBase[19+8*i] = (entries[i].offset >> 24) & 0xff;
+            objBase[20+8*i] = (entries[i].offset >> 32) & 0xff;
+            objBase[21+8*i] = (entries[i].offset >> 40) & 0xff;
+            objBase[22+8*i] = (entries[i].offset >> 48) & 0xff;
+            objBase[23+8*i] = entries[i].offset >> 56;
+          }
         }
 
       public:
@@ -398,17 +563,8 @@ namespace triagens {
             }
             _start[tableEntry] = x & 0xff;
             _start[tableEntry + 1] = (x >> 8) & 0xff;
-            if (_start[tos.base] == 0x06) {
-#if 0
-              tableEntry += 2;
-              std::vector<uint16_t> toSort;
-              toSort.reserve(tos.index);
-              for (JasonLength i = 0; i < tos.index; i++) {
-                toSort.push(_start[tableEntry + 2*i] + 
-                      static_cast<uint16_t>(_start[tableEntry + 2*i+1]) << 8);
-#endif
-              // TODO: Sort object entries by key, permute indexes
-              ;
+            if (_start[tos.base] == 0x06 && tos.len >= 2) {
+              sortObjectIndexShort(_start + tos.base, tos.len);
             }
           }
           else {
@@ -418,6 +574,9 @@ namespace triagens {
             for (size_t i = 0; i < 8; i++) {
               _start[tableEntry + i] = x & 0xff;
               x >>= 8;
+            }
+            if (_start[tos.base] == 0x07 && tos.len >= 2) {
+              sortObjectIndexLong(_start + tos.base, tos.len);
             }
           }
           // Now the array or object is complete, we pop a State off the _stack
