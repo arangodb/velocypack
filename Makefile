@@ -17,7 +17,7 @@ fpconv.o: Makefile fpconv.h
 Jason.o: Makefile JasonType.h Jason.h
 	$(CC) $(CFLAGS) Jason.cpp -c -o Jason.o
 
-JasonParser.o: Makefile JasonParser.h JasonParser.cpp Jason.h JasonType.h
+JasonParser.o: Makefile JasonBuilder.h JasonParser.h JasonParser.cpp Jason.h JasonType.h
 	$(CC) $(CFLAGS) JasonParser.cpp -c -o JasonParser.o
 
 JasonUtils.o: Makefile JasonUtils.h JasonUtils.cpp Jason.h JasonType.h
