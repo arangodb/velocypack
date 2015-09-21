@@ -2133,6 +2133,235 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
+TEST(LookupTest, LookupShortObject) {
+  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  JasonSlice v;
+  v = s.get("foo"); 
+  EXPECT_TRUE(v.isNull());
+ 
+  v = s.get("bar");  
+  EXPECT_TRUE(v.isBool());
+  EXPECT_EQ(true, v.getBool());
+
+  v = s.get("baz");  
+  EXPECT_TRUE(v.isDouble());
+  EXPECT_FLOAT_EQ(13.53, v.getDouble());
+
+  v = s.get("qux");  
+  EXPECT_TRUE(v.isArray());
+  EXPECT_TRUE(v.isType(JasonType::Array));
+  EXPECT_EQ(1ULL, v.length());
+
+  v = s.get("quz");  
+  EXPECT_TRUE(v.isObject());
+  EXPECT_TRUE(v.isType(JasonType::Object));
+  EXPECT_EQ(0ULL, v.length());
+
+  // non-present attributes
+  v = s.get("nada");  
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get(std::string("foo\0", 4));  
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get("Foo");  
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get("food");  
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get("");  
+  EXPECT_TRUE(v.isNone());
+}
+
+TEST(LookupTest, LookupLongObject) {
+  std::string value("{");
+  for (size_t i = 4; i < 1024; ++i) {
+    if (i > 4) {
+      value.append(","); 
+    }
+    value.append("\"test"); 
+    value.append(std::to_string(i));
+    value.append("\":"); 
+    value.append(std::to_string(i));
+  }
+  value.append("}"); 
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  JasonSlice v;
+  v = s.get("test4"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(4ULL, v.getUInt());
+
+  v = s.get("test10"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(10ULL, v.getUInt());
+
+  v = s.get("test42"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(42ULL, v.getUInt());
+
+  v = s.get("test100"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(100ULL, v.getUInt());
+  
+  v = s.get("test932"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(932ULL, v.getUInt());
+
+  v = s.get("test1000"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1000ULL, v.getUInt());
+
+  v = s.get("test1023"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1023ULL, v.getUInt());
+
+  // none existing
+  v = s.get("test0"); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get("test1"); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get("test1024"); 
+  EXPECT_TRUE(v.isNone());
+}
+
+TEST(LookupTest, LookupLinear) {
+  std::string value("{");
+  for (size_t i = 0; i < 4; ++i) {
+    if (i > 0) {
+      value.append(","); 
+    }
+    value.append("\"test"); 
+    value.append(std::to_string(i));
+    value.append("\":"); 
+    value.append(std::to_string(i));
+  }
+  value.append("}"); 
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  JasonSlice v;
+  v = s.get("test0"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(0ULL, v.getUInt());
+  
+  v = s.get("test1"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1ULL, v.getUInt());
+
+  v = s.get("test2"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(2ULL, v.getUInt());
+  
+  v = s.get("test3"); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(3ULL, v.getUInt());
+}
+
+TEST(LookupTest, LookupBinary) {
+  std::string value("{");
+  for (size_t i = 0; i < 128; ++i) {
+    if (i > 0) {
+      value.append(","); 
+    }
+    value.append("\"test"); 
+    value.append(std::to_string(i));
+    value.append("\":"); 
+    value.append(std::to_string(i));
+  }
+  value.append("}"); 
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  for (size_t i = 0; i < 128; ++i) {
+    std::string key = "test";
+    key.append(std::to_string(i));
+    JasonSlice v = s.get(key);
+  
+    EXPECT_TRUE(v.isNumber());
+    EXPECT_EQ(i, v.getUInt());
+  } 
+}
+
+TEST(LookupTest, LookupBinarySamePrefix) {
+  std::string value("{");
+  for (size_t i = 0; i < 128; ++i) {
+    if (i > 0) {
+      value.append(","); 
+    }
+    value.append("\"test"); 
+    for (size_t j = 0; j < i; ++j) {
+      value.append("x");
+    }
+    value.append("\":"); 
+    value.append(std::to_string(i));
+  }
+  value.append("}"); 
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  for (size_t i = 0; i < 128; ++i) {
+    std::string key = "test";
+    for (size_t j = 0; j < i; ++j) {
+      key.append("x");
+    }
+    JasonSlice v = s.get(key);
+  
+    EXPECT_TRUE(v.isNumber());
+    EXPECT_EQ(i, v.getUInt());
+  } 
+}
+
+TEST(LookupTest, LookupBinaryLongObject) {
+  std::string value("{");
+  for (size_t i = 0; i < 1127; ++i) {
+    if (i > 0) {
+      value.append(","); 
+    }
+    value.append("\"test"); 
+    value.append(std::to_string(i));
+    value.append("\":"); 
+    value.append(std::to_string(i));
+  }
+  value.append("}"); 
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  for (size_t i = 0; i < 1127; ++i) {
+    std::string key = "test";
+    key.append(std::to_string(i));
+    JasonSlice v = s.get(key);
+  
+    EXPECT_TRUE(v.isNumber());
+    EXPECT_EQ(i, v.getUInt());
+  } 
+}
+
 
 int main (int argc, char* argv[]) {
   JasonSlice::Initialize();

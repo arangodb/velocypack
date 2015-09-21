@@ -8,8 +8,17 @@ using JasonType   = triagens::basics::JasonType;
 
 static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
 
+static uint8_t const NoneValue = 0xff;
+
 // a lookup table for Jason types
 std::array<JasonType, 256> JasonSlice::TypeTable;
+        
+// a built-in "not found" value slice
+uint8_t const* JasonSlice::NotFoundSliceData = &NoneValue;
+        
+// maximum number of attributes in an object for which a linear
+// search is performed
+JasonLength const JasonSlice::MaxLengthForLinearSearch = 8;
 
 // get the total byte size for the object, including the head byte
 JasonLength JasonSlice::byteSize () const {

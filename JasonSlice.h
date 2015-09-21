@@ -27,6 +27,9 @@ namespace triagens {
         uint8_t const* _start;
 
       public:
+  
+        explicit JasonSlice () : _start(NotFoundSliceData) {
+        }
 
         explicit JasonSlice (uint8_t const* start) : _start(start) {
         }
@@ -55,6 +58,11 @@ namespace triagens {
         // check if slice is of the specified type
         inline bool isType (JasonType type) const {
           return TypeTable[head()] == type;
+        }
+
+        // check if slice is a None object
+        bool isNone () const {
+          return isType(JasonType::None);
         }
 
         // check if slice is a Null object
@@ -210,13 +218,101 @@ namespace triagens {
           return JasonSlice(key.start() + key.byteSize());
         }
 
-        JasonSlice get (std::string const& /*attribute*/) const {
-          // TODO
-          return *this;
+        JasonSlice get (std::string const& attribute) const {
+          JasonLength offsetSize;
+          if (isType(JasonType::Object)) {
+            // short object
+            offsetSize = 2;
+          }
+          else if (isType(JasonType::ObjectLong)) {
+            // long object
+            offsetSize = 8;
+          }
+          else {
+            throw JasonTypeError("unexpected type - expecting object");
+          }
+
+          JasonLength const n = readInteger<JasonLength>(offsetSize - 1);
+          if (n < MaxLengthForLinearSearch) {
+            return searchObjectKeyLinear(attribute, offsetSize, n);
+          }
+          return searchObjectKeyBinary(attribute, offsetSize, n);
         }
 
         JasonSlice operator[] (std::string const& attribute) const {
           return get(attribute);
+        }
+
+        JasonSlice searchObjectKeyLinear (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
+          for (JasonLength index = 0; index < n; ++index) {
+            JasonLength const offsetPosition = (index + 2) * offsetSize;
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
+            if (! key.isString()) {
+              // invalid object
+              return JasonSlice();
+            }
+
+            JasonLength keyLength;
+            char const* k = key.getString(keyLength); 
+            if (keyLength != static_cast<JasonLength>(attribute.size())) {
+              // key must have the exact same length as the attribute we search for
+              continue;
+            }
+
+            if (memcmp(k, attribute.c_str(), attribute.size()) != 0) {
+              continue;
+            }
+            // key is identical. now return value
+            return JasonSlice(key.start() + key.byteSize());
+          }
+
+          // nothing found
+          return JasonSlice();
+        }
+
+        JasonSlice searchObjectKeyBinary (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
+          assert(n > 0);
+            
+          JasonLength const attributeLength = static_cast<JasonLength>(attribute.size());
+
+          JasonLength l = 0;
+          JasonLength r = n - 1;
+
+          while (true) {
+            // midpoint
+            JasonLength index = l + ((r - l) / 2);
+            JasonLength const offsetPosition = (index + 2) * offsetSize;
+
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
+            if (! key.isString()) {
+              // invalid object
+              return JasonSlice();
+            }
+
+            JasonLength keyLength;
+            char const* k = key.getString(keyLength); 
+            size_t const compareLength = static_cast<size_t>((std::min)(keyLength, attributeLength));
+
+            int res = memcmp(k, attribute.c_str(), compareLength);
+
+            if (res == 0 && keyLength == attributeLength) {
+              // key is identical. now return value
+              return JasonSlice(key.start() + key.byteSize());
+            }
+
+            if (res > 0 || (res == 0 && keyLength > attributeLength)) {
+              if (index == 0) {
+                return JasonSlice();
+              }
+              r = index - 1;
+            }
+            else {
+              l = index + 1;
+            }
+            if (r < l) {
+              return JasonSlice();
+            }
+          }
         }
 
         // return the pointer to the data for an External object
@@ -365,11 +461,15 @@ namespace triagens {
 
       private:
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief a lookup table for Jason types
-////////////////////////////////////////////////////////////////////////////////
-
+        // a lookup table for Jason types
         static std::array<JasonType, 256> TypeTable;
+
+        // a built-in "not found" value slice
+        static uint8_t const* NotFoundSliceData;
+
+        // maximum number of attributes in an object for which a linear
+        // search is performed
+        static JasonLength const MaxLengthForLinearSearch;
 
     };
 

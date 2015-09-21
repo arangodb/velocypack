@@ -96,7 +96,8 @@ indicates the type (and often the length) of the Jason value at hand:
                 the long int in bytes. After that, that many bytes
                 follow, each byte encodes two digits in little-endian
                 packed BCD representation.
-  - 0xf0-0xff : reserved
+  - 0xf0-0xfe : reserved
+  - 0xff      : none - this indicates absence of any type and value
 
 ### Arrays
 
