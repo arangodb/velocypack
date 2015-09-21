@@ -1,5 +1,3 @@
-* improve tests for parser, actually checking the results with Slice and Dumper
-
 * Handle strange special case in \uXXXX for the non-standard planes,
   which do two adjacent \uXXXX to produce two UTF-16 surrogates.
 
@@ -13,6 +11,8 @@
 
 * implement optional lookup table suport in Builder, Slice, Parser and Dumper
 
-* implement sorting of objects by alphabetical attribute name
-
 * binary search in JasonSlice within an object
+
+* optionally check for repeated attribute names in the same subobject
+
+* test long variants (presumably just use > 255 entries)
