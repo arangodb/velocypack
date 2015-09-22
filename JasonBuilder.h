@@ -190,9 +190,9 @@ namespace triagens {
         static uint8_t* findAttrName (uint8_t* base, uint64_t& len) {
           if (*base >= 0x40 && *base <= 0xbf) {
             len = *base - 0x40;
-            return base+1;
+            return base + 1;
           }
-          else if (*base >= 0xc0 && *base <= 0xcf) {
+          if (*base >= 0xc0 && *base <= 0xcf) {
             len = 0;
             uint8_t lenLen = *base - 0xbf;
             for (uint8_t i = 1; i <= *base - 0xbf; i++) {
@@ -200,9 +200,7 @@ namespace triagens {
             }
             return base + lenLen + 1;
           }
-          else {
-            throw JasonBuilderError("Unimplemented attribute name type.");
-          }
+          throw JasonBuilderError("Unimplemented attribute name type.");
         }
 
         static void sortObjectIndexShort (uint8_t* objBase, JasonLength len) {
@@ -216,7 +214,7 @@ namespace triagens {
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntrySmall e;
-            e.offset = static_cast<uint16_t>(objBase[4 + 2 * i]) +
+            e.offset =  static_cast<uint16_t>(objBase[4 + 2 * i]) +
                        (static_cast<uint16_t>(objBase[5 + 2 * i]) << 8);
             uint64_t attrLen;
             uint8_t* nameStart = findAttrName(objBase + e.offset, attrLen);
@@ -230,7 +228,7 @@ namespace triagens {
             }
             entries.push_back(e);
           }
-          if (!alert) {
+          if (! alert) {
             doActualSortSmall(entries, objBase);
             // And now write info back:
             for (JasonLength i = 0; i < len; i++) {
@@ -245,7 +243,7 @@ namespace triagens {
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntryLarge e;
-            e.offset = static_cast<uint64_t>(objBase[4 + 2 * i]) +
+            e.offset =  static_cast<uint64_t>(objBase[4 + 2 * i]) +
                        (static_cast<uint64_t>(objBase[5 + 2 * i]) << 8);
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries2.push_back(e);
@@ -262,29 +260,31 @@ namespace triagens {
           std::vector<SortEntryLarge> entries;
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
+            JasonLength const pos = 16 + 8 * i;
             SortEntryLarge e;
-            e.offset = (static_cast<uint64_t>(objBase[16 + 8 * i])) +
-                       (static_cast<uint64_t>(objBase[17 + 8 * i]) << 8) +
-                       (static_cast<uint64_t>(objBase[18 + 8 * i]) << 16) +
-                       (static_cast<uint64_t>(objBase[19 + 8 * i]) << 24) +
-                       (static_cast<uint64_t>(objBase[20 + 8 * i]) << 32) +
-                       (static_cast<uint64_t>(objBase[21 + 8 * i]) << 40) +
-                       (static_cast<uint64_t>(objBase[22 + 8 * i]) << 48) +
-                       (static_cast<uint64_t>(objBase[23 + 8 * i]) << 56);
+            e.offset = (static_cast<uint64_t>(objBase[pos])) +
+                       (static_cast<uint64_t>(objBase[pos + 1]) << 8) +
+                       (static_cast<uint64_t>(objBase[pos + 2]) << 16) +
+                       (static_cast<uint64_t>(objBase[pos + 3]) << 24) +
+                       (static_cast<uint64_t>(objBase[pos + 4]) << 32) +
+                       (static_cast<uint64_t>(objBase[pos + 5]) << 40) +
+                       (static_cast<uint64_t>(objBase[pos + 6]) << 48) +
+                       (static_cast<uint64_t>(objBase[pos + 7]) << 56);
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries.push_back(e);
           }
           doActualSortLarge(entries);
           // And now write info back:
           for (JasonLength i = 0; i < len; i++) {
-            objBase[16 + 8 * i] = (entries[i].offset)       & 0xff;
-            objBase[17 + 8 * i] = (entries[i].offset >> 8)  & 0xff;
-            objBase[18 + 8 * i] = (entries[i].offset >> 16) & 0xff;
-            objBase[19 + 8 * i] = (entries[i].offset >> 24) & 0xff;
-            objBase[20 + 8 * i] = (entries[i].offset >> 32) & 0xff;
-            objBase[21 + 8 * i] = (entries[i].offset >> 40) & 0xff;
-            objBase[22 + 8 * i] = (entries[i].offset >> 48) & 0xff;
-            objBase[23 + 8 * i] = (entries[i].offset >> 56);
+            JasonLength const pos = 16 + 8 * i;
+            objBase[pos]     = (entries[i].offset)       & 0xff;
+            objBase[pos + 1] = (entries[i].offset >> 8)  & 0xff;
+            objBase[pos + 2] = (entries[i].offset >> 16) & 0xff;
+            objBase[pos + 3] = (entries[i].offset >> 24) & 0xff;
+            objBase[pos + 4] = (entries[i].offset >> 32) & 0xff;
+            objBase[pos + 5] = (entries[i].offset >> 40) & 0xff;
+            objBase[pos + 6] = (entries[i].offset >> 48) & 0xff;
+            objBase[pos + 7] = (entries[i].offset >> 56);
           }
         }
 
@@ -421,7 +421,6 @@ namespace triagens {
           if (! _externalMem) {
             target.clear();
             _alloc.swap(target);
-            clear();
           }
           else {
             target.clear();
@@ -431,57 +430,44 @@ namespace triagens {
             for (JasonLength i = 0; i < s; i++) {
               target.push_back(*x++);
             }
-            clear();
           }
+          clear();
         }
 
         void add (std::string const& attrName, Jason sub) {
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
-          if (_stack.empty()) {
-            set(Jason(attrName, JasonType::String));
-            set(sub);
-          }
-          else {
+          if (! _stack.empty()) {
             State& tos = _stack.back();
             if (_start[tos.base] != 0x06 &&
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd(_pos);
-            set(Jason(attrName, JasonType::String));
-            set(sub);
           }
+          set(Jason(attrName, JasonType::String));
+          set(sub);
         }
 
         uint8_t* add (std::string const& attrName, JasonPair sub) {
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
-          uint8_t* ret;
-          if (_stack.empty()) {
-            set(Jason(attrName, JasonType::String));
-            ret = set(sub);
-          }
-          else {
+          if (! _stack.empty()) {
             State& tos = _stack.back();
             if (_start[tos.base] != 0x06 &&
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd(_pos);
-            set(Jason(attrName, JasonType::String));
-            ret = set(sub);
           }
-          return ret;
+          set(Jason(attrName, JasonType::String));
+          return set(sub);
         }
 
         void add (Jason sub) {
-          if (_stack.empty()) {
-            set(sub);
-          }
-          else {
+          if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
             if (_start[tos.base] < 0x04 ||
@@ -505,16 +491,12 @@ namespace triagens {
             else {
               reportAdd(_pos);
             }
-            set(sub);
           }
+          set(sub);
         }
 
         uint8_t* add (JasonPair sub) {
-          uint8_t* ret;
-          if (_stack.empty()) {
-            ret = set(sub);
-          }
-          else {
+          if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
             if (_start[tos.base] < 0x04 ||
@@ -538,9 +520,8 @@ namespace triagens {
             else {
               reportAdd(_pos);
             }
-            ret = set(sub);
           }
-          return ret;
+          return set(sub);
         }
 
         void close () {
