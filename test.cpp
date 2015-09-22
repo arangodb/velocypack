@@ -2180,6 +2180,50 @@ TEST(LookupTest, LookupShortObject) {
   EXPECT_TRUE(v.isNone());
 }
 
+TEST(LookupTest, LookupSubattributes) {
+  std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  JasonSlice v;
+  v = s.get(std::vector<std::string>({ "foo" })); 
+  EXPECT_TRUE(v.isObject());
+ 
+  v = s.get(std::vector<std::string>({ "foo", "bar" })); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1ULL, v.getUInt());
+
+  v = s.get(std::vector<std::string>({ "boo" })); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get(std::vector<std::string>({ "boo", "far" })); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get(std::vector<std::string>({ "foo", "bark" })); 
+  EXPECT_TRUE(v.isArray());
+
+  v = s.get(std::vector<std::string>({ "foo", "bark", "baz" })); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get(std::vector<std::string>({ "foo", "baz" })); 
+  EXPECT_TRUE(v.isObject());
+
+  v = s.get(std::vector<std::string>({ "foo", "baz", "qux" })); 
+  EXPECT_TRUE(v.isObject());
+
+  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz" })); 
+  EXPECT_TRUE(v.isNull());
+
+  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurk" })); 
+  EXPECT_TRUE(v.isNone());
+
+  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
+  EXPECT_TRUE(v.isNone());
+}
+
 TEST(LookupTest, LookupLongObject) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {

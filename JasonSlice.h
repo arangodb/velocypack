@@ -218,6 +218,31 @@ namespace triagens {
           return JasonSlice(key.start() + key.byteSize());
         }
 
+        // look for the specified attribute path inside an object
+        // returns a JasonSlice(Jason::None) if not found
+        JasonSlice get (std::vector<std::string> const& attributes) const { 
+          size_t const n = attributes.size();
+          if (n == 0) {
+            throw JasonTypeError("got empty attribute path");
+          }
+
+          // use ourselves as the starting point
+          JasonSlice last = JasonSlice(start());
+          for (size_t i = 0; i < attributes.size(); ++i) {
+            // fetch subattribute
+            last = last.get(attributes[i]);
+
+            // abort as early as possible
+            if (last.isNone() || (i + 1 < n && ! last.isObject())) {
+              return JasonSlice();
+            }
+          }
+
+          return last;
+        }
+
+        // look for the specified attribute inside an object
+        // returns a JasonSlice(Jason::None) if not found
         JasonSlice get (std::string const& attribute) const {
           JasonLength offsetSize;
           if (isType(JasonType::Object)) {
@@ -241,78 +266,6 @@ namespace triagens {
 
         JasonSlice operator[] (std::string const& attribute) const {
           return get(attribute);
-        }
-
-        JasonSlice searchObjectKeyLinear (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
-          for (JasonLength index = 0; index < n; ++index) {
-            JasonLength const offsetPosition = (index + 2) * offsetSize;
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
-            if (! key.isString()) {
-              // invalid object
-              return JasonSlice();
-            }
-
-            JasonLength keyLength;
-            char const* k = key.getString(keyLength); 
-            if (keyLength != static_cast<JasonLength>(attribute.size())) {
-              // key must have the exact same length as the attribute we search for
-              continue;
-            }
-
-            if (memcmp(k, attribute.c_str(), attribute.size()) != 0) {
-              continue;
-            }
-            // key is identical. now return value
-            return JasonSlice(key.start() + key.byteSize());
-          }
-
-          // nothing found
-          return JasonSlice();
-        }
-
-        JasonSlice searchObjectKeyBinary (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
-          assert(n > 0);
-            
-          JasonLength const attributeLength = static_cast<JasonLength>(attribute.size());
-
-          JasonLength l = 0;
-          JasonLength r = n - 1;
-
-          while (true) {
-            // midpoint
-            JasonLength index = l + ((r - l) / 2);
-            JasonLength const offsetPosition = (index + 2) * offsetSize;
-
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
-            if (! key.isString()) {
-              // invalid object
-              return JasonSlice();
-            }
-
-            JasonLength keyLength;
-            char const* k = key.getString(keyLength); 
-            size_t const compareLength = static_cast<size_t>((std::min)(keyLength, attributeLength));
-
-            int res = memcmp(k, attribute.c_str(), compareLength);
-
-            if (res == 0 && keyLength == attributeLength) {
-              // key is identical. now return value
-              return JasonSlice(key.start() + key.byteSize());
-            }
-
-            if (res > 0 || (res == 0 && keyLength > attributeLength)) {
-              if (index == 0) {
-                return JasonSlice();
-              }
-              r = index - 1;
-            }
-            else {
-              l = index + 1;
-            }
-            if (r < l) {
-              return JasonSlice();
-            }
-          }
         }
 
         // return the pointer to the data for an External object
@@ -414,6 +367,81 @@ namespace triagens {
         static void Initialize ();
   
       private:
+
+        // perform a linear search for the specified attribute inside an object
+        JasonSlice searchObjectKeyLinear (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
+          for (JasonLength index = 0; index < n; ++index) {
+            JasonLength const offsetPosition = (index + 2) * offsetSize;
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
+            if (! key.isString()) {
+              // invalid object
+              return JasonSlice();
+            }
+
+            JasonLength keyLength;
+            char const* k = key.getString(keyLength); 
+            if (keyLength != static_cast<JasonLength>(attribute.size())) {
+              // key must have the exact same length as the attribute we search for
+              continue;
+            }
+
+            if (memcmp(k, attribute.c_str(), attribute.size()) != 0) {
+              continue;
+            }
+            // key is identical. now return value
+            return JasonSlice(key.start() + key.byteSize());
+          }
+
+          // nothing found
+          return JasonSlice();
+        }
+
+        // perform a binary search for the specified attribute inside an object
+        JasonSlice searchObjectKeyBinary (std::string const& attribute, JasonLength offsetSize, JasonLength n) const {
+          assert(n > 0);
+            
+          JasonLength const attributeLength = static_cast<JasonLength>(attribute.size());
+
+          JasonLength l = 0;
+          JasonLength r = n - 1;
+
+          while (true) {
+            // midpoint
+            JasonLength index = l + ((r - l) / 2);
+            JasonLength const offsetPosition = (index + 2) * offsetSize;
+
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offsetPosition, offsetSize));
+            if (! key.isString()) {
+              // invalid object
+              return JasonSlice();
+            }
+
+            JasonLength keyLength;
+            char const* k = key.getString(keyLength); 
+            size_t const compareLength = static_cast<size_t>((std::min)(keyLength, attributeLength));
+
+            int res = memcmp(k, attribute.c_str(), compareLength);
+
+            if (res == 0 && keyLength == attributeLength) {
+              // key is identical. now return value
+              return JasonSlice(key.start() + key.byteSize());
+            }
+
+            if (res > 0 || (res == 0 && keyLength > attributeLength)) {
+              if (index == 0) {
+                return JasonSlice();
+              }
+              r = index - 1;
+            }
+            else {
+              l = index + 1;
+            }
+            if (r < l) {
+              return JasonSlice();
+            }
+          }
+        }
+
          
         // assert that the slice is of a specific type
         // can be used for debugging and removed in production
