@@ -445,11 +445,14 @@ namespace triagens {
          
         // assert that the slice is of a specific type
         // can be used for debugging and removed in production
+#ifndef NDEBUG
         void assertType (JasonType type) const {
-#if 1
           assert(this->type() == type);
-#endif
         }
+#else
+        void assertType (JasonType) const {
+        }
+#endif
 
         // read an unsigned little endian integer value of the
         // specified length, starting at the byte following the head byte 
