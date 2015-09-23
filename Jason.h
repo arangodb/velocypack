@@ -115,6 +115,10 @@ namespace triagens {
           return _cType;
         }
 
+        bool isString () const {
+          return (_jasonType == JasonType::String || _jasonType == JasonType::StringLong); 
+        }
+
         bool getBool () const {
           assert(_cType == Bool);
           return _value.b;
@@ -173,16 +177,20 @@ namespace triagens {
             _size(size), _type(type) {
         }
 
-        uint8_t const* getStart () {
+        uint8_t const* getStart () const {
           return _start;
         }
 
-        uint64_t getSize () {
+        uint64_t getSize () const {
           return _size;
         }
 
-        JasonType jasonType () {
+        JasonType jasonType () const {
           return _type;
+        }
+
+        bool isString () const {
+          return (_type == JasonType::String || _type == JasonType::StringLong); 
         }
     };
 
