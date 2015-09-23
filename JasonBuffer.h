@@ -51,35 +51,7 @@ namespace triagens {
           _pos += len;
         }
 
-        void reserve (JasonLength len) {
-          if (_pos + len >= _alloc) {
-            static JasonLength const MinLength = sizeof(_local);
-            static double const GrowthFactor = 1.2;
-
-            // need reallocation
-            JasonLength newLen = _pos + len;
-            if (newLen < MinLength) {
-              // ensure we don't alloc too small blocks
-              newLen = MinLength;
-            }
-            if (_pos > 0 && newLen < GrowthFactor * _pos) {
-              // ensure the buffer grows sensibly and not by 1 byte only
-              newLen = GrowthFactor * _pos;
-            }
-
-            char* p = new char[newLen];
-
-            if (_buf != nullptr) {
-              // copy old data
-              memcpy(p, _buf, _pos);
-              if (_buf != _local) {
-                delete[] _buf;
-              }
-            }
-            _buf = p;
-            _alloc = newLen;
-          }
-        }
+        void reserve (JasonLength);
        
       private:
  
@@ -88,6 +60,8 @@ namespace triagens {
         JasonLength _pos;
 
         char        _local[160];
+
+        static double const GrowthFactor;
 
     };
 

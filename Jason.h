@@ -7,6 +7,18 @@
 
 #include "JasonType.h"
 
+// check for environment type (32 or 64 bit)
+// if the environment type cannot be determined reliably, then this will
+// abort compilation. this will abort on systems that neither have 32 bit
+// nor 64 bit pointers!
+#if INTPTR_MAX == INT32_MAX
+#define JASON_32BIT
+#elif INTPTR_MAX == INT64_MAX
+#define JASON_64BIT
+#else
+#error "Could not determine environment type (32 or 64 bits)"
+#endif
+
 namespace triagens {
   namespace basics {
 
@@ -14,6 +26,8 @@ namespace triagens {
     // though no Jason values exceeded the bounds of 32 bit can be
     // used on a 32 bit system
     typedef uint64_t JasonLength;
+
+    static_assert(sizeof(JasonLength) >= sizeof(SIZE_MAX), "invalid value for SIZE_MAX");
 
     // base exception class
     struct JasonException : std::exception {

@@ -18,7 +18,7 @@ namespace triagens {
 
     class JasonBuilder {
 
-      // This class organises the buildup of a Jason object. It manages
+      // This class organizes the buildup of a Jason object. It manages
       // the memory allocation and allows convenience methods to build
       // the object up recursively.
       //
@@ -54,6 +54,23 @@ namespace triagens {
       //    ("hans", Jason("Wurst"))                          "hans": "wurst",
       //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
 
+        struct SortEntrySmall {
+          int32_t  nameStartOffset;
+          uint16_t nameSize;
+          uint16_t offset;
+        };
+
+        struct SortEntryLarge {
+          uint8_t const* nameStart;
+          uint64_t nameSize;
+          uint64_t offset;
+        };
+
+        // thread local vector for sorting small object attributes
+        static thread_local std::vector<SortEntrySmall> SortObjectSmallEntries;
+        // thread local vector for sorting large object attributes
+        static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
+
         struct JasonBuilderError : std::exception {
           private:
             std::string _msg;
@@ -66,10 +83,10 @@ namespace triagens {
         };
 
         std::vector<uint8_t> _alloc;
-        bool         _externalMem;          // true if buffer came from the outside
         uint8_t*     _start;
         JasonLength  _size;
         JasonLength  _pos;   // the current append position, always <= _size
+        bool         _externalMem;          // true if buffer came from the outside
         bool         _attrWritten;  // indicates that an attribute name
                                     // in an object has been written
           
@@ -125,13 +142,6 @@ namespace triagens {
         }
 
         // Here comes infrastructure to sort object index tables:
-
-        struct SortEntrySmall {
-          int32_t  nameStartOffset;
-          uint16_t nameSize;
-          uint16_t offset;
-        };
-
         static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
                                        uint8_t const* objBase) {
           assert(entries.size() > 1);
@@ -147,12 +157,6 @@ namespace triagens {
             return (res < 0 || (res == 0 && sizea < sizeb));
           });
         }
-
-        struct SortEntryLarge {
-          uint8_t const* nameStart;
-          uint64_t nameSize;
-          uint64_t offset;
-        };
 
         static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
           assert(entries.size() > 1);
@@ -192,7 +196,8 @@ namespace triagens {
 
           bool alert = false;   // is set to true when we find an attribute
                                 // name longer than 0xffff
-          std::vector<SortEntrySmall> entries;
+          std::vector<SortEntrySmall>& entries = SortObjectSmallEntries; 
+          entries.clear();
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntrySmall e;
@@ -222,7 +227,7 @@ namespace triagens {
           // If we get here, we have to start over, because an attribute name
           // was too long:
           std::vector<SortEntryLarge> entries2;
-          entries.reserve(len);
+          entries2.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntryLarge e;
             e.offset =  static_cast<uint64_t>(objBase[4 + 2 * i]) +
@@ -239,7 +244,8 @@ namespace triagens {
         }
 
         static void sortObjectIndexLong (uint8_t* objBase, JasonLength len) {
-          std::vector<SortEntryLarge> entries;
+          std::vector<SortEntryLarge>& entries = SortObjectLargeEntries; 
+          entries.clear();
           entries.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             JasonLength const pos = 16 + 8 * i;
@@ -274,7 +280,7 @@ namespace triagens {
 
         JasonBuilder (JasonType /*type*/ = JasonType::None,
                       JasonLength spaceHint = 1) 
-          : _externalMem(false), _pos(0), _attrWritten(false) {
+          : _pos(0), _externalMem(false), _attrWritten(false) {
           JasonUtils::CheckSize(spaceHint);
           _alloc.reserve(static_cast<size_t>(spaceHint));
           _alloc.push_back(0);
@@ -284,8 +290,8 @@ namespace triagens {
 
         JasonBuilder (uint8_t* start, JasonLength size,
                       JasonType /*type*/ = JasonType::None) 
-          : _externalMem(true), _start(start), _size(size), _pos(0),
-            _attrWritten(false) {
+          : _start(start), _size(size), _pos(0),
+            _externalMem(true), _attrWritten(false) {
         }
       
         ~JasonBuilder () {
@@ -384,11 +390,11 @@ namespace triagens {
           _stack.clear();
         }
 
-        uint8_t* start () {
+        uint8_t* start () const {
           return _start;
         }
 
-        JasonLength size () {
+        JasonLength size () const {
           // Compute the actual size here, but only when sealed
           if (! _stack.empty()) {
             throw JasonBuilderError("Jason object not sealed.");
