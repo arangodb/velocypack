@@ -72,7 +72,7 @@ namespace triagens {
         JasonLength  _pos;   // the current append position, always <= _size
         bool         _attrWritten;  // indicates that an attribute name
                                     // in an object has been written
-
+          
         struct State {
           JasonLength base;   // Start of object currently being built
           JasonLength index;  // Index in array or object currently being worked on
@@ -133,58 +133,40 @@ namespace triagens {
         };
 
         static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
-                                       uint8_t* objBase) {
-          auto comp = [objBase] (SortEntrySmall& a, SortEntrySmall& b) {
+                                       uint8_t const* objBase) {
+          assert(entries.size() > 1);
+          std::sort(entries.begin(), entries.end(), [objBase] (SortEntrySmall const& a, SortEntrySmall const& b) {
             // return true iff a < b:
-            uint8_t* pa = objBase + a.nameStartOffset;
+            uint8_t const* pa = objBase + a.nameStartOffset;
             uint16_t sizea = a.nameSize;
-            uint8_t* pb = objBase + b.nameStartOffset;
+            uint8_t const* pb = objBase + b.nameStartOffset;
             uint16_t sizeb = b.nameSize;
-            while (sizea > 0 && sizeb > 0) {
-              if (*pa < *pb) {
-                return true;
-              }
-              else if (*pa > *pb) {
-                return false;
-              }
-              pa++; pb++; sizea--; sizeb--;
-            }
-            if (sizeb > 0) {
-              return true;
-            }
-            return false;
-          };
-          std::sort(entries.begin(), entries.end(), comp);
+            size_t const compareLength = static_cast<size_t>((std::min)(sizea, sizeb));
+            int res = memcmp(pa, pb, compareLength);
+
+            return (res < 0 || (res == 0 && sizea < sizeb));
+          });
         }
 
         struct SortEntryLarge {
-          uint8_t* nameStart;
+          uint8_t const* nameStart;
           uint64_t nameSize;
           uint64_t offset;
         };
 
         static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
-          auto comp = [] (SortEntryLarge& a, SortEntryLarge& b) {
+          assert(entries.size() > 1);
+          std::sort(entries.begin(), entries.end(), [] (SortEntryLarge const& a, SortEntryLarge const& b) {
             // return true iff a < b:
-            uint8_t* pa = a.nameStart;
+            uint8_t const* pa = a.nameStart;
             uint64_t sizea = a.nameSize;
-            uint8_t* pb = b.nameStart;
+            uint8_t const* pb = b.nameStart;
             uint64_t sizeb = b.nameSize;
-            while (sizea > 0 && sizeb > 0) {
-              if (*pa < *pb) {
-                return true;
-              }
-              else if (*pa > *pb) {
-                return false;
-              }
-              pa++; pb++; sizea--; sizeb--;
-            }
-            if (sizeb > 0) {
-              return true;
-            }
-            return false;
-          };
-          std::sort(entries.begin(), entries.end(), comp);
+            size_t const compareLength = static_cast<size_t>((std::min)(sizea, sizeb));
+            int res = memcmp(pa, pb, compareLength);
+
+            return (res < 0 || (res == 0 && sizea < sizeb));
+          });
         };
 
         static uint8_t* findAttrName (uint8_t* base, uint64_t& len) {
@@ -418,12 +400,11 @@ namespace triagens {
           if (! _stack.empty()) {
             throw JasonBuilderError("Jason object not sealed.");
           }
+          target.clear();
           if (! _externalMem) {
-            target.clear();
             _alloc.swap(target);
           }
           else {
-            target.clear();
             JasonLength s = size();
             target.reserve(static_cast<size_t>(s));
             uint8_t* x = _start;
@@ -434,7 +415,7 @@ namespace triagens {
           clear();
         }
 
-        void add (std::string const& attrName, Jason sub) {
+        void add (std::string const& attrName, Jason const& sub) {
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
@@ -450,7 +431,7 @@ namespace triagens {
           set(sub);
         }
 
-        uint8_t* add (std::string const& attrName, JasonPair sub) {
+        uint8_t* add (std::string const& attrName, JasonPair const& sub) {
           if (_attrWritten) {
             throw JasonBuilderError("Attribute name already written.");
           }
@@ -466,7 +447,7 @@ namespace triagens {
           return set(sub);
         }
 
-        void add (Jason sub) {
+        void add (Jason const& sub) {
           if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
@@ -475,9 +456,7 @@ namespace triagens {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
             if (_start[tos.base] >= 0x06) {   // object or long object
-              if (! _attrWritten &&
-                  sub.jasonType() != JasonType::String &&
-                  sub.jasonType() != JasonType::StringLong) {
+              if (! _attrWritten && ! sub.isString()) {
                 throw JasonBuilderError("Need open array for this add() call.");
               }
               isObject = true;
@@ -495,7 +474,7 @@ namespace triagens {
           set(sub);
         }
 
-        uint8_t* add (JasonPair sub) {
+        uint8_t* add (JasonPair const& sub) {
           if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
@@ -504,9 +483,7 @@ namespace triagens {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
             if (_start[tos.base] >= 0x06) {   // object or long object
-              if (! _attrWritten &&
-                  sub.jasonType() != JasonType::String &&
-                  sub.jasonType() != JasonType::StringLong) {
+              if (! _attrWritten && ! sub.isString()) {
                 throw JasonBuilderError("Need open array for this add() call.");
               }
               isObject = true;
@@ -604,6 +581,9 @@ namespace triagens {
 
         // returns number of bytes required to store the value
         static JasonLength uintLength (uint64_t value) {
+          if (value <= 0xff) {
+            return 1;
+          }
           JasonLength vSize = 0;
           do {
             vSize++;
@@ -615,7 +595,7 @@ namespace triagens {
 
       private:
 
-        void set (Jason item) {
+        void set (Jason const& item) {
           // This method builds a single further Jason item at the current
           // append position. If this is an array or object, then an index
           // table is created and a new State is pushed onto the stack.
@@ -924,7 +904,7 @@ namespace triagens {
           }
         }
 
-        uint8_t* set (JasonPair pair) {
+        uint8_t* set (JasonPair const& pair) {
           // This method builds a single further Jason item at the current
           // append position. This is the case for JasonType::ID or
           // JasonType::Binary, which both need two pieces of information

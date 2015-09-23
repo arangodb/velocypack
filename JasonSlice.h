@@ -419,7 +419,6 @@ namespace triagens {
             JasonLength keyLength;
             char const* k = key.getString(keyLength); 
             size_t const compareLength = static_cast<size_t>((std::min)(keyLength, attributeLength));
-
             int res = memcmp(k, attribute.c_str(), compareLength);
 
             if (res == 0 && keyLength == attributeLength) {
