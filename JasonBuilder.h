@@ -2,6 +2,7 @@
 #define JASON_BUILDER_H
 
 #include "Jason.h"
+#include "JasonSlice.h"
 #include "JasonType.h"
 #include "JasonUtils.h"
 
@@ -54,6 +55,11 @@ namespace triagens {
       //    ("hans", Jason("Wurst"))                          "hans": "wurst",
       //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
 
+        struct BuilderOptions {
+          bool checkAttributeUniqueness = false;
+        };
+          
+
         struct SortEntrySmall {
           int32_t  nameStartOffset;
           uint16_t nameSize;
@@ -83,13 +89,14 @@ namespace triagens {
         };
 
         std::vector<uint8_t> _alloc;
-        uint8_t*     _start;
-        JasonLength  _size;
-        JasonLength  _pos;   // the current append position, always <= _size
-        bool         _externalMem;          // true if buffer came from the outside
-        bool         _attrWritten;  // indicates that an attribute name
-                                    // in an object has been written
-          
+        uint8_t*       _start;
+        JasonLength    _size;
+        JasonLength    _pos;   // the current append position, always <= _size
+        bool           _externalMem;          // true if buffer came from the outside
+        bool           _attrWritten;  // indicates that an attribute name
+                                      // in an object has been written
+        BuilderOptions _options;
+
         struct State {
           JasonLength base;   // Start of object currently being built
           JasonLength index;  // Index in array or object currently being worked on
@@ -173,15 +180,16 @@ namespace triagens {
           });
         };
 
-        static uint8_t* findAttrName (uint8_t* base, uint64_t& len) {
-          if (*base >= 0x40 && *base <= 0xbf) {
-            len = *base - 0x40;
+        static uint8_t const* findAttrName (uint8_t const* base, uint64_t& len) {
+          uint8_t const b = *base;
+          if (b >= 0x40 && b <= 0xbf) {
+            len = b - 0x40;
             return base + 1;
           }
-          if (*base >= 0xc0 && *base <= 0xcf) {
+          if (b >= 0xc0 && b <= 0xcf) {
             len = 0;
-            uint8_t lenLen = *base - 0xbf;
-            for (uint8_t i = 1; i <= *base - 0xbf; i++) {
+            uint8_t lenLen = b - 0xbf;
+            for (uint8_t i = 1; i <= b - 0xbf; i++) {
               len = (len << 8) + base[i];
             }
             return base + lenLen + 1;
@@ -204,7 +212,7 @@ namespace triagens {
             e.offset =  static_cast<uint16_t>(objBase[4 + 2 * i]) +
                        (static_cast<uint16_t>(objBase[5 + 2 * i]) << 8);
             uint64_t attrLen;
-            uint8_t* nameStart = findAttrName(objBase + e.offset, attrLen);
+            uint8_t const* nameStart = findAttrName(objBase + e.offset, attrLen);
             if (attrLen <= 0xffff && nameStart - objBase <= 0xffff) {
               e.nameStartOffset = static_cast<uint16_t>(nameStart - objBase);
               e.nameSize = static_cast<uint16_t>(attrLen);
@@ -226,7 +234,8 @@ namespace triagens {
           }
           // If we get here, we have to start over, because an attribute name
           // was too long:
-          std::vector<SortEntryLarge> entries2;
+          std::vector<SortEntryLarge>& entries2 = SortObjectLargeEntries; 
+          entries2.clear();
           entries2.reserve(len);
           for (JasonLength i = 0; i < len; i++) {
             SortEntryLarge e;
@@ -545,6 +554,12 @@ namespace triagens {
               sortObjectIndexLong(_start + tos.base, tos.len);
             }
           }
+
+          if (_options.checkAttributeUniqueness && tos.len > 1 &&
+              (_start[tos.base] == 0x06 || _start[tos.base] == 0x07)) {
+            checkAttributeUniqueness(JasonSlice(_start));
+          }
+
           // Now the array or object is complete, we pop a State off the _stack
           _stack.pop_back();
         }
@@ -1027,6 +1042,31 @@ namespace triagens {
           else {
             appendUInt(static_cast<uint64_t>(-v), 0x27);
           }
+        }
+ 
+        void checkAttributeUniqueness (JasonSlice const obj) const {
+          JasonLength const n = obj.length();
+          JasonSlice previous = obj.keyAt(0);
+          JasonLength len;
+          char const* p = previous.getString(len);
+
+          for (JasonLength i = 1; i < n; ++i) {
+            JasonSlice current = obj.keyAt(i);
+            if (! current.isString()) {
+              return;
+            }
+            
+            JasonLength len2;
+            char const* q = current.getString(len2);
+
+            if (len == len2 && memcmp(p, q, len2) == 0) {
+              // identical key
+              throw JasonBuilderError("duplicate attribute name.");
+            }
+            // re-use already calculated values for next round
+            len = len2;
+            p = q;
+          } 
         }
 
     };
