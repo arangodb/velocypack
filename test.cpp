@@ -1496,6 +1496,27 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   checkDump(s, valueOut);
 }
 
+TEST(ParserTest, StringLiteralWithSurrogatePairs) {
+  std::string const value("\"\\ud800\\udc00\\udbff\\udfff\\udbc8\\udf45\"");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  std::string correct = "\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85";
+  checkBuild(s, JasonType::String, 1 + correct.size());
+  char const* p = s.getString(len);
+  EXPECT_EQ(correct.size(), len);
+  EXPECT_EQ(0, strncmp(correct.c_str(), p, len));
+  std::string out = s.copyString();
+  EXPECT_EQ(correct, out);
+
+  std::string const valueOut("\"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85\"");
+  checkDump(s, valueOut);
+}
+
 TEST(ParserTest, EmptyArray) {
   std::string const value("[]");
 

@@ -329,6 +329,7 @@ namespace triagens {
           // in the actual string.
           int i;
           int64_t byteLen = 0;
+          uint32_t highSurrogate = 0;  // non-zero if high-surrogate was ssen
 
           while (true) {
             uint8_t c = getOneOrThrow("scanString: Unfinished string detected.");
@@ -364,9 +365,9 @@ namespace triagens {
                   case 'r':
                   case 't':
                     byteLen++;
+                    highSurrogate = 0;
                     break;
                   case 'u': {
-                    // TODO: do surrogate pairs need to be handled specially here?
                     uint32_t v = 0;
                     for (int j = 0; j < 4; j++) {
                       i = consume();
@@ -389,9 +390,28 @@ namespace triagens {
                     }
                     if (v < 0x80) {
                       byteLen++;
+                      highSurrogate = 0;
                     }
                     else if (v < 0x800) {
                       byteLen += 2;
+                      highSurrogate = 0;
+                    }
+                    else if (v >= 0xd800 && v < 0xdc00) {
+                      // High surrogate:
+                      highSurrogate = v;
+                      byteLen += 3;  // We will correct this later with 
+                                     // the low surrogate pair
+                    }
+                    else if (v >= 0xdc00 && v < 0xe000) {
+                      // Low surrogate:
+                      if (highSurrogate == 0) {
+                        // no high surrogate before, so let's forget it
+                        byteLen += 3;
+                      }
+                      else {
+                        byteLen += 1;   // 3 from before, 1 here, total 4
+                        highSurrogate = 0;
+                      }
                     }
                     else {
                       byteLen += 3;
@@ -409,6 +429,7 @@ namespace triagens {
                 }
                 if ((c & 0x80) == 0) {
                   // non-UTF-8 sequence
+                  highSurrogate = 0;
                   byteLen++;
                 }
                 else {
@@ -441,6 +462,7 @@ namespace triagens {
                     }
                   }
                   byteLen += follow+1;
+                  highSurrogate = 0;
                 }
                 break;
             }
@@ -708,6 +730,8 @@ namespace triagens {
 
           int64_t strLen = temp[tempPos++];
           uint8_t* target;
+          uint32_t highSurrogate = 0;
+
           if (strLen > 127) {
             target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
                                       static_cast<uint64_t>(strLen),
@@ -731,31 +755,37 @@ namespace triagens {
                 switch (c) {
                   case '"':
                     *target++ = '"';
+                    highSurrogate = 0;
                     break;
                   case '\\':
                     *target++ = '\\';
+                    highSurrogate = 0;
                     break;
                   case '/':
                     *target++ = '/';
+                    highSurrogate = 0;
                     break;
                   case 'b':
                     *target++ = '\b';
+                    highSurrogate = 0;
                     break;
                   case 'f':
                     *target++ = '\f';
+                    highSurrogate = 0;
                     break;
                   case 'n':
                     *target++ = '\n';
+                    highSurrogate = 0;
                     break;
                   case 'r':
                     *target++ = '\r';
+                    highSurrogate = 0;
                     break;
                   case 't':
                     *target++ = '\t';
+                    highSurrogate = 0;
                     break;
                   case 'u': {
-                    // TODO: do surrogate pairs need to be handled specially here?
-                    // TODO: unfortunately, yes, leave this for later now:
                     uint32_t v = 0;
                     for (int j = 0; j < 4; j++) {
                       i = consume();
@@ -772,16 +802,38 @@ namespace triagens {
                     }
                     if (v < 0x80) {
                       *target++ = v;
+                      highSurrogate = 0;
+                      continue;
                     }
                     else if (v < 0x800) {
                       *target++ = 0xc0 + (v >> 6);
                       *target++ = 0x80 + (v & 0x3f);
+                      highSurrogate = 0;
+                      continue;
                     }
-                    else {    // if (v < 0x10000)  automatic
-                      *target++ = 0xe0 + (v >> 12);
+                    else if (v >= 0xdc00 && v < 0xe000 &&
+                             highSurrogate != 0) {
+                      // now put the two together:
+                      v = 0x10000 + ((highSurrogate - 0xd800) << 10)
+                                  + v - 0xdc00;
+                      target -= 3;
+                      *target++ = 0xf0 + (v >> 18);
+                      *target++ = 0x80 + ((v >> 12) & 0x3f);
                       *target++ = 0x80 + ((v >> 6) & 0x3f);
                       *target++ = 0x80 + (v & 0x3f);
+                      highSurrogate = 0;
+                      continue;
                     }
+                    if (v >= 0xd800 && v < 0xdc00) {
+                      // High surrogate:
+                      highSurrogate = v;
+                    }
+                    else {
+                      highSurrogate = 0;
+                    }
+                    *target++ = 0xe0 + (v >> 12);
+                    *target++ = 0x80 + ((v >> 6) & 0x3f);
+                    *target++ = 0x80 + (v & 0x3f);
                     break;
                   }
                   default:
@@ -790,6 +842,7 @@ namespace triagens {
                 break;
               default:
                 *target++ = c;
+                highSurrogate = 0;
                 break;
             }
           }

@@ -1,5 +1,6 @@
 * Handle strange special case in \uXXXX for the non-standard planes,
   which do two adjacent \uXXXX to produce two UTF-16 surrogates (MN).
+  --> done, only needed in parser, dumper can ignore
 
 * add RapidJson to bench for comparisons (JS)
 
