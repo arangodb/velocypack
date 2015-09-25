@@ -1,18 +1,28 @@
 * Handle strange special case in \uXXXX for the non-standard planes,
-  which do two adjacent \uXXXX to produce two UTF-16 surrogates.
+  which do two adjacent \uXXXX to produce two UTF-16 surrogates (MN).
 
-* Handle numbers that cannot be represented safely in int64/uint64/double in JasonParser
+* add RapidJson to bench for comparisons (JS)
 
-* Finish implementation of JasonSlice for all types
+* Handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
 
-* handle unsupported JSON types in JasonDumper 
+* Finish implementation of JasonSlice for all types (JS)
+
+* handle unsupported JSON types in JasonDumper (JS)
 
 * implement BCD in Builder, Slice, Parser and Dumper
 
 * implement optional lookup table suport in Builder, Slice, Parser and Dumper
 
-* optionally check for repeated attribute names in the same subobject
+* optionally check for repeated attribute names in the same subobject (JS)
 
 * test long variants (presumably just use > 255 entries)
 
+* test arrays/objects with few but long elements that exceed 64 KB
+
 * decide if JasonBuffer should be used in JasonBuilder
+
+* support shrinking
+
+* support modification of Jason object
+
+* optional: support accessing arbitrary objects via JSONPointer etc.
