@@ -140,6 +140,16 @@ namespace triagens {
           else {
             temp.reserve(8);
           }
+
+          // skip over optional BOM
+          if (_size >= 3 &&
+              _start[0] == 0xef &&
+              _start[1] == 0xbb &&
+              _start[2] == 0xbf) {
+            // found UTF-8 BOM. simply skip over it
+            _pos += 3;
+          }
+
           JasonLength len = 0;
           JasonLength nr = 0;
           size_t savePos;

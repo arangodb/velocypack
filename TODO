@@ -27,3 +27,5 @@
 * support modification of Jason object
 
 * optional: support accessing arbitrary objects via JSONPointer etc.
+
+* optional: support for other input encodings (e.g. UTF-16)

@@ -2154,6 +2154,37 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
+TEST(ParserTest, Utf8Bom) {
+  std::string const value("\xef\xbb\xbf{\"foo\":1}");
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  EXPECT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 12);
+  EXPECT_EQ(1ULL, s.length());
+
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "foo";
+  EXPECT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  checkBuild(ss, JasonType::UInt, 2);
+  EXPECT_EQ(1ULL, ss.getUInt());
+
+  std::string valueOut = "{\"foo\":1}";
+  checkDump(s, valueOut);
+}
+
+TEST(ParserTest, Utf8BomBroken) {
+  std::string const value("\xef\xbb");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
