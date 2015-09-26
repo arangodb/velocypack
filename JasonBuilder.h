@@ -617,6 +617,8 @@ namespace triagens {
       private:
 
         void set (Jason const& item) {
+          auto ctype = item.cType();
+
           // This method builds a single further Jason item at the current
           // append position. If this is an array or object, then an index
           // table is created and a new State is pushed onto the stack.
@@ -630,7 +632,7 @@ namespace triagens {
               break;
             }
             case JasonType::Bool: {
-              if (item.cType() != Jason::CType::Bool) {
+              if (ctype != Jason::CType::Bool) {
                 throw JasonBuilderError("Must give bool for JasonType::Bool.");
               }
               reserveSpace(1);
@@ -644,7 +646,7 @@ namespace triagens {
             }
             case JasonType::Double: {
               double v = 0.0;
-              switch (item.cType()) {
+              switch (ctype) {
                 case Jason::CType::Double:
                   v = item.getDouble();
                   break;
@@ -664,10 +666,10 @@ namespace triagens {
               break;
             }
             case JasonType::External: {
-              if (item.cType() != Jason::CType::VoidPtr) {
+              if (ctype != Jason::CType::VoidPtr) {
                 throw JasonBuilderError("Must give void pointer for JasonType::External.");
               }
-              reserveSpace(1+sizeof(void*));
+              reserveSpace(1 + sizeof(void*));
               // store pointer. this doesn't need to be portable
               _start[_pos++] = 0x08;
               void const* value = item.getExternal();
@@ -679,7 +681,7 @@ namespace triagens {
               uint64_t v = 0;
               int64_t vv = 0;
               bool positive = true;
-              switch (item.cType()) {
+              switch (ctype) {
                 case Jason::CType::Double:
                   if (item.getDouble() < 0.0) {
                     throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
@@ -687,7 +689,7 @@ namespace triagens {
                   vv = static_cast<int64_t>(item.getDouble());
                   if (vv >= 0) {
                     v = static_cast<uint64_t>(vv);
-                    positive = true;
+                    // positive is already set to true
                   }
                   else {
                     v = static_cast<uint64_t>(-vv);
@@ -698,7 +700,7 @@ namespace triagens {
                   vv = item.getInt64();
                   if (vv >= 0) {
                     v = static_cast<uint64_t>(vv);
-                    positive = true;
+                    // positive is already set to true
                   }
                   else {
                     v = static_cast<uint64_t>(-vv);
@@ -707,7 +709,7 @@ namespace triagens {
                   break;
                 case Jason::CType::UInt64:
                   v = item.getUInt64();
-                  positive = true;
+                  // positive is already set to true
                   break;
                 default:
                   throw JasonBuilderError("Must give number for JasonType::UInt.");
@@ -725,7 +727,7 @@ namespace triagens {
             case JasonType::UInt:
             case JasonType::UTCDate: {
               uint64_t v = 0;
-              switch (item.cType()) {
+              switch (ctype) {
                 case Jason::CType::Double:
                   if (item.getDouble() < 0.0) {
                     throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
@@ -756,13 +758,13 @@ namespace triagens {
             }
             case JasonType::String:
             case JasonType::StringLong: {
-              if (item.cType() != Jason::CType::String &&
-                  item.cType() != Jason::CType::CharPtr) {
+              if (ctype != Jason::CType::String &&
+                  ctype != Jason::CType::CharPtr) {
                 throw JasonBuilderError("Must give a string or char const* for JasonType::String or JasonType::StringLong.");
               }
               std::string const* s;
               std::string value;
-              if (item.cType() == Jason::CType::String) {
+              if (ctype == Jason::CType::String) {
                 s = item.getString();
               }
               else {
@@ -783,11 +785,11 @@ namespace triagens {
               break;
             }
             case JasonType::Array: {
-              if (item.cType() != Jason::CType::Int64 &&
-                  item.cType() != Jason::CType::UInt64) {
+              if (ctype != Jason::CType::Int64 &&
+                  ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::Array as length.");
               }
-              JasonLength len =   item.cType() == Jason::CType::UInt64 
+              JasonLength len =   ctype == Jason::CType::UInt64 
                                 ? item.getUInt64()
                                 : static_cast<uint64_t>(item.getInt64());
               if (len >= 256) {
@@ -813,11 +815,11 @@ namespace triagens {
               break;
             }
             case JasonType::ArrayLong: {
-              if (item.cType() != Jason::CType::Int64 &&
-                  item.cType() != Jason::CType::UInt64) {
+              if (ctype != Jason::CType::Int64 &&
+                  ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::ArrayLong as length.");
               }
-              JasonLength len =   item.cType() == Jason::CType::UInt64 
+              JasonLength len =   ctype == Jason::CType::UInt64 
                                 ? item.getUInt64()
                                 : static_cast<uint64_t>(item.getInt64());
               if (len == 0) {
@@ -843,24 +845,24 @@ namespace triagens {
               }
               // offsets
               if (len > 1) {
-                memset(_start + _pos, 0x00, (len-1) * 8);
-                _pos += (len-1) * 8;
+                memset(_start + _pos, 0x00, (len - 1) * 8);
+                _pos += (len - 1) * 8;
               }
               break;
             }
             case JasonType::Object: {
-              if (item.cType() != Jason::CType::Int64 &&
-                  item.cType() != Jason::CType::UInt64) {
+              if (ctype != Jason::CType::Int64 &&
+                  ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::Object as length.");
               }
-              JasonLength len =   item.cType() == Jason::CType::UInt64 
+              JasonLength len =   ctype == Jason::CType::UInt64 
                                 ? item.getUInt64()
                                 : static_cast<uint64_t>(item.getInt64());
               if (len >= 256) {
                 throw JasonBuilderError("Length in JasonType::Object must be < 256.");
               }
               _stack.emplace_back(_pos, 0, len);
-              reserveSpace(2 + (len+1) * 2);
+              reserveSpace(2 + (len + 1) * 2);
               _start[_pos++] = 0x06;
               _start[_pos++] = len & 0xff;
               _start[_pos++] = 0x00;   // these two bytes will be set at the end
@@ -874,11 +876,11 @@ namespace triagens {
               break;
             }
             case JasonType::ObjectLong: {
-              if (item.cType() != Jason::CType::Int64 &&
-                  item.cType() != Jason::CType::UInt64) {
+              if (ctype != Jason::CType::Int64 &&
+                  ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::ObjectLong as length.");
               }
-              JasonLength len =   item.cType() == Jason::CType::UInt64 
+              JasonLength len =   ctype == Jason::CType::UInt64 
                                 ? item.getUInt64()
                                 : static_cast<uint64_t>(item.getInt64());
               if (len == 0) {
@@ -888,7 +890,7 @@ namespace triagens {
                 throw JasonBuilderError("Length in JasonType::ObjectLong must be < 2^56.");
               }
               _stack.emplace_back(_pos, 0, len);
-              reserveSpace(8 + (len+1) * 8);
+              reserveSpace(8 + (len + 1) * 8);
               // type
               _start[_pos++] = 0x07; 
               // length
@@ -904,7 +906,7 @@ namespace triagens {
             }
             case JasonType::Binary: {
               uint64_t v = 0;
-              if (item.cType() != Jason::CType::UInt64) {
+              if (ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give unsigned integer for length of binary blob.");
               }
               v = item.getUInt64();

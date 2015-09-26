@@ -97,7 +97,7 @@ namespace triagens {
 
         // Returns the position at the time when the just reported error
         // occurred, only use when handling an exception.
-        size_t errorPos () {
+        size_t errorPos () const {
           return _pos > 0 ? _pos - 1 : _pos;
         }
 
@@ -118,7 +118,7 @@ namespace triagens {
         }
 
         inline void unconsume () {
-          _pos--;
+          --_pos;
         }
 
         inline void reset () {
@@ -265,47 +265,45 @@ namespace triagens {
           }
         }
 
-        inline uint8_t getOneOrThrow (char const* msg) {
+        inline int getOneOrThrow (char const* msg) {
           int i = consume();
           if (i < 0) {
             throw JasonParserError(msg);
           }
-          return static_cast<uint8_t>(i);
-        }
-
-        inline uint8_t getOne () {
-          // unchecked version of the above
-          return static_cast<uint8_t>(consume());
+          return i;
         }
 
         void scanNumber (JasonLength& len) {
-          uint8_t c = static_cast<uint8_t>(consume());
-          // We know that a character is coming, and we know it is '-' or a
-          // digit, otherwise we would not have been called.
-          if (c == '-') {
-            c = getOneOrThrow("scanNumber: incomplete number");
+          int i = consume();
+          // We know that a character is coming, and it's a number if it
+          // starts with '-' or a digit. otherwise it's invalid
+          if (i == '-') {
+            i = getOneOrThrow("scanNumber: incomplete number");
           }
+          if (i < '0' || i > '9') {
+            throw JasonParserError("value expected");
+          }
+          
           uint64_t value = 0;
-          if (c != '0') {
-            if (c < '1' || c > '9') {
+          if (i != '0') {
+            if (i < '1' || i > '9') {
               throw JasonParserError("scanNumber: incomplete number");
             }
             unconsume();
             value = scanDigits();
           }
-          int i = consume();
+          i = consume();
           if (i < 0) {
             len += 1 + _b.uintLength(value);
             return;
           }
-          c = static_cast<uint8_t>(i);
-          if (c != '.') {
+          if (i != '.') {
             unconsume();
             len += 1 + _b.uintLength(value);
             return;
           }
-          c = getOneOrThrow("scanNumber: incomplete number");
-          if (c < '0' || c > '9') {
+          i = getOneOrThrow("scanNumber: incomplete number");
+          if (i < '0' || i > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
           len += 1 + sizeof(double);
@@ -316,16 +314,15 @@ namespace triagens {
           if (i < 0) {
             return;
           }
-          c = static_cast<uint8_t>(i);
-          if (c != 'e' && c != 'E') {
+          if (i != 'e' && i != 'E') {
             unconsume();
             return;
           }
-          c = getOneOrThrow("scanNumber: incomplete number");
-          if (c == '+' || c == '-') {
-            c = getOneOrThrow("scanNumber: incomplete number");
+          i = getOneOrThrow("scanNumber: incomplete number");
+          if (i == '+' || i == '-') {
+            i = getOneOrThrow("scanNumber: incomplete number");
           }
-          if (c < '0' || c > '9') {
+          if (i < '0' || i > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
           scanDigits();
@@ -337,13 +334,12 @@ namespace triagens {
           // len is increased by the amount of bytes needed in the Jason
           // representation and the return value is the number of bytes
           // in the actual string.
-          int i;
           int64_t byteLen = 0;
-          uint32_t highSurrogate = 0;  // non-zero if high-surrogate was ssen
+          uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
           while (true) {
-            uint8_t c = getOneOrThrow("scanString: Unfinished string detected.");
-            switch (c) {
+            int i = getOneOrThrow("scanString: Unfinished string detected.");
+            switch (i) {
               case '"':
                 len += byteLen;
                 if (byteLen < 128) {
@@ -364,8 +360,7 @@ namespace triagens {
                 if (i < 0) {
                   throw JasonParserError("scanString: Unfinished string detected.");
                 }
-                c = static_cast<uint8_t>(i);
-                switch (c) {
+                switch (i) {
                   case '"':
                   case '\\':
                   case '/':
@@ -384,15 +379,14 @@ namespace triagens {
                       if (i < 0) {
                         throw JasonParserError("scanString: Unfinished \\uXXXX.");
                       }
-                      c = static_cast<uint8_t>(i);
-                      if (c >= '0' && c <= '9') {
-                        v = (v << 4) + c - '0';
+                      if (i >= '0' && i <= '9') {
+                        v = (v << 4) + i - '0';
                       }
-                      else if (c >= 'a' && c <= 'f') {
-                        v = (v << 4) + c - 'a' + 10;
+                      else if (i >= 'a' && i <= 'f') {
+                        v = (v << 4) + i - 'a' + 10;
                       }
-                      else if (c >= 'A' && c <= 'F') {
-                        v = (v << 4) + c - 'A' + 10;
+                      else if (i >= 'A' && i <= 'F') {
+                        v = (v << 4) + i - 'A' + 10;
                       }
                       else {
                         throw JasonParserError("scanString: Illegal hash digit.");
@@ -433,30 +427,30 @@ namespace triagens {
                 }
                 break;
               default:
-                if (c < 0x20) {
-                  // control character
-                  throw JasonParserError("scanString: Found control character.");
-                }
-                if ((c & 0x80) == 0) {
+                if ((i & 0x80) == 0) {
                   // non-UTF-8 sequence
+                  if (i < 0x20) {
+                    // control character
+                    throw JasonParserError("scanString: Found control character.");
+                  }
                   highSurrogate = 0;
                   byteLen++;
                 }
                 else {
-                  // UTF-8 sequence!
+                  // multi-byte UTF-8 sequence!
                   int follow = 0;
-                  if ((c & 0xe0) == 0x80) {
+                  if ((i & 0xe0) == 0x80) {
                     throw JasonParserError("scanString: Illegal UTF-8 byte.");
                   }
-                  else if ((c & 0xe0) == 0xc0) {
+                  else if ((i & 0xe0) == 0xc0) {
                     // two-byte sequence
                     follow = 1;
                   }
-                  else if ((c & 0xf0) == 0xe0) {
+                  else if ((i & 0xf0) == 0xe0) {
                     // three-byte sequence
                     follow = 2;
                   }
-                  else if ((c & 0xf8) == 0xf0) {
+                  else if ((i & 0xf8) == 0xf0) {
                     // four-byte sequence
                     follow = 3;
                   }
@@ -465,13 +459,13 @@ namespace triagens {
                   }
 
                   // validate follow up characters
-                  for (i = 0; i < follow; ++i) {
-                    c = getOneOrThrow("scanString: truncated UTF-8 sequence");
-                    if ((c & 0xc0) != 0x80) {
+                  for (int j = 0; j < follow; ++j) {
+                    i = getOneOrThrow("scanString: truncated UTF-8 sequence");
+                    if ((i & 0xc0) != 0x80) {
                       throw JasonParserError("scanString: invalid UTF-8 sequence");
                     }
                   }
-                  byteLen += follow+1;
+                  byteLen += follow + 1;
                   highSurrogate = 0;
                 }
                 break;
@@ -485,28 +479,30 @@ namespace triagens {
           int i = skipWhiteSpace("scanArray: item or ] expected");
           if (i == ']') {
             // empty array
-            consume();
+            ++_pos;
             len = 4;
             return;
           }
-          
+
           JasonLength startLen = len;
 
           while (true) {
             // parse array element itself
             scanJson(temp, len);
-            nr++;
+            ++nr;
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
               // end of array
-              consume();
+              ++_pos;
               break;
             }
-            if (i != ',') {
-              throw JasonParserError("scanArray: , or ] expected");
+            else if (nr > 0) {
+              // skip over ','
+              if (i != ',') {
+                throw JasonParserError("scanArray: , or ] expected");
+              }
+              ++_pos;
             }
-            // skip over ','
-            consume();
           }
             
           // If we have more than 255 entries, then it must be a long array.
@@ -538,7 +534,7 @@ namespace triagens {
             int i = skipWhiteSpace("scanObject: \" or } expected");
             if (i == '}' && nr == 0) {
               // '}' is only valid here if we haven't seen a ',' last time
-              consume();
+              ++_pos;
               break;
             }
 
@@ -547,29 +543,29 @@ namespace triagens {
               throw JasonParserError("scanObject: \" or } expected");
             }
             // get past the initial '"'
-            consume();
+            ++_pos;
 
-            temp.push_back(scanString(len));
+            temp.emplace_back(scanString(len));
             skipWhiteSpace("scanObject: : expected");
             // always expecting the ':' here
             i = consume();
             if (i != ':') {
-              throw JasonParserError("scanObject: 2: expected");
+              throw JasonParserError("scanObject: : expected");
             }
 
             scanJson(temp, len);
-            nr++;
+            ++nr;
             i = skipWhiteSpace("scanObject: , or } expected");
             if (i == '}') {
               // end of object
-              consume();
+              ++_pos;
               break;
             }
             if (i != ',') {
               throw JasonParserError("scanObject: , or } expected");
             } 
             // skip over ','
-            consume();
+            ++_pos;
           }
             
           // If we have more than 255 entries, then it must be a long object.
@@ -598,8 +594,7 @@ namespace triagens {
           if (i < 0) {
             return; 
           }
-          uint8_t c = static_cast<uint8_t>(i);
-          switch (c) {
+          switch (i) {
             case '{': {
               size_t tempPos = temp.size();
               temp.push_back(0);      // Here we will put the size       
@@ -621,7 +616,7 @@ namespace triagens {
               // &temp[tempPos] may point into the void
               scanArray(temp, tempNr, len);  
               temp[tempPos] = tempNr;
-                           // this consumes the closing '}' or throws
+                           // this consumes the closing ']' or throws
               break;
             }
             case 't':
@@ -633,44 +628,37 @@ namespace triagens {
             case 'n':
               scanNull(len);  // this consumes "ull" or throws
               break;
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-              unconsume();
-              scanNumber(len);  // this consumes the number or throws
-              break;
             case '"': {
-              temp.push_back(scanString(len));
+              temp.emplace_back(scanString(len));
               break;
             }
             default: {
-              throw JasonParserError("value expected");
+              // everything else must be a number or is invalid...
+              // this includes '-' and '0' to '9'. scanNumber() will
+              // throw if the input is non-numeric
+              unconsume();
+              scanNumber(len);  // this consumes the number or throws
+              break;
             }
           }
         }
 
         void buildNumber () {
-          int i;
-          uint8_t c = static_cast<uint8_t>(consume());
           uint64_t integerPart = 0;
           double   fractionalPart;
           uint64_t expPart;
           // We know that a character is coming, and we know it is '-' or a
           // digit, otherwise we would not have been called.
           bool negative = false;
-          if (c == '-') {
-            c = getOne();
+          int i = consume();
+          if (i == '-') {
+            i = consume();
             negative = true;
           }
-          if (c != '0') {
+          if (i < '0' || i > '9') {
+            throw JasonParserError("value expected");
+          }
+          if (i != '0') {
             unconsume();
             integerPart = scanDigits();
           }
@@ -684,8 +672,7 @@ namespace triagens {
             }
             return;
           }
-          c = static_cast<uint8_t>(i);
-          if (c != '.') {
+          if (i != '.') {
             unconsume();
             if (negative) {
               _b.add(Jason(-static_cast<int64_t>(integerPart)));
@@ -707,16 +694,15 @@ namespace triagens {
             _b.add(Jason(fractionalPart));
             return;
           }
-          c = static_cast<uint8_t>(i);
-          if (c != 'e' && c != 'E') {
+          if (i != 'e' && i != 'E') {
             unconsume();
             _b.add(Jason(fractionalPart));
             return;
           }
-          c = getOneOrThrow("scanNumber: incomplete number");
+          i = getOneOrThrow("scanNumber: incomplete number");
           negative = false;
-          if (c == '+' || c == '-') {
-            negative = (c == '-');
+          if (i == '+' || i == '-') {
+            negative = (i == '-');
           }
           else {
             unconsume();  // The first digit
@@ -753,16 +739,14 @@ namespace triagens {
                                       JasonType::String));
           }
 
-          int i;
           while (true) {
-            uint8_t c = getOne();
-            switch (c) {
+            int i = consume();
+            switch (i) {
               case '"':
                 return;
               case '\\':
                 i = consume();
-                c = static_cast<uint8_t>(i);
-                switch (c) {
+                switch (i) {
                   case '"':
                     *target++ = '"';
                     highSurrogate = 0;
@@ -799,15 +783,14 @@ namespace triagens {
                     uint32_t v = 0;
                     for (int j = 0; j < 4; j++) {
                       i = consume();
-                      c = static_cast<uint8_t>(i);
-                      if (c >= '0' && c <= '9') {
-                        v = (v << 4) + c - '0';
+                      if (i >= '0' && i <= '9') {
+                        v = (v << 4) + i - '0';
                       }
-                      else if (c >= 'a' && c <= 'f') {
-                        v = (v << 4) + c - 'a' + 10;
+                      else if (i >= 'a' && i <= 'f') {
+                        v = (v << 4) + i - 'a' + 10;
                       }
-                      else if (c >= 'A' && c <= 'F') {
-                        v = (v << 4) + c - 'A' + 10;
+                      else if (i >= 'A' && i <= 'F') {
+                        v = (v << 4) + i - 'A' + 10;
                       }
                     }
                     if (v < 0x80) {
@@ -851,7 +834,7 @@ namespace triagens {
                 }
                 break;
               default:
-                *target++ = c;
+                *target++ = static_cast<uint8_t>(i);
                 highSurrogate = 0;
                 break;
             }
@@ -873,12 +856,12 @@ namespace triagens {
             int i = skipWhiteSpaceNoCheck();
             if (i == '}' && nr == 0) {
               // '}' is only valid here if we haven't seen a ',' last time
-              consume();
+              ++_pos;
               break;
             }
             // always expecting a string attribute name here
             // get past the initial '"'
-            consume();
+            ++_pos;
 
             buildString(temp, tempPos);
             skipWhiteSpaceNoCheck();
@@ -886,15 +869,15 @@ namespace triagens {
             i = consume();
 
             buildJason(temp, tempPos);
-            nr++;
+            ++nr;
             i = skipWhiteSpaceNoCheck();
             if (i == '}') {
               // end of object
-              consume();
+              ++_pos;
               break;
             }
             // skip over ','
-            consume();
+            ++_pos;
           }
           _b.close();
         }
@@ -912,22 +895,22 @@ namespace triagens {
           int64_t nr = 0;
           while (true) {
             int i = skipWhiteSpaceNoCheck();
-            if (i == ']' && nr == 0) { 
-              // ']' is only valid here if we haven't seen a ',' last time
-              consume();
+            if (i == ']') { 
+              // end of array 
+              ++_pos;
               break;
             }
+            else if (nr > 0) {
+              // skip over ','
+              if (i != ',') {
+                throw JasonParserError("scanArray: , or ] expected");
+              }
+              ++_pos;
+            }
+
             // parse array element itself
             buildJason(temp, tempPos);
-            nr++;
-            i = skipWhiteSpaceNoCheck();
-            if (i == ']') {
-              // end of array
-              consume();
-              break;
-            }
-            // skip over ','
-            consume();
+            ++nr;
           }
           _b.close();
         }
@@ -938,8 +921,7 @@ namespace triagens {
           if (i < 0) {
             return; 
           }
-          uint8_t c = static_cast<uint8_t>(i);
-          switch (c) {
+          switch (i) {
             case '{': {
               buildObject(temp, tempPos);   // this consumes the closing '}'
               break;
@@ -950,42 +932,30 @@ namespace triagens {
             }
             case 't':
               // consume "rue"
-              consume(); consume(); consume();
+              _pos += 3;
               _b.add(Jason(true));
               break;
             case 'f':
               // consume "alse"
-              consume(); consume(); consume(); consume();
+              _pos += 4;
               _b.add(Jason(false));
               break;
             case 'n':
               // consume "ull"
-              consume(); consume(); consume();
+              _pos += 3;
               _b.add(Jason());
-              break;
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-              unconsume();
-              buildNumber();  // this consumes the number
               break;
             case '"': {
               buildString(temp, tempPos);
               break;
-            }
             default: {
-              throw JasonParserError("value expected");
+              unconsume();
+              buildNumber();  // this consumes the number
+              break;
             }
           }
         }
+      }
 
     };
 
