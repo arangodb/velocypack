@@ -55,10 +55,20 @@ namespace triagens {
       //    ("hans", Jason("Wurst"))                          "hans": "wurst",
       //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
 
-        struct BuilderOptions {
-          bool checkAttributeUniqueness = false;
+      public:
+
+        struct JasonBuilderError : std::exception {
+          private:
+            std::string _msg;
+          public:
+            JasonBuilderError (std::string const& msg) : _msg(msg) {
+            }
+            char const* what() const noexcept {
+              return _msg.c_str();
+            }
         };
-          
+
+      private:
 
         struct SortEntrySmall {
           int32_t  nameStartOffset;
@@ -77,17 +87,6 @@ namespace triagens {
         // thread local vector for sorting large object attributes
         static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
 
-        struct JasonBuilderError : std::exception {
-          private:
-            std::string _msg;
-          public:
-            JasonBuilderError (std::string const& msg) : _msg(msg) {
-            }
-            char const* what() const noexcept {
-              return _msg.c_str();
-            }
-        };
-
         std::vector<uint8_t> _alloc;
         uint8_t*       _start;
         JasonLength    _size;
@@ -95,8 +94,6 @@ namespace triagens {
         bool           _externalMem;          // true if buffer came from the outside
         bool           _attrWritten;  // indicates that an attribute name
                                       // in an object has been written
-        BuilderOptions _options;
-
         struct State {
           JasonLength base;   // Start of object currently being built
           JasonLength index;  // Index in array or object currently being worked on
@@ -286,6 +283,8 @@ namespace triagens {
         }
 
       public:
+
+        JasonOptions options;
 
         JasonBuilder (JasonType /*type*/ = JasonType::None,
                       JasonLength spaceHint = 1) 
@@ -555,9 +554,9 @@ namespace triagens {
             }
           }
 
-          if (_options.checkAttributeUniqueness && tos.len > 1 &&
+          if (options.checkAttributeUniqueness && tos.len > 1 &&
               (_start[tos.base] == 0x06 || _start[tos.base] == 0x07)) {
-            checkAttributeUniqueness(JasonSlice(_start));
+            checkAttributeUniqueness(JasonSlice(_start + tos.base));
           }
 
           // Now the array or object is complete, we pop a State off the _stack
@@ -1068,6 +1067,12 @@ namespace triagens {
             // re-use already calculated values for next round
             len = len2;
             p = q;
+
+            // recurse into sub-objects
+            JasonSlice value = obj.valueAt(i);
+            if (value.isObject()) {
+              checkAttributeUniqueness(value);
+            }
           } 
         }
 

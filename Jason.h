@@ -208,6 +208,10 @@ namespace triagens {
         }
     };
 
+    struct JasonOptions {
+      bool checkAttributeUniqueness = false;
+    };
+          
   }  // namespace triagens::basics
 }  // namespace triagens
 

@@ -2185,6 +2185,48 @@ TEST(ParserTest, Utf8BomBroken) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
+TEST(ParserTest, DuplicateAttributesAllowed) {
+  std::string const value("{\"foo\":1,\"foo\":2}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  JasonSlice v = s.get("foo");
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1ULL, v.getUInt());
+}
+
+TEST(ParserTest, DuplicateAttributesDisallowed) {
+  std::string const value("{\"foo\":1,\"foo\":2}");
+
+  JasonParser parser;
+  parser.options.checkAttributeUniqueness = true;
+  EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
+}
+
+TEST(ParserTest, DuplicateSubAttributesAllowed) {
+  std::string const value("{\"foo\":{\"bar\":1},\"baz\":{\"bar\":2},\"bar\":{\"foo\":23,\"baz\":9}}");
+
+  JasonParser parser;
+  parser.options.checkAttributeUniqueness = true;
+  parser.parse(value);
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  JasonSlice v = s.get(std::vector<std::string>({ "foo", "bar" })); 
+  EXPECT_TRUE(v.isNumber());
+  EXPECT_EQ(1ULL, v.getUInt());
+}
+
+TEST(ParserTest, DuplicateSubAttributesDisallowed) {
+  std::string const value("{\"roo\":{\"bar\":1,\"abc\":true,\"def\":7,\"abc\":2}}");
+
+  JasonParser parser;
+  parser.options.checkAttributeUniqueness = true;
+  EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
+}
+
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 

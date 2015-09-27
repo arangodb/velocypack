@@ -50,6 +50,8 @@ namespace triagens {
             }
         };
 
+        JasonOptions options;        
+
         JasonParser (JasonParser const&) = delete;
         JasonParser& operator= (JasonParser const&) = delete;
 
@@ -133,6 +135,7 @@ namespace triagens {
         // build the result (build phase).
 
         JasonLength parseInternal (bool multi) {
+          _b.options = options; // copy over options
           std::vector<int64_t> temp;
           if (_size > 1024) {
             temp.reserve(_size / 32);

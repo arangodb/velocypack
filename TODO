@@ -3,6 +3,14 @@
   --> done, only needed in parser, dumper can ignore
 
 * add RapidJson to bench for comparisons (JS)
+  --> done, run bench with "rapidjson" as last parameter
+
+* optionally check for repeated attribute names in the same subobject (JS)
+  --> functionality is implemented, duplicate attribute name checking is
+      turned off by default, but can be enabled by setting a parser option
+
+* compare against TRI_json_t (JS)
+  --> done for small.json and sample.json. Jason is 2 to 3 times faster
 
 * Handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
 
@@ -10,11 +18,11 @@
 
 * handle unsupported JSON types in JasonDumper (JS)
 
+* add pretty printing option to dumper (JS)
+
 * implement BCD in Builder, Slice, Parser and Dumper
 
-* implement optional lookup table suport in Builder, Slice, Parser and Dumper
-
-* optionally check for repeated attribute names in the same subobject (JS)
+* implement optional lookup table support in Builder, Slice, Parser and Dumper
 
 * test long variants (presumably just use > 255 entries)
 
@@ -24,7 +32,7 @@
 
 * support shrinking
 
-* support modification of Jason object
+* support modification of Jason objects
 
 * optional: support accessing arbitrary objects via JSONPointer etc.
 
