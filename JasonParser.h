@@ -7,6 +7,8 @@
 #include "Jason.h"
 #include "JasonBuilder.h"
 
+#define FAST 1
+
 namespace triagens {
   namespace basics {
 
@@ -668,20 +670,36 @@ namespace triagens {
           i = consume();
           if (i < 0) {
             if (negative) {
+#ifdef FAST
+              _b.addNegInt(integerPart);
+#else
               _b.add(Jason(-static_cast<int64_t>(integerPart)));
+#endif
             }
             else {
+#ifdef FAST
+              _b.addUInt(integerPart);
+#else
               _b.add(Jason(integerPart));
+#endif
             }
             return;
           }
           if (i != '.') {
             unconsume();
             if (negative) {
+#ifdef FAST
+              _b.addNegInt(integerPart);
+#else
               _b.add(Jason(-static_cast<int64_t>(integerPart)));
+#endif
             }
             else {
+#ifdef FAST
+              _b.addUInt(integerPart);
+#else
               _b.add(Jason(integerPart));
+#endif
             }
             return;
           }
@@ -694,12 +712,20 @@ namespace triagens {
           }
           i = consume();
           if (i < 0) {
+#ifdef FAST
+            _b.addDouble(fractionalPart);
+#else
             _b.add(Jason(fractionalPart));
+#endif
             return;
           }
           if (i != 'e' && i != 'E') {
             unconsume();
+#ifdef FAST
+            _b.addDouble(fractionalPart);
+#else
             _b.add(Jason(fractionalPart));
+#endif
             return;
           }
           i = getOneOrThrow("scanNumber: incomplete number");
@@ -718,7 +744,11 @@ namespace triagens {
           else {
             fractionalPart *= pow(10, static_cast<double>(expPart));
           }
+#ifdef FAST
+          _b.addDouble(fractionalPart);
+#else
           _b.add(Jason(fractionalPart));
+#endif
         }
 
         void buildString (std::vector<int64_t> const& temp, size_t& tempPos) {
@@ -731,6 +761,9 @@ namespace triagens {
           uint8_t* target;
           uint32_t highSurrogate = 0;
 
+#ifdef FAST
+          target = _b.addString(static_cast<uint64_t>(strLen));
+#else
           if (strLen > 127) {
             target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
                                       static_cast<uint64_t>(strLen),
@@ -741,6 +774,7 @@ namespace triagens {
                                       static_cast<uint64_t>(strLen),
                                       JasonType::String));
           }
+#endif
 
           while (true) {
             int i = consume();
@@ -847,6 +881,9 @@ namespace triagens {
         void buildObject (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrAttrs = temp[tempPos++];
+#ifdef FAST
+          _b.addObject(nrAttrs);
+#else
           if (nrAttrs < 0) {
             // Long Object:
             _b.add(Jason(-nrAttrs, JasonType::ObjectLong));
@@ -854,6 +891,7 @@ namespace triagens {
           else {
             _b.add(Jason(nrAttrs, JasonType::Object));
           }
+#endif
           int64_t nr = 0;
           while (true) {
             int i = skipWhiteSpaceNoCheck();
@@ -866,6 +904,9 @@ namespace triagens {
             // get past the initial '"'
             ++_pos;
 
+#ifdef FAST
+            _b.reportAdd();
+#endif
             buildString(temp, tempPos);
             skipWhiteSpaceNoCheck();
             // always expecting the ':' here
@@ -888,6 +929,9 @@ namespace triagens {
         void buildArray (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrEntries = temp[tempPos++];
+#ifdef FAST
+          _b.addArray(nrEntries);
+#else
           if (nrEntries < 0) {
             // Long Array:
             _b.add(Jason(-nrEntries, JasonType::ArrayLong));
@@ -895,6 +939,7 @@ namespace triagens {
           else {
             _b.add(Jason(nrEntries, JasonType::Array));
           }
+#endif
           int64_t nr = 0;
           while (true) {
             int i = skipWhiteSpaceNoCheck();
@@ -910,6 +955,10 @@ namespace triagens {
               }
               ++_pos;
             }
+
+#ifdef FAST
+            _b.reportAdd();
+#endif
 
             // parse array element itself
             buildJason(temp, tempPos);
@@ -936,17 +985,29 @@ namespace triagens {
             case 't':
               // consume "rue"
               _pos += 3;
+#ifdef FAST
+              _b.addTrue();
+#else
               _b.add(Jason(true));
+#endif
               break;
             case 'f':
               // consume "alse"
               _pos += 4;
+#ifdef FAST
+              _b.addFalse();
+#else
               _b.add(Jason(false));
+#endif
               break;
             case 'n':
               // consume "ull"
               _pos += 3;
+#ifdef FAST
+              _b.addNull();
+#else
               _b.add(Jason());
+#endif
               break;
             case '"': {
               buildString(temp, tempPos);
