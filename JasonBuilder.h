@@ -19,6 +19,8 @@ namespace triagens {
 
     class JasonBuilder {
 
+        friend class JasonParser;
+
       // This class organizes the buildup of a Jason object. It manages
       // the memory allocation and allows convenience methods to build
       // the object up recursively.
@@ -615,6 +617,122 @@ namespace triagens {
 
       private:
 
+        void addNull () {
+          _start[_pos++] = 0x00;
+        }
+
+        void addFalse () {
+          _start[_pos++] = 0x01;
+        }
+
+        void addTrue () {
+          _start[_pos++] = 0x02;
+        }
+
+        void addDouble (double v) {
+          _start[_pos++] = 0x03;
+          memcpy(_start + _pos, &v, sizeof(double));
+        }
+
+        void addPosInt (uint64_t v) {
+          appendUIntNoCheck(v, 0x1f);
+        }
+
+        void addNegInt (uint64_t v) {
+          appendUIntNoCheck(v, 0x27);
+        }
+
+        void addUInt (uint64_t v) {
+          appendUIntNoCheck(v, 0x2f);
+        }
+
+        void addUTCDate (uint64_t v) {
+          appendUIntNoCheck(v, 0x0f);
+        }
+
+        uint8_t* addString (uint64_t strLen) {
+          uint8_t* target;
+          if (strLen > 127) {
+            appendUIntNoCheck(strLen, 0xbf);
+            target = _start + _pos;
+            _pos += strLen;
+          }
+          else {
+            _start[_pos++] = 0x40 + strLen;
+            target = _start + _pos;
+            _pos += strLen;
+          }
+          return target;
+        }
+
+        void addArray (int64_t len) {
+          // if negative, then a long array is made
+          if (len < 0) {
+            JasonLength temp = static_cast<JasonLength>(-len);
+            _stack.emplace_back(_pos, 0, temp);
+            // type
+            _start[_pos++] = 0x05; 
+            // length
+            for (size_t i = 0; i < 7; i++) {
+              _start[_pos++] = temp & 0xff;
+              temp >>= 8;
+            }
+            // offsets
+            if (len > 1) {
+              memset(_start + _pos, 0x00, (len - 1) * 8);
+              _pos += (len - 1) * 8;
+            }
+          }
+          else {
+            // small array
+            JasonLength temp = static_cast<JasonLength>(len);
+            _stack.emplace_back(_pos, 0, temp);
+            _start[_pos++] = 0x04;
+            _start[_pos++] = temp & 0xff;
+            _start[_pos++] = 0x00;   // these two bytes will be set at the end
+            _start[_pos++] = 0x00;
+            if (temp > 1) {
+              for (JasonLength i = 0; i < temp-1; i++) {
+                _start[_pos++] = 0x00;
+                _start[_pos++] = 0x00;
+              }
+            }
+          }
+        }
+          
+        void addObject (int64_t len) {
+          // if negative, then a long object is made
+          if (len < 0) {
+            JasonLength temp = static_cast<JasonLength>(-len);
+            _stack.emplace_back(_pos, 0, temp);
+            // type
+            _start[_pos++] = 0x07; 
+            // length
+            for (size_t i = 0; i < 7; i++) {
+              _start[_pos++] = temp & 0xff;
+              temp >>= 8;
+            }
+            // offsets
+            memset(_start + _pos, 0x00, (len+1) * 8);
+            _pos += (len+1) * 8;
+          }
+          else {
+            // small array
+            uint64_t temp = static_cast<JasonLength>(len);
+            _stack.emplace_back(_pos, 0, temp);
+            _start[_pos++] = 0x06;
+            _start[_pos++] = temp & 0xff;
+            _start[_pos++] = 0x00;   // these two bytes will be set at the end
+            _start[_pos++] = 0x00;
+            if (temp > 0) {
+              for (JasonLength i = 0; i < temp; i++) {
+                _start[_pos++] = 0x00;
+                _start[_pos++] = 0x00;
+              }
+            }
+          }
+        }
+ 
         void set (Jason const& item) {
           auto ctype = item.cType();
 
@@ -1026,6 +1144,17 @@ namespace triagens {
           tos.index++;
         }
         
+        void appendUIntNoCheck (uint64_t v, uint8_t base) {
+          JasonLength save = _pos++;
+          uint8_t count = 0;
+          do {
+            _start[_pos++] = v & 0xff;
+            v >>= 8;
+            count++;
+          } while (v != 0);
+          _start[save] = base + count;
+        }
+
         void appendUInt (uint64_t v, uint8_t base) {
           JasonLength vSize = uintLength(v);
           reserveSpace(1 + vSize);
