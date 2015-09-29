@@ -106,25 +106,28 @@ namespace triagens {
           }
         };
 
-        std::vector<State> _stack;   // Has always size() >= 1 when still
-                                     // writable and 0 when sealed
+        std::vector<State>                    _stack;
+        std::vector<std::vector<JasonLength>> _index;
 
         // Here are the mechanics of how this building process works:
         // The whole Jason being built starts at where _start points to
-        // and uses at most _size bytes. The variable _pos keeps the 
-        // current write position. The method make simply writes a new
-        // Jason subobject at the current write position and advances it.
-        // Whenever one makes an array or object, a State is pushed onto
-        // the _stack, which remembers that we are in the process of building
-        // an array or object. If the stack is non-empty, the add methods
-        // are used to perform a make followed by keeping track of the 
-        // new subobject in the enclosing array or object. The close method
-        // seals the innermost array or object that is currently being
-        // built and pops a State off the _stack.
-        // In the beginning, the _stack is empty, which allows to build
-        // a sequence of unrelated Jason objects in the buffer.
-        // Whenever the stack is empty, one can use the start, size and
-        // stealTo methods to get out the ready built Jason object(s).
+        // and uses at most _size bytes. The variable _pos keeps the
+        // current write position. The method "set" simply writes a new
+        // Jason subobject at the current write position and advances
+        // it. Whenever one makes an array or object, a State is pushed
+        // onto the _stack, which remembers that we are in the process
+        // of building an array or object. The _index vectors are used
+        // to collect information for the index tables of arrays and
+        // objects, which are written after the subobjects. The add
+        // methods are used to perform a set followed by keeping track
+        // of the new subobject in _index. The close method seals the
+        // innermost array or object that is currently being built and
+        // pops a State off the _stack. The vectors in _index stay
+        // until the next clear() is called to minimize allocations. In
+        // the beginning, the _stack is empty, which allows to build a
+        // sequence of unrelated Jason objects in the buffer. Whenever
+        // the stack is empty, one can use the start, size and stealTo
+        // methods to get out the ready built Jason object(s).
 
         void reserveSpace (JasonLength len) {
           // Reserves len bytes at pos of the current state (top of stack)
@@ -1156,6 +1159,11 @@ namespace triagens {
         }
 
         void reportAdd () {
+          size_t depth = _stack.size()-1;
+          _index[depth].push_back(_pos);
+        }
+
+        void reportAddOld () {
           JasonLength itemStart = _pos;
           State& tos = _stack.back();
           if (tos.index >= tos.len) {
