@@ -356,8 +356,8 @@ namespace triagens {
             return reinterpret_cast<char const*>(_start + 1);
           }
           if (h == 0x0c) {
-            length = readInteger<JasonLength>(_start + 1, 6);
-            return reinterpret_cast<char const*>(_start + 1 + 6);
+            length = readInteger<JasonLength>(_start + 1, 8);
+            return reinterpret_cast<char const*>(_start + 1 + 8);
           }
           throw JasonTypeError("unexpected type. expecting string");
         }

@@ -948,9 +948,9 @@ namespace triagens {
               }
               else {
                 // long string
-                reserveSpace(1 + 6 + size);
+                reserveSpace(1 + 8 + size);
                 _start[_pos++] = 0x0c;
-                appendLength(size, 6);
+                appendLength(size, 8);
                 memcpy(_start + _pos, s->c_str(), size);
               }
               break;
@@ -1136,9 +1136,9 @@ namespace triagens {
             uint64_t size = pair.getSize();
             if (size > 127) { 
               // long string
-              reserveSpace(1 + 6 + size);
+              reserveSpace(1 + 8 + size);
               _start[_pos++] = 0x0c;
-              appendLength(size, 6);
+              appendLength(size, 8);
               _pos += size;
             }
             else {
