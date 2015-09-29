@@ -25,7 +25,9 @@ char const* triagens::basics::JasonTypeName (JasonType type) {
     case JasonType::UTCDate:     return "utc-date";
     case JasonType::Int:         return "int";
     case JasonType::UInt:        return "uint";
+    case JasonType::SmallInt:    return "smallint";
     case JasonType::Binary:      return "binary";
+    case JasonType::BCD:         return "bcd";
   }
 
   return "unknown";

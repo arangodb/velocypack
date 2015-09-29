@@ -18,7 +18,7 @@ namespace triagens {
     };
     
     enum JasonType {
-      None,           // not yet initialised
+      None,           // not yet initialized
       Null,           // JSON null
       Bool,
       Double,
@@ -34,6 +34,8 @@ namespace triagens {
       UTCDate,
       Int,
       UInt,
+      SmallInt,
+      BCD,
       Binary
     };
 

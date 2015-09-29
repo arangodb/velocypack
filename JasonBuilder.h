@@ -797,15 +797,38 @@ namespace triagens {
               _pos += sizeof(void*);
               break;
             }
+            case JasonType::SmallInt: {
+              int64_t vv = 0;
+              switch (ctype) {
+                case Jason::CType::Double:
+                  vv = static_cast<int64_t>(item.getDouble());
+                  break;
+                case Jason::CType::Int64:
+                  vv = item.getInt64();
+                  break;
+                case Jason::CType::UInt64:
+                  vv = static_cast<int64_t>(item.getUInt64());
+                default:
+                  throw JasonBuilderError("Must give number for JasonType::SmallInt.");
+              }
+              if (vv < -8 || vv > 7) {
+                throw JasonBuilderError("Number out of range of JasonType::SmallInt.");
+              } 
+              reserveSpace(1);
+              if (vv >= 0) {
+                _start[_pos++] = static_cast<uint8_t>(vv + 0x30);
+              }
+              else {
+                _start[_pos++] = static_cast<uint8_t>(vv + 8 + 0x38);
+              }
+              break;
+            }
             case JasonType::Int: {
               uint64_t v = 0;
               int64_t vv = 0;
               bool positive = true;
               switch (ctype) {
                 case Jason::CType::Double:
-                  if (item.getDouble() < 0.0) {
-                    throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
-                  }
                   vv = static_cast<int64_t>(item.getDouble());
                   if (vv >= 0) {
                     v = static_cast<uint64_t>(vv);
@@ -832,7 +855,7 @@ namespace triagens {
                   // positive is already set to true
                   break;
                 default:
-                  throw JasonBuilderError("Must give number for JasonType::UInt.");
+                  throw JasonBuilderError("Must give number for JasonType::Int.");
               }
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
@@ -1043,6 +1066,9 @@ namespace triagens {
             }
             case JasonType::ID: {
               throw JasonBuilderError("Need a JasonPair to build a JasonType::ID.");
+            }
+            case JasonType::BCD: {
+              throw JasonBuilderError("BCD not yet supported.");
             }
           }
         }

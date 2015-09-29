@@ -86,6 +86,7 @@ void JasonDumper::internalDump (JasonSlice slice) {
       break;
     case JasonType::Int:
     case JasonType::UInt:
+    case JasonType::SmallInt:
       dumpInteger(slice);
       break;
     case JasonType::String: 
@@ -98,6 +99,10 @@ void JasonDumper::internalDump (JasonSlice slice) {
       break;
     }
     case JasonType::Binary:
+      // TODO
+      handleUnsupportedType(slice);
+      break;
+    case JasonType::BCD:
       // TODO
       handleUnsupportedType(slice);
       break;

@@ -8,7 +8,7 @@ using JasonType   = triagens::basics::JasonType;
 
 static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
 
-static uint8_t const NoneValue = 0xff;
+static uint8_t const NoneValue = 0x00;
 
 // a lookup table for Jason types
 std::array<JasonType, 256> JasonSlice::TypeTable;
@@ -25,63 +25,70 @@ JasonLength JasonSlice::byteSize () const {
   switch (type()) {
     case JasonType::None:
     case JasonType::Null:
-    case JasonType::Bool:
+    case JasonType::Bool: 
+    case JasonType::ArangoDB_id:
+    case JasonType::SmallInt: {
       return 1;
+    }
 
-    case JasonType::Double:
+    case JasonType::Double: {
       return 1 + sizeof(double);
+    }
 
     case JasonType::Array:
-      // TODO
-      return readInteger<JasonLength>(_start + 2, 2);
-       
     case JasonType::ArrayLong:
-      return readInteger<JasonLength>(_start + 7, 8);
-
     case JasonType::Object:
-      return readInteger<JasonLength>(_start + 2, 2);
+    case JasonType::ObjectLong: {
+      return readInteger<JasonLength>(_start + 1, 6);
+    }
 
-    case JasonType::ObjectLong:
-      return 0; // TODO
-
-    case JasonType::External:
+    case JasonType::External: {
       return 1 + sizeof(char*);
+    }
 
-    case JasonType::ID:
+    case JasonType::ID: {
       return 1; // TODO
-
-    case JasonType::ArangoDB_id:
-      return 1; 
+    }
 
     case JasonType::UTCDate:
-      return 1 + readInteger<JasonLength>(head() - 0x0f);
+      return static_cast<JasonLength>(head() - 0x0f);
 
     case JasonType::Int: {
-      uint8_t h = head();
-      if (h <= 0x27) {
+      if (head() <= 0x1f) {
         // positive int
-        return 1 + (h - 0x1f);
+        return static_cast<JasonLength>(1 + (head() - 0x17));
       }
       // negative int
-      return 1 + (h - 0x27);
+      return static_cast<JasonLength>(1 + (head() - 0x1f));
     }
 
     case JasonType::UInt: {
-      return 1 + (head() - 0x2f);
+      return static_cast<JasonLength>(1 + (head() - 0x27));
     }
 
     case JasonType::String: {
-      return 1 + (head() - 0x40);
+      return static_cast<JasonLength>(1 + (head() - 0x40));
     }
 
     case JasonType::StringLong: {
-      uint8_t h = head();
-      return 1 + (h - 0xbf) + readInteger<JasonLength>(h - 0xbf);
+      return static_cast<JasonLength>(1 + 6 + readInteger<JasonLength>(_start + 1, 6));
     }
 
     case JasonType::Binary: {
-      uint8_t h = head();
-      return 1 + (h - 0xcf) + readInteger<JasonLength>(h - 0xcf);
+      return static_cast<JasonLength>(1 + (head() - 0xbf) + readInteger<JasonLength>(_start + 1, head() - 0xbf));
+    }
+
+    case JasonType::BCD: {
+      uint8_t base;
+      if (head() <= 0xcf) {
+        // positive BCD
+        base = 0xc7;
+      } 
+      else {
+        // negative BCD
+        base = 0xcf;
+      }
+      return static_cast<JasonLength>(1 + (head() - base) + readInteger<JasonLength>(_start + 1, head() - base));
     }
   }
 
@@ -99,35 +106,47 @@ void JasonSlice::Initialize () {
     TypeTable[i] = JasonType::None;
   }
 
-  TypeTable[0x00] = JasonType::Null;
-  TypeTable[0x01] = JasonType::Bool;
-  TypeTable[0x02] = JasonType::Bool;
-  TypeTable[0x03] = JasonType::Double;
-  TypeTable[0x04] = JasonType::Array;
-  TypeTable[0x05] = JasonType::ArrayLong;
-  TypeTable[0x06] = JasonType::Object;
-  TypeTable[0x07] = JasonType::ObjectLong;
-  TypeTable[0x08] = JasonType::External;
-  TypeTable[0x09] = JasonType::ID;
-  TypeTable[0x0a] = JasonType::ArangoDB_id;
+  TypeTable[0x01] = JasonType::Null;        // null value
+  TypeTable[0x02] = JasonType::Bool;        // false
+  TypeTable[0x03] = JasonType::Bool;        // true
+  TypeTable[0x04] = JasonType::Double;      // IEEE754 double
+  TypeTable[0x05] = JasonType::Array;       // short array
+  TypeTable[0x06] = JasonType::ArrayLong;   // long array
+  TypeTable[0x07] = JasonType::Object;      // short object
+  TypeTable[0x08] = JasonType::ObjectLong;  // long object
+  TypeTable[0x09] = JasonType::External;    // external
+  TypeTable[0x0a] = JasonType::ID;          // id type 
+  TypeTable[0x0b] = JasonType::ArangoDB_id; // ArangoDB _id
+  TypeTable[0x0c] = JasonType::StringLong;  // long UTF-8 string
  
   for (int i = 0x10; i <= 0x17; ++i) { 
-    TypeTable[i] = JasonType::UTCDate;
+    TypeTable[i] = JasonType::UTCDate;      // UTC date
   }
-  for (int i = 0x20; i <= 0x2f; ++i) { 
-    TypeTable[i] = JasonType::Int;
+  for (int i = 0x18; i <= 0x27; ++i) { 
+    TypeTable[i] = JasonType::Int;          // positive int, negative int
   }
-  for (int i = 0x30; i <= 0x37; ++i) { 
-    TypeTable[i] = JasonType::UInt;
+  for (int i = 0x28; i <= 0x2f; ++i) { 
+    TypeTable[i] = JasonType::UInt;         // uint
+  }
+  for (int i = 0x30; i <= 0x3f; ++i) { 
+    TypeTable[i] = JasonType::SmallInt;     // small integers -8..7
   }
   for (int i = 0x40; i <= 0xbf; ++i) { 
-    TypeTable[i] = JasonType::String;
+    TypeTable[i] = JasonType::String;       // short UTF-8 string
   }
   for (int i = 0xc0; i <= 0xc7; ++i) { 
-    TypeTable[i] = JasonType::StringLong;
+    TypeTable[i] = JasonType::Binary;       // binary
   }
-  for (int i = 0xd0; i <= 0xd7; ++i) { 
-    TypeTable[i] = JasonType::Binary;
+  for (int i = 0xc8; i <= 0xd7; ++i) { 
+    TypeTable[i] = JasonType::BCD;          // positive and negative packed BCD-encoded integers
+  }
+
+  // reserved
+  assert(TypeTable[0x0d] == JasonType::None); 
+  assert(TypeTable[0x0e] == JasonType::None); 
+  assert(TypeTable[0x0f] == JasonType::None); 
+  for (int i = 0xd8; i <= 0xff; ++i) { 
+    assert(TypeTable[i] == JasonType::None); 
   }
 }
 
