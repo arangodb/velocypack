@@ -1,7 +1,7 @@
 Jason
 =====
 
-Version 0.5
+Version 0.99
 
 Just Another SerializatiON
 
@@ -65,86 +65,94 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x0a      : the value of ArangoDB's _id attribute, it is generated
                 out of the collection name, "/" and the value of the
                 _key attribute when JSON is generated
-  - 0x0b-0x0f : reserved
+  - 0x0b      : long UTF-8-string, next 6 bytes are length of string in
+                bytes (not Unicode chars) as little endian unsigned
+                integer, note that long strings are not zero-terminated
+                and may contain zero bytes
+  - 0x0c-0x0f : reserved
   - 0x10-0x17 : UTC-date in milliseconds since the epoch, stored as uint
                 as below number of bytes used is V-0x0f
-  - 0x18-0x1f : reserved
-  - 0x20-0x27 : positive int, little endian, 1-8 bytes, number is V-0x1f
-  - 0x28-0x2f : negative int, absolute value is stored as uint, 1-8
+  - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17
+  - 0x20-0x27 : negative int, absolute value is stored as uint, 1-8
                 bytes, number is V-0x27
-  - 0x30-0x37 : uint, little endian, 1 to 8 bytes, number is V - 0x2f
-  - 0x38-0x3f : reserved
+  - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
+  - 0x30-0x3f : small integers -8, -7, ... 0, 1, ... 7 in twos complement, 
+                that is, 0 is 0x30 and 0x37 is 7 and 0x38 is -8, etc. 
   - 0x40-0xbf : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 127, note that strings here are not
                 zero-terminated
-  - 0xc0-0xc7 : long UTF-8-string, next V-0xbf bytes are length of string 
-                in bytes, note that long strings here are not
-                zero-terminated
-  - 0xc8-0xcf : reserved
-  - 0xd0-0xd7 : binary blob, next V-0xcf bytes are length of blob in bytes,
+  - 0xc0-0xc7 : binary blob, next V-0xcf bytes are length of blob in bytes,
                 note that binary blobs are not zero-terminated
-  - 0xd8-0xdf : reserved
-  - 0xe0-0xe7 : positive long packed BCD-encoded integer, V-0xdf bytes follow
+  - 0xc8-0xcf : positive long packed BCD-encoded integer, V-0xc7 bytes follow
                 that encode in a little-endian way the length of the
                 long int in bytes. After that, that many bytes follow,
                 each byte encodes two digits in little-endian packed BCD
                 Example: 12345 decimal is encoded as
-                         0xe0 0x03 0x45 0x23 0x01
-  - 0xe8-0xef : negative long packed BCD-encoded integer, V-0xe7 bytes
+                         0xc8 0x03 0x45 0x23 0x01
+  - 0xd0-0xd7 : negative long packed BCD-encoded integer, V-0xcf bytes
                 follow that encode in a little-endian way the length of
                 the long int in bytes. After that, that many bytes
                 follow, each byte encodes two digits in little-endian
                 packed BCD representation.
-  - 0xf0-0xfe : reserved
+  - 0xd8-0xfe : reserved
   - 0xff      : none - this indicates absence of any type and value
 
 ### Arrays
 
-A short array (V=0x04) has one byte N following that contains the number
-of entries in the array. Then follows a byte pair for the offset of the
-end of the last item, that is, the position where the next Jason item
-begins, measured from address A. After that, it has N-1 byte pairs for
-the offsets of the starts of the entries with index 1 to N-1, again
-measured from address A. The byte pairs are unsigned little endian
-values for the offsets. The first entry is always at address A+4 +
-2*(N-1). If N=0, then there is only one byte pair after the length byte
-containing hex bytes 04 00 to indicate a total length of 4 bytes.
+Arrays have a small header, then all the subvalues and then an index
+table containing offsets to the subvalues. To find the index table,
+we need at a fixed position at the beginning an offset to the end of 
+the complete value to find the length entry and the index table.
+Therefore both array variants have six bytes following the type byte
+that contain the offset of the following value from the start of the 
+array (little endian unsigned integer). The actual entries follow. 
+Thus, the first entry is always at address A+7. The index table
+resides at the end of the space occupied by the value.
+
+For a small array (V=0x04), the index table ends with a single byte
+containing the number N of entries and, before that, has N-1 byte pairs,
+containing the offsets of the subvalues at indices 1, 2, ... N-1. As
+mentioned before, the first subvalue is always at offset 7. If N=0, then
+the offset can be 7 and its last byte can be used as length byte. The
+byte pairs are unsigned little endian values for the offsets and all
+offsets are measured from base A.
+
 
 *Example*:
 
 `[1,2,3]` has the hex dump 
 
-    04 03 0e 00 0a 00 0c 00 20 01 20 02 20 03
+    04 0f 00 00 00 00 00 31 32 33 08 00 09 00 03 
 
 A long array (V=0x05) is very similar, except that the number of entries
-is a 7-byte unsigned integer and the offsets are 8-byte unsigned integers.
-Thus, the first value is always at address A+16 + 8*(N-1).
+and the offsets are 6-byte little endian unsigned integers.
 
 *Example*:
 
 `[1,2,3]` as long-array has the hex dump
 
-     05 03 00 00 00 00 00 00 
-     26 00 00 00 00 00 00 00
-     22 00 00 00 00 00 00 00
-     24 00 00 00 00 00 00 00
-     20 01 20 02 20 03
+     05 
+     1c 00 00 00 00 00
+     31 32 33
+     08 00 00 00 00 00
+     09 00 00 00 00 00
+     03 00 00 00 00 00
 
 Note that it is not recommended to encode short arrays in the long format.
 
 
 ### Objects
 
-A short object (V=0x06) has one byte N following that contains the
-number of key/value pairs in the object. Then, it has 1 byte pair for
-the offset of the next Jason item, that is, the end of the current one.
-Then follow N byte pairs for the offsets of the starts of the entries,
-measured from address A. The byte pairs are unsigned little endian
-values for the offsets of the starts of the attributes. The table of
-offsets is sorted so that they point to the attributes in alphabetical
-order to allow for binary search. Note that it is not necessary that the
-offsets are monotonically increasing!
+Objects have a small header, then all the subvalues and then an index
+table containing offsets to the subvalues. To find the index table,
+we need at a fixed position at the beginning an offset to the end of 
+the complete value to find the length entry and the index table.
+Therefore both object variants have six bytes following the type byte
+that contain the offset of the following value from the start of the 
+object (little endian unsigned integer). The actual entries follow.
+Thus, the first entry is always at address A+7. The index table
+resides at the end of the space occupied by the value.
 
 Each entry consists of two parts, the key and the value, they are
 encoded as normal JSON values as above, the first is always a short or
@@ -152,21 +160,23 @@ long UTF-8 string starting with a byte 0x40-0xcf as before. The second
 is any other JSON value.
 
 There is one extension: For the key it is possible to use the values
-0x00-0x2f as indexes into an outside-given table of attribute names, or
-the values 0x30-0x3f to store the index in a uint as above. These are
+0x00-0x27 as indexes into an outside-given table of attribute names, or
+the values 0x28-0x2f to store the index in a uint as above. These are
 convenient when only very few attribute names occur or some are repeated
 very often. The standard way to encode such an attribute name table is
 as a JSON-array as specified here.
 
 Example, the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    06 03 17 00 0d 00 0a 00 11 00
+    06 1b 00 00 00 00 00
     41 62 02 
-    41 61 20 0c 
+    41 61 18 0c 
     41 63 43 78 79 7a
+    0a 00 07 00 0e 00 03
 
-Large objects are the same, only the number of entries is a 7-byte
-little-endian integer and the offsets are 8-byte little-endian integers.
+Large objects are the same, only the number of entries is a 6-byte
+little-endian unsigned integer and the offsets are 6-byte little-endian 
+integers as well.
 
 
 C++-Classes to handle Jason
