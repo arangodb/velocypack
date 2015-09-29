@@ -99,10 +99,8 @@ namespace triagens {
         struct State {
           JasonLength base;   // Start of object currently being built
           JasonLength index;  // Index in array or object currently being worked on
-          JasonLength len;    // Total length of array or object in entries.
-
-          State (JasonLength b = 0, JasonLength i = 0, JasonLength l = 1)
-            : base(b), index(i), len(l) {
+          State (JasonLength b = 0, JasonLength i = 0)
+            : base(b), index(i) {
           }
         };
 
@@ -118,16 +116,17 @@ namespace triagens {
         // onto the _stack, which remembers that we are in the process
         // of building an array or object. The _index vectors are used
         // to collect information for the index tables of arrays and
-        // objects, which are written after the subobjects. The add
-        // methods are used to perform a set followed by keeping track
-        // of the new subobject in _index. The close method seals the
-        // innermost array or object that is currently being built and
-        // pops a State off the _stack. The vectors in _index stay
-        // until the next clear() is called to minimize allocations. In
-        // the beginning, the _stack is empty, which allows to build a
-        // sequence of unrelated Jason objects in the buffer. Whenever
-        // the stack is empty, one can use the start, size and stealTo
-        // methods to get out the ready built Jason object(s).
+        // objects, which are written behind the subvalues. The add
+        // methods are used to keep track of the new subvalue in _index
+        // followed by a set, and are what the user from the outside calls.
+        // The close method seals the innermost array or object that is
+        // currently being built and pops a State off the _stack. The
+        // vectors in _index stay until the next clearTemporary() is
+        // called to minimize allocations. In the beginning, the _stack
+        // is empty, which allows to build a sequence of unrelated Jason
+        // objects in the buffer. Whenever the stack is empty, one can
+        // use the start, size and stealTo methods to get out the ready
+        // built Jason object(s).
 
         void reserveSpace (JasonLength len) {
           // Reserves len bytes at pos of the current state (top of stack)
@@ -154,32 +153,36 @@ namespace triagens {
         static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
                                        uint8_t const* objBase) {
           assert(entries.size() > 1);
-          std::sort(entries.begin(), entries.end(), [objBase] (SortEntrySmall const& a, SortEntrySmall const& b) {
-            // return true iff a < b:
-            uint8_t const* pa = objBase + a.nameStartOffset;
-            uint16_t sizea = a.nameSize;
-            uint8_t const* pb = objBase + b.nameStartOffset;
-            uint16_t sizeb = b.nameSize;
-            size_t const compareLength = static_cast<size_t>((std::min)(sizea, sizeb));
-            int res = memcmp(pa, pb, compareLength);
+          std::sort(entries.begin(), entries.end(), 
+            [objBase] (SortEntrySmall const& a, SortEntrySmall const& b) {
+              // return true iff a < b:
+              uint8_t const* pa = objBase + a.nameStartOffset;
+              uint16_t sizea = a.nameSize;
+              uint8_t const* pb = objBase + b.nameStartOffset;
+              uint16_t sizeb = b.nameSize;
+              size_t const compareLength
+                  = static_cast<size_t>((std::min)(sizea, sizeb));
+              int res = memcmp(pa, pb, compareLength);
 
-            return (res < 0 || (res == 0 && sizea < sizeb));
-          });
+              return (res < 0 || (res == 0 && sizea < sizeb));
+            });
         }
 
         static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
           assert(entries.size() > 1);
-          std::sort(entries.begin(), entries.end(), [] (SortEntryLarge const& a, SortEntryLarge const& b) {
-            // return true iff a < b:
-            uint8_t const* pa = a.nameStart;
-            uint64_t sizea = a.nameSize;
-            uint8_t const* pb = b.nameStart;
-            uint64_t sizeb = b.nameSize;
-            size_t const compareLength = static_cast<size_t>((std::min)(sizea, sizeb));
-            int res = memcmp(pa, pb, compareLength);
+          std::sort(entries.begin(), entries.end(), 
+            [] (SortEntryLarge const& a, SortEntryLarge const& b) {
+              // return true iff a < b:
+              uint8_t const* pa = a.nameStart;
+              uint64_t sizea = a.nameSize;
+              uint8_t const* pb = b.nameStart;
+              uint64_t sizeb = b.nameSize;
+              size_t const compareLength
+                  = static_cast<size_t>((std::min)(sizea, sizeb));
+              int res = memcmp(pa, pb, compareLength);
 
-            return (res < 0 || (res == 0 && sizea < sizeb));
-          });
+              return (res < 0 || (res == 0 && sizea < sizeb));
+            });
         };
 
         static uint8_t const* findAttrName (uint8_t const* base, uint64_t& len) {
@@ -193,10 +196,10 @@ namespace triagens {
             // long UTF-8 string
             len = 0;
             // read string length
-            for (uint8_t i = 1; i <= 6; i++) {
+            for (uint8_t i = 1; i <= 8; i++) {
               len = (len << 8) + base[i];
             }
-            return base + 1 + 6; // string starts here
+            return base + 1 + 8; // string starts here
           }
           throw JasonBuilderError("Unimplemented attribute name type.");
         }
@@ -407,6 +410,13 @@ namespace triagens {
           _pos = 0;
           _attrWritten = false;
           _stack.clear();
+        }
+
+        void clearTemporary () {
+          // Clear temporary storage
+          _index.clear();
+          SortObjectSmallEntries.clear();
+          SortObjectLargeEntries.clear();
         }
 
         uint8_t* start () const {
