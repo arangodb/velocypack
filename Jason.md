@@ -75,7 +75,7 @@ indicates the type (and often the length) of the Jason value at hand:
                 as below number of bytes used is V-0x0f
   - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17
   - 0x20-0x27 : negative int, absolute value is stored as uint, 1-8
-                bytes, number is V-0x27
+                bytes, number is V-0x1f
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
   - 0x30-0x3f : small integers -8, -7, ... 0, 1, ... 7 in twos complement, 
                 that is, 0 is 0x30 and 0x37 is 7 and 0x38 is -8, etc. 
@@ -83,7 +83,7 @@ indicates the type (and often the length) of the Jason value at hand:
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 127, note that strings here are not
                 zero-terminated
-  - 0xc0-0xc7 : binary blob, next V-0xcf bytes are length of blob in bytes,
+  - 0xc0-0xc7 : binary blob, next V-0xbf bytes are length of blob in bytes,
                 note that binary blobs are not zero-terminated
   - 0xc8-0xcf : positive long packed BCD-encoded integer, V-0xc7 bytes follow
                 that encode in a little-endian way the length of the
