@@ -945,6 +945,8 @@ TEST(SliceTest, StringLong1) {
   *p++ = (uint8_t) 0;
   *p++ = (uint8_t) 0;
   *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
 
   *p++ = (uint8_t) 'f';
   *p++ = (uint8_t) 'o';
@@ -955,7 +957,7 @@ TEST(SliceTest, StringLong1) {
 
   EXPECT_EQ(JasonType::StringLong, slice.type());
   EXPECT_TRUE(slice.isString());
-  EXPECT_EQ(13ULL, slice.byteSize());
+  EXPECT_EQ(15ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
   EXPECT_EQ(6ULL, len);
