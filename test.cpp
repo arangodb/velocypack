@@ -61,9 +61,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Null:
       EXPECT_TRUE(s.isNull());
@@ -77,9 +79,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Bool:
       EXPECT_FALSE(s.isNull());
@@ -93,9 +97,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Double:
       EXPECT_FALSE(s.isNull());
@@ -109,9 +115,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_TRUE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Array:
     case JasonType::ArrayLong:
@@ -126,9 +134,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Object:
     case JasonType::ObjectLong:
@@ -143,9 +153,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::External:
       EXPECT_FALSE(s.isNull());
@@ -159,9 +171,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::ID:
       EXPECT_FALSE(s.isNull());
@@ -175,9 +189,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::ArangoDB_id:
       EXPECT_FALSE(s.isNull());
@@ -191,9 +207,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::UTCDate:
       EXPECT_FALSE(s.isNull());
@@ -207,9 +225,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_TRUE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Int:
       EXPECT_FALSE(s.isNull());
@@ -223,9 +243,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_TRUE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_TRUE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::UInt:
       EXPECT_FALSE(s.isNull());
@@ -239,9 +261,29 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_TRUE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_TRUE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
+      break;
+    case JasonType::SmallInt:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_TRUE(s.isSmallInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_TRUE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::String:
     case JasonType::StringLong:
@@ -256,9 +298,11 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_TRUE(s.isString());
       EXPECT_FALSE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Binary:
       EXPECT_FALSE(s.isNull());
@@ -272,9 +316,29 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isUTCDate());
       EXPECT_FALSE(s.isInt());
       EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
       EXPECT_FALSE(s.isString());
       EXPECT_TRUE(s.isBinary());
       EXPECT_FALSE(s.isNumber());
+      EXPECT_FALSE(s.isBCD());
+      break;
+    case JasonType::BCD:
+      EXPECT_FALSE(s.isNull());
+      EXPECT_FALSE(s.isBool());
+      EXPECT_FALSE(s.isDouble());
+      EXPECT_FALSE(s.isArray());
+      EXPECT_FALSE(s.isObject());
+      EXPECT_FALSE(s.isExternal());
+      EXPECT_FALSE(s.isID());
+      EXPECT_FALSE(s.isArangoDB_id());
+      EXPECT_FALSE(s.isUTCDate());
+      EXPECT_FALSE(s.isInt());
+      EXPECT_FALSE(s.isUInt());
+      EXPECT_FALSE(s.isSmallInt());
+      EXPECT_FALSE(s.isString());
+      EXPECT_FALSE(s.isBinary());
+      EXPECT_FALSE(s.isNumber());
+      EXPECT_TRUE(s.isBCD());
       break;
   }
 }
@@ -283,7 +347,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
 // Let the tests begin...
 
 TEST(SliceTest, Null) {
-  Buffer[0] = 0x0;
+  Buffer[0] = 0x1;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -293,7 +357,7 @@ TEST(SliceTest, Null) {
 }
 
 TEST(SliceTest, False) {
-  Buffer[0] = 0x1;
+  Buffer[0] = 0x2;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -304,7 +368,7 @@ TEST(SliceTest, False) {
 }
 
 TEST(SliceTest, True) {
-  Buffer[0] = 0x2;
+  Buffer[0] = 0x3;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -315,7 +379,7 @@ TEST(SliceTest, True) {
 }
 
 TEST(SliceTest, Double) {
-  Buffer[0] = 0x3;
+  Buffer[0] = 0x4;
 
   double value = 23.5;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
@@ -329,7 +393,7 @@ TEST(SliceTest, Double) {
 }
 
 TEST(SliceTest, DoubleNegative) {
-  Buffer[0] = 0x3;
+  Buffer[0] = 0x4;
 
   double value = -999.91355;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
@@ -343,7 +407,7 @@ TEST(SliceTest, DoubleNegative) {
 }
 
 TEST(SliceTest, Int1) {
-  Buffer[0] = 0x20;
+  Buffer[0] = 0x18;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
@@ -357,7 +421,7 @@ TEST(SliceTest, Int1) {
 }
 
 TEST(SliceTest, Int2) {
-  Buffer[0] = 0x21;
+  Buffer[0] = 0x19;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -371,7 +435,7 @@ TEST(SliceTest, Int2) {
 }
 
 TEST(SliceTest, Int3) {
-  Buffer[0] = 0x22;
+  Buffer[0] = 0x1a;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -386,7 +450,7 @@ TEST(SliceTest, Int3) {
 }
 
 TEST(SliceTest, Int4) {
-  Buffer[0] = 0x23;
+  Buffer[0] = 0x1b;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -402,7 +466,7 @@ TEST(SliceTest, Int4) {
 }
 
 TEST(SliceTest, NegInt1) {
-  Buffer[0] = 0x28;
+  Buffer[0] = 0x20;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
@@ -416,7 +480,7 @@ TEST(SliceTest, NegInt1) {
 }
 
 TEST(SliceTest, NegInt2) {
-  Buffer[0] = 0x29;
+  Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -430,7 +494,7 @@ TEST(SliceTest, NegInt2) {
 }
 
 TEST(SliceTest, NegInt3) {
-  Buffer[0] = 0x2a;
+  Buffer[0] = 0x22;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -445,7 +509,7 @@ TEST(SliceTest, NegInt3) {
 }
 
 TEST(SliceTest, NegInt4) {
-  Buffer[0] = 0x2b;
+  Buffer[0] = 0x23;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -461,7 +525,7 @@ TEST(SliceTest, NegInt4) {
 }
 
 TEST(SliceTest, UInt1) {
-  Buffer[0] = 0x30;
+  Buffer[0] = 0x28;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
@@ -475,7 +539,7 @@ TEST(SliceTest, UInt1) {
 }
 
 TEST(SliceTest, UInt2) {
-  Buffer[0] = 0x31;
+  Buffer[0] = 0x29;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -489,7 +553,7 @@ TEST(SliceTest, UInt2) {
 }
 
 TEST(SliceTest, UInt3) {
-  Buffer[0] = 0x32;
+  Buffer[0] = 0x2a;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -504,7 +568,7 @@ TEST(SliceTest, UInt3) {
 }
 
 TEST(SliceTest, UInt4) {
-  Buffer[0] = 0x33;
+  Buffer[0] = 0x2b;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -520,7 +584,7 @@ TEST(SliceTest, UInt4) {
 }
 
 TEST(SliceTest, ArrayEmpty) {
-  Buffer[0] = 0x04;
+  Buffer[0] = 0x05;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x00;
   *p++ = 0x04;
@@ -632,11 +696,18 @@ TEST(SliceTest, StringNullBytes) {
 }
 
 TEST(SliceTest, StringLong1) {
-  Buffer[0] = 0xc0;
+  Buffer[0] = 0x0c;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
   uint8_t* p = (uint8_t*) &Buffer[1];
+  // length
   *p++ = (uint8_t) 6;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+
   *p++ = (uint8_t) 'f';
   *p++ = (uint8_t) 'o';
   *p++ = (uint8_t) 'o';
@@ -646,10 +717,10 @@ TEST(SliceTest, StringLong1) {
 
   EXPECT_EQ(JasonType::StringLong, slice.type());
   EXPECT_TRUE(slice.isString());
-  EXPECT_EQ(8ULL, slice.byteSize());
+  EXPECT_EQ(13ULL, slice.byteSize());
   JasonLength len;
   char const* s = slice.getString(len);
-  EXPECT_EQ(6ULL, len);
+  EXPECT_EQ(13ULL, len);
   EXPECT_EQ(0, strncmp(s, "foobar", len));
 
   EXPECT_EQ("foobar", slice.copyString());
@@ -662,7 +733,7 @@ TEST(BuilderTest, Null) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x00 };
+    = { 0x01 };
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -675,7 +746,7 @@ TEST(BuilderTest, False) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x01 };
+    = { 0x02 };
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -688,7 +759,7 @@ TEST(BuilderTest, True) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x02 };
+    = { 0x03 };
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -702,7 +773,7 @@ TEST(BuilderTest, Double) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[9] 
-    = { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    = { 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   EXPECT_EQ(8ULL, sizeof(double));
   memcpy(correctResult + 1, &value, sizeof(value));
 
