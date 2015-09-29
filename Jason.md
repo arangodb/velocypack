@@ -1,7 +1,7 @@
 Jason
 =====
 
-Version 0.999
+Version 0.9999
 
 Just Another SerializatiON
 
@@ -66,7 +66,7 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x0b      : the value of ArangoDB's _id attribute, it is generated
                 out of the collection name, "/" and the value of the
                 _key attribute when JSON is generated
-  - 0x0c      : long UTF-8-string, next 6 bytes are length of string in
+  - 0x0c      : long UTF-8-string, next 8 bytes are length of string in
                 bytes (not Unicode chars) as little endian unsigned
                 integer, note that long strings are not zero-terminated
                 and may contain zero bytes
