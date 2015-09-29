@@ -372,9 +372,9 @@ namespace triagens {
             return std::string(reinterpret_cast<char const*>(_start + 1), static_cast<size_t>(length));
           }
           if (h == 0x0c) {
-            JasonLength length = readInteger<JasonLength>(_start + 1, 6);
+            JasonLength length = readInteger<JasonLength>(_start + 1, 8);
             JasonUtils::CheckSize(length);
-            return std::string(reinterpret_cast<char const*>(_start + 1 + 6), length);
+            return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
           }
           throw JasonTypeError("unexpected type. expecting string");
         }
