@@ -406,6 +406,21 @@ TEST(SliceTest, DoubleNegative) {
   EXPECT_FLOAT_EQ(value, slice.getDouble());
 }
 
+TEST(SliceTest, SmallInt) {
+  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1 };
+
+  for (int i = 0; i < 16; ++i) {
+    Buffer[0] = 0x30 + i;
+
+    JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+    EXPECT_EQ(JasonType::SmallInt, slice.type());
+    EXPECT_TRUE(slice.isSmallInt());
+    EXPECT_EQ(1ULL, slice.byteSize());
+
+    EXPECT_EQ(expected[i], slice.getSmallInt());
+  } 
+}
+
 TEST(SliceTest, Int1) {
   Buffer[0] = 0x18;
   uint8_t value = 0x33;
@@ -682,7 +697,6 @@ TEST(SliceTest, UInt1) {
   EXPECT_EQ(JasonType::UInt, slice.type());
   EXPECT_TRUE(slice.isUInt());
   EXPECT_EQ(2ULL, slice.byteSize());
-
   EXPECT_EQ(value, slice.getUInt());
 }
 
@@ -697,7 +711,7 @@ TEST(SliceTest, UInt2) {
   EXPECT_EQ(JasonType::UInt, slice.type());
   EXPECT_TRUE(slice.isUInt());
   EXPECT_EQ(3ULL, slice.byteSize());
-  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL, slice.getUInt());
+  EXPECT_EQ(0x4223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt3) {
@@ -712,7 +726,7 @@ TEST(SliceTest, UInt3) {
   EXPECT_EQ(JasonType::UInt, slice.type());
   EXPECT_TRUE(slice.isUInt());
   EXPECT_EQ(4ULL, slice.byteSize());
-  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL, slice.getUInt());
+  EXPECT_EQ(0x664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt4) {
@@ -728,7 +742,81 @@ TEST(SliceTest, UInt4) {
   EXPECT_EQ(JasonType::UInt, slice.type());
   EXPECT_TRUE(slice.isUInt());
   EXPECT_EQ(5ULL, slice.byteSize());
-  EXPECT_EQ(0x23ULL + 0x100ULL * 0x42ULL + 0x10000ULL * 0x66ULL + 0x1000000ULL * 0xacULL, slice.getUInt());
+  EXPECT_EQ(0xac664223ULL, slice.getUInt());
+}
+
+TEST(SliceTest, UInt5) {
+  Buffer[0] = 0x2c;
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = 0x23;
+  *p++ = 0x42;
+  *p++ = 0x66;
+  *p++ = 0xac;
+  *p++ = 0xff;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(6ULL, slice.byteSize());
+  EXPECT_EQ(0xffac664223ULL, slice.getUInt());
+}
+
+TEST(SliceTest, UInt6) {
+  Buffer[0] = 0x2d;
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = 0x23;
+  *p++ = 0x42;
+  *p++ = 0x66;
+  *p++ = 0xac;
+  *p++ = 0xff;
+  *p++ = 0xee;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(7ULL, slice.byteSize());
+  EXPECT_EQ(0xeeffac664223ULL, slice.getUInt());
+}
+
+TEST(SliceTest, UInt7) {
+  Buffer[0] = 0x2e;
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = 0x23;
+  *p++ = 0x42;
+  *p++ = 0x66;
+  *p++ = 0xac;
+  *p++ = 0xff;
+  *p++ = 0xee;
+  *p++ = 0x59;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(8ULL, slice.byteSize());
+  EXPECT_EQ(0x59eeffac664223ULL, slice.getUInt());
+}
+
+TEST(SliceTest, UInt8) {
+  Buffer[0] = 0x2f;
+  uint8_t* p = (uint8_t*) &Buffer[1];
+  *p++ = 0x23;
+  *p++ = 0x42;
+  *p++ = 0x66;
+  *p++ = 0xac;
+  *p++ = 0xff;
+  *p++ = 0xee;
+  *p++ = 0x59;
+  *p++ = 0xab;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  EXPECT_EQ(JasonType::UInt, slice.type());
+  EXPECT_TRUE(slice.isUInt());
+  EXPECT_EQ(9ULL, slice.byteSize());
+  EXPECT_EQ(0xab59eeffac664223ULL, slice.getUInt());
 }
 
 /* FIXME
