@@ -441,7 +441,7 @@ namespace triagens {
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            reportAdd(_pos);
+            reportAdd();
           }
           set(Jason(attrName, JasonType::String));
           set(sub);
@@ -457,7 +457,7 @@ namespace triagens {
                 _start[tos.base] != 0x07) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            reportAdd(_pos);
+            reportAdd();
           }
           set(Jason(attrName, JasonType::String));
           return set(sub);
@@ -479,12 +479,12 @@ namespace triagens {
             }
             if (isObject) {
               if (! _attrWritten) {
-                reportAdd(_pos);
+                reportAdd();
               }
               _attrWritten = ! _attrWritten;
             }
             else {
-              reportAdd(_pos);
+              reportAdd();
             }
           }
           set(sub);
@@ -506,12 +506,12 @@ namespace triagens {
             }
             if (isObject) {
               if (! _attrWritten) {
-                reportAdd(_pos);
+                reportAdd();
               }
               _attrWritten = ! _attrWritten;
             }
             else {
-              reportAdd(_pos);
+              reportAdd();
             }
           }
           return set(sub);
@@ -632,6 +632,7 @@ namespace triagens {
         void addDouble (double v) {
           _start[_pos++] = 0x03;
           memcpy(_start + _pos, &v, sizeof(double));
+          _pos += sizeof(double);
         }
 
         void addPosInt (uint64_t v) {
@@ -673,14 +674,15 @@ namespace triagens {
             // type
             _start[_pos++] = 0x05; 
             // length
+            JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
-              _start[_pos++] = temp & 0xff;
-              temp >>= 8;
+              _start[_pos++] = x & 0xff;
+              x >>= 8;
             }
             // offsets
             if (len > 1) {
-              memset(_start + _pos, 0x00, (len - 1) * 8);
-              _pos += (len - 1) * 8;
+              memset(_start + _pos, 0x00, (temp - 1) * 8);
+              _pos += (temp - 1) * 8;
             }
           }
           else {
@@ -708,17 +710,18 @@ namespace triagens {
             // type
             _start[_pos++] = 0x07; 
             // length
+            JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
-              _start[_pos++] = temp & 0xff;
-              temp >>= 8;
+              _start[_pos++] = x & 0xff;
+              x >>= 8;
             }
             // offsets
-            memset(_start + _pos, 0x00, (len+1) * 8);
-            _pos += (len+1) * 8;
+            memset(_start + _pos, 0x00, (temp+1) * 8);
+            _pos += (temp+1) * 8;
           }
           else {
-            // small array
-            uint64_t temp = static_cast<JasonLength>(len);
+            // small object
+            JasonLength temp = static_cast<JasonLength>(len);
             _stack.emplace_back(_pos, 0, temp);
             _start[_pos++] = 0x06;
             _start[_pos++] = temp & 0xff;
@@ -1091,7 +1094,8 @@ namespace triagens {
           }
         }
 
-        void reportAdd (JasonLength itemStart) {
+        void reportAdd () {
+          JasonLength itemStart = _pos;
           State& tos = _stack.back();
           if (tos.index >= tos.len) {
             throw JasonBuilderError("Open array or object is already full.");
