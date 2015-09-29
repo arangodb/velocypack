@@ -39,7 +39,13 @@ JasonLength JasonSlice::byteSize () const {
     case JasonType::ArrayLong:
     case JasonType::Object:
     case JasonType::ObjectLong: {
-      return readInteger<JasonLength>(_start + 1, 6);
+      uint8_t b = _start[1];
+      if (b != 0x00) {
+        // 1 byte length: already got the length
+        return static_cast<JasonLength>(b);
+      }
+      // 8 byte length: read the following 8 bytes
+      return readInteger<JasonLength>(_start + 1 + 1, 8);
     }
 
     case JasonType::External: {
@@ -71,7 +77,7 @@ JasonLength JasonSlice::byteSize () const {
     }
 
     case JasonType::StringLong: {
-      return static_cast<JasonLength>(1 + 6 + readInteger<JasonLength>(_start + 1, 6));
+      return static_cast<JasonLength>(1 + 8 + readInteger<JasonLength>(_start + 1, 8));
     }
 
     case JasonType::Binary: {
