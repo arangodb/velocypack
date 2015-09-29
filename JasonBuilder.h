@@ -674,14 +674,15 @@ namespace triagens {
             // type
             _start[_pos++] = 0x05; 
             // length
+            JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
-              _start[_pos++] = temp & 0xff;
-              temp >>= 8;
+              _start[_pos++] = x & 0xff;
+              x >>= 8;
             }
             // offsets
             if (len > 1) {
-              memset(_start + _pos, 0x00, (len - 1) * 8);
-              _pos += (len - 1) * 8;
+              memset(_start + _pos, 0x00, (temp - 1) * 8);
+              _pos += (temp - 1) * 8;
             }
           }
           else {
@@ -709,13 +710,14 @@ namespace triagens {
             // type
             _start[_pos++] = 0x07; 
             // length
+            JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
-              _start[_pos++] = temp & 0xff;
-              temp >>= 8;
+              _start[_pos++] = x & 0xff;
+              x >>= 8;
             }
             // offsets
-            memset(_start + _pos, 0x00, (len+1) * 8);
-            _pos += (len+1) * 8;
+            memset(_start + _pos, 0x00, (temp+1) * 8);
+            _pos += (temp+1) * 8;
           }
           else {
             // small object

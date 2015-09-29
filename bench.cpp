@@ -99,6 +99,7 @@ int main (int argc, char* argv[]) {
   do {
     for (int i = 0; i < 2; i++) {
       if (useJason) {
+        outputs[count]->clear();
         outputs[count]->parse(inputs[count]);
       }
       else {

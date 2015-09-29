@@ -105,6 +105,10 @@ namespace triagens {
           return _pos > 0 ? _pos - 1 : _pos;
         }
 
+        void clear () {
+          _b.clear();
+        }
+
       private:
 
         inline int peek () const {
@@ -174,6 +178,7 @@ namespace triagens {
             _b.reserve(len);
             size_t tempPos = 0;
             buildJason(temp, tempPos);
+            _b.reserve(len);
             while (_pos < _size && 
                    isWhiteSpace(_start[_pos])) {
               ++_pos;
@@ -485,7 +490,7 @@ namespace triagens {
           if (i == ']') {
             // empty array
             ++_pos;
-            len = 4;
+            len += 4;
             return;
           }
 
