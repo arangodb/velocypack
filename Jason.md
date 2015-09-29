@@ -48,28 +48,29 @@ indicates the type (and often the length) of the Jason value at hand:
 
 ### Value types
 
-  - 0x00      : null
-  - 0x01      : false
-  - 0x02      : true
-  - 0x03      : double, 8 bytes IEEE follow, little endian
-  - 0x04      : short array (< 256 entries, < 65536 bytes in length)
-  - 0x05      : long array (< 2^56 entries, < 2^64 bytes in length)
-  - 0x06      : short object (< 256 entries, < 65536 bytes in length)
-  - 0x07      : long object (< 2^56 entries, < 2^64 bytes in length)
-  - 0x08      : external (only in memory): a char* pointing to the actual
+  - 0x00      : none - this indicates absence of any type and value
+  - 0x01      : null
+  - 0x02      : false
+  - 0x03      : true
+  - 0x04      : double, 8 bytes IEEE follow, little endian
+  - 0x05      : short array (< 256 entries, < 65536 bytes in length)
+  - 0x06      : long array (< 2^56 entries, < 2^64 bytes in length)
+  - 0x07      : short object (< 256 entries, < 65536 bytes in length)
+  - 0x08      : long object (< 2^56 entries, < 2^64 bytes in length)
+  - 0x09      : external (only in memory): a char* pointing to the actual
                 place in memory, where another Jason item resides
-  - 0x09      : ID, to be specified, contains a collection ID and a
+  - 0x0a      : ID, to be specified, contains a collection ID and a
                 string key, for example as a uint followed by a string,
                 or as 8 bytes little endian unsigned int followed by a
                 string
-  - 0x0a      : the value of ArangoDB's _id attribute, it is generated
+  - 0x0b      : the value of ArangoDB's _id attribute, it is generated
                 out of the collection name, "/" and the value of the
                 _key attribute when JSON is generated
-  - 0x0b      : long UTF-8-string, next 6 bytes are length of string in
+  - 0x0c      : long UTF-8-string, next 6 bytes are length of string in
                 bytes (not Unicode chars) as little endian unsigned
                 integer, note that long strings are not zero-terminated
                 and may contain zero bytes
-  - 0x0c-0x0f : reserved
+  - 0x0d-0x0f : reserved
   - 0x10-0x17 : UTC-date in milliseconds since the epoch, stored as uint
                 as below number of bytes used is V-0x0f
   - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17
@@ -95,8 +96,7 @@ indicates the type (and often the length) of the Jason value at hand:
                 the long int in bytes. After that, that many bytes
                 follow, each byte encodes two digits in little-endian
                 packed BCD representation.
-  - 0xd8-0xfe : reserved
-  - 0xff      : none - this indicates absence of any type and value
+  - 0xd8-0xff : reserved
 
 ### Arrays
 
@@ -110,7 +110,7 @@ array (little endian unsigned integer). The actual entries follow.
 Thus, the first entry is always at address A+7. The index table
 resides at the end of the space occupied by the value.
 
-For a small array (V=0x04), the index table ends with a single byte
+For a small array (V=0x05), the index table ends with a single byte
 containing the number N of entries and, before that, has N-1 byte pairs,
 containing the offsets of the subvalues at indices 1, 2, ... N-1. As
 mentioned before, the first subvalue is always at offset 7. If N=0, then
@@ -123,16 +123,16 @@ offsets are measured from base A.
 
 `[1,2,3]` has the hex dump 
 
-    04 0f 00 00 00 00 00 31 32 33 08 00 09 00 03 
+    05 0f 00 00 00 00 00 31 32 33 08 00 09 00 03 
 
-A long array (V=0x05) is very similar, except that the number of entries
+A long array (V=0x06) is very similar, except that the number of entries
 and the offsets are 6-byte little endian unsigned integers.
 
 *Example*:
 
 `[1,2,3]` as long-array has the hex dump
 
-     05 
+     06 
      1c 00 00 00 00 00
      31 32 33
      08 00 00 00 00 00
@@ -168,8 +168,8 @@ as a JSON-array as specified here.
 
 Example, the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    06 1b 00 00 00 00 00
-    41 62 02 
+    07 1b 00 00 00 00 00
+    41 62 03 
     41 61 18 0c 
     41 63 43 78 79 7a
     0a 00 07 00 0e 00 03
