@@ -185,16 +185,18 @@ namespace triagens {
         static uint8_t const* findAttrName (uint8_t const* base, uint64_t& len) {
           uint8_t const b = *base;
           if (b >= 0x40 && b <= 0xbf) {
+            // short UTF-8 string
             len = b - 0x40;
             return base + 1;
           }
-          if (b >= 0xc0 && b <= 0xcf) {
+          if (b == 0x0c) {
+            // long UTF-8 string
             len = 0;
-            uint8_t lenLen = b - 0xbf;
-            for (uint8_t i = 1; i <= b - 0xbf; i++) {
+            // read string length
+            for (uint8_t i = 1; i <= 6; i++) {
               len = (len << 8) + base[i];
             }
-            return base + lenLen + 1;
+            return base + 1 + 6; // string starts here
           }
           throw JasonBuilderError("Unimplemented attribute name type.");
         }
@@ -209,6 +211,7 @@ namespace triagens {
           std::vector<SortEntrySmall>& entries = SortObjectSmallEntries; 
           entries.clear();
           entries.reserve(len);
+/////////////////////////////////////////////////////// TODO START
           for (JasonLength i = 0; i < len; i++) {
             SortEntrySmall e;
             e.offset =  static_cast<uint16_t>(objBase[4 + 2 * i]) +
@@ -252,12 +255,14 @@ namespace triagens {
             objBase[4 + 2 * i] = entries[i].offset & 0xff;
             objBase[5 + 2 * i] = entries[i].offset >> 8;
           }
+/////////////////////////////////////////////////////// TODO END
         }
 
         static void sortObjectIndexLong (uint8_t* objBase, JasonLength len) {
           std::vector<SortEntryLarge>& entries = SortObjectLargeEntries; 
           entries.clear();
           entries.reserve(len);
+/////////////////////////////////////////////////////// TODO START
           for (JasonLength i = 0; i < len; i++) {
             JasonLength const pos = 16 + 8 * i;
             SortEntryLarge e;
@@ -285,6 +290,7 @@ namespace triagens {
             objBase[pos + 6] = (entries[i].offset >> 48) & 0xff;
             objBase[pos + 7] = (entries[i].offset >> 56);
           }
+/////////////////////////////////////////////////////// TODO END
         }
 
       public:
@@ -440,8 +446,8 @@ namespace triagens {
           }
           if (! _stack.empty()) {
             State& tos = _stack.back();
-            if (_start[tos.base] != 0x06 &&
-                _start[tos.base] != 0x07) {
+            if (_start[tos.base] != 0x07 &&
+                _start[tos.base] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd();
@@ -456,8 +462,8 @@ namespace triagens {
           }
           if (! _stack.empty()) {
             State& tos = _stack.back();
-            if (_start[tos.base] != 0x06 &&
-                _start[tos.base] != 0x07) {
+            if (_start[tos.base] != 0x07 &&
+                _start[tos.base] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd();
@@ -470,13 +476,13 @@ namespace triagens {
           if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
-            if (_start[tos.base] < 0x04 ||
-                _start[tos.base] > 0x07) {
+            if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
+              // no array or object
               throw JasonBuilderError("Need open array or object for add() call.");
             }
-            if (_start[tos.base] >= 0x06) {   // object or long object
+            if (_start[tos.base] >= 0x07) {   // object or long object
               if (! _attrWritten && ! sub.isString()) {
-                throw JasonBuilderError("Need open array for this add() call.");
+                throw JasonBuilderError("Need open object for this add() call.");
               }
               isObject = true;
             }
@@ -497,13 +503,12 @@ namespace triagens {
           if (! _stack.empty()) {
             bool isObject = false;
             State& tos = _stack.back();
-            if (_start[tos.base] < 0x04 ||
-                _start[tos.base] > 0x07) {
+            if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
-            if (_start[tos.base] >= 0x06) {   // object or long object
+            if (_start[tos.base] >= 0x07) {   // object or long object
               if (! _attrWritten && ! sub.isString()) {
-                throw JasonBuilderError("Need open array for this add() call.");
+                throw JasonBuilderError("Need open object for this add() call.");
               }
               isObject = true;
             }
@@ -525,42 +530,45 @@ namespace triagens {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
           State& tos = _stack.back();
-          if (_start[tos.base] < 0x04 || _start[tos.base] > 0x07) {
+          if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
           if (tos.index < tos.len) {
             throw JasonBuilderError("Shrinking not yet implemented.");
           }
-          if (_start[tos.base] == 0x04 || _start[tos.base] == 0x06) {
+/////////////////////////////////////////////////////// TODO START
+          if (_start[tos.base] == 0x05 || _start[tos.base] == 0x07) {
             // short array or object:
-            JasonLength tableEntry = tos.base + 2;
-            JasonLength x = _pos - tos.base;
+            JasonLength tableEntry = tos.base + 2;  
+            JasonLength x = _pos - tos.base;      
             if (x >= 65536) {
               throw JasonBuilderError("Offsets too large for small array or object");
             }
-            _start[tableEntry] = x & 0xff;
+            _start[tableEntry] = x & 0xff;          
             _start[tableEntry + 1] = (x >> 8) & 0xff;
-            if (_start[tos.base] == 0x06 && tos.len >= 2) {
+            if (_start[tos.base] == 0x07 && tos.len >= 2) {
               // sort object attributes
               sortObjectIndexShort(_start + tos.base, tos.len);
             }
           }
           else {
             // long array or object:
-            JasonLength tableEntry = tos.base + 8;
-            JasonLength x = _pos - tos.base;
-            for (size_t i = 0; i < 8; i++) {
+            JasonLength tableEntry = tos.base + 8; 
+            JasonLength x = _pos - tos.base;      
+            for (size_t i = 0; i < 8; i++) {      
               _start[tableEntry + i] = x & 0xff;
               x >>= 8;
             }
-            if (_start[tos.base] == 0x07 && tos.len >= 2) {
+            if (_start[tos.base] == 0x08 && tos.len >= 2) {
               // sort object attributes
               sortObjectIndexLong(_start + tos.base, tos.len);
             }
           }
+/////////////////////////////////////////////////////// TODO END
 
           if (options.checkAttributeUniqueness && tos.len > 1 &&
-              (_start[tos.base] == 0x06 || _start[tos.base] == 0x07)) {
+              (_start[tos.base] == 0x07 || _start[tos.base] == 0x08)) {
+            // check uniqueness of attribute names
             checkAttributeUniqueness(JasonSlice(_start + tos.base));
           }
 
@@ -607,6 +615,7 @@ namespace triagens {
         // returns number of bytes required to store the value
         static JasonLength uintLength (uint64_t value) {
           if (value <= 0xff) {
+            // shortcut for the common case
             return 1;
           }
           JasonLength vSize = 0;
@@ -621,33 +630,33 @@ namespace triagens {
       private:
 
         void addNull () {
-          _start[_pos++] = 0x00;
-        }
-
-        void addFalse () {
           _start[_pos++] = 0x01;
         }
 
-        void addTrue () {
+        void addFalse () {
           _start[_pos++] = 0x02;
         }
 
-        void addDouble (double v) {
+        void addTrue () {
           _start[_pos++] = 0x03;
+        }
+
+        void addDouble (double v) {
+          _start[_pos++] = 0x04;
           memcpy(_start + _pos, &v, sizeof(double));
           _pos += sizeof(double);
         }
 
         void addPosInt (uint64_t v) {
-          appendUIntNoCheck(v, 0x1f);
+          appendUIntNoCheck(v, 0x17);
         }
 
         void addNegInt (uint64_t v) {
-          appendUIntNoCheck(v, 0x27);
+          appendUIntNoCheck(v, 0x1f);
         }
 
         void addUInt (uint64_t v) {
-          appendUIntNoCheck(v, 0x2f);
+          appendUIntNoCheck(v, 0x27);
         }
 
         void addUTCDate (uint64_t v) {
@@ -657,11 +666,15 @@ namespace triagens {
         uint8_t* addString (uint64_t strLen) {
           uint8_t* target;
           if (strLen > 127) {
-            appendUIntNoCheck(strLen, 0xbf);
+            // long string
+            _start[_pos++] = 0x0c;
+            // write string length
+            appendLength(strLen, 6);
             target = _start + _pos;
             _pos += strLen;
           }
           else {
+            // short string
             _start[_pos++] = 0x40 + strLen;
             target = _start + _pos;
             _pos += strLen;
@@ -675,8 +688,9 @@ namespace triagens {
             JasonLength temp = static_cast<JasonLength>(-len);
             _stack.emplace_back(_pos, 0, temp);
             // type
-            _start[_pos++] = 0x05; 
+            _start[_pos++] = 0x06; 
             // length
+/////////////////////////////////////////////////////// TODO START
             JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
               _start[_pos++] = x & 0xff;
@@ -687,12 +701,14 @@ namespace triagens {
               memset(_start + _pos, 0x00, (temp - 1) * 8);
               _pos += (temp - 1) * 8;
             }
+/////////////////////////////////////////////////////// TODO END
           }
           else {
+/////////////////////////////////////////////////////// TODO START
             // small array
             JasonLength temp = static_cast<JasonLength>(len);
             _stack.emplace_back(_pos, 0, temp);
-            _start[_pos++] = 0x04;
+            _start[_pos++] = 0x05;
             _start[_pos++] = temp & 0xff;
             _start[_pos++] = 0x00;   // these two bytes will be set at the end
             _start[_pos++] = 0x00;
@@ -702,16 +718,18 @@ namespace triagens {
                 _start[_pos++] = 0x00;
               }
             }
+/////////////////////////////////////////////////////// TODO END
           }
         }
           
         void addObject (int64_t len) {
           // if negative, then a long object is made
           if (len < 0) {
+/////////////////////////////////////////////////////// TODO START
             JasonLength temp = static_cast<JasonLength>(-len);
             _stack.emplace_back(_pos, 0, temp);
             // type
-            _start[_pos++] = 0x07; 
+            _start[_pos++] = 0x08; 
             // length
             JasonLength x = temp;
             for (size_t i = 0; i < 7; i++) {
@@ -721,12 +739,14 @@ namespace triagens {
             // offsets
             memset(_start + _pos, 0x00, (temp+1) * 8);
             _pos += (temp+1) * 8;
+/////////////////////////////////////////////////////// TODO END
           }
           else {
             // small object
+/////////////////////////////////////////////////////// TODO START
             JasonLength temp = static_cast<JasonLength>(len);
             _stack.emplace_back(_pos, 0, temp);
-            _start[_pos++] = 0x06;
+            _start[_pos++] = 0x07;
             _start[_pos++] = temp & 0xff;
             _start[_pos++] = 0x00;   // these two bytes will be set at the end
             _start[_pos++] = 0x00;
@@ -736,6 +756,7 @@ namespace triagens {
                 _start[_pos++] = 0x00;
               }
             }
+/////////////////////////////////////////////////////// TODO END
           }
         }
  
@@ -751,7 +772,7 @@ namespace triagens {
             }
             case JasonType::Null: {
               reserveSpace(1);
-              _start[_pos++] = 0x00;
+              _start[_pos++] = 0x01;
               break;
             }
             case JasonType::Bool: {
@@ -760,10 +781,10 @@ namespace triagens {
               }
               reserveSpace(1);
               if (item.getBool()) {
-                _start[_pos++] = 0x02;
+                _start[_pos++] = 0x03;
               }
               else {
-                _start[_pos++] = 0x01;
+                _start[_pos++] = 0x02;
               }
               break;
             }
@@ -783,7 +804,7 @@ namespace triagens {
                   throw JasonBuilderError("Must give number for JasonType::Double.");
               }
               reserveSpace(1 + sizeof(double));
-              _start[_pos++] = 0x03;
+              _start[_pos++] = 0x04;
               memcpy(_start + _pos, &v, sizeof(double));
               _pos += sizeof(double);
               break;
@@ -794,7 +815,7 @@ namespace triagens {
               }
               reserveSpace(1 + sizeof(void*));
               // store pointer. this doesn't need to be portable
-              _start[_pos++] = 0x08;
+              _start[_pos++] = 0x09;
               void const* value = item.getExternal();
               memcpy(_start + _pos, &value, sizeof(void*));
               _pos += sizeof(void*);
@@ -863,10 +884,10 @@ namespace triagens {
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
               if (positive) {
-                appendUInt(v, 0x1f);
+                appendUInt(v, 0x17);
               }
               else {
-                appendUInt(v, 0x27);
+                appendUInt(v, 0x1f);
               }
               break;
             }
@@ -895,7 +916,7 @@ namespace triagens {
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
               if (item.jasonType() == JasonType::UInt) {
-                appendUInt(v, 0x2f);
+                appendUInt(v, 0x27);
               }
               else {
                 appendUInt(v, 0x0f);
@@ -919,13 +940,17 @@ namespace triagens {
               }
               size_t size = s->size();
               if (size <= 127) {
+                // short string
                 reserveSpace(1 + size);
                 _start[_pos++] = 0x40 + size;
                 memcpy(_start + _pos, s->c_str(), size);
                 _pos += size;
               }
               else {
-                appendUInt(size, 0xbf);
+                // long string
+                reserveSpace(1 + 6 + size);
+                _start[_pos++] = 0x0c;
+                appendLength(size, 6);
                 memcpy(_start + _pos, s->c_str(), size);
               }
               break;
@@ -941,6 +966,7 @@ namespace triagens {
               if (len >= 256) {
                 throw JasonBuilderError("Length in JasonType::Array must be < 256.");
               }
+/////////////////////////////////////////////////////// TODO START
               _stack.emplace_back(_pos, 0, len);
               if (len > 1) {
                 reserveSpace(2 + len * 2);  // Offsets needed for indexes 1..
@@ -948,7 +974,7 @@ namespace triagens {
               else {
                 reserveSpace(4);   // No offset needed for index 0
               }
-              _start[_pos++] = 0x04;
+              _start[_pos++] = 0x05;
               _start[_pos++] = len & 0xff;
               _start[_pos++] = 0x00;   // these two bytes will be set at the end
               _start[_pos++] = 0x00;
@@ -958,9 +984,11 @@ namespace triagens {
                   _start[_pos++] = 0x00;
                 }
               }
+/////////////////////////////////////////////////////// TODO END
               break;
             }
             case JasonType::ArrayLong: {
+/////////////////////////////////////////////////////// TODO START
               if (ctype != Jason::CType::Int64 &&
                   ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::ArrayLong as length.");
@@ -982,7 +1010,7 @@ namespace triagens {
                 reserveSpace(16);
               }
               // type
-              _start[_pos++] = 0x05; 
+              _start[_pos++] = 0x06; 
               // length
               JasonLength temp = len;
               for (size_t i = 0; i < 7; i++) {
@@ -994,9 +1022,11 @@ namespace triagens {
                 memset(_start + _pos, 0x00, (len - 1) * 8);
                 _pos += (len - 1) * 8;
               }
+/////////////////////////////////////////////////////// TODO END
               break;
             }
             case JasonType::Object: {
+/////////////////////////////////////////////////////// TODO START
               if (ctype != Jason::CType::Int64 &&
                   ctype != Jason::CType::UInt64) {
                 throw JasonBuilderError("Must give an integer for JasonType::Object as length.");
@@ -1009,7 +1039,7 @@ namespace triagens {
               }
               _stack.emplace_back(_pos, 0, len);
               reserveSpace(2 + (len + 1) * 2);
-              _start[_pos++] = 0x06;
+              _start[_pos++] = 0x07;
               _start[_pos++] = len & 0xff;
               _start[_pos++] = 0x00;   // these two bytes will be set at the end
               _start[_pos++] = 0x00;
@@ -1019,6 +1049,7 @@ namespace triagens {
                   _start[_pos++] = 0x00;
                 }
               }
+/////////////////////////////////////////////////////// TODO END
               break;
             }
             case JasonType::ObjectLong: {
@@ -1035,10 +1066,11 @@ namespace triagens {
               if (len >= 0x100000000000000) {
                 throw JasonBuilderError("Length in JasonType::ObjectLong must be < 2^56.");
               }
+/////////////////////////////////////////////////////// TODO START
               _stack.emplace_back(_pos, 0, len);
               reserveSpace(8 + (len + 1) * 8);
               // type
-              _start[_pos++] = 0x07; 
+              _start[_pos++] = 0x08; 
               // length
               JasonLength temp = len;
               for (size_t i = 0; i < 7; i++) {
@@ -1048,6 +1080,7 @@ namespace triagens {
               // offsets
               memset(_start + _pos, 0x00, (len+1) * 8);
               _pos += (len+1) * 8;
+/////////////////////////////////////////////////////// TODO END
               break;
             }
             case JasonType::Binary: {
@@ -1058,20 +1091,20 @@ namespace triagens {
               v = item.getUInt64();
               JasonLength size = uintLength(v);
               reserveSpace(1 + size + v);
-              appendUInt(v, 0xcf);
+              appendUInt(v, 0xbf);
               _pos += v;
               break;
             }
             case JasonType::ArangoDB_id: {
               reserveSpace(1);
-              _start[_pos++] = 0x0a;
+              _start[_pos++] = 0x0b;
               break;
             }
             case JasonType::ID: {
               throw JasonBuilderError("Need a JasonPair to build a JasonType::ID.");
             }
             case JasonType::BCD: {
-              throw JasonBuilderError("BCD not yet supported.");
+              throw JasonBuilderError("BCD not yet implemented.");
             }
           }
         }
@@ -1083,7 +1116,7 @@ namespace triagens {
           // to build.
           if (pair.jasonType() == JasonType::ID) {
             reserveSpace(1);
-            _start[_pos++] = 0x09;
+            _start[_pos++] = 0x0a;
             set(Jason(pair.getSize(), JasonType::UInt));
             set(Jason(reinterpret_cast<char const*>(pair.getStart()),
                       JasonType::String));
@@ -1093,7 +1126,7 @@ namespace triagens {
             uint64_t v = pair.getSize();
             JasonLength size = uintLength(v);
             reserveSpace(1 + size + v);
-            appendUInt(v, 0xcf);
+            appendUInt(v, 0xbf);
             memcpy(_start + _pos, pair.getStart(), v);
             _pos += v;
             return nullptr;  // unused here
@@ -1101,13 +1134,15 @@ namespace triagens {
           else if (pair.jasonType() == JasonType::String ||
                    pair.jasonType() == JasonType::StringLong) {
             uint64_t size = pair.getSize();
-            if (size > 127) {
-              JasonLength lenSize = uintLength(size);
-              reserveSpace(1 + lenSize + size);
-              appendUInt(size, 0xbf);
+            if (size > 127) { 
+              // long string
+              reserveSpace(1 + 6 + size);
+              _start[_pos++] = 0x0c;
+              appendLength(size, 6);
               _pos += size;
             }
             else {
+              // short string
               reserveSpace(1 + size);
               _start[_pos++] = 0x40 + size;
               _pos += size;
@@ -1134,54 +1169,70 @@ namespace triagens {
           if (tos.index >= tos.len) {
             throw JasonBuilderError("Open array or object is already full.");
           }
-          if (_start[tos.base] == 0x04) {
+          if (_start[tos.base] == 0x05) {
             // short array:
             if (_pos - tos.base > 0xffff) {
               throw JasonBuilderError("Short array has grown too long (>0xffff).");
             }
             if (tos.index > 0) {
+/////////////////////////////////////////////////////// TODO START
               JasonLength tableEntry = tos.base + 4 + (tos.index - 1) * 2;
               JasonLength x = itemStart - tos.base;
               _start[tableEntry] = x & 0xff;
               _start[tableEntry + 1] = (x >> 8) & 0xff;
+/////////////////////////////////////////////////////// TODO END
             }
           }
-          else if (_start[tos.base] == 0x05) {
+          else if (_start[tos.base] == 0x06) {
             // long array:
             if (tos.index > 0) {
+/////////////////////////////////////////////////////// TODO START
               JasonLength tableEntry = tos.base + 16 + (tos.index - 1) * 8;
               JasonLength x = itemStart - tos.base;
               for (size_t i = 0; i < 8; i++) {
                 _start[tableEntry + i] = x & 0xff;
                 x >>= 8;
               }
+/////////////////////////////////////////////////////// TODO END
             }
           }
-          else if (_start[tos.base] == 0x06) {
+          else if (_start[tos.base] == 0x07) {
             // short object
             if (_pos - tos.base > 0xffff) {
               throw JasonBuilderError("Short object has grown too long (>0xffff).");
             }
+/////////////////////////////////////////////////////// TODO START
             JasonLength tableEntry = tos.base + 4 + tos.index * 2;
             JasonLength x = itemStart - tos.base;
             _start[tableEntry] = x & 0xff;
             _start[tableEntry + 1] = (x >> 8) & 0xff;
+/////////////////////////////////////////////////////// TODO END
           }
-          else if (_start[tos.base] == 0x07) {
+          else if (_start[tos.base] == 0x08) {
             // long object
+/////////////////////////////////////////////////////// TODO START
             JasonLength tableEntry = tos.base + 16 + tos.index * 8;
             JasonLength x = itemStart - tos.base;
             for (size_t i = 0; i < 8; i++) {
               _start[tableEntry + i] = x & 0xff;
               x >>= 8;
             }
+/////////////////////////////////////////////////////// TODO END
           }
           else {
             throw JasonBuilderError("Internal error, stack state does not point to object or array.");
           }
           tos.index++;
         }
-        
+
+        void appendLength (JasonLength v, uint64_t n) {
+          reserveSpace(n);
+          for (uint64_t i = 0; i < n; ++i) {
+            _start[_pos++] = v & 0xff;
+            v >>= 8;
+          }
+        }
+ 
         void appendUIntNoCheck (uint64_t v, uint8_t base) {
           JasonLength save = _pos++;
           uint8_t count = 0;
@@ -1189,7 +1240,8 @@ namespace triagens {
             _start[_pos++] = v & 0xff;
             v >>= 8;
             count++;
-          } while (v != 0);
+          } 
+          while (v != 0);
           _start[save] = base + count;
         }
 
@@ -1205,10 +1257,10 @@ namespace triagens {
 
         void appendInt (int64_t v) {
           if (v >= 0) {
-            appendUInt(static_cast<uint64_t>(v), 0x1f);
+            appendUInt(static_cast<uint64_t>(v), 0x17);
           }
           else {
-            appendUInt(static_cast<uint64_t>(-v), 0x27);
+            appendUInt(static_cast<uint64_t>(-v), 0x1f);
           }
         }
  
