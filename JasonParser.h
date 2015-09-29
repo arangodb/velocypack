@@ -183,7 +183,7 @@ namespace triagens {
         }
 
         inline bool isWhiteSpace (uint8_t i) const {
-          return (i == ' ' || i == '\t' || i == '\n' || i == '\r' || i == '\f' || i == '\b');
+          return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
 
         // skips over all following whitespace tokens but does not consume the
