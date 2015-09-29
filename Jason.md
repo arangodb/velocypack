@@ -104,7 +104,7 @@ indicates the type (and often the length) of the Jason value at hand:
 Arrays look like this:
 
   0x05 or 0x06 for the type (short or long array)
-  BYTELENGTH (one or 8 bytes)
+  BYTELENGTH (one or 9 bytes)
   sub Jason values
   ...
   INDEX-TABLE (2-byte offsets (short) or 8-byte offsets (long)
@@ -115,18 +115,15 @@ subvalues and then an index table containing offsets to the subvalues
 and finally the number of subvalues. To find the index table, find the
 end, then the number of subvalues and from that the base of the index
 table, considering whether the array is short or long. There are two
-variants for this byte length, a one byte variant with values between
-2 and 127, and an 8 byte offset with values between 0 and 2^63-1. The
-small values are specified by one byte following the type byte with
-values 0x02 to 0x7f (high bit cleared). If the high bit of A[1] is set,
-then the lower 7 bits together with the 7 following bytes constitute a
-63 bit unsigned integer (little endian, only 7 bits in the first byte)
-for the offset, counted from address A. Thus, the first entry is either
-at adress A+2 or at address A+9, depending on the high bit of the byte
-at address A+1. The index table resides at the end of the space occupied
-by the value, just before the number of subvalue information. As a
-special case the empty array has A[1] set to 2 and no length information
-is needed.
+variants for this byte length, a one byte variant with values between 2
+and 0xff, or an 8 byte integer. The small values are specified by one
+byte following the type byte with values 0x02 to 0xff. If this length
+byte is 0x00, then the next 8 bytes are the length as little endian
+unsigned integer. Thus, the first entry is either at adress A+2 or at
+address A+10, depending on whether the byte at address A+1 is non-zero
+or zero. The index table resides at the end of the space occupied by the
+value, just before the number of subvalue information. As a special case
+the empty array has A[1] set to 2 and no length information is needed.
 
 For a small array (V=0x05), the number of subvalues is stored in a
 single byte containing the number N of entries and, before that, has N
@@ -183,19 +180,16 @@ Objects have a small header including their byte length, then all the
 subvalues and then an index table containing offsets to the subvalues
 and finally the number of subvalues. To find the index table, find the
 end, then the number of subvalues and from that the base of the index
-table, considering whether the object is short or long. There are two
-variants for this byte length, a one byte variant with values between
-2 and 127, and an 8 byte offset with values between 0 and 2^63-1. The
-small values are specified by one byte following the type byte with
-values 0x02 to 0x7f (high bit cleared). If the high bit of A[1] is set,
-then the lower 7 bits together with the 7 following bytes constitute a
-63 bit unsigned integer (little endian, only 7 bits in the first byte)
-for the offset, counted from address A. Thus, the first entry is either
-at adress A+2 or at address A+9, depending on the high bit of the byte
-at address A+1. The index table resides at the end of the space occupied
-by the value, just before the number of subvalue information. As a
-special case the empty object has A[1] set to 2 and no length information
-is needed.
+table, considering whether the array is short or long. There are two
+variants for this byte length, a one byte variant with values between 2
+and 0xff, or an 8 byte integer. The small values are specified by one
+byte following the type byte with values 0x02 to 0xff. If this length
+byte is 0x00, then the next 8 bytes are the length as little endian
+unsigned integer. Thus, the first entry is either at adress A+2 or at
+address A+10, depending on whether the byte at address A+1 is non-zero
+or zero. The index table resides at the end of the space occupied by the
+value, just before the number of subvalue information. As a special case
+the empty object has A[1] set to 2 and no length information is needed.
 
 For a small object (V=0x07), the number of subvalues is stored in a
 single byte containing the number N of entries and, before that, has N
