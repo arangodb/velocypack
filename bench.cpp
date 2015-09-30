@@ -11,7 +11,6 @@
 
 #include "Jason.h"
 #include "JasonBuilder.h"
-#include "JasonDumper.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
@@ -21,9 +20,7 @@
 #include "rapidjson/stringbuffer.h"
 
 using Jason            = triagens::basics::Jason;
-using JasonBuffer      = triagens::basics::JasonBuffer;
 using JasonBuilder     = triagens::basics::JasonBuilder;
-using JasonDumper      = triagens::basics::JasonDumper;
 using JasonLength      = triagens::basics::JasonLength;
 using JasonPair        = triagens::basics::JasonPair;
 using JasonParser      = triagens::basics::JasonParser;

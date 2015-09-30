@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Jason.h"
+#include "JasonBuffer.h"
 #include "JasonBuilder.h"
 #include "JasonDumper.h"
 #include "JasonParser.h"
@@ -11,15 +12,16 @@
 
 #include "gtest/gtest.h"
 
-using Jason            = triagens::basics::Jason;
-using JasonBuffer      = triagens::basics::JasonBuffer;
-using JasonBuilder     = triagens::basics::JasonBuilder;
-using JasonDumper      = triagens::basics::JasonDumper;
-using JasonLength      = triagens::basics::JasonLength;
-using JasonPair        = triagens::basics::JasonPair;
-using JasonParser      = triagens::basics::JasonParser;
-using JasonSlice       = triagens::basics::JasonSlice;
-using JasonType        = triagens::basics::JasonType;
+using Jason             = triagens::basics::Jason;
+using JasonBuffer       = triagens::basics::JasonBuffer;
+using JasonBuilder      = triagens::basics::JasonBuilder;
+using JasonBufferDumper = triagens::basics::JasonBufferDumper;
+using JasonStringDumper = triagens::basics::JasonStringDumper;
+using JasonLength       = triagens::basics::JasonLength;
+using JasonPair         = triagens::basics::JasonPair;
+using JasonParser       = triagens::basics::JasonParser;
+using JasonSlice        = triagens::basics::JasonSlice;
+using JasonType         = triagens::basics::JasonType;
   
 static char Buffer[4096];
 
@@ -29,7 +31,7 @@ static char Buffer[4096];
 
 static void checkDump (JasonSlice s, std::string const& knownGood) {
   JasonBuffer buffer;
-  JasonDumper dumper(s, buffer, JasonDumper::STRATEGY_FAIL);
+  JasonBufferDumper dumper(s, buffer, triagens::basics::STRATEGY_FAIL);
   dumper.dump();
   std::string output(buffer.data(), buffer.size());
   EXPECT_EQ(knownGood, output);
@@ -342,6 +344,75 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
 
 
 // Let the tests begin...
+
+TEST(BufferDumperTest, Null) {
+  Buffer[0] = 0x1;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  JasonBuffer buffer;
+  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  std::string output(buffer.data(), buffer.size());
+  EXPECT_EQ(std::string("null"), output);
+}
+
+TEST(StringDumperTest, Null) {
+  Buffer[0] = 0x1;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  std::string buffer;
+  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(std::string("null"), buffer);
+}
+
+TEST(BufferDumperTest, False) {
+  Buffer[0] = 0x2;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  JasonBuffer buffer;
+  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  std::string output(buffer.data(), buffer.size());
+  EXPECT_EQ(std::string("false"), output);
+}
+
+TEST(StringDumperTest, False) {
+  Buffer[0] = 0x2;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  std::string buffer;
+  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(std::string("false"), buffer);
+}
+
+TEST(BufferDumperTest, True) {
+  Buffer[0] = 0x3;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  JasonBuffer buffer;
+  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  std::string output(buffer.data(), buffer.size());
+  EXPECT_EQ(std::string("true"), output);
+}
+
+TEST(StringDumperTest, True) {
+  Buffer[0] = 0x3;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  std::string buffer;
+  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump();
+  EXPECT_EQ(std::string("true"), buffer);
+}
 
 TEST(SliceTest, Null) {
   Buffer[0] = 0x1;

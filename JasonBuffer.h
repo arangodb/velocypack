@@ -34,6 +34,11 @@ namespace triagens {
           return _pos;
         }
 
+        void push_back (char c) {
+          reserve(_pos + 1); 
+          _buf[_pos++] = c;
+        }
+
         void append (char c) {
           reserve(_pos + 1); 
           _buf[_pos++] = c;
