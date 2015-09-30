@@ -451,8 +451,8 @@ namespace triagens {
                     }
                     else if (v < 0x800) {
                       _b.reserveSpace(2);
-                      _b._start[_b._pos++] = static_cast<uint8_t>(v & 0xff);
-                      _b._start[_b._pos++] = static_cast<uint8_t>(v >> 8);
+                      _b._start[_b._pos++] = 0xc0 + (v >> 6);
+                      _b._start[_b._pos++] = 0x80 + (v & 0x3f);
                       highSurrogate = 0;
                     }
                     else if (v >= 0xdc00 && v < 0xe000 &&
@@ -521,7 +521,8 @@ namespace triagens {
                   }
 
                   // validate follow up characters
-                  _b.reserveSpace(follow);
+                  _b.reserveSpace(1+follow);
+                  _b._start[_b._pos++] = static_cast<uint8_t>(i);
                   for (int j = 0; j < follow; ++j) {
                     i = getOneOrThrow("scanString: truncated UTF-8 sequence");
                     if ((i & 0xc0) != 0x80) {

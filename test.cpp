@@ -1483,8 +1483,8 @@ TEST(ParserTest, Zero) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::UInt, 2ULL);
-  ASSERT_EQ(0ULL, s.getUInt());
+  checkBuild(s, JasonType::SmallInt, 1ULL);
+  ASSERT_EQ(0, s.getSmallInt());
 
   checkDump(s, value);
 }
@@ -1514,8 +1514,8 @@ TEST(ParserTest, Int1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::UInt, 2ULL);
-  ASSERT_EQ(1ULL, s.getUInt());
+  checkBuild(s, JasonType::SmallInt, 1ULL);
+  ASSERT_EQ(1, s.getSmallInt());
 
   checkDump(s, value);
 }
@@ -1529,8 +1529,8 @@ TEST(ParserTest, IntM1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Int, 2ULL);
-  ASSERT_EQ(-1LL, s.getInt());
+  checkBuild(s, JasonType::SmallInt, 1ULL);
+  ASSERT_EQ(-1LL, s.getSmallInt());
 
   checkDump(s, value);
 }
@@ -1904,7 +1904,7 @@ TEST(ParserTest, EmptyArray) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 4);
+  checkBuild(s, JasonType::Array, 2);
   ASSERT_EQ(0ULL, s.length());
 
   checkDump(s, value);
@@ -1919,7 +1919,7 @@ TEST(ParserTest, WhitespacedArray) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 4);
+  checkBuild(s, JasonType::Array, 2);
   ASSERT_EQ(0ULL, s.length());
 
   std::string const valueOut = "[]";
@@ -2241,7 +2241,7 @@ TEST(ParserTest, EmptyObject) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 4);
+  checkBuild(s, JasonType::Object, 2);
   ASSERT_EQ(0ULL, s.length());
 
   checkDump(s, value);
@@ -2324,10 +2324,9 @@ TEST(ParserTest, BrokenObject10) {
 
   JasonParser parser;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
-  ASSERT_EQ(7u, parser.errorPos());
+  ASSERT_EQ(6u, parser.errorPos());
 }
 
-/*
 TEST(ParserTest, ObjectSimple1) {
   std::string const value("{ \"foo\" : 1}");
 
@@ -2337,7 +2336,7 @@ TEST(ParserTest, ObjectSimple1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 12);
+  checkBuild(s, JasonType::Object, 10);
   ASSERT_EQ(1ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2345,13 +2344,14 @@ TEST(ParserTest, ObjectSimple1) {
   std::string correct = "foo";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
-  checkBuild(ss, JasonType::UInt, 2);
-  ASSERT_EQ(1ULL, ss.getUInt());
+  checkBuild(ss, JasonType::SmallInt, 1);
+  ASSERT_EQ(1, ss.getSmallInt());
 
   std::string valueOut = "{\"foo\":1}";
   checkDump(s, valueOut);
 }
 
+/*
 TEST(ParserTest, ObjectSimple2) {
   std::string const value("{ \"foo\" : \"bar\", \"baz\":true}");
 

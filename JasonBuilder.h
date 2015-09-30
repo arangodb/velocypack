@@ -633,15 +633,38 @@ namespace triagens {
         }
 
         void addPosInt (uint64_t v) {
-          appendUInt(v, 0x17);
+          if (v < 8) {
+            reserveSpace(1);
+            _start[_pos++] = 0x30 + v;
+          }
+          else {
+            appendUInt(v, 0x17);
+          }
         }
 
         void addNegInt (uint64_t v) {
-          appendUInt(v, 0x1f);
+          if (v < 9) {
+            reserveSpace(1);
+            if (v == 0) {
+              _start[_pos++] = 0x30;
+            }
+            else {
+              _start[_pos++] = 0x40 - v;
+            }
+          }
+          else {
+            appendUInt(v, 0x1f);
+          }
         }
 
         void addUInt (uint64_t v) {
-          appendUInt(v, 0x27);
+          if (v < 8) {
+            reserveSpace(1);
+            _start[_pos++] = 0x30 + v;
+          }
+          else {
+            appendUInt(v, 0x27);
+          }
         }
 
         void addUTCDate (uint64_t v) {

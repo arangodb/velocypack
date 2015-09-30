@@ -253,6 +253,14 @@ namespace triagens {
 
             _buffer->push_back('0' + (v % 10));
           }
+          else if (slice.isType(JasonType::SmallInt)) {
+            int64_t v = slice.getSmallInt();
+            if (v < 0) {
+              _buffer->push_back('-');
+              v = -v;
+            }
+            _buffer->push_back('0' + v);
+          }
           else {
             throw JasonDumper::JasonDumperError("unexpected number type");
           }
