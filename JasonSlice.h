@@ -217,6 +217,9 @@ namespace triagens {
               if (b != 0x00) {
                 // 1 byte length: already got the length
                 end = static_cast<JasonLength>(b);
+                if (b == 0x02) {  // Special case
+                  return 0;
+                }
               }
               else { 
                 end = readInteger<JasonLength>(_start + 2, 8);
@@ -230,6 +233,9 @@ namespace triagens {
               if (b != 0x00) {
                 // 1 byte length: already got the length
                 end = static_cast<JasonLength>(b);
+                if (b == 0x02) {
+                  return 0;
+                }
               }
               else { 
                 end = readInteger<JasonLength>(_start + 2, 8);

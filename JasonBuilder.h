@@ -96,15 +96,7 @@ namespace triagens {
         bool           _externalMem;          // true if buffer came from the outside
         bool           _attrWritten;  // indicates that an attribute name
                                       // in an object has been written
-        struct State {
-          JasonLength base;   // Start of object currently being built
-          JasonLength index;  // Index in array or object currently being worked on
-          State (JasonLength b = 0, JasonLength i = 0)
-            : base(b), index(i) {
-          }
-        };
-
-        std::vector<State>                    _stack;
+        std::vector<JasonLength>              _stack;
         std::vector<std::vector<JasonLength>> _index;
 
         // Here are the mechanics of how this building process works:
@@ -112,21 +104,22 @@ namespace triagens {
         // and uses at most _size bytes. The variable _pos keeps the
         // current write position. The method "set" simply writes a new
         // Jason subobject at the current write position and advances
-        // it. Whenever one makes an array or object, a State is pushed
-        // onto the _stack, which remembers that we are in the process
-        // of building an array or object. The _index vectors are used
-        // to collect information for the index tables of arrays and
-        // objects, which are written behind the subvalues. The add
-        // methods are used to keep track of the new subvalue in _index
-        // followed by a set, and are what the user from the outside calls.
-        // The close method seals the innermost array or object that is
-        // currently being built and pops a State off the _stack. The
-        // vectors in _index stay until the next clearTemporary() is
-        // called to minimize allocations. In the beginning, the _stack
-        // is empty, which allows to build a sequence of unrelated Jason
-        // objects in the buffer. Whenever the stack is empty, one can
-        // use the start, size and stealTo methods to get out the ready
-        // built Jason object(s).
+        // it. Whenever one makes an array or object, a JasonLength for
+        // the beginning of the value is pushed onto the _stack, which
+        // remembers that we are in the process of building an array or
+        // object. The _index vectors are used to collect information
+        // for the index tables of arrays and objects, which are written
+        // behind the subvalues. The add methods are used to keep track
+        // of the new subvalue in _index followed by a set, and are
+        // what the user from the outside calls. The close method seals
+        // the innermost array or object that is currently being built
+        // and pops a JasonLength off the _stack. The vectors in _index
+        // stay until the next clearTemporary() is called to minimize
+        // allocations. In the beginning, the _stack is empty, which
+        // allows to build a sequence of unrelated Jason objects in the
+        // buffer. Whenever the stack is empty, one can use the start,
+        // size and stealTo methods to get out the ready built Jason
+        // object(s).
 
         void reserveSpace (JasonLength len) {
           // Reserves len bytes at pos of the current state (top of stack)
@@ -393,9 +386,9 @@ namespace triagens {
             throw JasonBuilderError("Attribute name already written.");
           }
           if (! _stack.empty()) {
-            State& tos = _stack.back();
-            if (_start[tos.base] != 0x07 &&
-                _start[tos.base] != 0x08) {
+            JasonLength& tos = _stack.back();
+            if (_start[tos] != 0x07 &&
+                _start[tos] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd();
@@ -409,9 +402,9 @@ namespace triagens {
             throw JasonBuilderError("Attribute name already written.");
           }
           if (! _stack.empty()) {
-            State& tos = _stack.back();
-            if (_start[tos.base] != 0x07 &&
-                _start[tos.base] != 0x08) {
+            JasonLength& tos = _stack.back();
+            if (_start[tos] != 0x07 &&
+                _start[tos] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
             reportAdd();
@@ -422,12 +415,12 @@ namespace triagens {
 
         void add (Jason const& sub) {
           if (! _stack.empty()) {
-            State& tos = _stack.back();
-            if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
+            JasonLength& tos = _stack.back();
+            if (_start[tos] < 0x05 || _start[tos] > 0x08) {
               // no array or object
               throw JasonBuilderError("Need open array or object for add() call.");
             }
-            if (_start[tos.base] >= 0x07) {   // object or long object
+            if (_start[tos] >= 0x07) {   // object or long object
               if (! _attrWritten && ! sub.isString()) {
                 throw JasonBuilderError("Need open object for this add() call.");
               }
@@ -445,11 +438,11 @@ namespace triagens {
 
         uint8_t* add (JasonPair const& sub) {
           if (! _stack.empty()) {
-            State& tos = _stack.back();
-            if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
+            JasonLength& tos = _stack.back();
+            if (_start[tos] < 0x05 || _start[tos] > 0x08) {
               throw JasonBuilderError("Need open array or object for add() call.");
             }
-            if (_start[tos.base] >= 0x07) {   // object or long object
+            if (_start[tos] >= 0x07) {   // object or long object
               if (! _attrWritten && ! sub.isString()) {
                 throw JasonBuilderError("Need open object for this add() call.");
               }
@@ -469,70 +462,72 @@ namespace triagens {
           if (_stack.empty()) {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
-          State& tos = _stack.back();
-          if (_start[tos.base] < 0x05 || _start[tos.base] > 0x08) {
+          JasonLength& tos = _stack.back();
+          if (_start[tos] < 0x05 || _start[tos] > 0x08) {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
-          size_t depth = _stack.size()-1;
+          std::vector<JasonLength>& index = _index[_stack.size()-1];
           // First determine byte length and its format:
           JasonLength tableBase;
           bool smallByteLength;
           bool smallTable;
-          if (tos.index < 0x100 && 
-              _pos - tos.base - 8 + 1 + 2 * tos.index < 0x100) {
+          if (index.size() < 0x100 && 
+              _pos - tos - 8 + 1 + 2 * index.size() < 0x100) {
             // This is the condition for a one-byte bytelength, since in
             // that case we can save 8 bytes in the beginning and the
             // table fits in the 256 bytes as well, using the small format:
-            memmove(_start + tos.base + 2, _start + tos.base + 10,
-                    _pos - tos.base + 10);
+            memmove(_start + tos + 2, _start + tos + 10,
+                    _pos - (tos + 10));
             _pos -= 8;
+            for (size_t i = 0; i < index.size(); i++) {
+              index[i] -= 8;
+            }
             smallByteLength = true;
             smallTable = true;
           }
           else {
             smallByteLength = false;
-            smallTable = tos.index < 0x100 && _index[depth].back() < 0x10000;
+            smallTable = index.size() < 0x100 && 
+                         (index.size() == 0 || index.back() < 0x10000);
           }
           tableBase = _pos;
           if (smallTable) {
-            if (tos.index != 0) {
-              reserveSpace(2 * tos.index + 1);
-              _pos += 2 * tos.index + 1;
+            if (index.size() != 0) {
+              reserveSpace(2 * index.size() + 1);
+              _pos += 2 * index.size() + 1;
             }
             // Make sure we use the small type (6,5 -> 5 and 8,7 -> 7):
-            if ((_start[tos.base] & 1) == 0) {
-              _start[tos.base]--;
+            if ((_start[tos] & 1) == 0) {
+              _start[tos]--;
             }
-            if (_start[tos.base] == 0x07 && tos.index >= 2) {
-              sortObjectIndexShort(_start + tos.base, _index[depth]);
+            if (_start[tos] == 0x07 && index.size() >= 2) {
+              sortObjectIndexShort(_start + tos, index);
             }
-            assert(tos.index == _index[depth].size());
-            for (size_t i = 0; i < _index[depth].size(); i++) {
-              uint16_t x = static_cast<uint16_t>(_index[depth][i]);
+            for (size_t i = 0; i < index.size(); i++) {
+              uint16_t x = static_cast<uint16_t>(index[i]);
               _start[tableBase + 2*i] = x & 0xff;
               _start[tableBase + 2*i + 1] = x >> 8;
             }
-            _start[_pos-1] = static_cast<uint8_t>(tos.index);
+            _start[_pos-1] = static_cast<uint8_t>(index.size());
           }
           else {
             // large table:
-            reserveSpace(8 * tos.index + 8);
-            _pos += 8 * tos.index + 8;
+            reserveSpace(8 * index.size() + 8);
+            _pos += 8 * index.size() + 8;
             // Make sure we use the large type (6,5 -> 6 and 8.7 -> 8):
-            if ((_start[tos.base] & 1) == 1) {
-              _start[tos.base]++;
+            if ((_start[tos] & 1) == 1) {
+              _start[tos]++;
             }
-            if (_start[tos.base] == 0x08 && tos.index >= 2) {
-              sortObjectIndexLong(_start + tos.base, _index[depth]);
+            if (_start[tos] == 0x08 && index.size() >= 2) {
+              sortObjectIndexLong(_start + tos, index);
             }
-            assert(tos.index == _index[depth].size());
-            JasonLength x = tos.index;
+            JasonLength x = index.size();
             for (size_t j = 0; j < 8; j++) {
               _start[_pos-8+j] = x & 0xff;
               x >>= 8;
             }
-            for (size_t i = 0; i < _index[depth].size(); i++) {
-              x = _index[depth][i];
+            for (size_t i = 0; i < index.size(); i++) {
+              x = index[i];
               for (size_t j = 0; j < 8; j++) {
                 _start[tableBase + 8*i + j] = x & 0xff;
                 x >>= 8;
@@ -540,26 +535,27 @@ namespace triagens {
             }
           }
           if (smallByteLength) {
-            _start[tos.base+1] = _pos - tos.base;
+            _start[tos+1] = _pos - tos;
           }
           else {
-            _start[tos.base+1] = 0x00;
-            JasonLength x = _pos - tos.base;
+            _start[tos+1] = 0x00;
+            JasonLength x = _pos - tos;
             for (size_t i = 2; i <= 9; i++) {
-              _start[tos.base+i] = x & 0xff;
+              _start[tos+i] = x & 0xff;
               x >>= 8;
             }
           }
 
-          if (options.checkAttributeUniqueness && tos.index > 1 &&
-              _start[tos.base] >= 0x07) {
+          if (options.checkAttributeUniqueness && index.size() > 1 &&
+              _start[tos] >= 0x07) {
             // check uniqueness of attribute names
-            checkAttributeUniqueness(JasonSlice(_start + tos.base));
+            checkAttributeUniqueness(JasonSlice(_start + tos));
           }
 
-          // Now the array or object is complete, we pop a State off the _stack
+          // Now the array or object is complete, we pop a JasonLength 
+          // off the _stack:
           _stack.pop_back();
-          // Intentionally leave _index[depth] intact!
+          // Intentionally leave _index[depth] intact to avoid future allocs!
         }
 
         JasonBuilder& operator() (std::string const& attrName, Jason sub) {
@@ -675,10 +671,11 @@ namespace triagens {
         void addArray () {
           reserveSpace(10);
           // an array is started:
-          _stack.emplace_back(_pos, 0);
+          _stack.push_back(_pos);
           while (_stack.size() > _index.size()) {
             _index.emplace_back();
           }
+          _index.back().clear();
           _start[_pos++] = 0x05;
           _start[_pos++] = 0x00;  // Will be filled later with short bytelength
           _pos += 8;              // Possible space for long bytelength
@@ -686,10 +683,11 @@ namespace triagens {
           
         void addObject () {
           reserveSpace(10);
-          _stack.emplace_back(_pos, 0);
+          _stack.push_back(_pos);
           while (_stack.size() > _index.size()) {
             _index.emplace_back();
           }
+          _index.back().clear();
           _start[_pos++] = 0x07;
           _start[_pos++] = 0x00;  // Will be filled later with short bytelength
           _pos += 8;              // Possible space for long bytelength
@@ -700,7 +698,7 @@ namespace triagens {
 
           // This method builds a single further Jason item at the current
           // append position. If this is an array or object, then an index
-          // table is created and a new State is pushed onto the stack.
+          // table is created and a new JasonLength is pushed onto the stack.
           switch (item.jasonType()) {
             case JasonType::None: {
               throw JasonBuilderError("Cannot set a JasonType::None.");
@@ -892,26 +890,12 @@ namespace triagens {
             }
             case JasonType::Array:
             case JasonType::ArrayLong: {
-              _stack.emplace_back(_pos, 0);
-              while (_stack.size() > _index.size()) {
-                _index.emplace_back();
-              }
-              reserveSpace(10);
-              _start[_pos++] = 0x05;
-              _start[_pos++] = 0x00;  // Will be filled later with short bytelen
-              _pos += 8;              // Possible space for long bytelength
+              addArray();
               break;
             }
             case JasonType::Object:
             case JasonType::ObjectLong: {
-              _stack.emplace_back(_pos, 0);
-              while (_stack.size() > _index.size()) {
-                _index.emplace_back();
-              }
-              reserveSpace(10);
-              _start[_pos++] = 0x07;
-              _start[_pos++] = 0x00;  // Will be filled later with short bytelen
-              _pos += 8;              // Possible space for long bytelength
+              addObject();
               break;
             }
             case JasonType::Binary: {

@@ -819,22 +819,18 @@ TEST(SliceTest, UInt8) {
   EXPECT_EQ(0xab59eeffac664223ULL, slice.getUInt());
 }
 
-/* FIXME
 TEST(SliceTest, ArrayEmpty) {
   Buffer[0] = 0x05;
   uint8_t* p = (uint8_t*) &Buffer[1];
-  *p++ = 0x00;
-  *p++ = 0x04;
-  *p++ = 0x00;
+  *p++ = 0x02;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   EXPECT_EQ(JasonType::Array, slice.type());
   EXPECT_TRUE(slice.isArray());
-  EXPECT_EQ(4ULL, slice.byteSize());
+  EXPECT_EQ(2ULL, slice.byteSize());
   EXPECT_EQ(0ULL, slice.length());
 }
-*/
 
 TEST(SliceTest, StringEmpty) {
   Buffer[0] = 0x40;
@@ -1037,16 +1033,15 @@ TEST(BuilderTest, String) {
   EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
 
-/* FIXME
 TEST(BuilderTest, ArrayEmpty) {
   JasonBuilder b;
-  b.add(Jason(0, JasonType::Array));
+  b.add(Jason(JasonType::Array));
   b.close();
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x04, 0x00, 0x04, 0x00 };
+    = { 0x05, 0x02 };
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -1055,7 +1050,7 @@ TEST(BuilderTest, ArrayEmpty) {
 TEST(BuilderTest, Array4) {
   double value = 2.3;
   JasonBuilder b;
-  b.add(Jason(4, JasonType::Array));
+  b.add(Jason(JasonType::Array));
   b.add(Jason(uint64_t(1200)));
   b.add(Jason(value));
   b.add(Jason("abc"));
@@ -1066,13 +1061,14 @@ TEST(BuilderTest, Array4) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x04, 0x04, 0x1b, 0x00,
-        0x0d, 0x00, 0x16, 0x00, 0x1a, 0x00,
-        0x31, 0xb0, 0x04,   // uint(1200) = 0x4b0
-        0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
+    = { 0x05, 0x1c,
+        0x29, 0xb0, 0x04,   // uint(1200) = 0x4b0
+        0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
         0x43, 0x61, 0x62, 0x63,
-        0x02 };
-  memcpy(correctResult + 14, &value, 8);
+        0x03,
+        0x02, 0x00, 0x05, 0x00, 0x0e, 0x00, 0x12, 0x00,
+        0x04};
+  memcpy(correctResult + 6, &value, sizeof(double));
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -1080,13 +1076,13 @@ TEST(BuilderTest, Array4) {
 
 TEST(BuilderTest, ObjectEmpty) {
   JasonBuilder b;
-  b.add(Jason(0, JasonType::Object));
+  b.add(Jason(JasonType::Object));
   b.close();
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x06, 0x00, 0x04, 0x00 };
+    = { 0x07, 0x02 };
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
@@ -1095,7 +1091,7 @@ TEST(BuilderTest, ObjectEmpty) {
 TEST(BuilderTest, Object4) {
   double value = 2.3;
   JasonBuilder b;
-  b.add(Jason(4, JasonType::Object));
+  b.add(Jason(JasonType::Object));
   b.add("a", Jason(uint64_t(1200)));
   b.add("b", Jason(value));
   b.add("c", Jason("abc"));
@@ -1106,19 +1102,20 @@ TEST(BuilderTest, Object4) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x06, 0x04, 0x25, 0x00,
-        0x0c, 0x00, 0x11, 0x00, 0x1c, 0x00, 0x22, 0x00,
-        0x41, 0x61, 0x31, 0xb0, 0x04,   // "a": uint(1200) = 0x4b0
-        0x41, 0x62, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
-                                        // "b": double(2.3)
+    = { 0x07, 0x24,
+        0x41, 0x61, 0x29, 0xb0, 0x04,        // "a": uint(1200) = 0x4b0
+        0x41, 0x62, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
+                                             // "b": double(2.3)
         0x41, 0x63, 0x43, 0x61, 0x62, 0x63,  // "c": "abc"
-        0x41, 0x64, 0x02 };
-  memcpy(correctResult + 20, &value, 8);
+        0x41, 0x64, 0x03,                    // "d": true
+        0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
+        0x04
+      };
+  memcpy(correctResult + 10, &value, sizeof(double));
 
   EXPECT_EQ(sizeof(correctResult), len);
   EXPECT_EQ(0, memcmp(result, correctResult, len));
 }
-*/
 
 TEST(BuilderTest, External) {
   uint8_t externalStuff[] = { 0x01 };
