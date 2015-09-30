@@ -9,8 +9,12 @@ namespace triagens {
     struct JasonUtils {
 
 #ifndef JASON_64BIT
-      // checks if the specified length is within the bounds of the system
-      static void CheckSize (JasonLength);
+      // check if the length is beyond the size of a SIZE_MAX on this platform
+      static void CheckSize (JasonLength length) {
+        if (length > static_cast<JasonLength>(SIZE_MAX)) {
+          throw JasonException("JasonLength out of bounds.");
+        }  
+      }
 #else
       static inline void CheckSize (JasonLength) { 
         // do nothing on a 64 bit platform 
