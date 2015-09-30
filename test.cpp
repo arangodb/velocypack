@@ -2518,7 +2518,6 @@ TEST(ParserTest, ObjectMixed) {
   std::string const valueOut("{\"bar\":true,\"baz\":13.53,\"foo\":null,\"qux\":[1],\"quz\":{}}");
   checkDump(s, valueOut);
 }
-*/
 
 TEST(ParserTest, ObjectInvalidQuotes) {
   std::string const value("{'foo':'bar' }");
@@ -2534,7 +2533,6 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
-/*
 TEST(ParserTest, Utf8Bom) {
   std::string const value("\xef\xbb\xbf{\"foo\":1}");
 
@@ -2558,7 +2556,6 @@ TEST(ParserTest, Utf8Bom) {
   std::string valueOut = "{\"foo\":1}";
   checkDump(s, valueOut);
 }
-*/
 
 TEST(ParserTest, Utf8BomBroken) {
   std::string const value("\xef\xbb");
@@ -2567,7 +2564,6 @@ TEST(ParserTest, Utf8BomBroken) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
-/* 
 TEST(ParserTest, DuplicateAttributesAllowed) {
   std::string const value("{\"foo\":1,\"foo\":2}");
 
@@ -2882,7 +2878,6 @@ TEST(LookupTest, LookupBinaryLongObject) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
-*/
 
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
