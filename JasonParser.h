@@ -150,7 +150,6 @@ namespace triagens {
             _pos += 3;
           }
 
-          JasonLength len = 0;
           JasonLength nr = 0;
           do {
             parseJson();
@@ -263,7 +262,7 @@ namespace triagens {
           return i;
         }
 
-        void parseNumber (JasonLength& len) {
+        void parseNumber () {
           uint64_t integerPart = 0;
           double   fractionalPart;
           uint64_t expPart;
@@ -345,32 +344,39 @@ namespace triagens {
           _b.addDouble(fractionalPart);
         }
 
-        int64_t scanString (JasonLength& len) {
+        void parseString () {
           // When we get here, we have seen a " character and now want to
-          // find the end of the string and count the number of bytes.
-          // len is increased by the amount of bytes needed in the Jason
-          // representation and the return value is the number of bytes
-          // in the actual string.
-          int64_t byteLen = 0;
+          // find the end of the string and parse the string value to its
+          // Jason representation. We assume that the string is short and
+          // insert 8 bytes for the length as soon as we reach 127 bytes
+          // in the Jason representation.
+
+          JasonLength base = _b._pos;
+          _b.reserveSpace(1);
+          _b._start[_b._pos++] = 0x40;   // correct this later
+
+          bool large = false;          // set to true when we reach 128 bytes
           uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
           while (true) {
             int i = getOneOrThrow("scanString: Unfinished string detected.");
             switch (i) {
               case '"':
-                len += byteLen;
-                if (byteLen < 128) {
-                  len += 1;
+                JasonLength len;
+                if (! large) {
+                  len = _b._pos - (base + 1);
+                  _b._start[base] = 0x40 + static_cast<uint8_t>(len);
+                  // String is ready
                 }
                 else {
-                  uint64_t x = static_cast<uint64_t>(byteLen);
-                  len += 1;
-                  while (x != 0) {
-                    len++;
-                    x >>= 8;
+                  len = _b._pos - (base + 9);
+                  _b._start[base] = 0x0c;
+                  for (JasonLength i = 1; i <= 8; i++) {
+                    _b._start[base+i] = len & 0xff;
+                    len >>= 8;
                   }
                 }
-                return byteLen;
+                return;
               case '\\':
                 // Handle cases or throw error
                 i = consume();
@@ -379,14 +385,43 @@ namespace triagens {
                 }
                 switch (i) {
                   case '"':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '"';
+                    highSurrogate = 0;
+                    break;
                   case '\\':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\\';
+                    highSurrogate = 0;
+                    break;
                   case '/':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '/';
+                    highSurrogate = 0;
+                    break;
                   case 'b':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\b';
+                    highSurrogate = 0;
+                    break;
                   case 'f':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\f';
+                    highSurrogate = 0;
+                    break;
                   case 'n':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\n';
+                    highSurrogate = 0;
+                    break;
                   case 'r':
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\r';
+                    highSurrogate = 0;
+                    break;
                   case 't':
-                    byteLen++;
+                    _b.reserveSpace(1);
+                    _b._start[_b._pos++] = '\t';
                     highSurrogate = 0;
                     break;
                   case 'u': {
@@ -410,32 +445,41 @@ namespace triagens {
                       }
                     }
                     if (v < 0x80) {
-                      byteLen++;
+                      _b.reserveSpace(1);
+                      _b._start[_b._pos++] = static_cast<uint8_t>(v);
                       highSurrogate = 0;
                     }
                     else if (v < 0x800) {
-                      byteLen += 2;
+                      _b.reserveSpace(2);
+                      _b._start[_b._pos++] = static_cast<uint8_t>(v & 0xff);
+                      _b._start[_b._pos++] = static_cast<uint8_t>(v >> 8);
                       highSurrogate = 0;
                     }
-                    else if (v >= 0xd800 && v < 0xdc00) {
-                      // High surrogate:
-                      highSurrogate = v;
-                      byteLen += 3;  // We will correct this later with 
-                                     // the low surrogate pair
-                    }
-                    else if (v >= 0xdc00 && v < 0xe000) {
-                      // Low surrogate:
-                      if (highSurrogate == 0) {
-                        // no high surrogate before, so let's forget it
-                        byteLen += 3;
-                      }
-                      else {
-                        byteLen += 1;   // 3 from before, 1 here, total 4
-                        highSurrogate = 0;
-                      }
+                    else if (v >= 0xdc00 && v < 0xe000 &&
+                             highSurrogate != 0) {
+                      // Low surrogate, put the two together:
+                      v = 0x10000 + ((highSurrogate - 0xd800) << 10)
+                                  + v - 0xdc00;
+                      _b._pos -= 3;
+                      _b.reserveSpace(4);
+                      _b._start[_b._pos++] = 0xf0 + (v >> 18);
+                      _b._start[_b._pos++] = 0x80 + ((v >> 12) & 0x3f);
+                      _b._start[_b._pos++] = 0x80 + ((v >> 6) & 0x3f);
+                      _b._start[_b._pos++] = 0x80 + (v & 0x3f);
+                      highSurrogate = 0;
                     }
                     else {
-                      byteLen += 3;
+                      if (v >= 0xd800 && v < 0xdc00) {
+                        // High surrogate:
+                        highSurrogate = v;
+                      }
+                      else {
+                        highSurrogate = 0;
+                      }
+                      _b.reserveSpace(3);
+                      _b._start[_b._pos++] = 0xe0 + (v >> 12);
+                      _b._start[_b._pos++] = 0x80 + ((v >> 6) & 0x3f);
+                      _b._start[_b._pos++] = 0x80 + (v & 0x3f);
                     }
                     break;
                   }
@@ -451,7 +495,8 @@ namespace triagens {
                     throw JasonParserError("scanString: Found control character.");
                   }
                   highSurrogate = 0;
-                  byteLen++;
+                  _b.reserveSpace(1);
+                  _b._start[_b._pos++] = static_cast<uint8_t>(i);
                 }
                 else {
                   // multi-byte UTF-8 sequence!
@@ -476,136 +521,105 @@ namespace triagens {
                   }
 
                   // validate follow up characters
+                  _b.reserveSpace(follow);
                   for (int j = 0; j < follow; ++j) {
                     i = getOneOrThrow("scanString: truncated UTF-8 sequence");
                     if ((i & 0xc0) != 0x80) {
                       throw JasonParserError("scanString: invalid UTF-8 sequence");
                     }
+                    _b._start[_b._pos++] = static_cast<uint8_t>(i);
                   }
-                  byteLen += follow + 1;
                   highSurrogate = 0;
                 }
                 break;
             }
+            if (_b._pos - (base + 1) > 127) {
+              large = true;
+              _b.reserveSpace(8);
+              memmove(_b._start + base + 1, _b._start + base + 9,
+                      _b._pos - (base + 1));
+              _b._pos += 8;
+            }
           }
         }
 
-        void scanArray (std::vector<int64_t>& temp,
-                        int64_t& nr, JasonLength& len) {
-          nr = 0;
+        void parseArray () {
+          _b.addArray();
+
           int i = skipWhiteSpace("scanArray: item or ] expected");
           if (i == ']') {
             // empty array
-            ++_pos;
-            len += 4;
+            consume();   // the closing ']'
+            _b.close();
             return;
           }
 
-          JasonLength startLen = len;
-
           while (true) {
             // parse array element itself
-            scanJson(temp, len);
-            ++nr;
+            _b.reportAdd();
+            parseJson();
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
               // end of array
-              ++_pos;
-              break;
+              consume();
+              _b.close();
+              return;
             }
-            else if (nr > 0) {
-              // skip over ','
-              if (i != ',') {
-                throw JasonParserError("scanArray: , or ] expected");
-              }
-              ++_pos;
+            // skip over ','
+            if (i != ',') {
+              throw JasonParserError("scanArray: , or ] expected");
             }
-          }
-            
-          // If we have more than 255 entries, then it must be a long array.
-          // If we have less than 256, then we need to make sure that all
-          // offsets are 16 bit. len-startLen is the size we need for the
-          // actual objects, and then we need the header: if there are
-          // <= 255 entries, we need 1 byte for the type, 1 byte for the
-          // number of entries, 2 bytes for the offset to the end and
-          // then nr-1 byte pairs for the offsets, thus 4 + 2*(nr-1).
-          // Note that for nr==0 we actually need 4 bytes of header, but
-          // then we are in the small case anyway.
-          if (nr > 255 || len - startLen + 4 + 2 * (nr - 1) > 65535) {
-            // long array
-            len += (nr > 1) ? 8 * (nr + 1) : 16;
-            nr = -nr;
-          }
-          else {
-            // short array
-            len += (nr > 1) ? 2 * (nr + 1) : 4;
+            consume();
           }
         }
                        
-        void scanObject (std::vector<int64_t>& temp,
-                         int64_t& nr, JasonLength& len) {
-          nr = 0;
-          JasonLength startLen = len;
+        void parseObject () {
+          _b.addObject();
+
+          int i = skipWhiteSpace("scanObject: item or } expected");
+          if (i == '}') {
+            // empty array
+            consume();   // the closing ']'
+            _b.close();
+            return;
+          }
 
           while (true) {
-            int i = skipWhiteSpace("scanObject: \" or } expected");
-            if (i == '}' && nr == 0) {
-              // '}' is only valid here if we haven't seen a ',' last time
-              ++_pos;
-              break;
-            }
 
             // always expecting a string attribute name here
             if (i != '"') {
               throw JasonParserError("scanObject: \" or } expected");
             }
             // get past the initial '"'
-            ++_pos;
+            consume();
 
-            temp.emplace_back(scanString(len));
-            skipWhiteSpace("scanObject: : expected");
+            _b.reportAdd();
+            parseString();
+            i = skipWhiteSpace("scanObject: : expected");
             // always expecting the ':' here
-            i = consume();
             if (i != ':') {
               throw JasonParserError("scanObject: : expected");
             }
+            consume();
 
-            scanJson(temp, len);
-            ++nr;
+            parseJson();
             i = skipWhiteSpace("scanObject: , or } expected");
             if (i == '}') {
               // end of object
-              ++_pos;
-              break;
+              consume();
+              _b.close();
+              return;
             }
             if (i != ',') {
               throw JasonParserError("scanObject: , or } expected");
             } 
             // skip over ','
-            ++_pos;
-          }
-            
-          // If we have more than 255 entries, then it must be a long object.
-          // If we have less than 256, then we need to make sure that all
-          // offsets are 16 bit. len-startLen is the size we need for the
-          // actual objects, and then we need the header:
-          // if there are <= 255 entries, we need
-          // 1 byte for the type, 1 byte for the number of entries, 2
-          // bytes for the offset to the end and then nr byte
-          // pairs for the offsets, thus 4 + 2*nr
-          if (nr > 255 || len - startLen + 4 + 2 * nr > 65535) {
-            // long object
-            len += 8 * (nr + 2);
-            nr = -nr;
-          }
-          else {
-            // short object
-            len += 2 * (nr + 2);
+            consume();
+            i = skipWhiteSpace("scanObject: \" or } expected");
           }
         }
                        
-        void scanJson (std::vector<int64_t>& temp,
-                       JasonLength& len) {
+        void parseJson () {
           skipWhiteSpace("expecting item");
           int i = consume();
           if (i < 0) {
@@ -613,40 +627,24 @@ namespace triagens {
           }
           switch (i) {
             case '{': {
-              size_t tempPos = temp.size();
-              temp.push_back(0);      // Here we will put the size       
-              int64_t tempNr; 
-              // pass local variable tempNr to scanObject because passing
-              // temp[tempPos] is unsafe if the vector gets resized. then
-              // &temp[tempPos] may point into the void
-              scanObject(temp, tempNr, len);
-              temp[tempPos] = tempNr;
-                           // this consumes the closing '}' or throws
+              parseObject();  // this consumes the closing '}' or throws
               break;
             }
             case '[': {
-              size_t tempPos = temp.size();
-              temp.push_back(0);      // Here we will put the size
-              int64_t tempNr;
-              // pass local variable tempNr to scanArray because passing
-              // temp[tempPos] is unsafe if the vector gets resized. then
-              // &temp[tempPos] may point into the void
-              scanArray(temp, tempNr, len);  
-              temp[tempPos] = tempNr;
-                           // this consumes the closing ']' or throws
+              parseArray();   // this consumes the closing ']' or throws
               break;
             }
             case 't':
-              scanTrue(len);  // this consumes "rue" or throws
+              parseTrue();    // this consumes "rue" or throws
               break;
             case 'f':
-              scanFalse(len);  // this consumes "alse" or throws
+              parseFalse();   // this consumes "alse" or throws
               break;
             case 'n':
-              scanNull(len);  // this consumes "ull" or throws
+              parseNull();    // this consumes "ull" or throws
               break;
             case '"': {
-              temp.emplace_back(scanString(len));
+              parseString();
               break;
             }
             default: {
@@ -654,307 +652,11 @@ namespace triagens {
               // this includes '-' and '0' to '9'. scanNumber() will
               // throw if the input is non-numeric
               unconsume();
-              scanNumber(len);  // this consumes the number or throws
+              parseNumber();  // this consumes the number or throws
               break;
             }
           }
         }
-
-        void buildNumber () {
-          uint64_t integerPart = 0;
-          double   fractionalPart;
-          uint64_t expPart;
-          // We know that a character is coming, and we know it is '-' or a
-          // digit, otherwise we would not have been called.
-          bool negative = false;
-          int i = consume();
-          if (i == '-') {
-            i = consume();
-            negative = true;
-          }
-          if (i < '0' || i > '9') {
-            throw JasonParserError("value expected");
-          }
-          if (i != '0') {
-            unconsume();
-            integerPart = scanDigits();
-          }
-          i = consume();
-          if (i < 0) {
-            if (negative) {
-              _b.addNegInt(integerPart);
-            }
-            else {
-              _b.addUInt(integerPart);
-            }
-            return;
-          }
-          if (i != '.') {
-            unconsume();
-            if (negative) {
-              _b.addNegInt(integerPart);
-            }
-            else {
-              _b.addUInt(integerPart);
-            }
-            return;
-          }
-          fractionalPart = scanDigitsFractional();
-          if (negative) {
-            fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
-          }
-          else {
-            fractionalPart = static_cast<double>(integerPart) + fractionalPart;
-          }
-          i = consume();
-          if (i < 0) {
-            _b.addDouble(fractionalPart);
-            return;
-          }
-          if (i != 'e' && i != 'E') {
-            unconsume();
-            _b.addDouble(fractionalPart);
-            return;
-          }
-          i = getOneOrThrow("scanNumber: incomplete number");
-          negative = false;
-          if (i == '+' || i == '-') {
-            negative = (i == '-');
-          }
-          else {
-            unconsume();  // The first digit
-          }
-          // We know c is another digit here.
-          expPart = scanDigits();
-          if (negative) {
-            fractionalPart *= pow(10, -static_cast<double>(expPart));
-          }
-          else {
-            fractionalPart *= pow(10, static_cast<double>(expPart));
-          }
-          _b.addDouble(fractionalPart);
-        }
-
-        void buildString (std::vector<int64_t> const& temp, size_t& tempPos) {
-          // When we get here, we have seen a " character and now want to
-          // actually build the string from what we see. All error checking
-          // has already been done. And: temp[tempPos] is the length of the
-          // string that will be created.
-
-          int64_t strLen = temp[tempPos++];
-          uint8_t* target;
-          uint32_t highSurrogate = 0;
-
-          target = _b.addString(static_cast<uint64_t>(strLen));
-
-          while (true) {
-            int i = consume();
-            switch (i) {
-              case '"':
-                return;
-              case '\\':
-                i = consume();
-                switch (i) {
-                  case '"':
-                    *target++ = '"';
-                    highSurrogate = 0;
-                    break;
-                  case '\\':
-                    *target++ = '\\';
-                    highSurrogate = 0;
-                    break;
-                  case '/':
-                    *target++ = '/';
-                    highSurrogate = 0;
-                    break;
-                  case 'b':
-                    *target++ = '\b';
-                    highSurrogate = 0;
-                    break;
-                  case 'f':
-                    *target++ = '\f';
-                    highSurrogate = 0;
-                    break;
-                  case 'n':
-                    *target++ = '\n';
-                    highSurrogate = 0;
-                    break;
-                  case 'r':
-                    *target++ = '\r';
-                    highSurrogate = 0;
-                    break;
-                  case 't':
-                    *target++ = '\t';
-                    highSurrogate = 0;
-                    break;
-                  case 'u': {
-                    uint32_t v = 0;
-                    for (int j = 0; j < 4; j++) {
-                      i = consume();
-                      if (i >= '0' && i <= '9') {
-                        v = (v << 4) + i - '0';
-                      }
-                      else if (i >= 'a' && i <= 'f') {
-                        v = (v << 4) + i - 'a' + 10;
-                      }
-                      else if (i >= 'A' && i <= 'F') {
-                        v = (v << 4) + i - 'A' + 10;
-                      }
-                    }
-                    if (v < 0x80) {
-                      *target++ = v;
-                      highSurrogate = 0;
-                      continue;
-                    }
-                    else if (v < 0x800) {
-                      *target++ = 0xc0 + (v >> 6);
-                      *target++ = 0x80 + (v & 0x3f);
-                      highSurrogate = 0;
-                      continue;
-                    }
-                    else if (v >= 0xdc00 && v < 0xe000 &&
-                             highSurrogate != 0) {
-                      // now put the two together:
-                      v = 0x10000 + ((highSurrogate - 0xd800) << 10)
-                                  + v - 0xdc00;
-                      target -= 3;
-                      *target++ = 0xf0 + (v >> 18);
-                      *target++ = 0x80 + ((v >> 12) & 0x3f);
-                      *target++ = 0x80 + ((v >> 6) & 0x3f);
-                      *target++ = 0x80 + (v & 0x3f);
-                      highSurrogate = 0;
-                      continue;
-                    }
-                    if (v >= 0xd800 && v < 0xdc00) {
-                      // High surrogate:
-                      highSurrogate = v;
-                    }
-                    else {
-                      highSurrogate = 0;
-                    }
-                    *target++ = 0xe0 + (v >> 12);
-                    *target++ = 0x80 + ((v >> 6) & 0x3f);
-                    *target++ = 0x80 + (v & 0x3f);
-                    break;
-                  }
-                  default:
-                    break;
-                }
-                break;
-              default:
-                *target++ = static_cast<uint8_t>(i);
-                highSurrogate = 0;
-                break;
-            }
-          }
-        }
-
-        void buildObject (std::vector<int64_t> const& temp, size_t& tempPos) {
-          // Remembered from previous pass:
-          int64_t nrAttrs = temp[tempPos++];
-          _b.addObject(nrAttrs);
-          int64_t nr = 0;
-          while (true) {
-            int i = skipWhiteSpaceNoCheck();
-            if (i == '}' && nr == 0) {
-              // '}' is only valid here if we haven't seen a ',' last time
-              ++_pos;
-              break;
-            }
-            // always expecting a string attribute name here
-            // get past the initial '"'
-            ++_pos;
-
-            _b.reportAdd();
-            buildString(temp, tempPos);
-            skipWhiteSpaceNoCheck();
-            // always expecting the ':' here
-            i = consume();
-
-            buildJason(temp, tempPos);
-            ++nr;
-            i = skipWhiteSpaceNoCheck();
-            if (i == '}') {
-              // end of object
-              ++_pos;
-              break;
-            }
-            // skip over ','
-            ++_pos;
-          }
-          _b.close();
-        }
-                       
-        void buildArray (std::vector<int64_t> const& temp, size_t& tempPos) {
-          // Remembered from previous pass:
-          int64_t nrEntries = temp[tempPos++];
-          _b.addArray(nrEntries);
-          int64_t nr = 0;
-          while (true) {
-            int i = skipWhiteSpaceNoCheck();
-            if (i == ']') { 
-              // end of array 
-              ++_pos;
-              break;
-            }
-            else if (nr > 0) {
-              // skip over ','
-              if (i != ',') {
-                throw JasonParserError("scanArray: , or ] expected");
-              }
-              ++_pos;
-            }
-
-            _b.reportAdd();
-
-            // parse array element itself
-            buildJason(temp, tempPos);
-            ++nr;
-          }
-          _b.close();
-        }
-                       
-        void buildJason (std::vector<int64_t> const& temp, size_t& tempPos) {
-          skipWhiteSpaceNoCheck();
-          int i = consume();
-          if (i < 0) {
-            return; 
-          }
-          switch (i) {
-            case '{': {
-              buildObject(temp, tempPos);   // this consumes the closing '}'
-              break;
-            }
-            case '[': {
-              buildArray(temp, tempPos);  // this consumes the closing '}'
-              break;
-            }
-            case 't':
-              // consume "rue"
-              _pos += 3;
-              _b.addTrue();
-              break;
-            case 'f':
-              // consume "alse"
-              _pos += 4;
-              _b.addFalse();
-              break;
-            case 'n':
-              // consume "ull"
-              _pos += 3;
-              _b.addNull();
-              break;
-            case '"': {
-              buildString(temp, tempPos);
-              break;
-            default: {
-              unconsume();
-              buildNumber();  // this consumes the number
-              break;
-            }
-          }
-        }
-      }
 
     };
 

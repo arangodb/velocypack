@@ -132,7 +132,7 @@ namespace triagens {
           JasonCheckSize(_pos + len);
           _alloc.reserve(static_cast<size_t>(_pos + len));
 
-          // fill the (potentially) newly allocated are with zeros
+          // fill the (potentially) newly allocated area with zeros
           _alloc.insert(_alloc.end(), _pos + len - _alloc.size(), 0);
           _start = _alloc.data();
           _size = _alloc.size();
