@@ -17,11 +17,15 @@
 * unify interface of JasonBuffer with interface of std::string (JS)
   --> done
 
-* change namespace from triagens::basics to arangodb::jason
+* beat rapidjson!
 
-* Handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
+* change namespace from triagens::basics to arangodb::jason (JS)
 
-* Finish implementation of JasonSlice for all types (JS)
+* handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
+
+* add tests with numeric values +inf, -inf, NaN, INT64_MAX, INT64_MIN etc. (JS)
+
+* finish implementation of JasonSlice for all types (JS)
 
 * handle unsupported JSON types in JasonDumper (JS)
 
@@ -40,3 +44,5 @@
 * optional: support accessing arbitrary objects via JSONPointer etc.
 
 * optional: support for other input encodings (e.g. UTF-16)
+
+* optional: add SSE4 optimization for whitespace parsing (borrow from rapidjson)
