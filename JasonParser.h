@@ -7,8 +7,6 @@
 #include "Jason.h"
 #include "JasonBuilder.h"
 
-#define FAST 1
-
 namespace triagens {
   namespace basics {
 
@@ -142,13 +140,6 @@ namespace triagens {
 
         JasonLength parseInternal (bool multi) {
           _b.options = options; // copy over options
-          std::vector<int64_t> temp;
-          if (_size > 1024) {
-            temp.reserve(_size / 32);
-          }
-          else {
-            temp.reserve(8);
-          }
 
           // skip over optional BOM
           if (_size >= 3 &&
@@ -161,11 +152,9 @@ namespace triagens {
 
           JasonLength len = 0;
           JasonLength nr = 0;
-          size_t savePos;
           do {
-            savePos = _pos;
-            temp.clear();
-            scanJson(temp, len);
+            parseJson();
+            nr++;
             while (_pos < _size && 
                    isWhiteSpace(_start[_pos])) {
               ++_pos;
@@ -174,21 +163,12 @@ namespace triagens {
               consume();  // to get error reporting right
               throw JasonParserError("expecting EOF");
             }
-            _pos = savePos;
-            _b.reserve(len);
-            size_t tempPos = 0;
-            buildJason(temp, tempPos);
-            _b.reserve(len);
-            while (_pos < _size && 
-                   isWhiteSpace(_start[_pos])) {
-              ++_pos;
-            }
-            nr++;
           } 
           while (multi && _pos < _size);
           return nr;
         }
 
+        // FIXME: implement a white space table?
         inline bool isWhiteSpace (uint8_t i) const {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
@@ -216,29 +196,29 @@ namespace triagens {
           return -1;
         }
 
-        void scanTrue (JasonLength& len) {
+        void parseTrue () {
           // Called, when main mode has just seen a 't', need to see "rue" next
           if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
             throw JasonParserError("true expected");
           }
-          len++;
+          _b.addTrue();
         }
 
-        void scanFalse (JasonLength& len) {
+        void parseFalse () {
           // Called, when main mode has just seen a 'f', need to see "alse" next
           if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
               consume() != 'e') {
             throw JasonParserError("false expected");
           }
-          len++;
+          _b.addFalse();
         }
 
-        void scanNull (JasonLength& len) {
+        void parseNull () {
           // Called, when main mode has just seen a 'n', need to see "ull" next
           if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
             throw JasonParserError("null expected");
           }
-          len++;
+          _b.addNull();
         }
 
         uint64_t scanDigits () {
@@ -283,59 +263,86 @@ namespace triagens {
           return i;
         }
 
-        void scanNumber (JasonLength& len) {
+        void parseNumber (JasonLength& len) {
+          uint64_t integerPart = 0;
+          double   fractionalPart;
+          uint64_t expPart;
+          bool negative = false;
           int i = consume();
           // We know that a character is coming, and it's a number if it
           // starts with '-' or a digit. otherwise it's invalid
           if (i == '-') {
             i = getOneOrThrow("scanNumber: incomplete number");
+            negative = true;
           }
           if (i < '0' || i > '9') {
             throw JasonParserError("value expected");
           }
           
-          uint64_t value = 0;
           if (i != '0') {
-            if (i < '1' || i > '9') {
-              throw JasonParserError("scanNumber: incomplete number");
-            }
             unconsume();
-            value = scanDigits();
+            integerPart = scanDigits();
           }
           i = consume();
           if (i < 0) {
-            len += 1 + _b.uintLength(value);
+            if (negative) {
+              _b.addNegInt(integerPart);
+            }
+            else {
+              _b.addUInt(integerPart);
+            }
             return;
           }
           if (i != '.') {
             unconsume();
-            len += 1 + _b.uintLength(value);
+            if (negative) {
+              _b.addNegInt(integerPart);
+            }
+            else {
+              _b.addUInt(integerPart);
+            }
             return;
           }
           i = getOneOrThrow("scanNumber: incomplete number");
           if (i < '0' || i > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
-          len += 1 + sizeof(double);
-
           unconsume();
-          scanDigits();
+          fractionalPart = scanDigitsFractional();
+          if (negative) {
+            fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
+          }
+          else {
+            fractionalPart = static_cast<double>(integerPart) + fractionalPart;
+          }
           i = consume();
           if (i < 0) {
+            _b.addDouble(fractionalPart);
             return;
           }
           if (i != 'e' && i != 'E') {
             unconsume();
+            _b.addDouble(fractionalPart);
             return;
           }
           i = getOneOrThrow("scanNumber: incomplete number");
+          negative = false;
           if (i == '+' || i == '-') {
+            negative = (i == '-');
             i = getOneOrThrow("scanNumber: incomplete number");
           }
           if (i < '0' || i > '9') {
             throw JasonParserError("scanNumber: incomplete number");
           }
-          scanDigits();
+          unconsume();
+          expPart = scanDigits();
+          if (negative) {
+            fractionalPart *= pow(10, -static_cast<double>(expPart));
+          }
+          else {
+            fractionalPart *= pow(10, static_cast<double>(expPart));
+          }
+          _b.addDouble(fractionalPart);
         }
 
         int64_t scanString (JasonLength& len) {
@@ -675,36 +682,20 @@ namespace triagens {
           i = consume();
           if (i < 0) {
             if (negative) {
-#ifdef FAST
               _b.addNegInt(integerPart);
-#else
-              _b.add(Jason(-static_cast<int64_t>(integerPart)));
-#endif
             }
             else {
-#ifdef FAST
               _b.addUInt(integerPart);
-#else
-              _b.add(Jason(integerPart));
-#endif
             }
             return;
           }
           if (i != '.') {
             unconsume();
             if (negative) {
-#ifdef FAST
               _b.addNegInt(integerPart);
-#else
-              _b.add(Jason(-static_cast<int64_t>(integerPart)));
-#endif
             }
             else {
-#ifdef FAST
               _b.addUInt(integerPart);
-#else
-              _b.add(Jason(integerPart));
-#endif
             }
             return;
           }
@@ -717,20 +708,12 @@ namespace triagens {
           }
           i = consume();
           if (i < 0) {
-#ifdef FAST
             _b.addDouble(fractionalPart);
-#else
-            _b.add(Jason(fractionalPart));
-#endif
             return;
           }
           if (i != 'e' && i != 'E') {
             unconsume();
-#ifdef FAST
             _b.addDouble(fractionalPart);
-#else
-            _b.add(Jason(fractionalPart));
-#endif
             return;
           }
           i = getOneOrThrow("scanNumber: incomplete number");
@@ -749,11 +732,7 @@ namespace triagens {
           else {
             fractionalPart *= pow(10, static_cast<double>(expPart));
           }
-#ifdef FAST
           _b.addDouble(fractionalPart);
-#else
-          _b.add(Jason(fractionalPart));
-#endif
         }
 
         void buildString (std::vector<int64_t> const& temp, size_t& tempPos) {
@@ -766,13 +745,7 @@ namespace triagens {
           uint8_t* target;
           uint32_t highSurrogate = 0;
 
-#ifdef FAST
           target = _b.addString(static_cast<uint64_t>(strLen));
-#else
-          target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
-                                    static_cast<uint64_t>(strLen),
-                                    JasonType::String));
-#endif
 
           while (true) {
             int i = consume();
@@ -879,17 +852,7 @@ namespace triagens {
         void buildObject (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrAttrs = temp[tempPos++];
-#ifdef FAST
           _b.addObject(nrAttrs);
-#else
-          if (nrAttrs < 0) {
-            // Long Object:
-            _b.add(Jason(-nrAttrs, JasonType::Object));
-          }
-          else {
-            _b.add(Jason(nrAttrs, JasonType::Object));
-          }
-#endif
           int64_t nr = 0;
           while (true) {
             int i = skipWhiteSpaceNoCheck();
@@ -902,9 +865,7 @@ namespace triagens {
             // get past the initial '"'
             ++_pos;
 
-#ifdef FAST
             _b.reportAdd();
-#endif
             buildString(temp, tempPos);
             skipWhiteSpaceNoCheck();
             // always expecting the ':' here
@@ -927,17 +888,7 @@ namespace triagens {
         void buildArray (std::vector<int64_t> const& temp, size_t& tempPos) {
           // Remembered from previous pass:
           int64_t nrEntries = temp[tempPos++];
-#ifdef FAST
           _b.addArray(nrEntries);
-#else
-          if (nrEntries < 0) {
-            // Long Array:
-            _b.add(Jason(-nrEntries, JasonType::Array));
-          }
-          else {
-            _b.add(Jason(nrEntries, JasonType::Array));
-          }
-#endif
           int64_t nr = 0;
           while (true) {
             int i = skipWhiteSpaceNoCheck();
@@ -954,9 +905,7 @@ namespace triagens {
               ++_pos;
             }
 
-#ifdef FAST
             _b.reportAdd();
-#endif
 
             // parse array element itself
             buildJason(temp, tempPos);
@@ -983,29 +932,17 @@ namespace triagens {
             case 't':
               // consume "rue"
               _pos += 3;
-#ifdef FAST
               _b.addTrue();
-#else
-              _b.add(Jason(true));
-#endif
               break;
             case 'f':
               // consume "alse"
               _pos += 4;
-#ifdef FAST
               _b.addFalse();
-#else
-              _b.add(Jason(false));
-#endif
               break;
             case 'n':
               // consume "ull"
               _pos += 3;
-#ifdef FAST
               _b.addNull();
-#else
-              _b.add(Jason());
-#endif
               break;
             case '"': {
               buildString(temp, tempPos);
