@@ -82,12 +82,12 @@ namespace triagens {
         
         // check if slice is an Array object
         bool isArray () const {
-          return isType(JasonType::Array) || isType(JasonType::ArrayLong);
+          return isType(JasonType::Array);
         }
 
         // check if slice is an Object object
         bool isObject () const {
-          return isType(JasonType::Object) || isType(JasonType::ObjectLong);
+          return isType(JasonType::Object);
         }
 
         // check if slice is an External object
@@ -127,7 +127,7 @@ namespace triagens {
 
         // check if slice is a String object
         bool isString () const {
-          return isType(JasonType::String) || isType(JasonType::StringLong);
+          return isType(JasonType::String);
         }
 
         // check if slice is a Binary object
@@ -162,29 +162,33 @@ namespace triagens {
         }
 
         JasonSlice at (JasonLength index) const {
+          if (! isType(JasonType::Array)) {
+            throw JasonTypeError("unexpected type. expecting array");
+          }
+
           JasonLength offsetSize, sizeSize;
-          if (isType(JasonType::Array)) {
+          if (head() == 0x05) {
             // short array
             offsetSize = 2;
             sizeSize = 1;
           }
-          else if (isType(JasonType::ArrayLong)) {
+          else {
             // long array
             offsetSize = 8;
             sizeSize = 8;
           }
-          else {
-            throw JasonTypeError("unexpected type. expecting array");
-          }
 
-          uint8_t b = _start[1];
           JasonLength end;
-          if (b != 0x00) {
+          uint8_t b = _start[1];
+          if (b == 0x02) {
+            throw JasonTypeError("index out of bounds");
+          }
+          else if (b == 0x00) {
+            end = readInteger<JasonLength>(_start + 2, 8);
+          }
+          else {
             // 1 byte length: already got the length
             end = static_cast<JasonLength>(b);
-          }
-          else { 
-            end = readInteger<JasonLength>(_start + 2, 8);
           }
           JasonLength const n = readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
           if (index >= n) {
@@ -192,10 +196,10 @@ namespace triagens {
           }
           if (index == 0) {
             // special case for first array element
-            if (b != 0x00) {
-              return JasonSlice(_start + 1 + 1);
+            if (b == 0x00) {
+              return JasonSlice(_start + 1 + 1 + 8);
             }
-            return JasonSlice(_start + 1 + 1 + 8);
+            return JasonSlice(_start + 1 + 1);
           }
           assert(n > 0);
           JasonLength const indexBase = end - sizeSize - (n - 1) * offsetSize;
@@ -209,68 +213,63 @@ namespace triagens {
 
         // return the number of members for an Array or Object object
         JasonLength length () const {
-          switch (type()) {
-            case JasonType::Array:
-            case JasonType::Object: {
-              uint8_t b = _start[1];
-              JasonLength end;
-              if (b != 0x00) {
-                // 1 byte length: already got the length
-                end = static_cast<JasonLength>(b);
-                if (b == 0x02) {  // Special case
-                  return 0;
-                }
-              }
-              else { 
-                end = readInteger<JasonLength>(_start + 2, 8);
-              }
-              return readInteger<JasonLength>(_start + end - 1, 1);
-            }
-            case JasonType::ArrayLong:
-            case JasonType::ObjectLong: {
-              uint8_t b = _start[1];
-              JasonLength end;
-              if (b != 0x00) {
-                // 1 byte length: already got the length
-                end = static_cast<JasonLength>(b);
-                if (b == 0x02) {
-                  return 0;
-                }
-              }
-              else { 
-                end = readInteger<JasonLength>(_start + 2, 8);
-              }
-              return readInteger<JasonLength>(_start + end - 8, 8);
-            }
-            default:
-              throw JasonTypeError("unexpected type. expecting array or object");
+          if (type() != JasonType::Array && type() != JasonType::Object) {
+            throw JasonTypeError("unexpected type. expecting array or object");
           }
+
+          uint8_t b = _start[1];
+          if (b == 0x02) {
+            // special case
+            return 0;
+          }
+          JasonLength sizeSize;
+          auto h = head();
+          if (h == 0x05 || h == 0x07) {
+            // short array or object
+            sizeSize = 1;
+          }
+          else {
+            // long array or object
+            sizeSize = 8;
+          }
+          JasonLength end;
+          if (b == 0x00) {
+            end = readInteger<JasonLength>(_start + 2, 8);
+          }
+          else {
+            end = static_cast<JasonLength>(b);
+          }
+          return readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
         }
 
         JasonSlice keyAt (JasonLength index) const {
+          if (! isType(JasonType::Object)) {
+            throw JasonTypeError("unexpected type. expecting object");
+          }
           JasonLength offsetSize, sizeSize;
-          if (isType(JasonType::Object)) {
+          if (head() == 0x07) {
             // short object
             offsetSize = 2;
             sizeSize = 1;
           }
-          else if (isType(JasonType::ObjectLong)) {
+          else {
             // long object
             offsetSize = 8;
             sizeSize = 8;
           }
-          else {
-            throw JasonTypeError("unexpected type. expecting object");
-          }
 
           uint8_t b = _start[1];
           JasonLength end;
-          if (b != 0x00) {
+          if (b == 0x02) {
+            // special case
+            throw JasonTypeError("index out of bounds");
+          }
+          else if (b == 0x00) {
+            end = readInteger<JasonLength>(_start + 2, 8);
+          }
+          else {
             // 1 byte length: already got the length
             end = static_cast<JasonLength>(b);
-          }
-          else { 
-            end = readInteger<JasonLength>(_start + 2, 8);
           }
           JasonLength const n = readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
           if (index >= n) {
@@ -278,10 +277,10 @@ namespace triagens {
           }
           if (index == 0) {
             // special case for first key
-            if (b != 0x00) {
-              return JasonSlice(_start + 1 + 1);
+            if (b == 0x00) {
+              return JasonSlice(_start + 1 + 1 + 8);
             }
-            return JasonSlice(_start + 1 + 1 + 8);
+            return JasonSlice(_start + 1 + 1);
           }
           assert(n > 0);
           JasonLength const indexBase = end - sizeSize - 2 * (n - 1) * offsetSize;
@@ -320,32 +319,37 @@ namespace triagens {
         // look for the specified attribute inside an object
         // returns a JasonSlice(Jason::None) if not found
         JasonSlice get (std::string const& attribute) const {
+          if (! isType(JasonType::Object)) {
+            throw JasonTypeError("unexpected type. expecting object");
+          }
+
           JasonLength offsetSize, sizeSize;
-          if (isType(JasonType::Object)) {
+          if (head() == 0x07) {
             // short object
             offsetSize = 2;
             sizeSize = 1;
           }
-          else if (isType(JasonType::ObjectLong)) {
+          else {
             // long object
             offsetSize = 8;
             sizeSize = 8;
           }
-          else {
-            throw JasonTypeError("unexpected type. expecting object");
-          }
 
-          uint8_t b = _start[1];
           JasonLength end;
           JasonLength firstOffset;
-          if (b != 0x00) {
+          uint8_t b = _start[1];
+          if (b == 0x02) {
+            // special case
+            return JasonSlice();
+          }
+          else if (b == 0x00) {
+            end = readInteger<JasonLength>(_start + 2, 8);
+            firstOffset = 1 + 1 + 8; 
+          }
+          else {
             // 1 byte length: already got the length
             end = static_cast<JasonLength>(b);
             firstOffset = 1 + 1; 
-          }
-          else { 
-            end = readInteger<JasonLength>(_start + 2, 8);
-            firstOffset = 1 + 1 + 8; 
           }
           JasonLength const n = readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
           JasonLength const indexBase = end - sizeSize - 2 * (n - 1) * offsetSize;
@@ -401,7 +405,7 @@ namespace triagens {
           return readInteger<uint64_t>(_start + 1, head() - 0x0f);
         }
 
-        // return the value for a String or StringLong object
+        // return the value for a String object
         char const* getString (JasonLength& length) const {
           uint8_t h = head();
           if (h >= 0x40 && h <= 0xbf) {

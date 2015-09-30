@@ -856,11 +856,10 @@ namespace triagens {
               }
               break;
             }
-            case JasonType::String:
-            case JasonType::StringLong: {
+            case JasonType::String: {
               if (ctype != Jason::CType::String &&
                   ctype != Jason::CType::CharPtr) {
-                throw JasonBuilderError("Must give a string or char const* for JasonType::String or JasonType::StringLong.");
+                throw JasonBuilderError("Must give a string or char const* for JasonType::String.");
               }
               std::string const* s;
               std::string value;
@@ -888,13 +887,11 @@ namespace triagens {
               }
               break;
             }
-            case JasonType::Array:
-            case JasonType::ArrayLong: {
+            case JasonType::Array: {
               addArray();
               break;
             }
-            case JasonType::Object:
-            case JasonType::ObjectLong: {
+            case JasonType::Object: {
               addObject();
               break;
             }
@@ -946,8 +943,7 @@ namespace triagens {
             _pos += v;
             return nullptr;  // unused here
           }
-          else if (pair.jasonType() == JasonType::String ||
-                   pair.jasonType() == JasonType::StringLong) {
+          else if (pair.jasonType() == JasonType::String) {
             uint64_t size = pair.getSize();
             if (size > 127) { 
               // long string
@@ -969,7 +965,7 @@ namespace triagens {
             return _start + _pos - size;
           }
           else {
-            throw JasonBuilderError("Only JasonType::ID, JasonType::Binary, JasonType::String and JasonType::StringLong are valid for JasonPair argument.");
+            throw JasonBuilderError("Only JasonType::ID, JasonType::Binary and JasonType::String are valid for JasonPair argument.");
           }
         }
 

@@ -40,8 +40,7 @@ void JasonDumper::internalDump (JasonSlice slice) {
       _buffer->append(&temp[0], static_cast<JasonLength>(len));
       break; 
     }
-    case JasonType::Array:
-    case JasonType::ArrayLong: {
+    case JasonType::Array: {
       JasonLength const n = slice.length();
       _buffer->append('[');
       for (JasonLength i = 0; i < n; ++i) {
@@ -53,8 +52,7 @@ void JasonDumper::internalDump (JasonSlice slice) {
       _buffer->append(']');
       break;
     }
-    case JasonType::Object:
-    case JasonType::ObjectLong: {
+    case JasonType::Object: {
       JasonLength const n = slice.length();
       _buffer->append('{');
       for (JasonLength i = 0; i < n; ++i) {
@@ -89,8 +87,7 @@ void JasonDumper::internalDump (JasonSlice slice) {
     case JasonType::SmallInt:
       dumpInteger(slice);
       break;
-    case JasonType::String: 
-    case JasonType::StringLong: {
+    case JasonType::String: {
       JasonLength len;
       char const* p = slice.getString(len);
       _buffer->append('"');

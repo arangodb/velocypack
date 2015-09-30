@@ -113,11 +113,6 @@ namespace triagens {
         }
         explicit Jason (std::string const& s, JasonType t = JasonType::String)
           : _jasonType(t), _cType(CType::String) {
-          if (_jasonType == JasonType::String &&
-              static_cast<JasonLength>(s.size()) > Jason::MaxLengthString) {
-            // make it a long string automatically if size too long
-            _jasonType = JasonType::StringLong;
-          }
           _value.s = &s;
         }
 
@@ -130,7 +125,7 @@ namespace triagens {
         }
 
         bool isString () const {
-          return (_jasonType == JasonType::String || _jasonType == JasonType::StringLong); 
+          return _jasonType == JasonType::String;
         }
 
         bool getBool () const {
@@ -168,9 +163,6 @@ namespace triagens {
           return _value.c;
         }
 
-      public:   
-
-        static JasonLength const MaxLengthString;
     };
 
     class JasonPair {
@@ -204,7 +196,7 @@ namespace triagens {
         }
 
         bool isString () const {
-          return (_type == JasonType::String || _type == JasonType::StringLong); 
+          return _type == JasonType::String;
         }
     };
 

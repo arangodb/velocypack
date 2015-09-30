@@ -36,9 +36,7 @@ JasonLength JasonSlice::byteSize () const {
     }
 
     case JasonType::Array:
-    case JasonType::ArrayLong:
-    case JasonType::Object:
-    case JasonType::ObjectLong: {
+    case JasonType::Object: {
       uint8_t b = _start[1];
       if (b != 0x00) {
         // 1 byte length: already got the length
@@ -73,11 +71,11 @@ JasonLength JasonSlice::byteSize () const {
     }
 
     case JasonType::String: {
+      auto h = head();
+      if (h == 0x0c) {
+        return static_cast<JasonLength>(1 + 8 + readInteger<JasonLength>(_start + 1, 8));
+      }
       return static_cast<JasonLength>(1 + (head() - 0x40));
-    }
-
-    case JasonType::StringLong: {
-      return static_cast<JasonLength>(1 + 8 + readInteger<JasonLength>(_start + 1, 8));
     }
 
     case JasonType::Binary: {
@@ -117,13 +115,13 @@ void JasonSlice::Initialize () {
   TypeTable[0x03] = JasonType::Bool;        // true
   TypeTable[0x04] = JasonType::Double;      // IEEE754 double
   TypeTable[0x05] = JasonType::Array;       // short array
-  TypeTable[0x06] = JasonType::ArrayLong;   // long array
+  TypeTable[0x06] = JasonType::Array;       // long array
   TypeTable[0x07] = JasonType::Object;      // short object
-  TypeTable[0x08] = JasonType::ObjectLong;  // long object
+  TypeTable[0x08] = JasonType::Object;      // long object
   TypeTable[0x09] = JasonType::External;    // external
   TypeTable[0x0a] = JasonType::ID;          // id type 
   TypeTable[0x0b] = JasonType::ArangoDB_id; // ArangoDB _id
-  TypeTable[0x0c] = JasonType::StringLong;  // long UTF-8 string
+  TypeTable[0x0c] = JasonType::String;      // long UTF-8 string
  
   for (int i = 0x10; i <= 0x17; ++i) { 
     TypeTable[i] = JasonType::UTCDate;      // UTC date

@@ -122,7 +122,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Array:
-    case JasonType::ArrayLong:
       EXPECT_FALSE(s.isNull());
       EXPECT_FALSE(s.isBool());
       EXPECT_FALSE(s.isDouble());
@@ -141,7 +140,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::Object:
-    case JasonType::ObjectLong:
       EXPECT_FALSE(s.isNull());
       EXPECT_FALSE(s.isBool());
       EXPECT_FALSE(s.isDouble());
@@ -286,7 +284,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       EXPECT_FALSE(s.isBCD());
       break;
     case JasonType::String:
-    case JasonType::StringLong:
       EXPECT_FALSE(s.isNull());
       EXPECT_FALSE(s.isBool());
       EXPECT_FALSE(s.isDouble());
@@ -951,7 +948,7 @@ TEST(SliceTest, StringLong1) {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  EXPECT_EQ(JasonType::StringLong, slice.type());
+  EXPECT_EQ(JasonType::String, slice.type());
   EXPECT_TRUE(slice.isString());
   EXPECT_EQ(15ULL, slice.byteSize());
   JasonLength len;

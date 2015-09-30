@@ -525,12 +525,12 @@ namespace triagens {
           // Note that for nr==0 we actually need 4 bytes of header, but
           // then we are in the small case anyway.
           if (nr > 255 || len - startLen + 4 + 2 * (nr - 1) > 65535) {
-            // ArrayLong
+            // long array
             len += (nr > 1) ? 8 * (nr + 1) : 16;
             nr = -nr;
           }
           else {
-            // Array
+            // short array
             len += (nr > 1) ? 2 * (nr + 1) : 4;
           }
         }
@@ -587,12 +587,12 @@ namespace triagens {
           // bytes for the offset to the end and then nr byte
           // pairs for the offsets, thus 4 + 2*nr
           if (nr > 255 || len - startLen + 4 + 2 * nr > 65535) {
-            // ObjectLong
+            // long object
             len += 8 * (nr + 2);
             nr = -nr;
           }
           else {
-            // Object
+            // short object
             len += 2 * (nr + 2);
           }
         }
@@ -769,16 +769,9 @@ namespace triagens {
 #ifdef FAST
           target = _b.addString(static_cast<uint64_t>(strLen));
 #else
-          if (strLen > 127) {
-            target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
-                                      static_cast<uint64_t>(strLen),
-                                      JasonType::StringLong));
-          }
-          else {
-            target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr),
-                                      static_cast<uint64_t>(strLen),
-                                      JasonType::String));
-          }
+          target = _b.add(JasonPair(static_cast<uint8_t const*>(nullptr), 
+                                    static_cast<uint64_t>(strLen),
+                                    JasonType::String));
 #endif
 
           while (true) {
@@ -891,7 +884,7 @@ namespace triagens {
 #else
           if (nrAttrs < 0) {
             // Long Object:
-            _b.add(Jason(-nrAttrs, JasonType::ObjectLong));
+            _b.add(Jason(-nrAttrs, JasonType::Object));
           }
           else {
             _b.add(Jason(nrAttrs, JasonType::Object));
@@ -939,7 +932,7 @@ namespace triagens {
 #else
           if (nrEntries < 0) {
             // Long Array:
-            _b.add(Jason(-nrEntries, JasonType::ArrayLong));
+            _b.add(Jason(-nrEntries, JasonType::Array));
           }
           else {
             _b.add(Jason(nrEntries, JasonType::Array));
