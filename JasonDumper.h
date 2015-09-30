@@ -18,7 +18,7 @@ namespace triagens {
     };
 
     // Dumps Jason into a JSON output string
-    template<typename T>
+    template<typename T, bool PrettyPrint = false>
     class JasonDumper {
 
         struct JasonDumperError : std::exception {
@@ -37,12 +37,8 @@ namespace triagens {
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (JasonSlice slice, T* buffer, UnsupportedTypeStrategy strategy) 
-          : _slice(slice), _buffer(buffer), _strategy(strategy) {
-        }
-        
         JasonDumper (JasonSlice slice, T& buffer, UnsupportedTypeStrategy strategy) 
-          : _slice(slice), _buffer(&buffer), _strategy(strategy) {
+          : _slice(slice), _buffer(&buffer), _strategy(strategy), _indentation(0) {
         }
 
         ~JasonDumper () {
@@ -53,6 +49,14 @@ namespace triagens {
         }
 
       private:
+
+        void indent () {
+          size_t n = _indentation * 2;
+          _buffer->reserve(n);
+          for (size_t i = 0; i < n; ++i) {
+            _buffer->append("  ", 2);
+          }
+        }
 
         void internalDump (JasonSlice slice) {
           switch (slice.type()) {
@@ -81,28 +85,66 @@ namespace triagens {
             }
             case JasonType::Array: {
               JasonLength const n = slice.length();
-              _buffer->push_back('[');
-              for (JasonLength i = 0; i < n; ++i) {
-                if (i > 0) {
-                  _buffer->push_back(',');
+              if (PrettyPrint) {
+                _buffer->push_back('[');
+                _buffer->push_back('\n');
+                ++_indentation;
+                for (JasonLength i = 0; i < n; ++i) {
+                  indent();
+                  internalDump(slice.at(i));
+                  if (i + 1 !=  n) {
+                    _buffer->push_back(',');
+                  }
+                  _buffer->push_back('\n');
                 }
-                internalDump(slice.at(i));
+                --_indentation;
+                indent();
+                _buffer->push_back(']');
               }
-              _buffer->push_back(']');
+              else {
+                _buffer->push_back('[');
+                for (JasonLength i = 0; i < n; ++i) {
+                  if (i > 0) {
+                    _buffer->push_back(',');
+                  }
+                  internalDump(slice.at(i));
+                }
+                _buffer->push_back(']');
+              }
               break;
             }
             case JasonType::Object: {
               JasonLength const n = slice.length();
-              _buffer->push_back('{');
-              for (JasonLength i = 0; i < n; ++i) {
-                if (i > 0) {
-                  _buffer->push_back(',');
+              if (PrettyPrint) {
+                _buffer->push_back('{');
+                _buffer->push_back('\n');
+                ++_indentation;
+                for (JasonLength i = 0; i < n; ++i) {
+                  indent();
+                  internalDump(slice.keyAt(i));
+                  _buffer->append(" : ", 3);
+                  internalDump(slice.valueAt(i));
+                  if (i + 1 !=  n) {
+                    _buffer->push_back(',');
+                  }
+                  _buffer->push_back('\n');
                 }
-                internalDump(slice.keyAt(i));
-                _buffer->push_back(':');
-                internalDump(slice.valueAt(i));
+                --_indentation;
+                indent();
+                _buffer->push_back('}');
               }
-              _buffer->push_back('}');
+              else {
+                _buffer->push_back('{');
+                for (JasonLength i = 0; i < n; ++i) {
+                  if (i > 0) {
+                    _buffer->push_back(',');
+                  }
+                  internalDump(slice.keyAt(i));
+                  _buffer->push_back(':');
+                  internalDump(slice.valueAt(i));
+                }
+                _buffer->push_back('}');
+              }
               break;
             }
             case JasonType::External: {
@@ -359,8 +401,11 @@ namespace triagens {
 
         UnsupportedTypeStrategy _strategy;
 
+        int _indentation;
+
     };
 
+    // some alias types for easier usage
     typedef JasonDumper<JasonBuffer> JasonBufferDumper;
     typedef JasonDumper<std::string> JasonStringDumper;
 
