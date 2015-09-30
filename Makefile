@@ -20,17 +20,14 @@ JasonBuffer.o: Makefile JasonBuffer.h JasonBuffer.cpp Jason.h
 JasonBuilder.o: Makefile JasonBuilder.h JasonBuilder.cpp Jason.h
 	$(CC) $(CFLAGS) JasonBuilder.cpp -c -o JasonBuilder.o
 
-JasonParser.o: Makefile JasonBuilder.o JasonParser.h JasonParser.cpp Jason.h
-	$(CC) $(CFLAGS) JasonParser.cpp -c -o JasonParser.o
-
 JasonSlice.o: Makefile JasonSlice.h JasonSlice.cpp Jason.h
 	$(CC) $(CFLAGS) JasonSlice.cpp -c -o JasonSlice.o
 
-test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o JasonType.h
-	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o googletest/googletest/libgtest.a -pthread -o test
+test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.o JasonBuilder.o JasonParser.h JasonSlice.o JasonType.h
+	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuffer.o JasonBuilder.o JasonSlice.o googletest/googletest/libgtest.a -pthread -o test
 
-bench: Makefile bench.cpp Jason.h JasonBuilder.o JasonParser.o JasonSlice.o JasonType.h
-	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o JasonParser.o JasonSlice.o -pthread -o bench
+bench: Makefile bench.cpp Jason.h JasonBuilder.o JasonParser.h JasonSlice.o JasonType.h
+	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o JasonSlice.o -pthread -o bench
 
 clean:	
 	rm -rf *.o test bench
