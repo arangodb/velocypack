@@ -14,17 +14,14 @@ googletest:
 fpconv.o: Makefile fpconv.h
 	$(CC) $(CFLAGS) fpconv.cpp -c -o fpconv.o
 
-JasonBuffer.o: Makefile JasonBuffer.h JasonBuffer.cpp Jason.h
-	$(CC) $(CFLAGS) JasonBuffer.cpp -c -o JasonBuffer.o
-
 JasonBuilder.o: Makefile JasonBuilder.h JasonBuilder.cpp Jason.h
 	$(CC) $(CFLAGS) JasonBuilder.cpp -c -o JasonBuilder.o
 
 JasonSlice.o: Makefile JasonSlice.h JasonSlice.cpp Jason.h
 	$(CC) $(CFLAGS) JasonSlice.cpp -c -o JasonSlice.o
 
-test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.o JasonBuilder.o JasonParser.h JasonSlice.o JasonType.h
-	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuffer.o JasonBuilder.o JasonSlice.o googletest/googletest/libgtest.a -pthread -o test
+test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.h JasonBuilder.o JasonParser.h JasonSlice.o JasonType.h
+	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuilder.o JasonSlice.o googletest/googletest/libgtest.a -pthread -o test
 
 bench: Makefile bench.cpp Jason.h JasonBuilder.o JasonParser.h JasonSlice.o JasonType.h
 	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o JasonSlice.o -pthread -o bench
