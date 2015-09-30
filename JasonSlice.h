@@ -621,6 +621,8 @@ namespace triagens {
 
     };
 
+    static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
+
   }  // namespace triagens::basics
 }  // namespace triagens
 

@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include <cstdint>
 
 #define npowers     87
 #define steppowers  8
