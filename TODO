@@ -19,6 +19,8 @@
 
 * beat rapidjson!
 
+* add tests for files in jsonSample/ (JS)
+
 * change namespace from triagens::basics to arangodb::jason (JS)
 
 * handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
