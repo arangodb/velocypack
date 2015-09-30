@@ -41,6 +41,19 @@ namespace triagens {
         }
     };
 
+#ifndef JASON_64BIT
+    // check if the length is beyond the size of a SIZE_MAX on this platform
+    static inline void JasonCheckSize (JasonLength length) {
+      if (length > static_cast<JasonLength>(SIZE_MAX)) {
+        throw JasonException("JasonLength out of bounds.");
+      }  
+    }
+#else
+    static inline void JasonCheckSize (JasonLength) { 
+      // do nothing on a 64 bit platform 
+    }
+#endif
+
     class Jason {
       // Convenience class for more compact notation
 

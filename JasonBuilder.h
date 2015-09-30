@@ -4,7 +4,6 @@
 #include "Jason.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
-#include "JasonUtils.h"
 
 #include <vector>
 #include <cstring>
@@ -130,7 +129,7 @@ namespace triagens {
           if (_externalMem) {
             throw JasonBuilderError("Cannot allocate more memory.");
           }
-          JasonUtils::CheckSize(_pos + len);
+          JasonCheckSize(_pos + len);
           _alloc.reserve(static_cast<size_t>(_pos + len));
 
           // fill the (potentially) newly allocated are with zeros

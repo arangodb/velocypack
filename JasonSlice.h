@@ -10,7 +10,6 @@
 #include <iostream>
 
 #include "Jason.h"
-#include "JasonUtils.h"
 #include "JasonType.h"
 
 namespace triagens {
@@ -426,12 +425,12 @@ namespace triagens {
           if (h >= 0x40 && h <= 0xbf) {
             // short string
             JasonLength length = h - 0x40;
-            JasonUtils::CheckSize(length);
+            JasonCheckSize(length);
             return std::string(reinterpret_cast<char const*>(_start + 1), static_cast<size_t>(length));
           }
           if (h == 0x0c) {
             JasonLength length = readInteger<JasonLength>(_start + 1, 8);
-            JasonUtils::CheckSize(length);
+            JasonCheckSize(length);
             return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
           }
           throw JasonTypeError("unexpected type. expecting string");
@@ -443,7 +442,7 @@ namespace triagens {
           uint8_t h = head();
           if (h >= 0xc0 && h <= 0xc7) {
             length = readInteger<JasonLength>(_start + 1, h - 0xbf); 
-            JasonUtils::CheckSize(length);
+            JasonCheckSize(length);
             return _start + 1 + h - 0xbf;
           }
           throw JasonTypeError("unexpected type. expecting binary");
@@ -456,7 +455,7 @@ namespace triagens {
           if (h >= 0xc0 && h <= 0xc7) {
             std::vector<uint8_t> out;
             JasonLength length = readInteger<JasonLength>(_start + 1, h - 0xbf); 
-            JasonUtils::CheckSize(length);
+            JasonCheckSize(length);
             out.reserve(static_cast<size_t>(length));
             out.insert(out.end(), _start + 1 + h - 0xbf, _start + 1 + h - 0xbf + length);
             return out; 

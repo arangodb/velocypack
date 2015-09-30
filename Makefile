@@ -14,31 +14,23 @@ googletest:
 fpconv.o: Makefile fpconv.h
 	$(CC) $(CFLAGS) fpconv.cpp -c -o fpconv.o
 
-Jason.o: Makefile JasonType.h Jason.h
-	$(CC) $(CFLAGS) Jason.cpp -c -o Jason.o
-
-JasonBuffer.o: Makefile JasonBuffer.h JasonBuffer.cpp Jason.o
+JasonBuffer.o: Makefile JasonBuffer.h JasonBuffer.cpp Jason.h
 	$(CC) $(CFLAGS) JasonBuffer.cpp -c -o JasonBuffer.o
 
-JasonBuilder.o: Makefile JasonBuilder.h JasonBuilder.cpp Jason.o
+JasonBuilder.o: Makefile JasonBuilder.h JasonBuilder.cpp Jason.h
 	$(CC) $(CFLAGS) JasonBuilder.cpp -c -o JasonBuilder.o
 
-JasonParser.o: Makefile JasonBuilder.o JasonParser.h JasonParser.cpp Jason.o
+JasonParser.o: Makefile JasonBuilder.o JasonParser.h JasonParser.cpp Jason.h
 	$(CC) $(CFLAGS) JasonParser.cpp -c -o JasonParser.o
 
-JasonSlice.o: Makefile JasonSlice.h JasonSlice.cpp Jason.o
+JasonSlice.o: Makefile JasonSlice.h JasonSlice.cpp Jason.h
 	$(CC) $(CFLAGS) JasonSlice.cpp -c -o JasonSlice.o
 
-JasonType.o: Makefile JasonType.h JasonType.cpp Jason.o
-	$(CC) $(CFLAGS) JasonType.cpp -c -o JasonType.o
+test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o JasonType.h
+	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o googletest/googletest/libgtest.a -pthread -o test
 
-test:	Makefile test.cpp JasonDumper.h JasonUtils.h fpconv.o Jason.o JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o \
-        JasonType.o
-	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonBuffer.o JasonBuilder.o JasonParser.o JasonSlice.o JasonType.o googletest/googletest/libgtest.a -pthread -o test
-
-bench: Makefile bench.cpp Jason.o JasonBuilder.o JasonParser.o JasonSlice.o \
-        JasonUtils.h JasonType.o
-	$(CC) $(CFLAGS) bench.cpp Jason.o JasonBuilder.o JasonParser.o JasonSlice.o JasonType.o -pthread -o bench
+bench: Makefile bench.cpp Jason.h JasonBuilder.o JasonParser.o JasonSlice.o JasonType.h
+	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o JasonParser.o JasonSlice.o -pthread -o bench
 
 clean:	
 	rm -rf *.o test bench
