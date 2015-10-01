@@ -208,7 +208,6 @@ namespace triagens {
             entries.push_back(e);
           }
           assert(entries.size() == offsets.size());
-
           doActualSortSmall(entries, objBase);
 
           // copy back the sorted offsets 
@@ -228,7 +227,13 @@ namespace triagens {
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries.push_back(e);
           }
+          assert(entries.size() == offsets.size());
           doActualSortLarge(entries);
+
+          // copy back the sorted offsets 
+          for (JasonLength i = 0; i < offsets.size(); i++) {
+            offsets[i] = entries[i].offset;
+          }
         }
 
       public:
