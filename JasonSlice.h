@@ -265,16 +265,9 @@ namespace triagens {
           if (index >= n) {
             throw JasonTypeError("index out of bounds");
           }
-          if (index == 0) {
-            // special case for first array element
-            if (b == 0x00) {
-              return JasonSlice(_start + 1 + 1 + 8);
-            }
-            return JasonSlice(_start + 1 + 1);
-          }
           assert(n > 0);
-          JasonLength const indexBase = end - sizeSize - (n - 1) * offsetSize;
-          JasonLength const offset = indexBase + (index - 1) * offsetSize;
+          JasonLength const indexBase = end - sizeSize - n * offsetSize;
+          JasonLength const offset = indexBase + index * offsetSize;
           return JasonSlice(_start + readInteger<JasonLength>(_start + offset, offsetSize));
         }
 
@@ -346,16 +339,9 @@ namespace triagens {
           if (index >= n) {
             throw JasonTypeError("index out of bounds");
           }
-          if (index == 0) {
-            // special case for first key
-            if (b == 0x00) {
-              return JasonSlice(_start + 1 + 1 + 8);
-            }
-            return JasonSlice(_start + 1 + 1);
-          }
           assert(n > 0);
-          JasonLength const indexBase = end - sizeSize - 2 * (n - 1) * offsetSize;
-          JasonLength const offset = indexBase + 2 * (index - 1) * offsetSize;
+          JasonLength const indexBase = end - sizeSize - n * offsetSize;
+          JasonLength const offset = indexBase + index * offsetSize;
           return JasonSlice(_start + readInteger<JasonLength>(_start + offset, offsetSize));
         }
 
@@ -407,7 +393,6 @@ namespace triagens {
           }
 
           JasonLength end;
-          JasonLength firstOffset;
           uint8_t b = _start[1];
           if (b == 0x02) {
             // special case
@@ -415,19 +400,18 @@ namespace triagens {
           }
           else if (b == 0x00) {
             end = readInteger<JasonLength>(_start + 2, 8);
-            firstOffset = 1 + 1 + 8; 
           }
           else {
             // 1 byte length: already got the length
             end = static_cast<JasonLength>(b);
-            firstOffset = 1 + 1; 
           }
           JasonLength const n = readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
-          JasonLength const indexBase = end - sizeSize - 2 * (n - 1) * offsetSize;
+          JasonLength const indexBase = end - sizeSize - n * offsetSize;
           if (n < MaxLengthForLinearSearch) {
-            return searchObjectKeyLinear(attribute, firstOffset, indexBase, offsetSize, n);
+            return searchObjectKeyLinear(attribute, indexBase, offsetSize, n);
           }
-          return searchObjectKeyBinary(attribute, firstOffset, indexBase, offsetSize, n);
+
+          return searchObjectKeyBinary(attribute, indexBase, offsetSize, n);
         }
 
         JasonSlice operator[] (std::string const& attribute) const {
@@ -642,19 +626,11 @@ namespace triagens {
 
         // perform a linear search for the specified attribute inside an object
         JasonSlice searchObjectKeyLinear (std::string const& attribute, 
-                                          JasonLength firstOffset, 
                                           JasonLength indexBase, 
                                           JasonLength offsetSize, 
                                           JasonLength n) const {
           for (JasonLength index = 0; index < n; ++index) {
-            JasonLength offset;
-            if (index == 0) { 
-              offset = firstOffset;
-            }
-            else {
-              assert(index > 0);
-              offset = indexBase + 2 * (index - 1) * offsetSize;
-            }
+            JasonLength offset = indexBase + index * offsetSize;
             JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object
@@ -681,7 +657,6 @@ namespace triagens {
 
         // perform a binary search for the specified attribute inside an object
         JasonSlice searchObjectKeyBinary (std::string const& attribute, 
-                                          JasonLength firstOffset,
                                           JasonLength indexBase,
                                           JasonLength offsetSize, 
                                           JasonLength n) const {
@@ -696,14 +671,7 @@ namespace triagens {
             // midpoint
             JasonLength index = l + ((r - l) / 2);
 
-            JasonLength offset;
-            if (index == 0) { 
-              offset = firstOffset;
-            }
-            else {
-              assert(index > 0);
-              offset = indexBase + 2 * (index - 1) * offsetSize;
-            }
+            JasonLength offset = indexBase + index * offsetSize;
             JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object

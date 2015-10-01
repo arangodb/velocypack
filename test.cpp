@@ -2341,6 +2341,7 @@ TEST(ParserTest, ObjectSimple1) {
 
   JasonSlice ss = s.keyAt(0);
   checkBuild(ss, JasonType::String, 4);
+
   std::string correct = "foo";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
