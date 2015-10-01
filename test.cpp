@@ -2461,7 +2461,7 @@ TEST(ParserTest, ObjectReservedKeys) {
   std::string const valueOut = "{\"false\":\"bar\",\"null\":\"true\",\"true\":\"foo\"}";
   checkDump(s, valueOut);
 }
-/*
+
 TEST(ParserTest, ObjectMixed) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
@@ -2513,13 +2513,13 @@ TEST(ParserTest, ObjectMixed) {
   correct = "quz";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(4);
-  checkBuild(ss, JasonType::Object, 4);
+  checkBuild(ss, JasonType::Object, 2);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut("{\"bar\":true,\"baz\":13.53,\"foo\":null,\"qux\":[1],\"quz\":{}}");
   checkDump(s, valueOut);
 }
-*/
+
 TEST(ParserTest, ObjectInvalidQuotes) {
   std::string const value("{'foo':'bar' }");
 
@@ -2565,7 +2565,6 @@ TEST(ParserTest, Utf8BomBroken) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
-/*
 TEST(ParserTest, DuplicateAttributesAllowed) {
   std::string const value("{\"foo\":1,\"foo\":2}");
 
@@ -2607,7 +2606,6 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
   parser.options.checkAttributeUniqueness = true;
   EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
 }
-*/
 
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
@@ -2656,7 +2654,6 @@ TEST(LookupTest, LookupShortObject) {
   ASSERT_TRUE(v.isNone());
 }
 
-/*
 TEST(LookupTest, LookupSubattributes) {
   std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
 
@@ -2700,7 +2697,6 @@ TEST(LookupTest, LookupSubattributes) {
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
   ASSERT_TRUE(v.isNone());
 }
-*/
 
 TEST(LookupTest, LookupLongObject) {
   std::string value("{");
@@ -2823,7 +2819,6 @@ TEST(LookupTest, LookupBinary) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
-/*
 
 TEST(LookupTest, LookupBinarySamePrefix) {
   std::string value("{");
@@ -2856,7 +2851,7 @@ TEST(LookupTest, LookupBinarySamePrefix) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
-*/
+
 TEST(LookupTest, LookupBinaryLongObject) {
   std::string value("{");
   for (size_t i = 0; i < 1127; ++i) {
