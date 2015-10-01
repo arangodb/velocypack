@@ -2606,6 +2606,7 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
   parser.options.checkAttributeUniqueness = true;
   EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
 }
+*/
 
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
@@ -2654,6 +2655,7 @@ TEST(LookupTest, LookupShortObject) {
   ASSERT_TRUE(v.isNone());
 }
 
+/*
 TEST(LookupTest, LookupSubattributes) {
   std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
 
@@ -2697,6 +2699,7 @@ TEST(LookupTest, LookupSubattributes) {
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
   ASSERT_TRUE(v.isNone());
 }
+*/
 
 TEST(LookupTest, LookupLongObject) {
   std::string value("{");
@@ -2792,6 +2795,7 @@ TEST(LookupTest, LookupLinear) {
   ASSERT_EQ(3ULL, v.getUInt());
 }
 
+/*
 TEST(LookupTest, LookupBinary) {
   std::string value("{");
   for (size_t i = 0; i < 128; ++i) {
@@ -2851,7 +2855,7 @@ TEST(LookupTest, LookupBinarySamePrefix) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
-
+*/
 TEST(LookupTest, LookupBinaryLongObject) {
   std::string value("{");
   for (size_t i = 0; i < 1127; ++i) {
@@ -2879,7 +2883,7 @@ TEST(LookupTest, LookupBinaryLongObject) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
-*/
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
