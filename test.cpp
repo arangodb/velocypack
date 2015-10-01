@@ -2795,7 +2795,6 @@ TEST(LookupTest, LookupLinear) {
   ASSERT_EQ(3ULL, v.getUInt());
 }
 
-/*
 TEST(LookupTest, LookupBinary) {
   std::string value("{");
   for (size_t i = 0; i < 128; ++i) {
@@ -2823,6 +2822,7 @@ TEST(LookupTest, LookupBinary) {
     ASSERT_EQ(i, v.getUInt());
   } 
 }
+/*
 
 TEST(LookupTest, LookupBinarySamePrefix) {
   std::string value("{");
