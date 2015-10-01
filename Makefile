@@ -1,6 +1,7 @@
 CC=g++
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG
-CFLAGS=-Wall -Wextra -std=c++11 -g -O3
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -DRAPIDJSON_SSE42 -march=native
+CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native
 
 all:	test bench
 
@@ -18,14 +19,11 @@ fpconv.o: Makefile powers.h fpconv.h fpconv.cpp
 JasonBuilder.o: Makefile JasonBuilder.h JasonBuilder.cpp Jason.h
 	$(CC) $(CFLAGS) JasonBuilder.cpp -c -o JasonBuilder.o
 
-JasonParser.o: Makefile JasonParser.h JasonParser.cpp
-	$(CC) $(CFLAGS) JasonParser.cpp -c -o JasonParser.o
+test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.h JasonBuilder.o JasonParser.h JasonSlice.h JasonType.h
+	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuilder.o googletest/googletest/libgtest.a -pthread -o test
 
-test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.h JasonBuilder.o JasonParser.h JasonParser.o JasonSlice.h JasonType.h
-	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o JasonBuilder.o JasonParser.o googletest/googletest/libgtest.a -pthread -o test
-
-bench: Makefile bench.cpp Jason.h JasonBuilder.h JasonBuilder.o JasonParser.h JasonParser.o JasonSlice.h JasonType.h
-	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o JasonParser.o -o bench
+bench: Makefile bench.cpp Jason.h JasonBuilder.h JasonBuilder.o JasonParser.h JasonSlice.h JasonType.h
+	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o -o bench
 
 clean:	
 	rm -rf *.o test bench
