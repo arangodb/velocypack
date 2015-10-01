@@ -491,7 +491,7 @@ namespace triagens {
           }
           tableBase = _pos;
           if (smallTable) {
-            if (index.size() != 0) {
+            if (! index.empty()) {
               reserveSpace(2 * index.size() + 1);
               _pos += 2 * index.size() + 1;
             }
@@ -504,10 +504,10 @@ namespace triagens {
             }
             for (size_t i = 0; i < index.size(); i++) {
               uint16_t x = static_cast<uint16_t>(index[i]);
-              _start[tableBase + 2*i] = x & 0xff;
-              _start[tableBase + 2*i + 1] = x >> 8;
+              _start[tableBase + 2 * i] = x & 0xff;
+              _start[tableBase + 2 * i + 1] = x >> 8;
             }
-            _start[_pos-1] = static_cast<uint8_t>(index.size());
+            _start[_pos - 1] = static_cast<uint8_t>(index.size());
           }
           else {
             // large table:
@@ -522,25 +522,25 @@ namespace triagens {
             }
             JasonLength x = index.size();
             for (size_t j = 0; j < 8; j++) {
-              _start[_pos-8+j] = x & 0xff;
+              _start[_pos - 8 + j] = x & 0xff;
               x >>= 8;
             }
             for (size_t i = 0; i < index.size(); i++) {
               x = index[i];
               for (size_t j = 0; j < 8; j++) {
-                _start[tableBase + 8*i + j] = x & 0xff;
+                _start[tableBase + 8 * i + j] = x & 0xff;
                 x >>= 8;
               }
             }
           }
           if (smallByteLength) {
-            _start[tos+1] = _pos - tos;
+            _start[tos + 1] = _pos - tos;
           }
           else {
-            _start[tos+1] = 0x00;
+            _start[tos + 1] = 0x00;
             JasonLength x = _pos - tos;
             for (size_t i = 2; i <= 9; i++) {
-              _start[tos+i] = x & 0xff;
+              _start[tos + i] = x & 0xff;
               x >>= 8;
             }
           }

@@ -1925,7 +1925,7 @@ TEST(ParserTest, WhitespacedArray) {
   std::string const valueOut = "[]";
   checkDump(s, valueOut);
 }
-/*
+
 TEST(ParserTest, Array1) {
   std::string const value("[1]");
 
@@ -1938,7 +1938,7 @@ TEST(ParserTest, Array1) {
   checkBuild(s, JasonType::Array, 6);
   ASSERT_EQ(1ULL, s.length());
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(1ULL, ss.getUInt());
 
   checkDump(s, value);
@@ -1953,13 +1953,13 @@ TEST(ParserTest, Array2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 10);
+  checkBuild(s, JasonType::Array, 9);
   ASSERT_EQ(2ULL, s.length());
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(1ULL, ss.getUInt());
   ss = s[1];
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(2ULL, ss.getUInt());
 
   checkDump(s, value);
@@ -1973,15 +1973,15 @@ TEST(ParserTest, Array3) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 36);
+  checkBuild(s, JasonType::Array, 34);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Int, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(-1LL, ss.getInt());
 
   ss = s[1];
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(2ULL, ss.getUInt());
 
   ss = s[2];
@@ -1989,7 +1989,7 @@ TEST(ParserTest, Array3) {
   ASSERT_EQ(4.5, ss.getDouble());
 
   ss = s[3];
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(3ULL, ss.getUInt());
 
   ss = s[4];
@@ -2009,7 +2009,7 @@ TEST(ParserTest, Array4) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 40);
+  checkBuild(s, JasonType::Array, 41);
   ASSERT_EQ(7ULL, s.length());
 
   JasonSlice ss = s[0];
@@ -2045,7 +2045,7 @@ TEST(ParserTest, Array4) {
   std::string const valueOut = "[\"foo\",\"bar\",\"baz\",null,true,false,-42.23]";
   checkDump(s, valueOut);
 }
-
+/*
 TEST(ParserTest, NestedArray1) {
   std::string const value("[ [ ] ]");
 

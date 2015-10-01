@@ -441,32 +441,58 @@ namespace triagens {
 
         // return the value for an Int object
         int64_t getInt () const {
-          assertType(JasonType::Int);
           uint8_t h = head();
-          if (h <= 0x1f) {
+          if (h >= 0x18 && h <= 0x1f) {
             // positive int
             return readInteger<int64_t>(_start + 1, h - 0x17);
           }
-          // negative int
-          return - readInteger<int64_t>(_start + 1, h - 0x1f);
+          else if (h >= 0x20 && h <= 0x27) { 
+            // negative int
+            return - readInteger<int64_t>(_start + 1, h - 0x1f);
+          }
+          else if (h >= 0x30 && h <= 0x3f) {
+            // small int
+            return getSmallInt();
+          }
+
+          throw JasonTypeError("unexpected type. expecting int");
         }
 
         // return the value for a UInt object
         uint64_t getUInt () const {
-          assertType(JasonType::UInt);
-          return readInteger<uint64_t>(_start + 1, head() - 0x27);
+          uint8_t h = head();
+          if (h >= 0x28 && h <= 0x2f) {
+            // uint
+            return readInteger<uint64_t>(_start + 1, head() - 0x27);
+          }
+          else if (h >= 0x30 && h <= 0x37) {
+            // positive smallint
+            return static_cast<uint64_t>(h - 0x30);
+          }
+          else if (h >= 0x18 && h <= 0x1f) {
+            // positive int
+            return readInteger<uint64_t>(_start + 1, h - 0x17);
+          }
+          
+          throw JasonTypeError("unexpected type. expecting uint");
         }
 
         // return the value for a SmallInt object
         int64_t getSmallInt () const {
-          assertType(JasonType::SmallInt);
           uint8_t h = head();
           if (h >= 0x30 && h <= 0x37) {
+            // positive
             return static_cast<int64_t>(h - 0x30);
           }
           else if (h >= 0x38 && h <= 0x3f) {
+            // negative
             return static_cast<int64_t>(h - 0x38) - 8;
           }
+          else if (h >= 0x18 && h <= 0x27) {
+            // regular int
+            return getInt();
+          }
+
           throw JasonTypeError("unexpected type. expecting smallint");
         }
 

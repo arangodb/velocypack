@@ -372,7 +372,7 @@ namespace triagens {
                   len = _b._pos - (base + 9);
                   _b._start[base] = 0x0c;
                   for (JasonLength i = 1; i <= 8; i++) {
-                    _b._start[base+i] = len & 0xff;
+                    _b._start[base + i] = len & 0xff;
                     len >>= 8;
                   }
                 }
@@ -521,7 +521,7 @@ namespace triagens {
                   }
 
                   // validate follow up characters
-                  _b.reserveSpace(1+follow);
+                  _b.reserveSpace(1 + follow);
                   _b._start[_b._pos++] = static_cast<uint8_t>(i);
                   for (int j = 0; j < follow; ++j) {
                     i = getOneOrThrow("scanString: truncated UTF-8 sequence");
