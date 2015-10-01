@@ -414,7 +414,7 @@ namespace triagens {
     };
 
     // some alias types for easier usage
-    typedef JasonDumper<JasonBuffer> JasonBufferDumper;
+    typedef JasonDumper<JasonCharBuffer> JasonBufferDumper;
     typedef JasonDumper<std::string> JasonStringDumper;
 
   }  // namespace triagens::basics

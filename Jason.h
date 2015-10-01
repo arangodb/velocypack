@@ -3,9 +3,25 @@
 
 #include <cstdint>
 #include <string>
-#include <cassert>
 
-#include "JasonType.h"
+#ifdef JASON_DEBUG
+
+#ifndef DEBUG
+#define DEBUG
+#endif
+
+#include <cassert>
+#define JASON_ASSERT(x) assert(x)
+
+#else
+
+#ifndef NDEBUG
+#define NDEBUG
+#endif
+
+#define JASON_ASSERT(x) 
+
+#endif
 
 // check for environment type (32 or 64 bit)
 // if the environment type cannot be determined reliably, then this will
@@ -18,6 +34,8 @@
 #else
 #error "Could not determine environment type (32 or 64 bits)"
 #endif
+
+#include "JasonType.h"
 
 namespace triagens {
   namespace basics {
@@ -142,37 +160,37 @@ namespace triagens {
         }
 
         bool getBool () const {
-          assert(_cType == Bool);
+          JASON_ASSERT(_cType == Bool);
           return _value.b;
         }
 
         double getDouble () const {
-          assert(_cType == Double);
+          JASON_ASSERT(_cType == Double);
           return _value.d;
         }
 
         int64_t getInt64 () const {
-          assert(_cType == Int64);
+          JASON_ASSERT(_cType == Int64);
           return _value.i;
         }
 
         uint64_t getUInt64 () const {
-          assert(_cType == UInt64);
+          JASON_ASSERT(_cType == UInt64);
           return _value.u;
         }
 
         std::string const* getString () const {
-          assert(_cType == String);
+          JASON_ASSERT(_cType == String);
           return _value.s;
         }
 
         void const* getExternal () const {
-          assert(_cType == VoidPtr);
+          JASON_ASSERT(_cType == VoidPtr);
           return _value.e;
         }
 
         char const* getCharPtr () const {
-          assert(_cType == CharPtr);
+          JASON_ASSERT(_cType == CharPtr);
           return _value.c;
         }
 

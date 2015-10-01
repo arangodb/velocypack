@@ -351,7 +351,7 @@ namespace triagens {
           // insert 8 bytes for the length as soon as we reach 127 bytes
           // in the Jason representation.
 
-          JasonLength base = _b._pos;
+          JasonLength const base = _b._pos;
           _b.reserveSpace(1);
           _b._start[_b._pos++] = 0x40;   // correct this later
 

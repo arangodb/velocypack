@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 using Jason             = triagens::basics::Jason;
-using JasonBuffer       = triagens::basics::JasonBuffer;
+using JasonCharBuffer   = triagens::basics::JasonCharBuffer;
 using JasonBuilder      = triagens::basics::JasonBuilder;
 using JasonBufferDumper = triagens::basics::JasonBufferDumper;
 using JasonStringDumper = triagens::basics::JasonStringDumper;
@@ -30,7 +30,7 @@ static char Buffer[4096];
 // original input, otherwise we provide a knownGood result.
 
 static void checkDump (JasonSlice s, std::string const& knownGood) {
-  JasonBuffer buffer;
+  JasonCharBuffer buffer;
   JasonBufferDumper dumper(s, buffer, triagens::basics::STRATEGY_FAIL);
   dumper.dump();
   std::string output(buffer.data(), buffer.size());
@@ -350,7 +350,7 @@ TEST(BufferDumperTest, Null) {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  JasonBuffer buffer;
+  JasonCharBuffer buffer;
   JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
   dumper.dump();
   std::string output(buffer.data(), buffer.size());
@@ -373,7 +373,7 @@ TEST(BufferDumperTest, False) {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  JasonBuffer buffer;
+  JasonCharBuffer buffer;
   JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
   dumper.dump();
   std::string output(buffer.data(), buffer.size());
@@ -396,7 +396,7 @@ TEST(BufferDumperTest, True) {
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
-  JasonBuffer buffer;
+  JasonCharBuffer buffer;
   JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
   dumper.dump();
   std::string output(buffer.data(), buffer.size());

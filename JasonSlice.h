@@ -1,7 +1,6 @@
 #ifndef JASON_SLICE_H
 #define JASON_SLICE_H 1
 
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -265,7 +264,7 @@ namespace triagens {
           if (index >= n) {
             throw JasonTypeError("index out of bounds");
           }
-          assert(n > 0);
+          JASON_ASSERT(n > 0);
           JasonLength const indexBase = end - sizeSize - n * offsetSize;
           JasonLength const offset = indexBase + index * offsetSize;
           return JasonSlice(_start + readInteger<JasonLength>(_start + offset, offsetSize));
@@ -339,7 +338,7 @@ namespace triagens {
           if (index >= n) {
             throw JasonTypeError("index out of bounds");
           }
-          assert(n > 0);
+          JASON_ASSERT(n > 0);
           JasonLength const indexBase = end - sizeSize - n * offsetSize;
           JasonLength const offset = indexBase + index * offsetSize;
           return JasonSlice(_start + readInteger<JasonLength>(_start + offset, offsetSize));
@@ -618,7 +617,7 @@ namespace triagens {
             }
           }
 
-          assert(false);
+          JASON_ASSERT(false);
           return 0;
         }
 
@@ -660,7 +659,7 @@ namespace triagens {
                                           JasonLength indexBase,
                                           JasonLength offsetSize, 
                                           JasonLength n) const {
-          assert(n > 0);
+          JASON_ASSERT(n > 0);
             
           JasonLength const attributeLength = static_cast<JasonLength>(attribute.size());
 
@@ -706,12 +705,12 @@ namespace triagens {
          
         // assert that the slice is of a specific type
         // can be used for debugging and removed in production
-#ifndef NDEBUG
-        void assertType (JasonType type) const {
-          assert(this->type() == type);
+#ifdef JASON_ASSERT
+        inline void assertType (JasonType) const {
         }
 #else
-        void assertType (JasonType) const {
+        inline void assertType (JasonType type) const {
+          JASON_ASSERT(this->type() == type);
         }
 #endif
           

@@ -1,17 +1,16 @@
 #ifndef JASON_BUILDER_H
 #define JASON_BUILDER_H
 
-#include "Jason.h"
-#include "JasonSlice.h"
-#include "JasonType.h"
-
+#include <iostream>
 #include <vector>
 #include <cstring>
+#include <cstdint>
 #include <algorithm>
-           
-// Endianess of the system must be configured here:
-#undef BIG_ENDIAN
-// #define BIG_ENDIAN 1
+
+#include "Jason.h"
+#include "JasonBuffer.h"
+#include "JasonSlice.h"
+#include "JasonType.h"
 
 namespace triagens {
   namespace basics {
@@ -88,11 +87,10 @@ namespace triagens {
         // thread local vector for sorting large object attributes
         static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
 
-        std::vector<uint8_t> _alloc;
+        JasonBuffer<uint8_t> _buffer;
         uint8_t*       _start;
         JasonLength    _size;
         JasonLength    _pos;   // the current append position, always <= _size
-        bool           _externalMem;          // true if buffer came from the outside
         bool           _attrWritten;  // indicates that an attribute name
                                       // in an object has been written
         std::vector<JasonLength>              _stack;
@@ -126,21 +124,18 @@ namespace triagens {
           if (_pos + len <= _size) {
             return;  // All OK, we can just increase tos->pos by len
           }
-          if (_externalMem) {
-            throw JasonBuilderError("Cannot allocate more memory.");
-          }
           JasonCheckSize(_pos + len);
 
           // fill the (potentially) newly allocated area with zeros
-          _alloc.resize(_pos + len);
-          _start = _alloc.data();
-          _size = _alloc.size();
+          _buffer.prealloc(len);
+          _start = _buffer.data();
+          _size = _buffer.size();
         }
 
         // Here comes infrastructure to sort object index tables:
         static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
                                        uint8_t const* objBase) {
-          assert(entries.size() > 1);
+          JASON_ASSERT(entries.size() > 1);
           std::sort(entries.begin(), entries.end(), 
             [objBase] (SortEntrySmall const& a, SortEntrySmall const& b) {
               // return true iff a < b:
@@ -157,7 +152,7 @@ namespace triagens {
         }
 
         static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
-          assert(entries.size() > 1);
+          JASON_ASSERT(entries.size() > 1);
           std::sort(entries.begin(), entries.end(), 
             [] (SortEntryLarge const& a, SortEntryLarge const& b) {
               // return true iff a < b:
@@ -206,7 +201,7 @@ namespace triagens {
             e.nameSize = static_cast<uint16_t>(attrLen);
             entries.push_back(e);
           }
-          assert(entries.size() == offsets.size());
+          JASON_ASSERT(entries.size() == offsets.size());
           doActualSortSmall(entries, objBase);
 
           // copy back the sorted offsets 
@@ -226,7 +221,7 @@ namespace triagens {
             e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
             entries.push_back(e);
           }
-          assert(entries.size() == offsets.size());
+          JASON_ASSERT(entries.size() == offsets.size());
           doActualSortLarge(entries);
 
           // copy back the sorted offsets 
@@ -240,34 +235,20 @@ namespace triagens {
         JasonOptions options;
 
         JasonBuilder ()
-          : _pos(0), _externalMem(false), _attrWritten(false) {
-          _alloc.push_back(0);
-          _start = _alloc.data();
-          _size = _alloc.size();
+          : _pos(0), 
+            _attrWritten(false) {
+          _buffer.push_back(0);
+          _start = _buffer.data();
+          _size = _buffer.size();
         }
 
-        JasonBuilder (uint8_t* start, JasonLength size)
-          : _start(start), _size(size), _pos(0),
-            _externalMem(true), _attrWritten(false) {
-        }
-      
         ~JasonBuilder () {
         }
 
-        JasonBuilder (JasonBuilder const& that)
-          : _externalMem(false) {
-          if (! that._externalMem) {
-            _alloc = that._alloc;
-          }
-          else {
-            _alloc.reserve(static_cast<size_t>(that._size));
-            uint8_t* x = that._start;
-            for (JasonLength i = 0; i < that._size; i++) {
-              _alloc.push_back(*x++);
-            }
-          }
-          _start = _alloc.data();
-          _size = _alloc.size();
+        JasonBuilder (JasonBuilder const& that) {
+          _buffer = that._buffer;
+          _start = _buffer.data();
+          _size = _buffer.size();
           _pos = that._pos;
           _attrWritten = that._attrWritten;
           _stack = that._stack;
@@ -275,20 +256,9 @@ namespace triagens {
         }
 
         JasonBuilder& operator= (JasonBuilder const& that) {
-          _externalMem = false;
-          if (! that._externalMem) {
-            _alloc = that._alloc;
-          }
-          else {
-            _alloc.clear();
-            _alloc.reserve(static_cast<size_t>(that._size));
-            uint8_t* x = that._start;
-            for (JasonLength i = 0; i < that._size; i++) {
-              _alloc.push_back(*x++);
-            }
-          }
-          _start = _alloc.data();
-          _size = _alloc.size();
+          _buffer = that._buffer;
+          _start = _buffer.data();
+          _size = _buffer.size();
           _pos = that._pos;
           _attrWritten = that._attrWritten;
           _stack = that._stack;
@@ -297,18 +267,11 @@ namespace triagens {
         }
 
         JasonBuilder (JasonBuilder&& that) {
-          _externalMem = that._externalMem;
-          if (_externalMem) {
-            _alloc.clear();
-            _start = that._start;
-            _size = that._size;
-          }
-          else {
-            _alloc.clear();
-            _alloc.swap(that._alloc);
-            _start = _alloc.data();
-            _size = _alloc.size();
-          }
+          _buffer.reset();
+          _buffer = that._buffer;
+          that._buffer.reset();
+          _start = _buffer.data();
+          _size = _buffer.size();
           _pos = that._pos;
           _attrWritten = that._attrWritten;
           _stack.clear();
@@ -322,18 +285,11 @@ namespace triagens {
         }
 
         JasonBuilder& operator= (JasonBuilder&& that) {
-          _externalMem = that._externalMem;
-          if (_externalMem) {
-            _alloc.clear();
-            _start = that._start;
-            _size = that._size;
-          }
-          else {
-            _alloc.clear();
-            _alloc.swap(that._alloc);
-            _start = _alloc.data();
-            _size = _alloc.size();
-          }
+          _buffer.reset();
+          _buffer = that._buffer;
+          that._buffer.reset();
+          _start = _buffer.data();
+          _size = _buffer.size();
           _pos = that._pos;
           _attrWritten = that._attrWritten;
           _stack.clear();
@@ -370,25 +326,6 @@ namespace triagens {
             throw JasonBuilderError("Jason object not sealed.");
           }
           return _pos;
-        }
-
-        void stealTo (std::vector<uint8_t>& target) {
-          if (! _stack.empty()) {
-            throw JasonBuilderError("Jason object not sealed.");
-          }
-          target.clear();
-          if (! _externalMem) {
-            _alloc.swap(target);
-          }
-          else {
-            JasonLength s = size();
-            target.reserve(static_cast<size_t>(s));
-            uint8_t* x = _start;
-            for (JasonLength i = 0; i < s; i++) {
-              target.push_back(*x++);
-            }
-          }
-          clear();
         }
 
         void add (std::string const& attrName, Jason const& sub) {
@@ -595,17 +532,6 @@ namespace triagens {
         JasonBuilder& operator() () {
           close();
           return *this;
-        }
-
-        void reserve (JasonLength size) {
-          if (_size < size) {
-            try {
-              reserveSpace(size - _pos);
-            }
-            catch (...) {
-              // Ignore exception here, let it crash later.
-            }
-          }
         }
 
         // returns number of bytes required to store the value

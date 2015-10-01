@@ -121,5 +121,9 @@ int main (int argc, char* argv[]) {
                         totalTime.count() << " bytes/s"
        << " or " << total / totalTime.count() 
        << " JSON docs per second." << endl;
+
+  for (auto& it : outputs) {
+    delete it;
+  }
   return EXIT_SUCCESS;
 }
