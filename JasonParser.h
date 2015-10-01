@@ -545,6 +545,7 @@ namespace triagens {
         }
 
         void parseArray () {
+          JasonLength base = _b._pos;
           _b.addArray();
 
           int i = skipWhiteSpace("scanArray: item or ] expected");
@@ -557,7 +558,7 @@ namespace triagens {
 
           while (true) {
             // parse array element itself
-            _b.reportAdd();
+            _b.reportAdd(base);
             parseJson();
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
@@ -575,6 +576,7 @@ namespace triagens {
         }
                        
         void parseObject () {
+          JasonLength base = _b._pos;
           _b.addObject();
 
           int i = skipWhiteSpace("scanObject: item or } expected");
@@ -594,7 +596,7 @@ namespace triagens {
             // get past the initial '"'
             consume();
 
-            _b.reportAdd();
+            _b.reportAdd(base);
             parseString();
             i = skipWhiteSpace("scanObject: : expected");
             // always expecting the ':' here

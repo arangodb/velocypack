@@ -402,7 +402,7 @@ namespace triagens {
                 _start[tos] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            reportAdd();
+            reportAdd(tos);
           }
           set(Jason(attrName, JasonType::String));
           set(sub);
@@ -418,7 +418,7 @@ namespace triagens {
                 _start[tos] != 0x08) {
               throw JasonBuilderError("Need open object for add() call.");
             }
-            reportAdd();
+            reportAdd(tos);
           }
           set(Jason(attrName, JasonType::String));
           return set(sub);
@@ -436,12 +436,12 @@ namespace triagens {
                 throw JasonBuilderError("Need open object for this add() call.");
               }
               if (! _attrWritten) {
-                reportAdd();
+                reportAdd(tos);
               }
               _attrWritten = ! _attrWritten;
             }
             else {
-              reportAdd();
+              reportAdd(tos);
             }
           }
           set(sub);
@@ -458,12 +458,12 @@ namespace triagens {
                 throw JasonBuilderError("Need open object for this add() call.");
               }
               if (! _attrWritten) {
-                reportAdd();
+                reportAdd(tos);
               }
               _attrWritten = ! _attrWritten;
             }
             else {
-              reportAdd();
+              reportAdd(tos);
             }
           }
           return set(sub);
@@ -487,8 +487,10 @@ namespace triagens {
             // This is the condition for a one-byte bytelength, since in
             // that case we can save 8 bytes in the beginning and the
             // table fits in the 256 bytes as well, using the small format:
-            memmove(_start + tos + 2, _start + tos + 10,
-                    _pos - (tos + 10));
+            if (_pos > (tos + 10)) {
+              memmove(_start + tos + 2, _start + tos + 10,
+                      _pos - (tos + 10));
+            }
             _pos -= 8;
             for (size_t i = 0; i < index.size(); i++) {
               index[i] -= 8;
@@ -520,6 +522,8 @@ namespace triagens {
               _start[tableBase + 2 * i + 1] = x >> 8;
             }
             _start[_pos - 1] = static_cast<uint8_t>(index.size());
+            // Note that for the case of length 0, we store a zero here
+            // but further down we overwrite with the bytelength of 2!
           }
           else {
             // large table:
@@ -709,7 +713,7 @@ namespace triagens {
           while (_stack.size() > _index.size()) {
             _index.emplace_back();
           }
-          _index.back().clear();
+          _index[_stack.size()-1].clear();
           _start[_pos++] = 0x05;
           _start[_pos++] = 0x00;  // Will be filled later with short bytelength
           _pos += 8;              // Possible space for long bytelength
@@ -721,7 +725,7 @@ namespace triagens {
           while (_stack.size() > _index.size()) {
             _index.emplace_back();
           }
-          _index.back().clear();
+          _index[_stack.size()-1].clear();
           _start[_pos++] = 0x07;
           _start[_pos++] = 0x00;  // Will be filled later with short bytelength
           _pos += 8;              // Possible space for long bytelength
@@ -1003,9 +1007,9 @@ namespace triagens {
           }
         }
 
-        void reportAdd () {
+        void reportAdd (JasonLength base) {
           size_t depth = _stack.size()-1;
-          _index[depth].push_back(_pos);
+          _index[depth].push_back(_pos - base);
         }
 
         void appendLength (JasonLength v, uint64_t n) {

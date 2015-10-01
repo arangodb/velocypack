@@ -2045,7 +2045,7 @@ TEST(ParserTest, Array4) {
   std::string const valueOut = "[\"foo\",\"bar\",\"baz\",null,true,false,-42.23]";
   checkDump(s, valueOut);
 }
-/*
+
 TEST(ParserTest, NestedArray1) {
   std::string const value("[ [ ] ]");
 
@@ -2055,11 +2055,11 @@ TEST(ParserTest, NestedArray1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 8);
+  checkBuild(s, JasonType::Array, 7);
   ASSERT_EQ(1ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 4);
+  checkBuild(ss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut = "[[]]";
@@ -2075,61 +2075,62 @@ TEST(ParserTest, NestedArray2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 66);
+  checkBuild(s, JasonType::Array, 55);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 4);
+  checkBuild(ss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, ss.length());
 
   ss = s[1];
-  checkBuild(ss, JasonType::Array, 8);
+  checkBuild(ss, JasonType::Array, 7);
   ASSERT_EQ(1ULL, ss.length());
 
   JasonSlice sss = ss[0];
-  checkBuild(sss, JasonType::Array, 4);
+  checkBuild(sss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, sss.length());
 
   ss = s[2];
-  checkBuild(ss, JasonType::Array, 4);
+  checkBuild(ss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, ss.length());
 
   ss = s[3];
-  checkBuild(ss, JasonType::Array, 34);
+  checkBuild(ss, JasonType::Array, 29);
   ASSERT_EQ(1ULL, ss.length());
 
   sss = ss[0];
-  checkBuild(sss, JasonType::Array, 30);
+  checkBuild(sss, JasonType::Array, 24);
   ASSERT_EQ(2ULL, sss.length());
 
   JasonSlice ssss = sss[0];
-  checkBuild(ssss, JasonType::Array, 20);
+  checkBuild(ssss, JasonType::Array, 15);
   ASSERT_EQ(3ULL, ssss.length());
 
   JasonSlice sssss = ssss[0];
-  checkBuild(sssss, JasonType::Array, 4);
+  checkBuild(sssss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, sssss.length());
 
   sssss = ssss[1];
-  checkBuild(sssss, JasonType::Array, 4);
+  checkBuild(sssss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, sssss.length());
 
   sssss = ssss[2];
-  checkBuild(sssss, JasonType::Array, 4);
+  checkBuild(sssss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, sssss.length());
 
   ssss = sss[1];
-  checkBuild(ssss, JasonType::Array, 4);
+  checkBuild(ssss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, ssss.length());
 
   ss = s[4];
-  checkBuild(ss, JasonType::Array, 4);
+  checkBuild(ss, JasonType::Array, 2);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut = "[[],[[]],[],[[[[],[],[]],[]]],[]]";
   checkDump(s, valueOut);
 }
 
+/*
 TEST(ParserTest, NestedArray3) {
   std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ], true, false ], -42.23 ]");
 
