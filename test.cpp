@@ -2130,7 +2130,6 @@ TEST(ParserTest, NestedArray2) {
   checkDump(s, valueOut);
 }
 
-/*
 TEST(ParserTest, NestedArray3) {
   std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ], true, false ], -42.23 ]");
 
@@ -2140,11 +2139,11 @@ TEST(ParserTest, NestedArray3) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 48);
+  checkBuild(s, JasonType::Array, 51);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 33);
+  checkBuild(ss, JasonType::Array, 35);
   ASSERT_EQ(4ULL, ss.length());
 
   JasonSlice sss = ss[0];
@@ -2153,7 +2152,7 @@ TEST(ParserTest, NestedArray3) {
   ASSERT_EQ(correct, sss.copyString());
 
   sss = ss[1];
-  checkBuild(sss, JasonType::Array, 17);
+  checkBuild(sss, JasonType::Array, 18);
   ASSERT_EQ(3ULL, sss.length());
 
   JasonSlice ssss = sss[0];
@@ -2208,7 +2207,7 @@ TEST(ParserTest, NestedArrayInvalid3) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
   ASSERT_EQ(34u, parser.errorPos());
 }
-*/
+
 TEST(ParserTest, BrokenArray1) {
   std::string const value("[");
 
