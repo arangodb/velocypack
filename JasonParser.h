@@ -167,7 +167,6 @@ namespace triagens {
           return nr;
         }
 
-        // FIXME: implement a white space table?
         inline bool isWhiteSpace (uint8_t i) const {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
@@ -344,8 +343,6 @@ namespace triagens {
           _b.addDouble(fractionalPart);
         }
 
-        static uint8_t parseStringTab[256];
-
         void parseString () {
           // When we get here, we have seen a " character and now want to
           // find the end of the string and parse the string value to its
@@ -364,7 +361,7 @@ namespace triagens {
             int i = getOneOrThrow("scanString: Unfinished string detected.");
             _b.reserveSpace(256);
             int count = 256;
-            while (count-- > 0 && i >= 0 && parseStringTab[i] == 0) {
+            while (count-- > 0 && i >= 32 && i != '\\' && i != '"') {
               _b._start[_b._pos++] = static_cast<uint8_t>(i);
               i = consume();
             }
