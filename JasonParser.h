@@ -344,6 +344,8 @@ namespace triagens {
           _b.addDouble(fractionalPart);
         }
 
+        static uint8_t parseStringTab[256];
+
         void parseString () {
           // When we get here, we have seen a " character and now want to
           // find the end of the string and parse the string value to its
@@ -360,6 +362,22 @@ namespace triagens {
 
           while (true) {
             int i = getOneOrThrow("scanString: Unfinished string detected.");
+            _b.reserveSpace(256);
+            int count = 256;
+            while (count-- > 0 && i >= 0 && parseStringTab[i] == 0) {
+              _b._start[_b._pos++] = static_cast<uint8_t>(i);
+              i = consume();
+            }
+            if (i < 0) {
+              throw JasonParserError("scanString: Unfinished string detected.");
+            }
+            if (! large && _b._pos - (base + 1) > 127) {
+              large = true;
+              _b.reserveSpace(8);
+              memmove(_b._start + base + 9, _b._start + base + 1,
+                      _b._pos - (base + 1));
+              _b._pos += 8;
+            }
             switch (i) {
               case '"':
                 JasonLength len;
@@ -533,13 +551,6 @@ namespace triagens {
                   highSurrogate = 0;
                 }
                 break;
-            }
-            if (! large && _b._pos - (base + 1) > 127) {
-              large = true;
-              _b.reserveSpace(8);
-              memmove(_b._start + base + 9, _b._start + base + 1,
-                      _b._pos - (base + 1));
-              _b._pos += 8;
             }
           }
         }
