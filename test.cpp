@@ -2352,7 +2352,6 @@ TEST(ParserTest, ObjectSimple1) {
   checkDump(s, valueOut);
 }
 
-/*
 TEST(ParserTest, ObjectSimple2) {
   std::string const value("{ \"foo\" : \"bar\", \"baz\":true}");
 
@@ -2362,7 +2361,7 @@ TEST(ParserTest, ObjectSimple2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 21);
+  checkBuild(s, JasonType::Object, 20);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2395,7 +2394,7 @@ TEST(ParserTest, ObjectDenseNotation) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 16);
+  checkBuild(s, JasonType::Object, 15);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2428,7 +2427,7 @@ TEST(ParserTest, ObjectReservedKeys) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 39);
+  checkBuild(s, JasonType::Object, 38);
   ASSERT_EQ(3ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2461,7 +2460,7 @@ TEST(ParserTest, ObjectReservedKeys) {
   std::string const valueOut = "{\"false\":\"bar\",\"null\":\"true\",\"true\":\"foo\"}";
   checkDump(s, valueOut);
 }
-
+/*
 TEST(ParserTest, ObjectMixed) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
@@ -2471,7 +2470,7 @@ TEST(ParserTest, ObjectMixed) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 55);
+  checkBuild(s, JasonType::Object, 52);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2505,7 +2504,7 @@ TEST(ParserTest, ObjectMixed) {
   checkBuild(ss, JasonType::Array, 6);
 
   JasonSlice sss = ss[0];
-  checkBuild(sss, JasonType::UInt, 2);
+  checkBuild(sss, JasonType::SmallInt, 1);
   ASSERT_EQ(1ULL, sss.getUInt());
 
   ss = s.keyAt(4);
@@ -2520,7 +2519,6 @@ TEST(ParserTest, ObjectMixed) {
   checkDump(s, valueOut);
 }
 */
-
 TEST(ParserTest, ObjectInvalidQuotes) {
   std::string const value("{'foo':'bar' }");
 
@@ -2535,7 +2533,6 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
-/*
 TEST(ParserTest, Utf8Bom) {
   std::string const value("\xef\xbb\xbf{\"foo\":1}");
 
@@ -2545,7 +2542,7 @@ TEST(ParserTest, Utf8Bom) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 12);
+  checkBuild(s, JasonType::Object, 10);
   ASSERT_EQ(1ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -2553,13 +2550,12 @@ TEST(ParserTest, Utf8Bom) {
   std::string correct = "foo";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
-  checkBuild(ss, JasonType::UInt, 2);
+  checkBuild(ss, JasonType::SmallInt, 1);
   ASSERT_EQ(1ULL, ss.getUInt());
 
   std::string valueOut = "{\"foo\":1}";
   checkDump(s, valueOut);
 }
-*/
 
 TEST(ParserTest, Utf8BomBroken) {
   std::string const value("\xef\xbb");

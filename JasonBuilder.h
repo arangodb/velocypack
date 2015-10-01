@@ -207,7 +207,14 @@ namespace triagens {
             e.nameSize = static_cast<uint16_t>(attrLen);
             entries.push_back(e);
           }
+          assert(entries.size() == offsets.size());
+
           doActualSortSmall(entries, objBase);
+
+          // copy back the sorted offsets 
+          for (JasonLength i = 0; i < offsets.size(); i++) {
+            offsets[i] = entries[i].offset;
+          }
         }
 
         static void sortObjectIndexLong (uint8_t* objBase,
@@ -465,7 +472,7 @@ namespace triagens {
           if (_start[tos] < 0x05 || _start[tos] > 0x08) {
             throw JasonBuilderError("Need open array or object for close() call.");
           }
-          std::vector<JasonLength>& index = _index[_stack.size()-1];
+          std::vector<JasonLength>& index = _index[_stack.size() - 1];
           // First determine byte length and its format:
           JasonLength tableBase;
           bool smallByteLength;
