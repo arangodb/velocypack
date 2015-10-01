@@ -537,7 +537,7 @@ namespace triagens {
             if (! large && _b._pos - (base + 1) > 127) {
               large = true;
               _b.reserveSpace(8);
-              memmove(_b._start + base + 1, _b._start + base + 9,
+              memmove(_b._start + base + 9, _b._start + base + 1,
                       _b._pos - (base + 1));
               _b._pos += 8;
             }
