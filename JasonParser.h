@@ -168,7 +168,7 @@ namespace triagens {
         }
 
         // FIXME: implement a white space table?
-        inline bool isWhiteSpace (uint8_t i) const {
+        inline bool isWhiteSpace (uint8_t i) const noexcept {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
 
@@ -177,7 +177,7 @@ namespace triagens {
         inline int skipWhiteSpace (char const* err) {
           while (_pos < _size) {
             if (! isWhiteSpace(_start[_pos])) { 
-              return static_cast<int>(_start[_pos]);;
+              return static_cast<int>(_start[_pos]);
             }
             ++_pos;
           } 

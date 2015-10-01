@@ -144,7 +144,7 @@ namespace triagens {
             // ensure we don't alloc too small blocks
             newLen = MinLength;
           }
-          static double const GrowthFactor = 1.2;
+          static double const GrowthFactor = 1.25;
           if (_pos > 0 && newLen < GrowthFactor * _pos) {
             // ensure the buffer grows sensibly and not by 1 byte only
             newLen = GrowthFactor * _pos;
@@ -167,7 +167,7 @@ namespace triagens {
         // reserve and zero fill
         void prealloc (JasonLength len) {
           reserve(len);
-          memset(_buffer + _pos, 0, len);
+          // memset(_buffer + _pos, 0, len);
           _pos += len;
         }
        
