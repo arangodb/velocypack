@@ -1,7 +1,5 @@
 * beat rapidjson!
 
-* add tests for files in jsonSample/ (JS)
-
 * JasonValue, JasonArray, JasonObject c++ access
 
 * change namespace from triagens::basics to arangodb::jason (JS)

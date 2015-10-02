@@ -1,6 +1,9 @@
-
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "Jason.h"
 #include "JasonBuffer.h"
@@ -25,6 +28,40 @@ using JasonSlice        = triagens::basics::JasonSlice;
 using JasonType         = triagens::basics::JasonType;
   
 static char Buffer[4096];
+
+static std::string readFile (std::string const& filename) {
+  std::string s;
+  int fd = open(filename.c_str(), O_RDONLY);
+
+  if (fd < 0) {
+    throw "cannot open input file";
+  }
+
+  char buffer[4096];
+  int len;
+  while (true) {
+    len = read(fd, buffer, 4096);
+    if (len <= 0) {
+      break;
+    }
+    s.append(buffer, len);
+  }
+  close(fd);
+  return s;
+}
+
+static bool parseFile (std::string const& filename) {
+  std::string const data = readFile(filename);
+ 
+  JasonParser parser;
+  try {
+    parser.parse(data);
+    return true;
+  }
+  catch (...) {
+    return false;
+  }
+}
 
 // This function is used to use the dumper to produce JSON and verify
 // the result. When we have parsed previously, we usually can take the
@@ -345,6 +382,146 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
 
 
 // Let the tests begin...
+
+TEST(StaticFilesTest, CommitsJson) {
+  ASSERT_TRUE(parseFile("jsonSample/commits.json"));
+}
+
+TEST(StaticFilesTest, SampleJson) {
+  ASSERT_TRUE(parseFile("jsonSample/sample.json"));
+}
+
+TEST(StaticFilesTest, SampleNoWhiteJson) {
+  ASSERT_TRUE(parseFile("jsonSample/sampleNoWhite.json"));
+}
+
+TEST(StaticFilesTest, SmallJson) {
+  ASSERT_TRUE(parseFile("jsonSample/small.json"));
+}
+
+TEST(StaticFilesTest, Fail2Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail2.json"));
+}
+
+TEST(StaticFilesTest, Fail3Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail3.json"));
+}
+
+TEST(StaticFilesTest, Fail4Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail4.json"));
+}
+
+TEST(StaticFilesTest, Fail5Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail5.json"));
+}
+
+TEST(StaticFilesTest, Fail6Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail6.json"));
+}
+
+TEST(StaticFilesTest, Fail7Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail7.json"));
+}
+
+TEST(StaticFilesTest, Fail8Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail8.json"));
+}
+
+TEST(StaticFilesTest, Fail9Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail9.json"));
+}
+
+TEST(StaticFilesTest, Fail10Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail10.json"));
+}
+
+TEST(StaticFilesTest, Fail11Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail11.json"));
+}
+
+TEST(StaticFilesTest, Fail12Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail12.json"));
+}
+
+TEST(StaticFilesTest, Fail13Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail13.json"));
+}
+
+TEST(StaticFilesTest, Fail14Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail14.json"));
+}
+
+TEST(StaticFilesTest, Fail15Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail15.json"));
+}
+
+TEST(StaticFilesTest, Fail16Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail16.json"));
+}
+
+TEST(StaticFilesTest, Fail17Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail17.json"));
+}
+
+TEST(StaticFilesTest, Fail19Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail19.json"));
+}
+
+TEST(StaticFilesTest, Fail20Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail20.json"));
+}
+
+TEST(StaticFilesTest, Fail21Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail21.json"));
+}
+
+TEST(StaticFilesTest, Fail22Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail22.json"));
+}
+
+TEST(StaticFilesTest, Fail23Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail23.json"));
+}
+
+TEST(StaticFilesTest, Fail24Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail24.json"));
+}
+
+TEST(StaticFilesTest, Fail25Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail25.json"));
+}
+
+TEST(StaticFilesTest, Fail26Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail26.json"));
+}
+
+TEST(StaticFilesTest, Fail27Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail27.json"));
+}
+
+TEST(StaticFilesTest, Fail28Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail28.json"));
+}
+
+TEST(StaticFilesTest, Fail29Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail29.json"));
+}
+
+TEST(StaticFilesTest, Fail30Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail30.json"));
+}
+
+TEST(StaticFilesTest, Fail31Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail31.json"));
+}
+
+TEST(StaticFilesTest, Fail32Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail32.json"));
+}
+
+TEST(StaticFilesTest, Fail33Json) {
+  ASSERT_FALSE(parseFile("jsonSample/fail33.json"));
+}
 
 TEST(OutStreamTest, StringifyComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
