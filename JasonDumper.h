@@ -9,8 +9,8 @@
 #include "Jason.h"
 #include "fpconv.h"
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     enum UnsupportedTypeStrategy {
       STRATEGY_SUPPRESS,
@@ -445,7 +445,7 @@ namespace triagens {
     typedef JasonDumper<std::string, false> JasonStringDumper;
     typedef JasonDumper<std::string, true> JasonStringPrettyDumper;
 
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif

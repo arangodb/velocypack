@@ -3,11 +3,11 @@
 #include "JasonDumper.h"
 #include "JasonSlice.h"
 
-using Jason             = triagens::basics::Jason;
-using JasonBuilder      = triagens::basics::JasonBuilder;
-using JasonLength       = triagens::basics::JasonLength;
-using JasonPrettyDumper = triagens::basics::JasonStringPrettyDumper;
-using JasonSlice        = triagens::basics::JasonSlice;
+using Jason             = arangodb::jason::Jason;
+using JasonBuilder      = arangodb::jason::JasonBuilder;
+using JasonLength       = arangodb::jason::JasonLength;
+using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
+using JasonSlice        = arangodb::jason::JasonSlice;
        
 // thread local vector for sorting small object attributes
 thread_local std::vector<JasonBuilder::SortEntrySmall> JasonBuilder::SortObjectSmallEntries;

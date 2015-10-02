@@ -7,8 +7,8 @@
 #include "Jason.h"
 #include "JasonBuilder.h"
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     class JasonParser {
 
@@ -655,7 +655,7 @@ namespace triagens {
 
     };
 
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif

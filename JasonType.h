@@ -3,8 +3,8 @@
 
 #include <string>
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     struct JasonTypeError : std::exception {
       private:
@@ -59,7 +59,7 @@ namespace triagens {
       return "unknown";
     }
 
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif

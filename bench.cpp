@@ -19,13 +19,13 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-using Jason            = triagens::basics::Jason;
-using JasonBuilder     = triagens::basics::JasonBuilder;
-using JasonLength      = triagens::basics::JasonLength;
-using JasonPair        = triagens::basics::JasonPair;
-using JasonParser      = triagens::basics::JasonParser;
-using JasonSlice       = triagens::basics::JasonSlice;
-using JasonType        = triagens::basics::JasonType;
+using Jason            = arangodb::jason::Jason;
+using JasonBuilder     = arangodb::jason::JasonBuilder;
+using JasonLength      = arangodb::jason::JasonLength;
+using JasonPair        = arangodb::jason::JasonPair;
+using JasonParser      = arangodb::jason::JasonParser;
+using JasonSlice       = arangodb::jason::JasonSlice;
+using JasonType        = arangodb::jason::JasonType;
   
 using namespace std;
 

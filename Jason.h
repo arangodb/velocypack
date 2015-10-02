@@ -48,8 +48,8 @@
 
 #include "JasonType.h"
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     // unified size type for Jason, can be used on 32 and 64 bit
     // though no Jason values exceeded the bounds of 32 bit can be
@@ -247,7 +247,7 @@ namespace triagens {
       bool sortAttributeNames       = true;
     };
           
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif

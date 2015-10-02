@@ -6,8 +6,8 @@
 
 #include "Jason.h"
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     template<typename T>
     class JasonBuffer {
@@ -184,7 +184,7 @@ namespace triagens {
 
     typedef JasonBuffer<char> JasonCharBuffer;
 
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif

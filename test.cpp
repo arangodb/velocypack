@@ -15,17 +15,17 @@
 
 #include "gtest/gtest.h"
 
-using Jason             = triagens::basics::Jason;
-using JasonCharBuffer   = triagens::basics::JasonCharBuffer;
-using JasonBuilder      = triagens::basics::JasonBuilder;
-using JasonBufferDumper = triagens::basics::JasonBufferDumper;
-using JasonPrettyDumper = triagens::basics::JasonStringPrettyDumper;
-using JasonStringDumper = triagens::basics::JasonStringDumper;
-using JasonLength       = triagens::basics::JasonLength;
-using JasonPair         = triagens::basics::JasonPair;
-using JasonParser       = triagens::basics::JasonParser;
-using JasonSlice        = triagens::basics::JasonSlice;
-using JasonType         = triagens::basics::JasonType;
+using Jason             = arangodb::jason::Jason;
+using JasonCharBuffer   = arangodb::jason::JasonCharBuffer;
+using JasonBuilder      = arangodb::jason::JasonBuilder;
+using JasonBufferDumper = arangodb::jason::JasonBufferDumper;
+using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
+using JasonStringDumper = arangodb::jason::JasonStringDumper;
+using JasonLength       = arangodb::jason::JasonLength;
+using JasonPair         = arangodb::jason::JasonPair;
+using JasonParser       = arangodb::jason::JasonParser;
+using JasonSlice        = arangodb::jason::JasonSlice;
+using JasonType         = arangodb::jason::JasonType;
   
 static char Buffer[4096];
 
@@ -69,7 +69,7 @@ static bool parseFile (std::string const& filename) {
 
 static void checkDump (JasonSlice s, std::string const& knownGood) {
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(knownGood, output);
@@ -571,7 +571,7 @@ TEST(BufferDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("null"), output);
@@ -583,7 +583,7 @@ TEST(StringDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -594,7 +594,7 @@ TEST(BufferDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("false"), output);
@@ -606,7 +606,7 @@ TEST(StringDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   ASSERT_EQ(std::string("false"), buffer);
 }
@@ -617,7 +617,7 @@ TEST(BufferDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("true"), output);
@@ -629,7 +629,7 @@ TEST(StringDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
 }

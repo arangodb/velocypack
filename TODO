@@ -2,8 +2,6 @@
 
 * JasonValue, JasonArray, JasonObject c++ access
 
-* change namespace from triagens::basics to arangodb::jason (JS)
-
 * handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
 
 * add tests with numeric values +inf, -inf, NaN, INT64_MAX, INT64_MIN etc. (JS)

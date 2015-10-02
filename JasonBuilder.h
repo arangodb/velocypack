@@ -12,8 +12,8 @@
 #include "JasonSlice.h"
 #include "JasonType.h"
 
-namespace triagens {
-  namespace basics {
+namespace arangodb {
+  namespace jason {
 
     class JasonBuilder {
 
@@ -1007,7 +1007,7 @@ namespace triagens {
         }
     };
 
-  }  // namespace triagens::basics
-}  // namespace triagens
+  }  // namespace arangodb::jason
+}  // namespace arangodb
 
 #endif
