@@ -2,4 +2,6 @@ test
 bench
 core 
 *.o
+*.orig
+*.rej
 googletest
