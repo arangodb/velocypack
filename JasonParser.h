@@ -385,18 +385,10 @@ namespace triagens {
                 }
                 switch (i) {
                   case '"':
-                    _b.reserveSpace(1);
-                    _b._start[_b._pos++] = '"';
-                    highSurrogate = 0;
-                    break;
+                  case '/':
                   case '\\':
                     _b.reserveSpace(1);
-                    _b._start[_b._pos++] = '\\';
-                    highSurrogate = 0;
-                    break;
-                  case '/':
-                    _b.reserveSpace(1);
-                    _b._start[_b._pos++] = '/';
+                    _b._start[_b._pos++] = static_cast<uint8_t>(i);
                     highSurrogate = 0;
                     break;
                   case 'b':

@@ -4,12 +4,11 @@
 #include <cstdint>
 #include <string>
 
+// debug mode
 #ifdef JASON_DEBUG
-
 #ifndef DEBUG
 #define DEBUG
 #endif
-
 #include <cassert>
 #define JASON_ASSERT(x) assert(x)
 
@@ -18,9 +17,7 @@
 #ifndef NDEBUG
 #define NDEBUG
 #endif
-
 #define JASON_ASSERT(x) 
-
 #endif
 
 // check for environment type (32 or 64 bit)
@@ -29,11 +26,25 @@
 // nor 64 bit pointers!
 #if INTPTR_MAX == INT32_MAX
 #define JASON_32BIT
+
 #elif INTPTR_MAX == INT64_MAX
 #define JASON_64BIT
+
 #else
 #error "Could not determine environment type (32 or 64 bits)"
 #endif
+
+// macros for likely/unlikely
+#if defined(__GNUC__) && __GNUC__ >= 4                                                                        
+#define LIKELY(x)   (__builtin_expect((x), 1))                                                                
+#define UNLIKELY(x) (__builtin_expect((x), 0))                                                                
+
+#else                                                                                                         
+
+#define LIKELY(x)   (x)                                                                                       
+#define UNLIKELY(x) (x)                                                                                       
+#endif   
+
 
 #include "JasonType.h"
 
