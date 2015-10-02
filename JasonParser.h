@@ -343,6 +343,18 @@ namespace triagens {
           _b.addDouble(fractionalPart);
         }
 
+        int inline fastStringCopy (uint8_t* dst, uint8_t const* src) {
+          int count = 256;
+          while (count > 0 && 
+                 *src >= 32 && 
+                 *src != '\\' && 
+                 *src != '"') {
+            *dst++ = *src++;
+            count--;
+          }
+          return 256 - count;
+        }
+
         void parseString () {
           // When we get here, we have seen a " character and now want to
           // find the end of the string and parse the string value to its
@@ -358,16 +370,13 @@ namespace triagens {
           uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
           while (true) {
-            int i = getOneOrThrow("scanString: Unfinished string detected.");
             _b.reserveSpace(256);
-            int count = 256;
-            while (count-- > 0 && i >= 32 && i != '\\' && i != '"') {
-              _b._start[_b._pos++] = static_cast<uint8_t>(i);
-              i = consume();
+            if (_size - _pos >= 257) {
+              int count = fastStringCopy(_b._start + _b._pos, _start + _pos);
+              _pos += count;
+              _b._pos += count;
             }
-            if (i < 0) {
-              throw JasonParserError("scanString: Unfinished string detected.");
-            }
+            int i = getOneOrThrow("scanString: Unfinished string detected.");
             if (! large && _b._pos - (base + 1) > 127) {
               large = true;
               _b.reserveSpace(8);
