@@ -37,28 +37,45 @@ namespace triagens {
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (JasonSlice slice, T& buffer, UnsupportedTypeStrategy strategy) 
-          : _slice(slice), _buffer(&buffer), _strategy(strategy), _indentation(0) {
+        JasonDumper (T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) 
+          : _buffer(&buffer), _strategy(strategy), _indentation(0) {
         }
 
         ~JasonDumper () {
         }
 
-        void dump () {
-          internalDump(_slice);
+        void dump (JasonSlice const& slice) {
+          _indentation = 0;
+          internalDump(slice);
+        }
+
+        static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+          JasonDumper dumper(buffer, strategy);
+          dumper.internalDump(slice);
+        }
+        
+        static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+          T buffer;
+          JasonDumper dumper(buffer, strategy);
+          dumper.internalDump(slice);
+          return buffer;
+        }
+
+        void reset () {
+          _buffer.reset();
         }
 
       private:
 
         void indent () {
-          size_t n = _indentation * 2;
+          size_t n = _indentation;
           _buffer->reserve(n);
           for (size_t i = 0; i < n; ++i) {
             _buffer->append("  ", 2);
           }
         }
 
-        void internalDump (JasonSlice slice) {
+        void internalDump (JasonSlice const& slice) {
           switch (slice.type()) {
             case JasonType::None: {
               handleUnsupportedType(slice);
@@ -403,8 +420,6 @@ namespace triagens {
 
       private:
 
-        JasonSlice const _slice;
-
         T* _buffer;
 
         UnsupportedTypeStrategy _strategy;
@@ -414,8 +429,9 @@ namespace triagens {
     };
 
     // some alias types for easier usage
-    typedef JasonDumper<JasonCharBuffer> JasonBufferDumper;
-    typedef JasonDumper<std::string> JasonStringDumper;
+    typedef JasonDumper<JasonCharBuffer, false> JasonBufferDumper;
+    typedef JasonDumper<std::string, false> JasonStringDumper;
+    typedef JasonDumper<std::string, true> JasonStringPrettyDumper;
 
   }  // namespace triagens::basics
 }  // namespace triagens

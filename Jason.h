@@ -244,6 +244,7 @@ namespace triagens {
 
     struct JasonOptions {
       bool checkAttributeUniqueness = false;
+      bool sortAttributeNames       = true;
     };
           
   }  // namespace triagens::basics

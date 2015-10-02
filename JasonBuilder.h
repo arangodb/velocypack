@@ -449,7 +449,9 @@ namespace triagens {
             if ((_start[tos] & 1) == 0) {
               _start[tos]--;
             }
-            if (_start[tos] == 0x07 && index.size() >= 2) {
+            if (_start[tos] == 0x07 && 
+                index.size() >= 2 &&
+                options.sortAttributeNames) {
               sortObjectIndexShort(_start + tos, index);
             }
             for (size_t i = 0; i < index.size(); i++) {
@@ -469,7 +471,9 @@ namespace triagens {
             if ((_start[tos] & 1) == 1) {
               _start[tos]++;
             }
-            if (_start[tos] == 0x08 && index.size() >= 2) {
+            if (_start[tos] == 0x08 && 
+                index.size() >= 2 &&
+                options.sortAttributeNames) {
               sortObjectIndexLong(_start + tos, index);
             }
             JasonLength x = index.size();

@@ -16,6 +16,7 @@ using Jason             = triagens::basics::Jason;
 using JasonCharBuffer   = triagens::basics::JasonCharBuffer;
 using JasonBuilder      = triagens::basics::JasonBuilder;
 using JasonBufferDumper = triagens::basics::JasonBufferDumper;
+using JasonPrettyDumper = triagens::basics::JasonStringPrettyDumper;
 using JasonStringDumper = triagens::basics::JasonStringDumper;
 using JasonLength       = triagens::basics::JasonLength;
 using JasonPair         = triagens::basics::JasonPair;
@@ -31,8 +32,8 @@ static char Buffer[4096];
 
 static void checkDump (JasonSlice s, std::string const& knownGood) {
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(s, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(knownGood, output);
 }
@@ -344,6 +345,33 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
 
 
 // Let the tests begin...
+  
+TEST(PrettyDumperTest, SimpleObject) {
+  std::string const value("{\"foo\":\"bar\"}");
+
+  JasonParser parser;
+  parser.parse(value);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  std::string result = JasonPrettyDumper::Dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result);
+}
+
+TEST(PrettyDumperTest, ComplexObject) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  JasonParser parser;
+  parser.options.sortAttributeNames = false;
+  parser.parse(value);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  std::string result = JasonPrettyDumper::Dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
+}
 
 TEST(BufferDumperTest, Null) {
   Buffer[0] = 0x1;
@@ -351,8 +379,8 @@ TEST(BufferDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("null"), output);
 }
@@ -363,8 +391,8 @@ TEST(StringDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
 
@@ -374,8 +402,8 @@ TEST(BufferDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("false"), output);
 }
@@ -386,8 +414,8 @@ TEST(StringDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   ASSERT_EQ(std::string("false"), buffer);
 }
 
@@ -397,8 +425,8 @@ TEST(BufferDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonBufferDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("true"), output);
 }
@@ -409,8 +437,8 @@ TEST(StringDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(slice, buffer, triagens::basics::STRATEGY_FAIL);
-  dumper.dump();
+  JasonStringDumper dumper(buffer, triagens::basics::STRATEGY_FAIL);
+  dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
 }
 
