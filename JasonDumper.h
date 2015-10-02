@@ -1,13 +1,13 @@
 #ifndef JASON_DUMPER_H
 #define JASON_DUMPER_H 1
 
+#include <string>
+
 #include "JasonBuffer.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
 #include "Jason.h"
 #include "fpconv.h"
-
-#include <string>
 
 namespace triagens {
   namespace basics {
@@ -53,11 +53,23 @@ namespace triagens {
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice);
         }
+
+        static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+          JasonDumper dumper(buffer, strategy);
+          dumper.internalDump(*slice);
+        }
         
         static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice);
+          return buffer;
+        }
+
+        static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+          T buffer;
+          JasonDumper dumper(buffer, strategy);
+          dumper.internalDump(*slice);
           return buffer;
         }
 

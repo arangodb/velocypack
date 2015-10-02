@@ -345,6 +345,21 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
 
 
 // Let the tests begin...
+
+TEST(OutStreamTest, StringifyComplexObject) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  JasonParser parser;
+  parser.options.sortAttributeNames = false;
+  parser.parse(value);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+
+  std::ostringstream result;
+  result << s;
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
+}
   
 TEST(PrettyDumperTest, SimpleObject) {
   std::string const value("{\"foo\":\"bar\"}");

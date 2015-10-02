@@ -1,25 +1,8 @@
-* fuse types JasonType::String & JasonType::StringLong,
-             JasonType::Array & JasonType::ArrayLong,
-             JasonType::Object & JasonType::ObjectLong (JS)
-  --> done. long types have been removed
-
-* add RapidJson to bench for comparisons (JS)
-  --> done, run bench with "rapidjson" as last parameter
-  --> TODO: performance tests need to be repeated after refactoring
-
-* compare against TRI_json_t (JS)
-  --> done for small.json and sample.json. Jason is 2 to 3 times faster
-  --> TODO: performance tests need to be repeated after refactoring
-
-* add pretty printing option to dumper (JS)
-  --> done, but needs testing (requires working arrays and objects)
-
-* unify interface of JasonBuffer with interface of std::string (JS)
-  --> done
-
 * beat rapidjson!
 
 * add tests for files in jsonSample/ (JS)
+
+* JasonValue, JasonArray, JasonObject c++ access
 
 * change namespace from triagens::basics to arangodb::jason (JS)
 
@@ -38,8 +21,6 @@
 * test long variants (presumably just use > 255 entries)
 
 * test arrays/objects with few but long elements that exceed 64 KB
-
-* decide if JasonBuffer should be used in JasonBuilder instead of plain std::vector<uint8_t>
 
 * support modification of Jason objects
 

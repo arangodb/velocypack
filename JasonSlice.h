@@ -5,7 +5,6 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include <array>
 #include <iostream>
 
 #include "Jason.h"
@@ -741,6 +740,18 @@ namespace triagens {
           }; 
           memcpy(&binary[0], _start + 1, sizeof(T));
           return value; 
+        }
+
+        std::string toString () const;
+
+        friend std::ostream& operator<< (std::ostream& stream, JasonSlice const* slice) {
+          stream << slice->toString();
+          return stream;
+        }
+
+        friend std::ostream& operator<< (std::ostream& stream, JasonSlice const& slice) {
+          stream << slice.toString();
+          return stream;
         }
 
       private:
