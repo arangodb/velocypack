@@ -88,11 +88,11 @@ namespace arangodb {
         static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
 
         JasonBuffer<uint8_t> _buffer;
-        uint8_t*       _start;
-        JasonLength    _size;
-        JasonLength    _pos;   // the current append position, always <= _size
-        bool           _attrWritten;  // indicates that an attribute name
-                                      // in an object has been written
+        uint8_t*             _start;
+        JasonLength          _size;
+        JasonLength          _pos;   // the current append position, always <= _size
+        bool                 _attrWritten;  // indicates that an attribute name
+                                            // in an object has been written
         std::vector<JasonLength>              _stack;
         std::vector<std::vector<JasonLength>> _index;
 
@@ -126,7 +126,6 @@ namespace arangodb {
           }
           JasonCheckSize(_pos + len);
 
-          // fill the (potentially) newly allocated area with zeros
           _buffer.prealloc(len);
           _start = _buffer.data();
           _size = _buffer.size();
@@ -235,9 +234,9 @@ namespace arangodb {
         JasonOptions options;
 
         JasonBuilder ()
-          : _pos(0), 
+          : _buffer({ 0 }),
+            _pos(0), 
             _attrWritten(false) {
-          _buffer.push_back(0);
           _start = _buffer.data();
           _size = _buffer.size();
         }
@@ -307,13 +306,6 @@ namespace arangodb {
           _pos = 0;
           _attrWritten = false;
           _stack.clear();
-        }
-
-        void clearTemporary () {
-          // Clear temporary storage
-          _index.clear();
-          SortObjectSmallEntries.clear();
-          SortObjectLargeEntries.clear();
         }
 
         uint8_t* start () const {
@@ -623,41 +615,35 @@ namespace arangodb {
             _start[_pos++] = 0x0c;
             // write string length
             appendLength(strLen, 8);
-            target = _start + _pos;
-            _pos += strLen;
           }
           else {
             // short string
             _start[_pos++] = 0x40 + strLen;
-            target = _start + _pos;
-            _pos += strLen;
           }
+          target = _start + _pos;
+          _pos += strLen;
           return target;
         }
 
-        void addArray () {
+        void addCompoundValue (uint8_t type) {
           reserveSpace(10);
           // an array is started:
           _stack.push_back(_pos);
           while (_stack.size() > _index.size()) {
             _index.emplace_back();
           }
-          _index[_stack.size()-1].clear();
-          _start[_pos++] = 0x05;
+          _index[_stack.size() - 1].clear();
+          _start[_pos++] = type;
           _start[_pos++] = 0x00;  // Will be filled later with short bytelength
           _pos += 8;              // Possible space for long bytelength
         }
+
+        void addArray () {
+          addCompoundValue(0x05);
+        }
           
         void addObject () {
-          reserveSpace(10);
-          _stack.push_back(_pos);
-          while (_stack.size() > _index.size()) {
-            _index.emplace_back();
-          }
-          _index[_stack.size()-1].clear();
-          _start[_pos++] = 0x07;
-          _start[_pos++] = 0x00;  // Will be filled later with short bytelength
-          _pos += 8;              // Possible space for long bytelength
+          addCompoundValue(0x07);
         }
  
         void set (Jason const& item) {
@@ -931,13 +917,11 @@ namespace arangodb {
             // with valid UTF-8!
             return _start + _pos - size;
           }
-          else {
-            throw JasonBuilderError("Only JasonType::ID, JasonType::Binary and JasonType::String are valid for JasonPair argument.");
-          }
+          throw JasonBuilderError("Only JasonType::ID, JasonType::Binary and JasonType::String are valid for JasonPair argument.");
         }
 
         void reportAdd (JasonLength base) {
-          size_t depth = _stack.size()-1;
+          size_t depth = _stack.size() - 1;
           _index[depth].push_back(_pos - base);
         }
 
@@ -997,13 +981,6 @@ namespace arangodb {
               checkAttributeUniqueness(value);
             }
           } 
-        }
-
-        // To be deleted when parser is ready:
-        void addArray (int64_t) {
-        }
-
-        void addObject (int64_t) {
         }
     };
 

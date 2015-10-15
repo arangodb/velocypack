@@ -1,6 +1,7 @@
 CC=g++
-#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 
-CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG
+CFLAGS=-Wall -Wextra -std=c++11 -g -O3 
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -DJASON_VALIDATEUTF8 
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG -DJASON_VALIDATEUTF8
 
 all:	test bench
 
