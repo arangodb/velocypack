@@ -677,7 +677,7 @@ TEST(SliceTest, Double) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  EXPECT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_FLOAT_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, DoubleNegative) {
@@ -691,7 +691,7 @@ TEST(SliceTest, DoubleNegative) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  EXPECT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_FLOAT_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, SmallInt) {
@@ -1785,6 +1785,67 @@ TEST(ParserTest, Int3) {
   checkDump(s, value);
 }
 
+TEST(ParserTest, UIntMaxNeg) {
+  std::string value("-");
+  value.append(std::to_string(UINT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  // handle rounding errors
+  ASSERT_TRUE(s.getDouble() >= -18446744073709552000.);
+  ASSERT_TRUE(s.getDouble() <= -18446744073709551615.);
+}
+
+TEST(ParserTest, IntMin) {
+  std::string const value(std::to_string(INT64_MIN));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Int, 9ULL);
+  ASSERT_EQ(INT64_MIN, s.getInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, IntMax) {
+  std::string const value(std::to_string(INT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.getUInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, UIntMax) {
+  std::string const value(std::to_string(UINT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(UINT64_MAX, s.getUInt());
+
+  checkDump(s, value);
+}
+
 TEST(ParserTest, Double1) {
   std::string const value("1.0124");
 
@@ -2844,7 +2905,7 @@ TEST(LookupTest, LookupShortObject) {
 
   v = s.get("baz");  
   ASSERT_TRUE(v.isDouble());
-  EXPECT_FLOAT_EQ(13.53, v.getDouble());
+  ASSERT_FLOAT_EQ(13.53, v.getDouble());
 
   v = s.get("qux");  
   ASSERT_TRUE(v.isArray());

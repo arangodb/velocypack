@@ -73,9 +73,10 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x0d-0x0f : reserved
   - 0x10-0x17 : UTC-date in milliseconds since the epoch, stored as uint
                 as below number of bytes used is V-0x0f
-  - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17
+  - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17.
+                max value is INT64_MAX
   - 0x20-0x27 : negative int, absolute value is stored as uint, 1-8
-                bytes, number is V-0x1f
+                bytes, number is V-0x1f. max value is INT64_MIN
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
   - 0x30-0x3f : small integers -8, -7, ... 0, 1, ... 7 in twos complement, 
                 that is, 0 is 0x30 and 0x37 is 7 and 0x38 is -8, etc. 
