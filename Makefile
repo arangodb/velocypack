@@ -1,9 +1,11 @@
 CC=g++
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -DRAPIDJSON_SSE42 -march=native
-CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native -msse4.2 -DNO_SSE42
+CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native -msse4.2
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DNO_SSE42
 
-all:	test bench
+all:	test bench JasonAsm
 
 .PHONY: googletest
 
@@ -24,6 +26,9 @@ test:	Makefile test.cpp JasonDumper.h fpconv.o Jason.h JasonBuffer.h JasonBuilde
 
 bench: Makefile bench.cpp Jason.h JasonBuilder.h JasonBuilder.o JasonParser.h JasonSlice.h JasonType.h
 	$(CC) $(CFLAGS) bench.cpp JasonBuilder.o -o bench
+
+JasonAsm: Makefile JasonAsm.h JasonAsm.cpp
+	$(CC) $(CFLAGS) JasonAsm.cpp -DCOMPILE_JASONASM_UNITTESTS -o JasonAsm
 
 clean:	
 	rm -rf *.o test bench
