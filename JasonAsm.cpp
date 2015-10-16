@@ -3,7 +3,8 @@
 
 #include "JasonAsm.h"
 
-int (*JSONStringCopy)(uint8_t*&, uint8_t const*&, int) = DoInit;
+int (*JSONStringCopy)(uint8_t*&, uint8_t const*&, int) = DoInitCopy;
+int (*JSONSkipWhiteSpace)(uint8_t const*&, int) = DoInitSkip;
 
 #if defined(COMPILE_JASONASM_UNITTESTS)
 
@@ -122,40 +123,40 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Race took altogether " << totalTime2.count() << " seconds." 
             << std::endl;
-  std::cout << "Time to copy string of length " << size+16
+  std::cout << "Time to copy string of length " << size
             << " on average is: " << totalTime2.count() / repeat << "."
             << std::endl;
-  std::cout << "Megabytes copied per second: "
+  std::cout << "Bytes copied per second: "
             << (double) size * (double) repeat / totalTime2.count()
             << std::endl;
 
   std::cout << "\nNow racing for the repeated full string, now unaligned target...\n" << std::endl;
 
-  start2 = std::chrono::high_resolution_clock::now();
   dst++;
+  start2 = std::chrono::high_resolution_clock::now();
   for (int j = 0; j < repeat; j++) {
     srcx = src; dstx = dst;
     copied = JSONStringCopy(dstx, srcx, size);
     akku = akku * 13 + copied;
   }
   now2 = std::chrono::high_resolution_clock::now();
+  dst--;
 
   totalTime2 
       = std::chrono::duration_cast<std::chrono::duration<double>>(now2 - start2);
 
   std::cout << "Race took altogether " << totalTime2.count() << " seconds." 
             << std::endl;
-  std::cout << "Time to copy string of length " << size+16
+  std::cout << "Time to copy string of length " << size
             << " on average is: " << totalTime2.count() / repeat << "."
             << std::endl;
-  std::cout << "Megabytes copied per second: "
+  std::cout << "Bytes copied per second: "
             << (double) size * (double) repeat / totalTime2.count()
             << std::endl;
 
   std::cout << "\nNow comparing with strcpy...\n" << std::endl;
 
   start2 = std::chrono::high_resolution_clock::now();
-  dst--;
   for (int j = 0; j < repeat; j++) {
     srcx = src; dstx = dst;
     strcpy((char*) dstx, (char*) srcx);
@@ -167,15 +168,110 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Race took altogether " << totalTime2.count() << " seconds." 
             << std::endl;
-  std::cout << "Time to copy string of length " << size+16
+  std::cout << "Time to copy string of length " << size
             << " on average is: " << totalTime2.count() / repeat << "."
             << std::endl;
-  std::cout << "Megabytes copied per second: "
+  std::cout << "Bytes copied per second: "
             << (double) size * (double) repeat / totalTime2.count()
             << std::endl;
 
-  //std::cout << "\n\nAkku (just ignore, this is to beat the compiler optimization): "
-  //          << akku << std::endl;
+  std::cout << "\n\n\nNOW WHITESPACE SKIPPING\n" << std::endl;
+
+  // Now do the whitespace skipping tests/measurements:
+  static char const whitetab[17] = "       \t   \n   \r";
+  for (int i = 0; i < size+16; i++) {
+    src[i] = whitetab[i % 16];
+  }
+  src[size+16] = 0;
+
+  if (docorrectness > 0) {
+    std::cout << "Performing correctness tests for whitespace skipping..." 
+              << std::endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int salign = 0; salign < 16; salign++) {
+      src += salign;
+      for (int i = 0;
+           i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
+        uint8_t merk;
+        int pos = testPositions[i];
+        if (pos < 0) {
+          pos = size + pos;
+        }
+
+        // Test a non-whitespace character:
+        merk = src[pos]; src[pos] = 'x';
+        srcx = src;
+        copied = JSONSkipWhiteSpace(srcx, size);
+        if (copied != pos) {
+          std::cout << "Error: " << salign << " "
+                    << i << " " << pos << " " << copied << std::endl;
+        }
+        src[pos] = merk;
+      }
+      src -= salign;
+    }
+
+    decltype(start) now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> totalTime 
+        = std::chrono::duration_cast<std::chrono::duration<double>>(now-start);
+    std::cout << "Whitespace tests took altogether " << totalTime.count() 
+              << " seconds." << std::endl;
+  }
+
+  std::cout << "\nNow racing for the repeated full string...\n" << std::endl;
+
+  start2 = std::chrono::high_resolution_clock::now();
+  akku = 0;
+  src[size] = 0;
+  for (int j = 0; j < repeat; j++) {
+    srcx = src;
+    copied = JSONSkipWhiteSpace(srcx, size);
+    akku = akku * 13 + copied;
+  }
+  now2 = std::chrono::high_resolution_clock::now();
+
+  totalTime2 
+      = std::chrono::duration_cast<std::chrono::duration<double>>(now2-start2);
+
+  std::cout << "Race took altogether " << totalTime2.count() << " seconds." 
+            << std::endl;
+  std::cout << "Time to skip white string of length " << size
+            << " on average is: " << totalTime2.count() / repeat << "."
+            << std::endl;
+  std::cout << "Bytes skipped per second: "
+            << (double) size * (double) repeat / totalTime2.count()
+            << std::endl;
+
+  std::cout << "\nNow comparing with strlen...\n" << std::endl;
+
+  start2 = std::chrono::high_resolution_clock::now();
+  for (int j = 0; j < repeat; j++) {
+    srcx = src;
+    copied = strlen((char*) srcx);
+    // Fake activity for the compiler:
+    src[0] = (j & 0xf) + 1;
+    akku = akku * 13 + copied;
+  }
+  now2 = std::chrono::high_resolution_clock::now();
+
+  totalTime2 
+      = std::chrono::duration_cast<std::chrono::duration<double>>(now2 - start2);
+
+  std::cout << "Race took altogether " << totalTime2.count() << " seconds." 
+            << std::endl;
+  std::cout << "Time to strlen string of length " << size
+            << " on average is: " << totalTime2.count() / repeat << "."
+            << std::endl;
+  std::cout << "Bytes scanned per second: "
+            << (double) size * (double) repeat / totalTime2.count()
+            << std::endl;
+
+  std::cout << "\n\n\nAkku (please ignore):" << akku << std::endl;
+
+  delete[] src;
+  delete[] dst;
   return 0;
 }
 
