@@ -2,10 +2,6 @@
 
 * handle unsupported JSON types or out-of-bounds stuff in JasonDumper (JS)
 
-* test long variants (presumably just use > 255 entries) (JS)
-
-* test arrays/objects with few but long elements that exceed 64 KB (JS)
-
 * finish implementation of JasonSlice for all types (JS)
 
 
@@ -23,4 +19,3 @@
 
 * optional: support for other input encodings (e.g. UTF-16)
 
-* optional: add SSE4 optimization for whitespace parsing (borrow from rapidjson)
