@@ -645,6 +645,26 @@ TEST(StringDumperTest, ArangoDBId) {
   EXPECT_THROW(dumper.dump(slice), JasonDumperError);
 }
 
+TEST(StringDumperTest, ArangoDBIdCallback) {
+  JasonBuilder b;
+  b.add(Jason(JasonType::Object));
+  b.add("_id", Jason(JasonType::ArangoDB_id));
+  b.close();
+
+  bool sawArangoDBId = false;
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  dumper.setCallback([&] (std::string*, JasonSlice const& slice) {
+    if (slice.type() == JasonType::ArangoDB_id) {
+      sawArangoDBId = true;
+      return true;
+    }
+    return false;
+  });
+  dumper.dump(b.slice());
+  ASSERT_TRUE(sawArangoDBId);
+}
+
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;
   v *= -v;
