@@ -1,15 +1,13 @@
 * beat rapidjson!
 
-* add tests with numeric values +inf, -inf, NaN etc. (JS)
+* handle unsupported JSON types or out-of-bounds stuff in JasonDumper (JS)
 
 * test long variants (presumably just use > 255 entries) (JS)
 
 * test arrays/objects with few but long elements that exceed 64 KB (JS)
 
-
 * finish implementation of JasonSlice for all types (JS)
 
-* handle unsupported JSON types in JasonDumper (JS)
 
 
 * JasonValue, JasonArray, JasonObject c++ access
