@@ -214,26 +214,39 @@ namespace arangodb {
         // skips over all following whitespace tokens but does not consume the
         // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
-          while (_pos < _size) {
-            if (! isWhiteSpace(_start[_pos])) { 
-              return static_cast<int>(_start[_pos]);
-            }
-            ++_pos;
-          } 
+          int remaining = static_cast<int>(_size - _pos);
+          uint8_t const* src = _start + _pos;
+          int count = JSONSkipWhiteSpace(src, remaining);
+          _pos += count;
+          if (count < remaining) {
+            return static_cast<int>(_start[_pos]);
+          }
           throw JasonParserError(err);
         }
-
-        // The fast non-checking variant:
-        inline int skipWhiteSpaceNoCheck () {
-          while (_pos < _size) {
-            if (! isWhiteSpace(_start[_pos])) {
+#if 0
+        inline int skipWhiteSpace (char const* err) {
+          JasonLength remaining = _size - _pos;
+          uint8_t const* src = _start + _pos;
+          int count;
+          while (remaining >= 1024*1024) {
+            count = JSONSkipWhiteSpace(src, 1024*1024);
+            _pos += count;
+            if (count < 1024*1024) {
               return static_cast<int>(_start[_pos]);
             }
-            ++_pos;
-          } 
-          return -1;
+            remaining = _size - _pos;
+          }
+          if (remaining == 0) {
+            throw JasonParserError(err);
+          }
+          count = JSONSkipWhiteSpace(src, remaining);
+          _pos += count;
+          if (count < static_cast<int>(remaining)) {
+            return static_cast<int>(_start[_pos]);
+          }
+          throw JasonParserError(err);
         }
-
+#endif
         void parseTrue () {
           // Called, when main mode has just seen a 't', need to see "rue" next
           if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
@@ -408,11 +421,16 @@ namespace arangodb {
 #ifdef JASON_VALIDATEUTF8
             int i = getOneOrThrow("scanString: Unfinished string detected.");
 #else
-            if (_size - _pos >= 257) {
+            uint8_t const* s = _start + _pos;
+            while (_size - _pos >= 271) {
               _b.reserveSpace(256);
-              int count = fastStringCopy(_b._start + _b._pos, _start + _pos);
+              uint8_t* d = _b._start + _b._pos;
+              int count = JSONStringCopy(d, s, 256);
               _pos += count;
               _b._pos += count;
+              if (count < 256) {
+                break;
+              }
             }
             int i = getOneOrThrow("scanString: Unfinished string detected.");
             if (! large && _b._pos - (base + 1) > 127) {
