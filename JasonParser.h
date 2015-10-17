@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+#include "JasonAsm.h"
 #include "JasonType.h"
 #include "Jason.h"
 #include "JasonBuilder.h"
