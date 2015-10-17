@@ -1,7 +1,5 @@
 * beat rapidjson!
 
-* test type External
-
 * implement types ArangoDB_id, ID 
 
 * finish implementation of JasonSlice for all types (JS)

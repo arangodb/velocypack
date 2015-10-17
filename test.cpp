@@ -635,6 +635,16 @@ TEST(StringDumperTest, True) {
   ASSERT_EQ(std::string("true"), buffer);
 }
 
+TEST(StringDumperTest, ArangoDBId) {
+  Buffer[0] = 0xb;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;
   v *= -v;
