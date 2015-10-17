@@ -21,22 +21,22 @@ googletest:
 	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
 	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
 
-fpconv.o: Makefile powers.h fpconv.h fpconv.cpp
+fpconv.o: GNUmakefile powers.h fpconv.h fpconv.cpp
 	$(CC) $(CFLAGS) fpconv.cpp -c -o fpconv.o
 
-JasonAsm.o: Makefile JasonAsm.h JasonAsm.cpp
+JasonAsm.o: GNUmakefile JasonAsm.h JasonAsm.cpp
 	$(CC) $(CFLAGS) JasonAsm.cpp -c -o JasonAsm.o
 
-Jason.o: Makefile Jason.h JasonBuilder.h JasonDumper.h JasonParser.h JasonSlice.h JasonType.h Jason.cpp
+Jason.o: GNUmakefile Jason.h JasonBuilder.h JasonDumper.h JasonParser.h JasonSlice.h JasonType.h Jason.cpp
 	$(CC) $(CFLAGS) Jason.cpp -c -o Jason.o
 
-test:	Makefile test.cpp fpconv.o Jason.h Jason.o JasonAsm.o
+test:	GNUmakefile test.cpp fpconv.o Jason.h Jason.o JasonAsm.o
 	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonAsm.o googletest/googletest/libgtest.a -pthread -o test
 
-bench: Makefile bench.cpp fpconv.o Jason.h Jason.o JasonAsm.o
+bench: GNUmakefile bench.cpp fpconv.o Jason.h Jason.o JasonAsm.o
 	$(CC) $(CFLAGS) bench.cpp fpconv.o Jason.o JasonAsm.o -o bench
 
-JasonAsm: Makefile JasonAsm.h JasonAsm.cpp
+JasonAsm: GNUmakefile JasonAsm.h JasonAsm.cpp
 	$(CC) $(CFLAGS) JasonAsm.cpp -DCOMPILE_JASONASM_UNITTESTS -o JasonAsm
 
 clean:	
