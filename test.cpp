@@ -1541,7 +1541,7 @@ TEST(BuilderTest, External) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[1+sizeof(char*)] 
+  static uint8_t correctResult[1 + sizeof(char*)] 
     = { 0x00 };
   correctResult[0] = 0x09;
   uint8_t* p = externalStuff;
@@ -1549,6 +1549,84 @@ TEST(BuilderTest, External) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ExternalUTCDate) {
+  int64_t const v = -24549959465;
+  JasonBuilder bExternal;
+  bExternal.add(Jason(v, JasonType::UTCDate));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+  ASSERT_EQ(JasonType::UTCDate, sExternal.type());
+  ASSERT_EQ(v, sExternal.getUTCDate());
+}
+
+TEST(BuilderTest, ExternalDouble) {
+  double const v = -134.494401;
+  JasonBuilder bExternal;
+  bExternal.add(Jason(v));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+  ASSERT_EQ(JasonType::Double, sExternal.type());
+  ASSERT_FLOAT_EQ(v, sExternal.getDouble());
+}
+
+TEST(BuilderTest, ExternalBinary) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p), JasonType::Binary));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
+  ASSERT_EQ(JasonType::Binary, sExternal.type());
+  JasonLength len;
+  uint8_t const* str = sExternal.getBinary(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, memcmp(str, p, len));
+}
+
+TEST(BuilderTest, ExternalString) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p)));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
+  ASSERT_EQ(JasonType::String, sExternal.type());
+  JasonLength len;
+  char const* str = sExternal.getString(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, strncmp(str, p, len));
 }
 
 TEST(BuilderTest, UInt) {

@@ -902,6 +902,7 @@ namespace arangodb {
               JasonLength size = uintLength(v);
               reserveSpace(1 + size + v);
               appendUInt(v, 0xbf);
+              memcpy(_start + _pos, s->c_str(), v);
               _pos += v;
               break;
             }
