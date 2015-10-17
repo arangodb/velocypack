@@ -1979,6 +1979,20 @@ TEST(ParserTest, DoubleScientific4) {
   checkDump(s, valueOut);
 }
 
+TEST(ParserTest, DoubleMinusInf) {
+  std::string const value("-1.2345e999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, DoublePlusInf) {
+  std::string const value("1.2345e999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
 TEST(ParserTest, Empty) {
   std::string const value("");
 
