@@ -623,8 +623,19 @@ namespace arangodb {
           }
         }
 
-        void addUTCDate (uint64_t v) {
-          appendUInt(v, 0x0f);
+        void addUTCDate (int64_t v) {
+          static_assert(sizeof(int64_t) == sizeof(uint64_t), "invalid int64 size");
+
+          uint64_t dv;
+          memcpy(&dv, &v, sizeof(int64_t));
+          dv = 1 + (~ dv);
+          JasonLength vSize = sizeof(int64_t);
+          reserveSpace(1 + vSize);
+          _start[_pos++] = 0x0d;
+          for (uint64_t x = dv; vSize > 0; vSize--) {
+            _start[_pos++] = x & 0xff;
+            x >>= 8;
+          }
         }
 
         uint8_t* addString (uint64_t strLen) {
@@ -796,8 +807,7 @@ namespace arangodb {
               }
               break;
             }
-            case JasonType::UInt:
-            case JasonType::UTCDate: {
+            case JasonType::UInt: {
               uint64_t v = 0;
               switch (ctype) {
                 case Jason::CType::Double:
@@ -816,7 +826,7 @@ namespace arangodb {
                   v = item.getUInt64();
                   break;
                 default:
-                  throw JasonBuilderError("Must give number for JasonType::UInt and JasonType::UTCDate.");
+                  throw JasonBuilderError("Must give number for JasonType::UInt.");
               }
               JasonLength size = uintLength(v);
               reserveSpace(1 + size);
@@ -826,6 +836,13 @@ namespace arangodb {
               else {
                 appendUInt(v, 0x0f);
               }
+              break;
+            }
+            case JasonType::UTCDate: {
+              if (item.jasonType() == JasonType::Int) {
+                throw JasonBuilderError("Must give number for JasonType::UTCDate.");
+              }
+              addUTCDate(item.getInt64());
               break;
             }
             case JasonType::String: {
@@ -885,6 +902,7 @@ namespace arangodb {
               JasonLength size = uintLength(v);
               reserveSpace(1 + size + v);
               appendUInt(v, 0xbf);
+              memcpy(_start + _pos, s->c_str(), v);
               _pos += v;
               break;
             }

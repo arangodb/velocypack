@@ -1,10 +1,6 @@
 * beat rapidjson!
 
-* fix type UTCDate
-
 * implement types ArangoDB_id, ID 
-
-* test type External
 
 * finish implementation of JasonSlice for all types (JS)
 

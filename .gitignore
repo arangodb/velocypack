@@ -1,6 +1,7 @@
 test
 bench
 core 
+JasonAsm
 *.o
 *.orig
 *.rej

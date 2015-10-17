@@ -73,9 +73,9 @@ indicates the type (and often the length) of the Jason value at hand:
                 bytes (not Unicode chars) as little endian unsigned
                 integer, note that long strings are not zero-terminated
                 and may contain zero bytes
-  - 0x0d-0x0f : reserved
-  - 0x10-0x17 : UTC-date in milliseconds since the epoch, stored as uint
-                as below number of bytes used is V-0x0f
+  - 0x0d      : UTC-date in milliseconds since the epoch, stored as 8 byte
+                signed int, little endian, 2s complement
+  - 0x0e-0x17 : reserved
   - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17.
                 max value is INT64_MAX
   - 0x20-0x27 : negative int, absolute value is stored as uint, 1-8

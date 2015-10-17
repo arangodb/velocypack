@@ -2,6 +2,7 @@
 #define JASON_DUMPER_H 1
 
 #include <string>
+#include <functional>
 
 #include "JasonBuffer.h"
 #include "JasonSlice.h"
@@ -42,6 +43,10 @@ namespace arangodb {
         }
 
         ~JasonDumper () {
+        }
+
+        void setCallback (std::function<bool(T*, JasonSlice const&)> const& callback) {
+          _callback = callback;
         }
 
         void dump (JasonSlice const& slice) {
@@ -88,6 +93,10 @@ namespace arangodb {
         }
 
         void internalDump (JasonSlice const& slice) {
+          if (_callback && _callback(_buffer, slice)) {
+            return;
+          }
+
           switch (slice.type()) {
             case JasonType::None: {
               handleUnsupportedType(slice);
@@ -440,6 +449,8 @@ namespace arangodb {
       private:
 
         T* _buffer;
+          
+        std::function<bool(T*, JasonSlice const&)> _callback;
 
         UnsupportedTypeStrategy _strategy;
 

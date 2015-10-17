@@ -635,6 +635,36 @@ TEST(StringDumperTest, True) {
   ASSERT_EQ(std::string("true"), buffer);
 }
 
+TEST(StringDumperTest, ArangoDBId) {
+  Buffer[0] = 0xb;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ArangoDBIdCallback) {
+  JasonBuilder b;
+  b.add(Jason(JasonType::Object));
+  b.add("_id", Jason(JasonType::ArangoDB_id));
+  b.close();
+
+  bool sawArangoDBId = false;
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  dumper.setCallback([&] (std::string*, JasonSlice const& slice) {
+    if (slice.type() == JasonType::ArangoDB_id) {
+      sawArangoDBId = true;
+      return true;
+    }
+    return false;
+  });
+  dumper.dump(b.slice());
+  ASSERT_TRUE(sawArangoDBId);
+}
+
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;
   v *= -v;
@@ -1541,7 +1571,7 @@ TEST(BuilderTest, External) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[1+sizeof(char*)] 
+  static uint8_t correctResult[1 + sizeof(char*)] 
     = { 0x00 };
   correctResult[0] = 0x09;
   uint8_t* p = externalStuff;
@@ -1549,6 +1579,113 @@ TEST(BuilderTest, External) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ExternalUTCDate) {
+  int64_t const v = -24549959465;
+  JasonBuilder bExternal;
+  bExternal.add(Jason(v, JasonType::UTCDate));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+  ASSERT_EQ(JasonType::UTCDate, sExternal.type());
+  ASSERT_EQ(v, sExternal.getUTCDate());
+}
+
+TEST(BuilderTest, ExternalDouble) {
+  double const v = -134.494401;
+  JasonBuilder bExternal;
+  bExternal.add(Jason(v));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+  ASSERT_EQ(JasonType::Double, sExternal.type());
+  ASSERT_FLOAT_EQ(v, sExternal.getDouble());
+}
+
+TEST(BuilderTest, ExternalBinary) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p), JasonType::Binary));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
+  ASSERT_EQ(JasonType::Binary, sExternal.type());
+  JasonLength len;
+  uint8_t const* str = sExternal.getBinary(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, memcmp(str, p, len));
+}
+
+TEST(BuilderTest, ExternalString) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p)));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
+  ASSERT_EQ(JasonType::String, sExternal.type());
+  JasonLength len;
+  char const* str = sExternal.getString(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, strncmp(str, p, len));
+}
+
+TEST(BuilderTest, ExternalExternal) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p)));
+
+  JasonBuilder bExExternal;
+  bExExternal.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  bExExternal.add(Jason(std::string(p)));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(JasonType::External, sExternal.type());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+
+  JasonSlice sExExternal(sExternal.getExternal());
+  ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
+  ASSERT_EQ(JasonType::String, sExExternal.type());
+  JasonLength len;
+  char const* str = sExExternal.getString(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, strncmp(str, p, len));
 }
 
 TEST(BuilderTest, UInt) {
@@ -1645,6 +1782,54 @@ TEST(BuilderTest, Binary) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, UTCDate) {
+  int64_t const value = 12345678;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateZero) {
+  int64_t const value = 0;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateMin) {
+  int64_t const value = INT64_MIN;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateMax) {
+  int64_t const value = INT64_MAX;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
 TEST(BuilderTest, ID) {
   char const* key = "\x02\x03\x05\x08\x0d";
 
@@ -1663,15 +1848,20 @@ TEST(BuilderTest, ID) {
 
 TEST(BuilderTest, ArangoDB_id) {
   JasonBuilder b;
-  b.add(Jason(JasonType::ArangoDB_id));
+  b.add(Jason(JasonType::Object));
+  b.add("_id", Jason(JasonType::ArangoDB_id));
+  b.close();
 
-  uint8_t* result = b.start();
-  JasonLength len = b.size();
+  JasonSlice s(b.start());
+  ASSERT_EQ(10ULL, s.byteSize());
 
-  static uint8_t correctResult[] = { 0x0b };
-
-  ASSERT_EQ(sizeof(correctResult), len);
-  ASSERT_EQ(0, memcmp(result, correctResult, len));
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "_id";
+  ASSERT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  ASSERT_EQ(JasonType::ArangoDB_id, ss.type());
+  checkBuild(ss, JasonType::ArangoDB_id, 1);
 }
 
 TEST(ParserTest, Garbage1) {

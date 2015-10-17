@@ -48,9 +48,9 @@ namespace arangodb {
             /* 0x00 */  JT::None,        /* 0x01 */  JT::Null,        /* 0x02 */  JT::Bool,        /* 0x03 */  JT::Bool,        
             /* 0x04 */  JT::Double,      /* 0x05 */  JT::Array,       /* 0x06 */  JT::Array,       /* 0x07 */  JT::Object,      
             /* 0x08 */  JT::Object,      /* 0x09 */  JT::External,    /* 0x0a */  JT::ID,          /* 0x0b */  JT::ArangoDB_id, 
-            /* 0x0c */  JT::String,      /* 0x0d */  JT::None,        /* 0x0e */  JT::None,        /* 0x0f */  JT::None,        
-            /* 0x10 */  JT::UTCDate,     /* 0x11 */  JT::UTCDate,     /* 0x12 */  JT::UTCDate,     /* 0x13 */  JT::UTCDate,     
-            /* 0x14 */  JT::UTCDate,     /* 0x15 */  JT::UTCDate,     /* 0x16 */  JT::UTCDate,     /* 0x17 */  JT::UTCDate,     
+            /* 0x0c */  JT::String,      /* 0x0d */  JT::UTCDate,     /* 0x0e */  JT::None,        /* 0x0f */  JT::None,        
+            /* 0x10 */  JT::None,        /* 0x11 */  JT::None,        /* 0x12 */  JT::None,        /* 0x13 */  JT::None,     
+            /* 0x14 */  JT::None,        /* 0x15 */  JT::None,        /* 0x16 */  JT::None,        /* 0x17 */  JT::None,     
             /* 0x18 */  JT::Int,         /* 0x19 */  JT::Int,         /* 0x1a */  JT::Int,         /* 0x1b */  JT::Int,         
             /* 0x1c */  JT::Int,         /* 0x1d */  JT::Int,         /* 0x1e */  JT::Int,         /* 0x1f */  JT::Int,         
             /* 0x20 */  JT::Int,         /* 0x21 */  JT::Int,         /* 0x22 */  JT::Int,         /* 0x23 */  JT::Int,         
@@ -483,9 +483,13 @@ namespace arangodb {
         }
 
         // return the value for a UTCDate object
-        uint64_t getUTCDate () const {
+        int64_t getUTCDate () const {
           assertType(JasonType::UTCDate);
-          return readInteger<uint64_t>(_start + 1, head() - 0x0f);
+          uint64_t v = readInteger<uint64_t>(_start + 1, sizeof(uint64_t));
+          int64_t dv;
+          memcpy(&dv, &v, sizeof(int64_t));
+          dv -= 1;
+          return ~ dv;
         }
 
         // return the value for a String object
@@ -579,7 +583,7 @@ namespace arangodb {
             }
 
             case JasonType::UTCDate:
-              return static_cast<JasonLength>(head() - 0x0f);
+              return 9;
 
             case JasonType::Int: {
               if (head() <= 0x1f) {
