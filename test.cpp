@@ -2597,6 +2597,7 @@ TEST(ParserTest, ShortArrayMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
+  ASSERT_EQ(5ULL, s.head()); // short array
   checkBuild(s, JasonType::Array, 1023);
   ASSERT_EQ(255ULL, s.length());
   
@@ -2622,7 +2623,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   single.append(single); // 1024 bytes
 
   std::string value("[");
-  for (size_t i = 0; i < 64; ++i) {
+  for (size_t i = 0; i < 65; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -2638,10 +2639,11 @@ TEST(ParserTest, LongArrayFewMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 66251);
-  ASSERT_EQ(64ULL, s.length());
+  ASSERT_EQ(6ULL, s.head()); // long array
+  checkBuild(s, JasonType::Array, 67683);
+  ASSERT_EQ(65ULL, s.length());
   
-  for (size_t i = 0; i < 64; ++i) {
+  for (size_t i = 0; i < 65; ++i) {
     JasonSlice ss = s[i];
     checkBuild(ss, JasonType::String, 1033);
     JasonLength len;
@@ -2667,6 +2669,7 @@ TEST(ParserTest, LongArrayManyMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
+  ASSERT_EQ(6ULL, s.head()); // long array
   checkBuild(s, JasonType::Array, 2570);
   ASSERT_EQ(256ULL, s.length());
   
@@ -3008,10 +3011,126 @@ TEST(ParserTest, ShortObjectMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
+  ASSERT_EQ(7ULL, s.head()); // short object
   checkBuild(s, JasonType::Object, 3063);
   ASSERT_EQ(255ULL, s.length());
   
   for (size_t i = 0; i < 255; ++i) {
+    JasonSlice sk = s.keyAt(i);
+    JasonLength len;
+    char const* str = sk.getString(len);
+    std::string key("test");
+    if (i < 100) {
+      key.push_back('0');
+      if (i < 10) {
+        key.push_back('0');
+      }
+    }
+    key.append(std::to_string(i));
+
+    ASSERT_EQ(key.size(), len);
+    ASSERT_EQ(0, strncmp(str, key.c_str(), len));
+    JasonSlice sv = s.valueAt(i);
+    if (i <= 7) {
+      checkBuild(sv, JasonType::SmallInt, 1);
+    }
+    else {
+      checkBuild(sv, JasonType::UInt, 2);
+    }
+    ASSERT_EQ(i, sv.getUInt());
+  }
+}
+
+TEST(ParserTest, LongObjectFewMembers) {
+  std::string single("0123456789abcdef");
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single); // 1024 bytes
+
+  std::string value("{");
+  for (size_t i = 0; i < 64; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    if (i < 100) {
+      value.push_back('0');
+      if (i < 10) {
+        value.push_back('0');
+      }
+    }
+    value.append(std::to_string(i));
+    value.append("\":\"");
+    value.append(single);
+    value.push_back('\"');
+  }
+  value.push_back('}');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  ASSERT_EQ(8ULL, s.head()); // long object
+  checkBuild(s, JasonType::Object, 67154);
+  ASSERT_EQ(64ULL, s.length());
+  
+  for (size_t i = 0; i < 64; ++i) {
+    JasonSlice sk = s.keyAt(i);
+    JasonLength len;
+    char const* str = sk.getString(len);
+    std::string key("test");
+    if (i < 100) {
+      key.push_back('0');
+      if (i < 10) {
+        key.push_back('0');
+      }
+    }
+    key.append(std::to_string(i));
+
+    ASSERT_EQ(key.size(), len);
+    ASSERT_EQ(0, strncmp(str, key.c_str(), len));
+    JasonSlice sv = s.valueAt(i);
+    str = sv.getString(len);
+    ASSERT_EQ(1024ULL, len);
+    ASSERT_EQ(0, strncmp(str, single.c_str(), len));
+  }
+}
+
+TEST(ParserTest, LongObjectManyMembers) {
+  std::string value("{");
+  for (size_t i = 0; i < 256; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    if (i < 100) {
+      value.push_back('0');
+      if (i < 10) {
+        value.push_back('0');
+      }
+    }
+    value.append(std::to_string(i));
+    value.append("\":");
+    value.append(std::to_string(i));
+  }
+  value.push_back('}');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  ASSERT_EQ(8ULL, s.head()); // long object
+  checkBuild(s, JasonType::Object, 4618);
+  ASSERT_EQ(256ULL, s.length());
+  
+  for (size_t i = 0; i < 256; ++i) {
     JasonSlice sk = s.keyAt(i);
     JasonLength len;
     char const* str = sk.getString(len);

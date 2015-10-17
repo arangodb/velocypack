@@ -439,7 +439,7 @@ namespace arangodb {
             }
             // Make sure we use the small type (6,5 -> 5 and 8,7 -> 7):
             if ((_start[tos] & 1) == 0) {
-              _start[tos]--;
+              --_start[tos];
             }
             if (_start[tos] == 0x07 && 
                 index.size() >= 2 &&
@@ -461,7 +461,7 @@ namespace arangodb {
             _pos += 8 * index.size() + 8;
             // Make sure we use the large type (6,5 -> 6 and 8.7 -> 8):
             if ((_start[tos] & 1) == 1) {
-              _start[tos]++;
+              ++_start[tos];
             }
             if (_start[tos] == 0x08 && 
                 index.size() >= 2 &&

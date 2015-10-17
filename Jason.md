@@ -53,9 +53,11 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x02      : false
   - 0x03      : true
   - 0x04      : double, 8 bytes IEEE follow, little endian
-  - 0x05      : short array (< 256 entries, < 65536 bytes in length)
+  - 0x05      : short array (< 256 entries, and all offset values are
+                < 65536)
   - 0x06      : long array (< 2^64 entries, < 2^64 bytes in length)
-  - 0x07      : short object (< 256 entries, < 65536 bytes in length)
+  - 0x07      : short object (< 256 entries, andd all offset values are
+                < 65536)
   - 0x08      : long object (< 2^64 entries, < 2^64 bytes in length)
   - 0x09      : external (only in memory): a char* pointing to the actual
                 place in memory, where another Jason item resides
