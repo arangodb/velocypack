@@ -868,11 +868,20 @@ namespace arangodb {
               break;
             }
             case JasonType::Binary: {
-              uint64_t v = 0;
-              if (ctype != Jason::CType::UInt64) {
-                throw JasonBuilderError("Must give unsigned integer for length of binary blob.");
+              if (ctype != Jason::CType::String &&
+                  ctype != Jason::CType::CharPtr) {
+                throw JasonBuilderError("Must give a string or char const* for JasonType::Binary.");
               }
-              v = item.getUInt64();
+              std::string const* s;
+              std::string value;
+              if (ctype == Jason::CType::String) {
+                s = item.getString();
+              }
+              else {
+                value = item.getCharPtr();
+                s = &value;
+              }
+              JasonLength v = s->size();
               JasonLength size = uintLength(v);
               reserveSpace(1 + size + v);
               appendUInt(v, 0xbf);

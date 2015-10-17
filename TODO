@@ -1,9 +1,14 @@
 * beat rapidjson!
 
-* handle unsupported JSON types or out-of-bounds stuff in JasonDumper (JS)
+* fix type UTCDate
+
+* implement types ArangoDB_id, ID 
+
+* test type External
 
 * finish implementation of JasonSlice for all types (JS)
 
+* support modification of Jason objects
 
 
 * JasonValue, JasonArray, JasonObject c++ access
@@ -13,7 +18,6 @@
 * implement optional lookup table support in Builder, Slice, Parser and Dumper
 
 
-* support modification of Jason objects
 
 * optional: support accessing arbitrary objects via JSONPointer etc.
 
