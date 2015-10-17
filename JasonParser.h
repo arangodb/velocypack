@@ -34,6 +34,9 @@ namespace arangodb {
           }
 
           doubleValue = doubleValue * 10.0 + (i - '0');
+          if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
+            throw JasonParserError("numeric value out of bounds");
+          }
         }
 
         double asDouble () const {
@@ -368,6 +371,9 @@ namespace arangodb {
           }
           else {
             fractionalPart *= pow(10, exponent.asDouble());
+          }
+          if (std::isnan(fractionalPart) || ! std::isfinite(fractionalPart)) {
+            throw JasonParserError("numeric value out of bounds");
           }
           _b.addDouble(fractionalPart);
         }
