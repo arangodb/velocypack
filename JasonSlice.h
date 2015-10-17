@@ -227,7 +227,12 @@ namespace arangodb {
         // return the value for a Double object
         double getDouble () const {
           assertType(JasonType::Double);
-          return extractValue<double>();
+          union {
+            uint64_t dv;
+            double d;
+          } v;
+          memcpy(&v.dv, _start + 1, sizeof(double));
+          return v.d; 
         }
 
         JasonSlice at (JasonLength index) const {

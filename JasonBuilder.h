@@ -312,6 +312,10 @@ namespace arangodb {
           return _start;
         }
 
+        JasonSlice slice () const {
+          return JasonSlice(_start);
+        }
+
         JasonLength size () const {
           // Compute the actual size here, but only when sealed
           if (! _stack.empty()) {
@@ -563,10 +567,15 @@ namespace arangodb {
         }
 
         void addDouble (double v) {
-          reserveSpace(9);
+          uint64_t dv;
+          memcpy(&dv, &v, sizeof(double));
+          JasonLength vSize = sizeof(double);
+          reserveSpace(1 + vSize);
           _start[_pos++] = 0x04;
-          memcpy(_start + _pos, &v, sizeof(double));
-          _pos += sizeof(double);
+          for (uint64_t x = dv; vSize > 0; vSize--) {
+            _start[_pos++] = x & 0xff;
+            x >>= 8;
+          }
         }
 
         void addPosInt (uint64_t v) {
@@ -942,7 +951,7 @@ namespace arangodb {
             v >>= 8;
           }
         }
- 
+
         void appendUInt (uint64_t v, uint8_t base) {
           JasonLength vSize = uintLength(v);
           reserveSpace(1 + vSize);

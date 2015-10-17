@@ -52,7 +52,8 @@ indicates the type (and often the length) of the Jason value at hand:
   - 0x01      : null
   - 0x02      : false
   - 0x03      : true
-  - 0x04      : double, 8 bytes IEEE follow, little endian
+  - 0x04      : double, 8 bytes follow, stored as little endian uint64
+                equivalent
   - 0x05      : short array (< 256 entries, and all offset values are
                 < 65536)
   - 0x06      : long array (< 2^64 entries, < 2^64 bytes in length)
