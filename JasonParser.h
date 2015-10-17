@@ -398,16 +398,14 @@ namespace arangodb {
 #ifdef JASON_VALIDATEUTF8
             int i = getOneOrThrow("scanString: Unfinished string detected.");
 #else
-            uint8_t const* s = _start + _pos;
-            while (_size - _pos >= 271) {
-              _b.reserveSpace(256);
+            size_t remainder = _size - _pos;
+            if (remainder >= 16) {
+              _b.reserveSpace(remainder);
+              uint8_t const* s = _start + _pos;
               uint8_t* d = _b._start + _b._pos;
-              int count = JSONStringCopy(d, s, 256);
+              size_t count = JSONStringCopy(d, s, remainder );
               _pos += count;
               _b._pos += count;
-              if (count < 256) {
-                break;
-              }
             }
             int i = getOneOrThrow("scanString: Unfinished string detected.");
             if (! large && _b._pos - (base + 1) > 127) {
