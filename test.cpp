@@ -2983,6 +2983,60 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
+TEST(ParserTest, ShortObjectMembers) {
+  std::string value("{");
+  for (size_t i = 0; i < 255; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    if (i < 100) {
+      value.push_back('0');
+      if (i < 10) {
+        value.push_back('0');
+      }
+    }
+    value.append(std::to_string(i));
+    value.append("\":");
+    value.append(std::to_string(i));
+  }
+  value.push_back('}');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 3063);
+  ASSERT_EQ(255ULL, s.length());
+  
+  for (size_t i = 0; i < 255; ++i) {
+    JasonSlice sk = s.keyAt(i);
+    JasonLength len;
+    char const* str = sk.getString(len);
+    std::string key("test");
+    if (i < 100) {
+      key.push_back('0');
+      if (i < 10) {
+        key.push_back('0');
+      }
+    }
+    key.append(std::to_string(i));
+
+    ASSERT_EQ(key.size(), len);
+    ASSERT_EQ(0, strncmp(str, key.c_str(), len));
+    JasonSlice sv = s.valueAt(i);
+    if (i <= 7) {
+      checkBuild(sv, JasonType::SmallInt, 1);
+    }
+    else {
+      checkBuild(sv, JasonType::UInt, 2);
+    }
+    ASSERT_EQ(i, sv.getUInt());
+  }
+}
+
 TEST(ParserTest, Utf8Bom) {
   std::string const value("\xef\xbb\xbf{\"foo\":1}");
 
