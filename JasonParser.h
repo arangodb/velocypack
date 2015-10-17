@@ -167,7 +167,6 @@ namespace arangodb {
           return nr;
         }
 
-        // FIXME: implement a white space table?
         inline bool isWhiteSpace (uint8_t i) const noexcept {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
@@ -344,6 +343,18 @@ namespace arangodb {
           _b.addDouble(fractionalPart);
         }
 
+        int inline fastStringCopy (uint8_t* dst, uint8_t const* src) {
+          int count = 256;
+          while (count > 0 && 
+                 *src >= 32 && 
+                 *src != '\\' && 
+                 *src != '"') {
+            *dst++ = *src++;
+            count--;
+          }
+          return 256 - count;
+        }
+
         void parseString () {
           // When we get here, we have seen a " character and now want to
           // find the end of the string and parse the string value to its
@@ -359,7 +370,20 @@ namespace arangodb {
           uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
           while (true) {
+            _b.reserveSpace(256);
+            if (_size - _pos >= 257) {
+              int count = fastStringCopy(_b._start + _b._pos, _start + _pos);
+              _pos += count;
+              _b._pos += count;
+            }
             int i = getOneOrThrow("scanString: Unfinished string detected.");
+            if (! large && _b._pos - (base + 1) > 127) {
+              large = true;
+              _b.reserveSpace(8);
+              memmove(_b._start + base + 9, _b._start + base + 1,
+                      _b._pos - (base + 1));
+              _b._pos += 8;
+            }
             switch (i) {
               case '"':
                 JasonLength len;
@@ -525,13 +549,6 @@ namespace arangodb {
                   highSurrogate = 0;
                 }
                 break;
-            }
-            if (! large && _b._pos - (base + 1) > 127) {
-              large = true;
-              _b.reserveSpace(8);
-              memmove(_b._start + base + 9, _b._start + base + 1,
-                      _b._pos - (base + 1));
-              _b._pos += 8;
             }
           }
         }
