@@ -1797,8 +1797,7 @@ TEST(ParserTest, UIntMaxNeg) {
   JasonSlice s(builder.start());
   checkBuild(s, JasonType::Double, 9ULL);
   // handle rounding errors
-  ASSERT_TRUE(s.getDouble() >= -18446744073709552000.);
-  ASSERT_TRUE(s.getDouble() <= -18446744073709551615.);
+  ASSERT_FLOAT_EQ(-18446744073709551615., s.getDouble());
 }
 
 TEST(ParserTest, IntMin) {
@@ -1816,6 +1815,19 @@ TEST(ParserTest, IntMin) {
   checkDump(s, value);
 }
 
+TEST(ParserTest, IntMinMinusOne) {
+  std::string const value("-9223372036854775809"); // INT64_MIN - 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  ASSERT_FLOAT_EQ(-9223372036854775809., s.getDouble());
+}
+
 TEST(ParserTest, IntMax) {
   std::string const value(std::to_string(INT64_MAX));
 
@@ -1827,6 +1839,21 @@ TEST(ParserTest, IntMax) {
   JasonSlice s(builder.start());
   checkBuild(s, JasonType::UInt, 9ULL);
   ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.getUInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, IntMaxPlusOne) {
+  std::string const value("9223372036854775808"); // INT64_MAX + 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX) + 1, s.getUInt());
 
   checkDump(s, value);
 }
@@ -1844,6 +1871,19 @@ TEST(ParserTest, UIntMax) {
   ASSERT_EQ(UINT64_MAX, s.getUInt());
 
   checkDump(s, value);
+}
+
+TEST(ParserTest, UIntMaxPlusOne) {
+  std::string const value("18446744073709551616"); // UINT64_MAX + 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  ASSERT_FLOAT_EQ(18446744073709551616., s.getDouble());
 }
 
 TEST(ParserTest, Double1) {
@@ -3165,3 +3205,4 @@ int main (int argc, char* argv[]) {
 
   return RUN_ALL_TESTS();
 }
+

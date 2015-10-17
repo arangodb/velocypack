@@ -12,6 +12,42 @@ namespace arangodb {
 
     class JasonParser {
 
+      struct ParsedNumber {
+        ParsedNumber ()
+          : intValue(0),
+            doubleValue(0.0),
+            isInteger(true) {
+        }
+
+        void addDigit (int i) {
+          if (isInteger) {
+            // check if adding another digit to the int will make it overflow
+            if (intValue < 1844674407370955161ULL ||
+                (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
+              // int won't overflow
+              intValue = intValue * 10 + (i - '0');
+              return;
+            }
+            // int would overflow
+            doubleValue = static_cast<double>(intValue);
+            isInteger = false;
+          }
+
+          doubleValue = doubleValue * 10.0 + (i - '0');
+        }
+
+        double asDouble () const {
+          if (isInteger) {
+            return static_cast<double>(intValue);
+          }
+          return doubleValue;
+        }
+
+        uint64_t intValue;
+        double doubleValue;
+        bool isInteger;
+      };
+
       // This class can parse JSON very rapidly, but only from contiguous
       // blocks of memory. It builds the result using the JasonBuilder.
       //
@@ -219,19 +255,18 @@ namespace arangodb {
           }
           _b.addNull();
         }
-
-        uint64_t scanDigits () {
-          uint64_t x = 0;
+        
+        void scanDigits (ParsedNumber& value) {
           while (true) {
             int i = consume();
             if (i < 0) {
-              return x;
+              return;
             }
             if (i < '0' || i > '9') {
               unconsume();
-              return x;
+              return;
             }
-            x = x * 10 + (i - '0');
+            value.addDigit(i);
           }
         }
 
@@ -261,7 +296,7 @@ namespace arangodb {
         }
 
         void parseNumber () {
-          uint64_t integerPart = 0;
+          ParsedNumber numberValue;
           bool negative = false;
           int i = consume();
           // We know that a character is coming, and it's a number if it
@@ -276,25 +311,21 @@ namespace arangodb {
           
           if (i != '0') {
             unconsume();
-            integerPart = scanDigits();
+            scanDigits(numberValue);
           }
           i = consume();
-          if (i < 0) {
-            if (negative) {
-              _b.addNegInt(integerPart);
+          if (i < 0 || i != '.') {
+            if (i >= 0) {
+              unconsume();
+            }
+            if (! numberValue.isInteger) {
+              _b.addDouble(numberValue.doubleValue);
+            }
+            else if (negative) {
+              _b.addNegInt(numberValue.intValue);
             }
             else {
-              _b.addUInt(integerPart);
-            }
-            return;
-          }
-          if (i != '.') {
-            unconsume();
-            if (negative) {
-              _b.addNegInt(integerPart);
-            }
-            else {
-              _b.addUInt(integerPart);
+              _b.addUInt(numberValue.intValue);
             }
             return;
           }
@@ -305,10 +336,10 @@ namespace arangodb {
           unconsume();
           double fractionalPart = scanDigitsFractional();
           if (negative) {
-            fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
+            fractionalPart = - numberValue.asDouble() - fractionalPart;
           }
           else {
-            fractionalPart = static_cast<double>(integerPart) + fractionalPart;
+            fractionalPart = numberValue.asDouble() + fractionalPart;
           }
           i = consume();
           if (i < 0) {
@@ -330,12 +361,13 @@ namespace arangodb {
             throw JasonParserError("scanNumber: incomplete number");
           }
           unconsume();
-          uint64_t expPart = scanDigits();
+          ParsedNumber exponent;
+          scanDigits(exponent);
           if (negative) {
-            fractionalPart *= pow(10, -static_cast<double>(expPart));
+            fractionalPart *= pow(10, -exponent.asDouble());
           }
           else {
-            fractionalPart *= pow(10, static_cast<double>(expPart));
+            fractionalPart *= pow(10, exponent.asDouble());
           }
           _b.addDouble(fractionalPart);
         }
