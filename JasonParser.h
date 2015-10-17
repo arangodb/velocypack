@@ -12,6 +12,45 @@ namespace arangodb {
 
     class JasonParser {
 
+      struct ParsedNumber {
+        ParsedNumber ()
+          : intValue(0),
+            doubleValue(0.0),
+            isInteger(true) {
+        }
+
+        void addDigit (int i) {
+          if (isInteger) {
+            // check if adding another digit to the int will make it overflow
+            if (intValue < 1844674407370955161ULL ||
+                (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
+              // int won't overflow
+              intValue = intValue * 10 + (i - '0');
+              return;
+            }
+            // int would overflow
+            doubleValue = static_cast<double>(intValue);
+            isInteger = false;
+          }
+
+          doubleValue = doubleValue * 10.0 + (i - '0');
+          if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
+            throw JasonParserError("numeric value out of bounds");
+          }
+        }
+
+        double asDouble () const {
+          if (isInteger) {
+            return static_cast<double>(intValue);
+          }
+          return doubleValue;
+        }
+
+        uint64_t intValue;
+        double doubleValue;
+        bool isInteger;
+      };
+
       // This class can parse JSON very rapidly, but only from contiguous
       // blocks of memory. It builds the result using the JasonBuilder.
       //
@@ -218,20 +257,18 @@ namespace arangodb {
           }
           _b.addNull();
         }
-
-        uint64_t scanDigits () {
-          uint64_t x = 0;
+        
+        void scanDigits (ParsedNumber& value) {
           while (true) {
             int i = consume();
             if (i < 0) {
-              return x;
+              return;
             }
-            uint8_t c = static_cast<uint8_t>(i);
-            if (c < '0' || c > '9') {
+            if (i < '0' || i > '9') {
               unconsume();
-              return x;
+              return;
             }
-            x = x * 10 + c - '0';
+            value.addDigit(i);
           }
         }
 
@@ -243,12 +280,11 @@ namespace arangodb {
             if (i < 0) {
               return x;
             }
-            uint8_t c = static_cast<uint8_t>(i);
-            if (c < '0' || c > '9') {
+            if (i < '0' || i > '9') {
               unconsume();
               return x;
             }
-            x = x + pot * (c - '0');
+            x = x + pot * (i - '0');
             pot /= 10.0;
           }
         }
@@ -262,9 +298,7 @@ namespace arangodb {
         }
 
         void parseNumber () {
-          uint64_t integerPart = 0;
-          double   fractionalPart;
-          uint64_t expPart;
+          ParsedNumber numberValue;
           bool negative = false;
           int i = consume();
           // We know that a character is coming, and it's a number if it
@@ -279,25 +313,21 @@ namespace arangodb {
           
           if (i != '0') {
             unconsume();
-            integerPart = scanDigits();
+            scanDigits(numberValue);
           }
           i = consume();
-          if (i < 0) {
-            if (negative) {
-              _b.addNegInt(integerPart);
+          if (i < 0 || i != '.') {
+            if (i >= 0) {
+              unconsume();
+            }
+            if (! numberValue.isInteger) {
+              _b.addDouble(numberValue.doubleValue);
+            }
+            else if (negative) {
+              _b.addNegInt(numberValue.intValue);
             }
             else {
-              _b.addUInt(integerPart);
-            }
-            return;
-          }
-          if (i != '.') {
-            unconsume();
-            if (negative) {
-              _b.addNegInt(integerPart);
-            }
-            else {
-              _b.addUInt(integerPart);
+              _b.addUInt(numberValue.intValue);
             }
             return;
           }
@@ -306,12 +336,12 @@ namespace arangodb {
             throw JasonParserError("scanNumber: incomplete number");
           }
           unconsume();
-          fractionalPart = scanDigitsFractional();
+          double fractionalPart = scanDigitsFractional();
           if (negative) {
-            fractionalPart = -static_cast<double>(integerPart) - fractionalPart;
+            fractionalPart = - numberValue.asDouble() - fractionalPart;
           }
           else {
-            fractionalPart = static_cast<double>(integerPart) + fractionalPart;
+            fractionalPart = numberValue.asDouble() + fractionalPart;
           }
           i = consume();
           if (i < 0) {
@@ -333,22 +363,26 @@ namespace arangodb {
             throw JasonParserError("scanNumber: incomplete number");
           }
           unconsume();
-          expPart = scanDigits();
+          ParsedNumber exponent;
+          scanDigits(exponent);
           if (negative) {
-            fractionalPart *= pow(10, -static_cast<double>(expPart));
+            fractionalPart *= pow(10, -exponent.asDouble());
           }
           else {
-            fractionalPart *= pow(10, static_cast<double>(expPart));
+            fractionalPart *= pow(10, exponent.asDouble());
+          }
+          if (std::isnan(fractionalPart) || ! std::isfinite(fractionalPart)) {
+            throw JasonParserError("numeric value out of bounds");
           }
           _b.addDouble(fractionalPart);
         }
 
         int inline fastStringCopy (uint8_t* dst, uint8_t const* src) {
           int count = 256;
-          while (count > 0 && 
-                 *src >= 32 && 
+          while (*src != '"' && 
                  *src != '\\' && 
-                 *src != '"') {
+                 *src >= 32 && 
+                 count > 0) {
             *dst++ = *src++;
             count--;
           }
@@ -370,8 +404,11 @@ namespace arangodb {
           uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
           while (true) {
-            _b.reserveSpace(256);
+#ifdef JASON_VALIDATEUTF8
+            int i = getOneOrThrow("scanString: Unfinished string detected.");
+#else
             if (_size - _pos >= 257) {
+              _b.reserveSpace(256);
               int count = fastStringCopy(_b._start + _b._pos, _start + _pos);
               _pos += count;
               _b._pos += count;
@@ -384,6 +421,7 @@ namespace arangodb {
                       _b._pos - (base + 1));
               _b._pos += 8;
             }
+#endif
             switch (i) {
               case '"':
                 JasonLength len;
@@ -560,7 +598,7 @@ namespace arangodb {
           int i = skipWhiteSpace("scanArray: item or ] expected");
           if (i == ']') {
             // empty array
-            consume();   // the closing ']'
+            ++_pos;   // the closing ']'
             _b.close();
             return;
           }
@@ -572,7 +610,7 @@ namespace arangodb {
             i = skipWhiteSpace("scanArray: , or ] expected");
             if (i == ']') {
               // end of array
-              consume();
+              ++_pos;  // the closing ']'
               _b.close();
               return;
             }
@@ -580,7 +618,7 @@ namespace arangodb {
             if (i != ',') {
               throw JasonParserError("scanArray: , or ] expected");
             }
-            consume();
+            ++_pos;  // the ','
           }
         }
                        
@@ -597,13 +635,12 @@ namespace arangodb {
           }
 
           while (true) {
-
             // always expecting a string attribute name here
             if (i != '"') {
               throw JasonParserError("scanObject: \" or } expected");
             }
             // get past the initial '"'
-            consume();
+            ++_pos;
 
             _b.reportAdd(base);
             parseString();
@@ -612,13 +649,13 @@ namespace arangodb {
             if (i != ':') {
               throw JasonParserError("scanObject: : expected");
             }
-            consume();
+            ++_pos; // skip over the colon
 
             parseJson();
             i = skipWhiteSpace("scanObject: , or } expected");
             if (i == '}') {
               // end of object
-              consume();
+              ++_pos;  // the closing '}'
               _b.close();
               return;
             }
@@ -626,7 +663,7 @@ namespace arangodb {
               throw JasonParserError("scanObject: , or } expected");
             } 
             // skip over ','
-            consume();
+            ++_pos;  // the ','
             i = skipWhiteSpace("scanObject: \" or } expected");
           }
         }
@@ -638,14 +675,12 @@ namespace arangodb {
             return; 
           }
           switch (i) {
-            case '{': {
+            case '{': 
               parseObject();  // this consumes the closing '}' or throws
               break;
-            }
-            case '[': {
+            case '[':
               parseArray();   // this consumes the closing ']' or throws
               break;
-            }
             case 't':
               parseTrue();    // this consumes "rue" or throws
               break;
@@ -655,10 +690,9 @@ namespace arangodb {
             case 'n':
               parseNull();    // this consumes "ull" or throws
               break;
-            case '"': {
+            case '"': 
               parseString();
               break;
-            }
             default: {
               // everything else must be a number or is invalid...
               // this includes '-' and '0' to '9'. scanNumber() will

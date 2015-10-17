@@ -677,7 +677,7 @@ TEST(SliceTest, Double) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  EXPECT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_FLOAT_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, DoubleNegative) {
@@ -691,7 +691,7 @@ TEST(SliceTest, DoubleNegative) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  EXPECT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_FLOAT_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, SmallInt) {
@@ -1785,6 +1785,107 @@ TEST(ParserTest, Int3) {
   checkDump(s, value);
 }
 
+TEST(ParserTest, UIntMaxNeg) {
+  std::string value("-");
+  value.append(std::to_string(UINT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  // handle rounding errors
+  ASSERT_FLOAT_EQ(-18446744073709551615., s.getDouble());
+}
+
+TEST(ParserTest, IntMin) {
+  std::string const value(std::to_string(INT64_MIN));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Int, 9ULL);
+  ASSERT_EQ(INT64_MIN, s.getInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, IntMinMinusOne) {
+  std::string const value("-9223372036854775809"); // INT64_MIN - 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  ASSERT_FLOAT_EQ(-9223372036854775809., s.getDouble());
+}
+
+TEST(ParserTest, IntMax) {
+  std::string const value(std::to_string(INT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.getUInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, IntMaxPlusOne) {
+  std::string const value("9223372036854775808"); // INT64_MAX + 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX) + 1, s.getUInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, UIntMax) {
+  std::string const value(std::to_string(UINT64_MAX));
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::UInt, 9ULL);
+  ASSERT_EQ(UINT64_MAX, s.getUInt());
+
+  checkDump(s, value);
+}
+
+TEST(ParserTest, UIntMaxPlusOne) {
+  std::string const value("18446744073709551616"); // UINT64_MAX + 1
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Double, 9ULL);
+  ASSERT_FLOAT_EQ(18446744073709551616., s.getDouble());
+}
+
 TEST(ParserTest, Double1) {
   std::string const value("1.0124");
 
@@ -1876,6 +1977,34 @@ TEST(ParserTest, DoubleScientific4) {
 
   std::string const valueOut("2.3354310124e-36");
   checkDump(s, valueOut);
+}
+
+TEST(ParserTest, IntMinusInf) {
+  std::string const value("-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, IntPlusInf) {
+  std::string const value("999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, DoubleMinusInf) {
+  std::string const value("-1.2345e999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
+}
+
+TEST(ParserTest, DoublePlusInf) {
+  std::string const value("1.2345e999");
+
+  JasonParser parser;
+  EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
 TEST(ParserTest, Empty) {
@@ -2452,6 +2581,107 @@ TEST(ParserTest, BrokenArray3) {
   ASSERT_EQ(2u, parser.errorPos());
 }
 
+TEST(ParserTest, ShortArrayMembers) {
+  std::string value("[");
+  for (size_t i = 0; i < 255; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append(std::to_string(i));
+  }
+  value.push_back(']');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 1023);
+  ASSERT_EQ(255ULL, s.length());
+  
+  for (size_t i = 0; i < 255; ++i) {
+    JasonSlice ss = s[i];
+    if (i <= 7) {
+      checkBuild(ss, JasonType::SmallInt, 1);
+    }
+    else {
+      checkBuild(ss, JasonType::UInt, 2);
+    }
+    ASSERT_EQ(i, ss.getUInt());
+  }
+}
+
+TEST(ParserTest, LongArrayFewMembers) {
+  std::string single("0123456789abcdef");
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single);
+  single.append(single); // 1024 bytes
+
+  std::string value("[");
+  for (size_t i = 0; i < 64; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.push_back('"');
+    value.append(single);
+    value.push_back('"');
+  }
+  value.push_back(']');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 66251);
+  ASSERT_EQ(64ULL, s.length());
+  
+  for (size_t i = 0; i < 64; ++i) {
+    JasonSlice ss = s[i];
+    checkBuild(ss, JasonType::String, 1033);
+    JasonLength len;
+    char const* s = ss.getString(len);
+    ASSERT_EQ(1024ULL, len);
+    ASSERT_EQ(0, strncmp(s, single.c_str(), len));
+  }
+}
+
+TEST(ParserTest, LongArrayManyMembers) {
+  std::string value("[");
+  for (size_t i = 0; i < 256; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append(std::to_string(i));
+  }
+  value.push_back(']');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Array, 2570);
+  ASSERT_EQ(256ULL, s.length());
+  
+  for (size_t i = 0; i < 256; ++i) {
+    JasonSlice ss = s[i];
+    if (i <= 7) {
+      checkBuild(ss, JasonType::SmallInt, 1);
+    }
+    else {
+      checkBuild(ss, JasonType::UInt, 2);
+    }
+    ASSERT_EQ(i, ss.getUInt());
+  }
+}
+
 TEST(ParserTest, EmptyObject) {
   std::string const value("{}");
 
@@ -2753,6 +2983,60 @@ TEST(ParserTest, ObjectMissingQuotes) {
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
 }
 
+TEST(ParserTest, ShortObjectMembers) {
+  std::string value("{");
+  for (size_t i = 0; i < 255; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    if (i < 100) {
+      value.push_back('0');
+      if (i < 10) {
+        value.push_back('0');
+      }
+    }
+    value.append(std::to_string(i));
+    value.append("\":");
+    value.append(std::to_string(i));
+  }
+  value.push_back('}');
+
+  JasonParser parser;
+  JasonLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice s(builder.start());
+  checkBuild(s, JasonType::Object, 3063);
+  ASSERT_EQ(255ULL, s.length());
+  
+  for (size_t i = 0; i < 255; ++i) {
+    JasonSlice sk = s.keyAt(i);
+    JasonLength len;
+    char const* str = sk.getString(len);
+    std::string key("test");
+    if (i < 100) {
+      key.push_back('0');
+      if (i < 10) {
+        key.push_back('0');
+      }
+    }
+    key.append(std::to_string(i));
+
+    ASSERT_EQ(key.size(), len);
+    ASSERT_EQ(0, strncmp(str, key.c_str(), len));
+    JasonSlice sv = s.valueAt(i);
+    if (i <= 7) {
+      checkBuild(sv, JasonType::SmallInt, 1);
+    }
+    else {
+      checkBuild(sv, JasonType::UInt, 2);
+    }
+    ASSERT_EQ(i, sv.getUInt());
+  }
+}
+
 TEST(ParserTest, Utf8Bom) {
   std::string const value("\xef\xbb\xbf{\"foo\":1}");
 
@@ -2844,7 +3128,7 @@ TEST(LookupTest, LookupShortObject) {
 
   v = s.get("baz");  
   ASSERT_TRUE(v.isDouble());
-  EXPECT_FLOAT_EQ(13.53, v.getDouble());
+  ASSERT_FLOAT_EQ(13.53, v.getDouble());
 
   v = s.get("qux");  
   ASSERT_TRUE(v.isArray());
@@ -3104,3 +3388,4 @@ int main (int argc, char* argv[]) {
 
   return RUN_ALL_TESTS();
 }
+

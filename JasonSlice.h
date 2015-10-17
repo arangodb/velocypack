@@ -405,11 +405,10 @@ namespace arangodb {
           }
           JasonLength const n = readInteger<JasonLength>(_start + end - sizeSize, sizeSize);
           JasonLength const indexBase = end - sizeSize - n * offsetSize;
-          if (n < MaxLengthForLinearSearch) {
-            return searchObjectKeyLinear(attribute, indexBase, offsetSize, n);
+          if (n > MaxLengthForLinearSearch) {
+            return searchObjectKeyBinary(attribute, indexBase, offsetSize, n);
           }
-
-          return searchObjectKeyBinary(attribute, indexBase, offsetSize, n);
+          return searchObjectKeyLinear(attribute, indexBase, offsetSize, n);
         }
 
         JasonSlice operator[] (std::string const& attribute) const {

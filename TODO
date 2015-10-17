@@ -1,22 +1,21 @@
 * beat rapidjson!
 
-* JasonValue, JasonArray, JasonObject c++ access
+* handle unsupported JSON types or out-of-bounds stuff in JasonDumper (JS)
 
-* handle numbers that cannot be represented safely in int64/uint64/double in JasonParser (JS)
+* test long variants (presumably just use > 255 entries) (JS)
 
-* add tests with numeric values +inf, -inf, NaN, INT64_MAX, INT64_MIN etc. (JS)
+* test arrays/objects with few but long elements that exceed 64 KB (JS)
 
 * finish implementation of JasonSlice for all types (JS)
 
-* handle unsupported JSON types in JasonDumper (JS)
+
+
+* JasonValue, JasonArray, JasonObject c++ access
 
 * implement BCD in Builder, Slice, Parser and Dumper
 
 * implement optional lookup table support in Builder, Slice, Parser and Dumper
 
-* test long variants (presumably just use > 255 entries)
-
-* test arrays/objects with few but long elements that exceed 64 KB
 
 * support modification of Jason objects
 
