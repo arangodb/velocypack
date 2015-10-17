@@ -215,8 +215,7 @@ namespace arangodb {
         // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
           size_t remaining = _size - _pos;
-          uint8_t const* src = _start + _pos;
-          size_t count = JSONSkipWhiteSpace(src, remaining);
+          size_t count = JSONSkipWhiteSpace(_start + _pos, remaining);
           _pos += count;
           if (count < remaining) {
             return static_cast<int>(_start[_pos]);
@@ -401,9 +400,8 @@ namespace arangodb {
             size_t remainder = _size - _pos;
             if (remainder >= 16) {
               _b.reserveSpace(remainder);
-              uint8_t const* s = _start + _pos;
-              uint8_t* d = _b._start + _b._pos;
-              size_t count = JSONStringCopy(d, s, remainder );
+              size_t count = JSONStringCopy(_b._start + _b._pos, _start + _pos,
+                                            remainder);
               _pos += count;
               _b._pos += count;
             }

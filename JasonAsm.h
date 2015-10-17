@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cstring>
 
-static inline size_t JSONStringCopyInline (uint8_t*& dst, uint8_t const*& src,
+static inline size_t JSONStringCopyInline (uint8_t* dst, uint8_t const* src,
                                            size_t limit) {
   // Copy up to limit uint8_t from src to dst.
   // Stop at the first control character or backslash or double quote.
@@ -18,13 +18,13 @@ static inline size_t JSONStringCopyInline (uint8_t*& dst, uint8_t const*& src,
   return limit - count;
 }
 
-size_t JSONStringCopyC (uint8_t*& dst, uint8_t const*& src, size_t limit);
-extern size_t (*JSONStringCopy)(uint8_t*&, uint8_t const*&, size_t);
+size_t JSONStringCopyC (uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, size_t);
 
 // Now a version which also stops at high bit set bytes:
 
-static inline size_t JSONStringCopyCheckUtf8Inline (uint8_t*& dst,
-                                                    uint8_t const*& src,
+static inline size_t JSONStringCopyCheckUtf8Inline (uint8_t* dst,
+                                                    uint8_t const* src,
                                                     size_t limit) {
   // Copy up to limit uint8_t from src to dst.
   // Stop at the first control character or backslash or double quote.
@@ -43,13 +43,13 @@ static inline size_t JSONStringCopyCheckUtf8Inline (uint8_t*& dst,
   return limit - count;
 }
 
-size_t JSONStringCopyCheckUtf8C (uint8_t*& dst, uint8_t const*& src,
+size_t JSONStringCopyCheckUtf8C (uint8_t* dst, uint8_t const* src,
                                  size_t limit);
-extern size_t (*JSONStringCopyCheckUtf8)(uint8_t*&, uint8_t const*&, size_t);
+extern size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*, size_t);
 
 // White space skipping:
 
-static inline size_t JSONSkipWhiteSpaceInline (uint8_t const*& ptr,
+static inline size_t JSONSkipWhiteSpaceInline (uint8_t const* ptr,
                                                size_t limit) {
   // Skip up to limit uint8_t from ptr as long as they are whitespace.
   // Advance ptr and return the number of skipped bytes.
@@ -65,6 +65,6 @@ static inline size_t JSONSkipWhiteSpaceInline (uint8_t const*& ptr,
   return limit - count;
 }
 
-size_t JSONSkipWhiteSpaceC (uint8_t const*& ptr, size_t limit);
-extern size_t (*JSONSkipWhiteSpace)(uint8_t const*&, size_t);
+size_t JSONSkipWhiteSpaceC (uint8_t const* ptr, size_t limit);
+extern size_t (*JSONSkipWhiteSpace)(uint8_t const*, size_t);
 
