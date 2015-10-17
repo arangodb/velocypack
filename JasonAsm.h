@@ -47,6 +47,7 @@ extern int (*JSONSkipWhiteSpace)(uint8_t const*&, int);
 
 #if defined(__SSE4_2__) && ! defined(NO_SSE42)
 
+#include <cpuid.h>
 #include <x86intrin.h>
 
 static int JSONStringCopySSE42 (uint8_t*& dst, uint8_t const*& src, int limit) {
@@ -91,8 +92,23 @@ static int JSONStringCopySSE42 (uint8_t*& dst, uint8_t const*& src, int limit) {
   return count;
 }
 
+static bool HasSSE42 () {
+  unsigned int eax, ebx, ecx, edx;
+  if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+    if ((ecx & 0x100000) != 0) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  else {
+    return false;
+  }
+}
+
 static int DoInitCopy (uint8_t*& dst, uint8_t const*& src, int limit) {
-  if (__builtin_cpu_supports("sse4.2")) {
+  if (HasSSE42()) {
     JSONStringCopy = JSONStringCopySSE42;
   }
   else {
@@ -138,7 +154,7 @@ static int JSONSkipWhiteSpaceSSE42 (uint8_t const*& ptr, int limit) {
 }
 
 static int DoInitSkip (uint8_t const*& ptr, int limit) {
-  if (__builtin_cpu_supports("sse4.2")) {
+  if (HasSSE42()) {
     JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
   }
   else {

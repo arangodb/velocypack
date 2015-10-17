@@ -1,8 +1,10 @@
 CC=g++
-#CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG
+#CC=clang++
+CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DJASON_DEBUG
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -DRAPIDJSON_SSE42 -march=native
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native -msse4.2 -DNO_SSE42
-CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native -msse4.2
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -march=native -msse4.2
+#CFLAGS=-Wall -Wextra -std=c++11 -g -O3 -msse4.2
 #CFLAGS=-Wall -Wextra -std=c++11 -g -O0 -DNO_SSE42
 
 all:	test bench JasonAsm

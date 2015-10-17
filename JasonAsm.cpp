@@ -14,6 +14,118 @@ int testPositions[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                         -13, -14, -15, -16, -23, -31, -32, -67, -103, -178,
                         -210, -234, -247, -254, -255 };
 
+void TestStringCopyCorrectness (uint8_t* src, uint8_t* dst, int size) {
+  uint8_t const* srcx;
+  uint8_t* dstx;
+  int copied;
+
+  std::cout << "Performing correctness tests..." << std::endl;
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int salign = 0; salign < 16; salign++) {
+    src += salign;
+    for (int dalign = 0; dalign < 16; dalign++) {
+      dst += dalign;
+      for (int i = 0;
+           i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
+        uint8_t merk;
+        int pos = testPositions[i];
+        if (pos < 0) {
+          pos = size + pos;
+        }
+
+        // Test a quote character:
+        merk = src[pos]; src[pos] = '"';
+        srcx = src; dstx = dst;
+        copied = JSONStringCopy(dstx, srcx, size);
+        if (copied != pos || memcmp(dst, src, copied) != 0) {
+          std::cout << "Error: " << salign << " " << dalign << " "
+                    << i << " " << pos << " " << copied << std::endl;
+        }
+        src[pos] = merk;
+
+        // Test a backslash character:
+        src[pos] = '\\';
+        srcx = src; dstx = dst;
+        copied = JSONStringCopy(dstx, srcx, size);
+        if (copied != pos || memcmp(dst, src, copied) != 0) {
+          std::cout << "Error: " << salign << " " << dalign << " "
+                    << i << " " << pos << " " << copied << std::endl;
+        }
+        src[pos] = merk;
+
+        // Test a 0 character:
+        src[pos] = 0;
+        srcx = src; dstx = dst;
+        copied = JSONStringCopy(dstx, srcx, size);
+        if (copied != pos || memcmp(dst, src, copied) != 0) {
+          std::cout << "Error: " << salign << " " << dalign << " "
+                    << i << " " << pos << " " << copied << std::endl;
+        }
+        src[pos] = merk;
+
+        // Test a control character:
+        src[pos] = 31;
+        srcx = src; dstx = dst;
+        copied = JSONStringCopy(dstx, srcx, size);
+        if (copied != pos || memcmp(dst, src, copied) != 0) {
+          std::cout << "Error: " << salign << " " << dalign << " "
+                    << i << " " << pos << " " << copied << std::endl;
+        }
+        src[pos] = merk;
+      }
+      dst -= dalign;
+    }
+    src -= salign;
+  }
+
+  decltype(start) now = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> totalTime 
+      = std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
+  std::cout << "Tests took altogether " << totalTime.count() << " seconds." 
+            << std::endl;
+}
+
+void TestSkipWhiteSpaceCorrectness (uint8_t* src, int size) {
+  uint8_t const* srcx;
+  int copied;
+
+  std::cout << "Performing correctness tests for whitespace skipping..." 
+            << std::endl;
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int salign = 0; salign < 16; salign++) {
+    src += salign;
+    for (int i = 0;
+         i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
+      uint8_t merk;
+      int pos = testPositions[i];
+      if (pos < 0) {
+        pos = size + pos;
+      }
+
+      // Test a non-whitespace character:
+      merk = src[pos]; src[pos] = 'x';
+      srcx = src;
+      copied = JSONSkipWhiteSpace(srcx, size);
+      if (copied != pos) {
+        std::cout << "Error: " << salign << " "
+                  << i << " " << pos << " " << copied << std::endl;
+      }
+      src[pos] = merk;
+    }
+    src -= salign;
+  }
+
+  decltype(start) now = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> totalTime 
+      = std::chrono::duration_cast<std::chrono::duration<double>>(now-start);
+  std::cout << "Whitespace tests took altogether " << totalTime.count() 
+            << " seconds." << std::endl;
+}
+
 int main (int argc, char* argv[]) { 
   if (argc < 4) {
     std::cout << "Usage: JasonAsm SIZE REPEAT CORRECTNESS" << std::endl;
@@ -28,6 +140,8 @@ int main (int argc, char* argv[]) {
 
   uint8_t* src = new uint8_t[size+17];
   uint8_t* dst = new uint8_t[size+17];
+  std::cout << "Src pointer: " << (void*) src << std::endl;
+  std::cout << "Dst pointer: " << (void*) dst << std::endl;
   for (int i = 0; i < size+16; i++) {
     src[i] = 'a' + (i % 26);
   }
@@ -38,72 +152,7 @@ int main (int argc, char* argv[]) {
   int copied;
 
   if (docorrectness > 0) {
-    std::cout << "Performing correctness tests..." << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int salign = 0; salign < 16; salign++) {
-      src += salign;
-      for (int dalign = 0; dalign < 16; dalign++) {
-        dst += dalign;
-        for (int i = 0;
-             i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
-          uint8_t merk;
-          int pos = testPositions[i];
-          if (pos < 0) {
-            pos = size + pos;
-          }
-
-          // Test a quote character:
-          merk = src[pos]; src[pos] = '"';
-          srcx = src; dstx = dst;
-          copied = JSONStringCopy(dstx, srcx, size);
-          if (copied != pos || memcmp(dst, src, copied) != 0) {
-            std::cout << "Error: " << salign << " " << dalign << " "
-                      << i << " " << pos << " " << copied << std::endl;
-          }
-          src[pos] = merk;
-
-          // Test a backslash character:
-          src[pos] = '\\';
-          srcx = src; dstx = dst;
-          copied = JSONStringCopy(dstx, srcx, size);
-          if (copied != pos || memcmp(dst, src, copied) != 0) {
-            std::cout << "Error: " << salign << " " << dalign << " "
-                      << i << " " << pos << " " << copied << std::endl;
-          }
-          src[pos] = merk;
-
-          // Test a 0 character:
-          src[pos] = 0;
-          srcx = src; dstx = dst;
-          copied = JSONStringCopy(dstx, srcx, size);
-          if (copied != pos || memcmp(dst, src, copied) != 0) {
-            std::cout << "Error: " << salign << " " << dalign << " "
-                      << i << " " << pos << " " << copied << std::endl;
-          }
-          src[pos] = merk;
-
-          // Test a control character:
-          src[pos] = 31;
-          srcx = src; dstx = dst;
-          copied = JSONStringCopy(dstx, srcx, size);
-          if (copied != pos || memcmp(dst, src, copied) != 0) {
-            std::cout << "Error: " << salign << " " << dalign << " "
-                      << i << " " << pos << " " << copied << std::endl;
-          }
-          src[pos] = merk;
-        }
-        dst -= dalign;
-      }
-      src -= salign;
-    }
-
-    decltype(start) now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> totalTime 
-        = std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
-    std::cout << "Tests took altogether " << totalTime.count() << " seconds." 
-              << std::endl;
+    TestStringCopyCorrectness(src, dst, size); 
   }
 
   std::cout << "\nNow racing for the repeated full string, first target aligned...\n" << std::endl;
@@ -185,39 +234,7 @@ int main (int argc, char* argv[]) {
   src[size+16] = 0;
 
   if (docorrectness > 0) {
-    std::cout << "Performing correctness tests for whitespace skipping..." 
-              << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    for (int salign = 0; salign < 16; salign++) {
-      src += salign;
-      for (int i = 0;
-           i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
-        uint8_t merk;
-        int pos = testPositions[i];
-        if (pos < 0) {
-          pos = size + pos;
-        }
-
-        // Test a non-whitespace character:
-        merk = src[pos]; src[pos] = 'x';
-        srcx = src;
-        copied = JSONSkipWhiteSpace(srcx, size);
-        if (copied != pos) {
-          std::cout << "Error: " << salign << " "
-                    << i << " " << pos << " " << copied << std::endl;
-        }
-        src[pos] = merk;
-      }
-      src -= salign;
-    }
-
-    decltype(start) now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> totalTime 
-        = std::chrono::duration_cast<std::chrono::duration<double>>(now-start);
-    std::cout << "Whitespace tests took altogether " << totalTime.count() 
-              << " seconds." << std::endl;
+    TestSkipWhiteSpaceCorrectness(src, size);
   }
 
   std::cout << "\nNow racing for the repeated full string...\n" << std::endl;
@@ -269,6 +286,7 @@ int main (int argc, char* argv[]) {
             << std::endl;
 
   std::cout << "\n\n\nAkku (please ignore):" << akku << std::endl;
+  //std::cout << "\n\n\nGuck (please ignore): " << dst[100] << std::endl;
 
   delete[] src;
   delete[] dst;
