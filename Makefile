@@ -24,7 +24,7 @@ googletest:
 fpconv.o: Makefile powers.h fpconv.h fpconv.cpp
 	$(CC) $(CFLAGS) fpconv.cpp -c -o fpconv.o
 
-JasonAsm.o: Makefile JasonAsm.h
+JasonAsm.o: Makefile JasonAsm.h JasonAsm.cpp
 	$(CC) $(CFLAGS) JasonAsm.cpp -c -o JasonAsm.o
 
 Jason.o: Makefile Jason.h JasonBuilder.h JasonDumper.h JasonParser.h JasonSlice.h JasonType.h Jason.cpp

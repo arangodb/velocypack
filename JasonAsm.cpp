@@ -3,15 +3,16 @@
 
 #include "JasonAsm.h"
 
-int JSONStringCopyC (uint8_t*& dst, uint8_t const*& src, int limit) {
+size_t JSONStringCopyC (uint8_t*& dst, uint8_t const*& src, size_t limit) {
   return JSONStringCopyInline(dst, src, limit);
 }
 
-int JSONStringCopyCheckUtf8C (uint8_t*& dst, uint8_t const*& src, int limit) {
+size_t JSONStringCopyCheckUtf8C (uint8_t*& dst, uint8_t const*& src,
+                                 size_t limit) {
   return JSONStringCopyCheckUtf8Inline(dst, src, limit);
 }
 
-int JSONSkipWhiteSpaceC (uint8_t const*& ptr, int limit) {
+size_t JSONSkipWhiteSpaceC (uint8_t const*& ptr, size_t limit) {
   return JSONSkipWhiteSpaceInline(ptr, limit);
 }
 
@@ -35,11 +36,11 @@ static bool HasSSE42 () {
   }
 }
 
-static int JSONStringCopySSE42 (uint8_t*& dst, uint8_t const*& src, int limit) {
+static size_t JSONStringCopySSE42 (uint8_t*& dst, uint8_t const*& src, size_t limit) {
   alignas(16) static char const ranges[16] = "\x00\x1f\"\"\\\\";
   __m128i const r = _mm_load_si128(reinterpret_cast<__m128i const*>(ranges));
-  int count = 0;
-  int x = 0;
+  size_t count = 0;
+  size_t x = 0;
   while (limit >= 16) {
     __m128i const s = _mm_loadu_si128(reinterpret_cast<__m128i const*>(src));
     x = _mm_cmpestri(r, 6, s, 16,
@@ -77,7 +78,7 @@ static int JSONStringCopySSE42 (uint8_t*& dst, uint8_t const*& src, int limit) {
   return count;
 }
 
-static int DoInitCopy (uint8_t*& dst, uint8_t const*& src, int limit) {
+static size_t DoInitCopy (uint8_t*& dst, uint8_t const*& src, size_t limit) {
   if (HasSSE42()) {
     JSONStringCopy = JSONStringCopySSE42;
   }
@@ -87,13 +88,13 @@ static int DoInitCopy (uint8_t*& dst, uint8_t const*& src, int limit) {
   return (*JSONStringCopy)(dst, src, limit);
 }
 
-static int JSONStringCopyCheckUtf8SSE42 (uint8_t*& dst,
-                                         uint8_t const*& src,
-                                         int limit) {
+static size_t JSONStringCopyCheckUtf8SSE42 (uint8_t*& dst,
+                                            uint8_t const*& src,
+                                            size_t limit) {
   alignas(16) static unsigned char const ranges[16] = "\x00\x1f\x80\xff\"\"\\\\";
   __m128i const r = _mm_load_si128(reinterpret_cast<__m128i const*>(ranges));
-  int count = 0;
-  int x = 0;
+  size_t count = 0;
+  size_t x = 0;
   while (limit >= 16) {
     __m128i const s = _mm_loadu_si128(reinterpret_cast<__m128i const*>(src));
     x = _mm_cmpestri(r, 8, s, 16,
@@ -131,7 +132,8 @@ static int JSONStringCopyCheckUtf8SSE42 (uint8_t*& dst,
   return count;
 }
 
-static int DoInitCopyCheckUtf8 (uint8_t*& dst, uint8_t const*& src, int limit) {
+static size_t DoInitCopyCheckUtf8 (uint8_t*& dst, uint8_t const*& src,
+                                   size_t limit) {
   if (HasSSE42()) {
     JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8SSE42;
   }
@@ -141,11 +143,11 @@ static int DoInitCopyCheckUtf8 (uint8_t*& dst, uint8_t const*& src, int limit) {
   return (*JSONStringCopyCheckUtf8)(dst, src, limit);
 }
 
-static int JSONSkipWhiteSpaceSSE42 (uint8_t const*& ptr, int limit) {
+static size_t JSONSkipWhiteSpaceSSE42 (uint8_t const*& ptr, size_t limit) {
   alignas(16) static char const white[16] = " \t\n\r";
   __m128i const w = _mm_load_si128(reinterpret_cast<__m128i const*>(white));
-  int count = 0;
-  int x = 0;
+  size_t count = 0;
+  size_t x = 0;
   while (limit >= 16) {
     __m128i const s = _mm_loadu_si128(reinterpret_cast<__m128i const*>(ptr));
     x = _mm_cmpestri(w, 4, s, 16,
@@ -177,7 +179,7 @@ static int JSONSkipWhiteSpaceSSE42 (uint8_t const*& ptr, int limit) {
   return count;
 }
 
-static int DoInitSkip (uint8_t const*& ptr, int limit) {
+static size_t DoInitSkip (uint8_t const*& ptr, size_t limit) {
   if (HasSSE42()) {
     JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
   }
@@ -189,17 +191,18 @@ static int DoInitSkip (uint8_t const*& ptr, int limit) {
 
 #else
 
-static int DoInitCopy (uint8_t*& dst, uint8_t const*& src, int limit) {
+static size_t DoInitCopy (uint8_t*& dst, uint8_t const*& src, size_t limit) {
   JSONStringCopy = JSONStringCopyC;
   return JSONStringCopyC(dst, src, limit);
 }
 
-static int DoInitCopyCheckUtf8 (uint8_t*& dst, uint8_t const*& src, int limit) {
+static size_t DoInitCopyCheckUtf8 (uint8_t*& dst, uint8_t const*& src,
+                                   size_t limit) {
   JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
   return JSONStringCopyCheckUtf8C(dst, src, limit);
 }
 
-static int DoInitSkip (uint8_t const*& ptr, int limit) {
+static size_t DoInitSkip (uint8_t const*& ptr, size_t limit) {
   JSONSkipWhiteSpace = JSONSkipWhiteSpaceC;
   return JSONSkipWhiteSpace(ptr, limit);
 }
@@ -207,10 +210,10 @@ static int DoInitSkip (uint8_t const*& ptr, int limit) {
 #endif
 
 
-int (*JSONStringCopy)(uint8_t*&, uint8_t const*&, int) = DoInitCopy;
-int (*JSONStringCopyCheckUtf8)(uint8_t*&, uint8_t const*&, int) 
+size_t (*JSONStringCopy)(uint8_t*&, uint8_t const*&, size_t) = DoInitCopy;
+size_t (*JSONStringCopyCheckUtf8)(uint8_t*&, uint8_t const*&, size_t) 
     = DoInitCopyCheckUtf8;
-int (*JSONSkipWhiteSpace)(uint8_t const*&, int) = DoInitSkip;
+size_t (*JSONSkipWhiteSpace)(uint8_t const*&, size_t) = DoInitSkip;
 
 #if defined(COMPILE_JASONASM_UNITTESTS)
 
@@ -220,27 +223,31 @@ int testPositions[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                         -13, -14, -15, -16, -23, -31, -32, -67, -103, -178,
                         -210, -234, -247, -254, -255 };
 
-void TestStringCopyCorrectness (uint8_t* src, uint8_t* dst, int size) {
+void TestStringCopyCorrectness (uint8_t* src, uint8_t* dst, size_t size) {
   uint8_t const* srcx;
   uint8_t* dstx;
-  int copied;
+  size_t copied;
 
   std::cout << "Performing correctness tests..." << std::endl;
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  for (int salign = 0; salign < 16; salign++) {
+  for (size_t salign = 0; salign < 16; salign++) {
     src += salign;
-    for (int dalign = 0; dalign < 16; dalign++) {
+    for (size_t dalign = 0; dalign < 16; dalign++) {
       dst += dalign;
-      for (int i = 0;
+      for (size_t i = 0;
            i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
         uint8_t merk;
-        int pos = testPositions[i];
-        if (pos < 0) {
-          pos = size + pos;
+        int off = testPositions[i];
+        size_t pos;
+        if (off >= 0) {
+          pos = off;
         }
-        if (pos < 0 || pos >= size) {
+        else {
+          pos = size - static_cast<size_t>(-off);
+        }
+        if (pos >= size) {
           continue;
         }
 
@@ -296,10 +303,11 @@ void TestStringCopyCorrectness (uint8_t* src, uint8_t* dst, int size) {
             << std::endl;
 }
 
-void TestStringCopyCorrectnessCheckUtf8 (uint8_t* src, uint8_t* dst, int size) {
+void TestStringCopyCorrectnessCheckUtf8 (uint8_t* src, uint8_t* dst,
+                                         size_t size) {
   uint8_t const* srcx;
   uint8_t* dstx;
-  int copied;
+  size_t copied;
 
   std::cout << "Performing correctness tests (check UTF8)..." << std::endl;
 
@@ -312,11 +320,15 @@ void TestStringCopyCorrectnessCheckUtf8 (uint8_t* src, uint8_t* dst, int size) {
       for (int i = 0;
            i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
         uint8_t merk;
-        int pos = testPositions[i];
-        if (pos < 0) {
-          pos = size + pos;
+        int off = testPositions[i];
+        size_t pos;
+        if (off >= 0) {
+          pos = off;
         }
-        if (pos < 0 || pos >= size) {
+        else {
+          pos = size - static_cast<size_t>(-off);
+        }
+        if (pos >= size) {
           continue;
         }
 
@@ -382,9 +394,9 @@ void TestStringCopyCorrectnessCheckUtf8 (uint8_t* src, uint8_t* dst, int size) {
             << std::endl;
 }
 
-void TestSkipWhiteSpaceCorrectness (uint8_t* src, int size) {
+void TestSkipWhiteSpaceCorrectness (uint8_t* src, size_t size) {
   uint8_t const* srcx;
-  int copied;
+  size_t copied;
 
   std::cout << "Performing correctness tests for whitespace skipping..." 
             << std::endl;
@@ -396,11 +408,15 @@ void TestSkipWhiteSpaceCorrectness (uint8_t* src, int size) {
     for (int i = 0;
          i < static_cast<int>(sizeof(testPositions) / sizeof(int)); i++) {
       uint8_t merk;
-      int pos = testPositions[i];
-      if (pos < 0) {
-        pos = size + pos;
+      int off = testPositions[i];
+      size_t pos;
+      if (off >= 0) {
+        pos = off;
       }
-      if (pos < 0 || pos >= size) {
+      else {
+        pos = size - static_cast<size_t>(-off);
+      }
+      if (pos >= size) {
         continue;
       }
 
@@ -424,10 +440,10 @@ void TestSkipWhiteSpaceCorrectness (uint8_t* src, int size) {
             << " seconds." << std::endl;
 }
 
-void RaceStringCopy (uint8_t* dst, uint8_t* src, int size, int repeat, int&akku) {
+void RaceStringCopy (uint8_t* dst, uint8_t* src, size_t size, int repeat, int&akku) {
   uint8_t const* srcx;
   uint8_t* dstx;
-  int copied;
+  size_t copied;
 
   std::cout << "\nNow racing for the repeated full string, "
             << "first target aligned...\n" << std::endl;
@@ -481,10 +497,10 @@ void RaceStringCopy (uint8_t* dst, uint8_t* src, int size, int repeat, int&akku)
 }
 
 void RaceStringCopyCheckUtf8 (uint8_t* dst, uint8_t* src,
-                              int size, int repeat, int& akku) {
+                              size_t size, int repeat, int& akku) {
   uint8_t const* srcx;
   uint8_t* dstx;
-  int copied;
+  size_t copied;
 
   std::cout << "\nNow racing for the repeated (check UTF8) full string, "
             << "first target aligned...\n" << std::endl;
@@ -557,9 +573,9 @@ void RaceStringCopyCheckUtf8 (uint8_t* dst, uint8_t* src,
             << std::endl;
 }
 
-void RaceSkipWhiteSpace (uint8_t* src, int size, int repeat, int& akku) {
+void RaceSkipWhiteSpace (uint8_t* src, size_t size, int repeat, int& akku) {
   uint8_t const* srcx;
-  int copied;
+  size_t copied;
 
   std::cout << "\nNow racing for the repeated full string...\n" << std::endl;
 
@@ -616,7 +632,7 @@ int main (int argc, char* argv[]) {
     return 0;
   }
 
-  int size = atoi(argv[1]);
+  size_t size = atol(argv[1]);
   int repeat = atoi(argv[2]);
   int docorrectness = atoi(argv[3]);
   int akku = 0;
@@ -627,7 +643,7 @@ int main (int argc, char* argv[]) {
   uint8_t* dst = new uint8_t[size+17];
   std::cout << "Src pointer: " << (void*) src << std::endl;
   std::cout << "Dst pointer: " << (void*) dst << std::endl;
-  for (int i = 0; i < size+16; i++) {
+  for (size_t i = 0; i < size+16; i++) {
     src[i] = 'a' + (i % 26);
   }
   src[size+16] = 0;
@@ -648,7 +664,7 @@ int main (int argc, char* argv[]) {
 
   // Now do the whitespace skipping tests/measurements:
   static char const whitetab[17] = "       \t   \n   \r";
-  for (int i = 0; i < size+16; i++) {
+  for (size_t i = 0; i < size+16; i++) {
     src[i] = whitetab[i % 16];
   }
   src[size+16] = 0;
@@ -659,8 +675,8 @@ int main (int argc, char* argv[]) {
 
   RaceSkipWhiteSpace(src, size, repeat, akku);
 
-  std::cout << "\n\n\nAkku (please ignore):" << akku << std::endl;
-  std::cout << "\n\n\nGuck (please ignore): " << dst[100] << std::endl;
+  //std::cout << "\n\n\nAkku (please ignore):" << akku << std::endl;
+  //std::cout << "\n\n\nGuck (please ignore): " << dst[100] << std::endl;
 
   delete[] src;
   delete[] dst;

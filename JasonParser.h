@@ -214,39 +214,16 @@ namespace arangodb {
         // skips over all following whitespace tokens but does not consume the
         // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
-          int remaining = static_cast<int>(_size - _pos);
+          size_t remaining = _size - _pos;
           uint8_t const* src = _start + _pos;
-          int count = JSONSkipWhiteSpace(src, remaining);
+          size_t count = JSONSkipWhiteSpace(src, remaining);
           _pos += count;
           if (count < remaining) {
             return static_cast<int>(_start[_pos]);
           }
           throw JasonParserError(err);
         }
-#if 0
-        inline int skipWhiteSpace (char const* err) {
-          JasonLength remaining = _size - _pos;
-          uint8_t const* src = _start + _pos;
-          int count;
-          while (remaining >= 1024*1024) {
-            count = JSONSkipWhiteSpace(src, 1024*1024);
-            _pos += count;
-            if (count < 1024*1024) {
-              return static_cast<int>(_start[_pos]);
-            }
-            remaining = _size - _pos;
-          }
-          if (remaining == 0) {
-            throw JasonParserError(err);
-          }
-          count = JSONSkipWhiteSpace(src, remaining);
-          _pos += count;
-          if (count < static_cast<int>(remaining)) {
-            return static_cast<int>(_start[_pos]);
-          }
-          throw JasonParserError(err);
-        }
-#endif
+
         void parseTrue () {
           // Called, when main mode has just seen a 't', need to see "rue" next
           if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
