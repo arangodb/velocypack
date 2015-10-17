@@ -1828,15 +1828,20 @@ TEST(BuilderTest, ID) {
 
 TEST(BuilderTest, ArangoDB_id) {
   JasonBuilder b;
-  b.add(Jason(JasonType::ArangoDB_id));
+  b.add(Jason(JasonType::Object));
+  b.add("_id", Jason(JasonType::ArangoDB_id));
+  b.close();
 
-  uint8_t* result = b.start();
-  JasonLength len = b.size();
+  JasonSlice s(b.start());
+  ASSERT_EQ(10ULL, s.byteSize());
 
-  static uint8_t correctResult[] = { 0x0b };
-
-  ASSERT_EQ(sizeof(correctResult), len);
-  ASSERT_EQ(0, memcmp(result, correctResult, len));
+  JasonSlice ss = s.keyAt(0);
+  checkBuild(ss, JasonType::String, 4);
+  std::string correct = "_id";
+  ASSERT_EQ(correct, ss.copyString());
+  ss = s.valueAt(0);
+  ASSERT_EQ(JasonType::ArangoDB_id, ss.type());
+  checkBuild(ss, JasonType::ArangoDB_id, 1);
 }
 
 TEST(ParserTest, Garbage1) {
