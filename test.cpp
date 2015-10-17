@@ -1629,6 +1629,35 @@ TEST(BuilderTest, ExternalString) {
   ASSERT_EQ(0, strncmp(str, p, len));
 }
 
+TEST(BuilderTest, ExternalExternal) {
+  char const* p = "the quick brown FOX jumped over the lazy dog";
+  JasonBuilder bExternal;
+  bExternal.add(Jason(std::string(p)));
+
+  JasonBuilder bExExternal;
+  bExExternal.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  bExExternal.add(Jason(std::string(p)));
+
+  JasonBuilder b;
+  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
+  
+  JasonSlice s(b.start());
+  ASSERT_EQ(JasonType::External, s.type());
+  ASSERT_EQ(9ULL, s.byteSize());
+ 
+  JasonSlice sExternal(s.getExternal());
+  ASSERT_EQ(JasonType::External, sExternal.type());
+  ASSERT_EQ(9ULL, sExternal.byteSize());
+
+  JasonSlice sExExternal(sExternal.getExternal());
+  ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
+  ASSERT_EQ(JasonType::String, sExExternal.type());
+  JasonLength len;
+  char const* str = sExExternal.getString(len);
+  ASSERT_EQ(strlen(p), len);
+  ASSERT_EQ(0, strncmp(str, p, len));
+}
+
 TEST(BuilderTest, UInt) {
   uint64_t value = 0x12345678abcdef;
   JasonBuilder b;
