@@ -714,6 +714,54 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   ASSERT_EQ(std::string("null"), buffer);
 }
 
+TEST(StringDumperTest, UnsupportedTypeBinary) {
+  JasonBuilder b;
+  b.add(Jason(std::string("der fuchs"), JasonType::Binary));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ConvertTypeBinary) {
+  JasonBuilder b;
+  b.add(Jason(std::string("der fuchs"), JasonType::Binary));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeUTCDate) {
+  int64_t v = 0;
+  JasonBuilder b;
+  b.add(Jason(v, JasonType::UTCDate));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ConvertTypeUTCDate) {
+  int64_t v = 0;
+  JasonBuilder b;
+  b.add(Jason(v, JasonType::UTCDate));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
+}
+
 TEST(SliceTest, Null) {
   Buffer[0] = 0x1;
 
