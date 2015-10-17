@@ -1645,6 +1645,54 @@ TEST(BuilderTest, Binary) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, UTCDate) {
+  int64_t const value = 12345678;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateZero) {
+  int64_t const value = 0;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateMin) {
+  int64_t const value = INT64_MIN;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
+TEST(BuilderTest, UTCDateMax) {
+  int64_t const value = INT64_MAX;
+  JasonBuilder b;
+  b.add(Jason(value, JasonType::UTCDate));
+
+  JasonSlice s(b.start());
+  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_TRUE(s.isUTCDate());
+  ASSERT_EQ(9UL, s.byteSize());
+  ASSERT_EQ(value, s.getUTCDate());
+}
+
 TEST(BuilderTest, ID) {
   char const* key = "\x02\x03\x05\x08\x0d";
 
