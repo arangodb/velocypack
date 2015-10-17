@@ -1,4 +1,4 @@
-make bench
+# make -f Makefile.old bench
 DURATION=10
 
 echo
