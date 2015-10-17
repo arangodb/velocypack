@@ -206,7 +206,6 @@ namespace arangodb {
           return nr;
         }
 
-        // FIXME: implement a white space table?
         inline bool isWhiteSpace (uint8_t i) const noexcept {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
@@ -589,6 +588,9 @@ namespace arangodb {
                 }
                 break;
             }
+#ifdef JASON_VALIDATEUTF8
+            // If we do not do UTF8 validation, we must do this
+            // after the fast copy further up.
             if (! large && _b._pos - (base + 1) > 127) {
               large = true;
               _b.reserveSpace(8);
@@ -596,6 +598,7 @@ namespace arangodb {
                       _b._pos - (base + 1));
               _b._pos += 8;
             }
+#endif
           }
         }
 
