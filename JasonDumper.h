@@ -13,24 +13,24 @@ namespace arangodb {
   namespace jason {
 
     enum UnsupportedTypeStrategy {
-      STRATEGY_SUPPRESS,
+      STRATEGY_NULLIFY,
       STRATEGY_FAIL
+    };
+        
+    struct JasonDumperError : std::exception {
+      private:
+        std::string _msg;
+      public:
+        JasonDumperError (std::string const& msg) : _msg(msg) {
+        }
+        char const* what() const noexcept {
+          return _msg.c_str();
+        }
     };
 
     // Dumps Jason into a JSON output string
     template<typename T, bool PrettyPrint = false>
     class JasonDumper {
-
-        struct JasonDumperError : std::exception {
-          private:
-            std::string _msg;
-          public:
-            JasonDumperError (std::string const& msg) : _msg(msg) {
-            }
-            char const* what() const noexcept {
-              return _msg.c_str();
-            }
-        };
 
       public:
 
@@ -107,9 +107,15 @@ namespace arangodb {
               break;
             }
             case JasonType::Double: {
-              char temp[24];
-              int len = fpconv_dtoa(slice.getDouble(), &temp[0]);
-              _buffer->append(&temp[0], static_cast<JasonLength>(len));
+              double const v = slice.getDouble();
+              if (std::isnan(v) || ! std::isfinite(v)) {
+                handleUnsupportedType(slice);
+              }
+              else {
+                char temp[24];
+                int len = fpconv_dtoa(v, &temp[0]);
+                _buffer->append(&temp[0], static_cast<JasonLength>(len));
+              }
               break; 
             }
             case JasonType::Array: {
@@ -182,18 +188,18 @@ namespace arangodb {
               break;
             }
             case JasonType::ID: {
-              handleUnsupportedType(slice);
               // TODO
+              handleUnsupportedType(slice);
               break;
             }
             case JasonType::ArangoDB_id: {
-              handleUnsupportedType(slice);
               // TODO
+              handleUnsupportedType(slice);
               break;
             }
             case JasonType::UTCDate: {
-              handleUnsupportedType(slice);
               // TODO
+              handleUnsupportedType(slice);
               break;
             }
             case JasonType::Int:
@@ -291,7 +297,7 @@ namespace arangodb {
             _buffer->push_back('0' + v);
           }
           else {
-            throw JasonDumper::JasonDumperError("unexpected number type");
+            throw JasonDumperError("unexpected number type");
           }
         }
 
@@ -345,7 +351,7 @@ namespace arangodb {
             else if ((c & 0xe0) == 0xc0) {
               // two-byte sequence
               if (p + 1 >= e) {
-                throw JasonDumper::JasonDumperError("unexpected end of string");
+                throw JasonDumperError("unexpected end of string");
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 2);
@@ -363,7 +369,7 @@ namespace arangodb {
             else if ((c & 0xf0) == 0xe0) {
               // three-byte sequence
               if (p + 2 >= e) {
-                throw JasonDumper::JasonDumperError("unexpected end of string");
+                throw JasonDumperError("unexpected end of string");
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 3);
@@ -372,7 +378,7 @@ namespace arangodb {
               uint8_t e = *(p + 2);
 
               if ((d & 0xc0) != 0x80 || (e & 0xc0) != 0x80) {
-                throw JasonDumper::JasonDumperError("invalid UTF-8 sequence");
+                throw JasonDumperError("invalid UTF-8 sequence");
               }
             
               dumpEscapedCharacter(((c & 0x0f) << 12) | ((d & 0x3f) << 6) | (e & 0x3f));
@@ -382,7 +388,7 @@ namespace arangodb {
             else if ((c & 0xf8) == 0xf0) {
               // four-byte sequence
               if (p + 3 >= e) {
-                throw JasonDumper::JasonDumperError("unexpected end of string");
+                throw JasonDumperError("unexpected end of string");
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 4);
@@ -392,7 +398,7 @@ namespace arangodb {
               uint8_t f = *(p + 3);
 
               if ((d & 0xc0) != 0x80 || (e & 0xc0) != 0x80 || (f & 0xc0) != 0x80) {
-                throw JasonDumper::JasonDumperError("invalid UTF-8 sequence");
+                throw JasonDumperError("invalid UTF-8 sequence");
               }
 
               uint32_t n = ((c & 0x0f) << 18) | ((d & 0x3f) << 12) | ((e & 0x3f) << 6) | (f & 0x3f);
@@ -422,8 +428,9 @@ namespace arangodb {
           _buffer->append((u < 10) ? ('0' + u) : ('A' + u - 10));
         }
 
-        void handleUnsupportedType (JasonSlice /*slice*/) {
-          if (_strategy == STRATEGY_SUPPRESS) {
+        void handleUnsupportedType (JasonSlice const&) {
+          if (_strategy == STRATEGY_NULLIFY) {
+            _buffer->append("null", 4);
             return;
           }
 

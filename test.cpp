@@ -21,6 +21,7 @@ using JasonBuilder      = arangodb::jason::JasonBuilder;
 using JasonBufferDumper = arangodb::jason::JasonBufferDumper;
 using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
 using JasonStringDumper = arangodb::jason::JasonStringDumper;
+using JasonDumperError  = arangodb::jason::JasonDumperError;
 using JasonLength       = arangodb::jason::JasonLength;
 using JasonPair         = arangodb::jason::JasonPair;
 using JasonParser       = arangodb::jason::JasonParser;
@@ -632,6 +633,85 @@ TEST(StringDumperTest, True) {
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
+  double v = -3.33e307;
+  v *= -v;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
+  double v = -3.33e307;
+  v *= -v;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
+  double v = 3.33e307;
+  v *= v;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
+  double v = 3.33e307;
+  v *= v;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
+  double v = 1.0 / 0.0;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+}
+
+TEST(StringDumperTest, ConvertTypeDoubleNan) {
+  double v = 1.0 / 0.0;
+  JasonBuilder b;
+  b.add(Jason(v));
+
+  JasonSlice slice = b.slice();
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
 }
 
 TEST(SliceTest, Null) {
