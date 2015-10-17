@@ -3,21 +3,21 @@ ACLOCAL_AMFLAGS="-Im4"
 lib_LIBRARIES = libjason.a
 
 libjason_a_SOURCES = JasonAsm.cpp Jason.cpp
-libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2
+libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 
 noinst_PROGRAMS = bench test JasonAsm
 
 bench_SOURCES = bench.cpp fpconv.cpp
 bench_LDADD = libjason.a
-bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -DRAPIDJSON_SSE42 -msse4.2
+bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -DRAPIDJSON_SSE42 -msse4.2 -march=native
 
 test_SOURCES = test.cpp fpconv.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
-test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include
+test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native
 
 JasonAsm_SOURCES = JasonAsm.cpp
-JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2
+JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
 
 .PHONY: googletest
