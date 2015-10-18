@@ -214,6 +214,13 @@ namespace arangodb {
         // skips over all following whitespace tokens but does not consume the
         // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
+          if (_pos >= _size) {
+            return -1;
+          }
+          uint8_t c = _start[_pos];
+          if (! isWhiteSpace(c)) {
+            return c;
+          }
           size_t remaining = _size - _pos;
           size_t count = JSONSkipWhiteSpace(_start + _pos, remaining);
           _pos += count;

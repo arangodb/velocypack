@@ -9,9 +9,6 @@ using JasonLength       = arangodb::jason::JasonLength;
 using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
 using JasonSlice        = arangodb::jason::JasonSlice;
        
-// thread local vector for sorting small object attributes
-thread_local std::vector<JasonBuilder::SortEntrySmall> JasonBuilder::SortObjectSmallEntries;
-
 // thread local vector for sorting large object attributes
 thread_local std::vector<JasonBuilder::SortEntryLarge> JasonBuilder::SortObjectLargeEntries;
 

@@ -70,20 +70,12 @@ namespace arangodb {
 
       private:
 
-        struct SortEntrySmall {
-          int32_t  nameStartOffset;
-          uint16_t nameSize;
-          uint16_t offset;
-        };
-
         struct SortEntryLarge {
           uint8_t const* nameStart;
           uint64_t nameSize;
           uint64_t offset;
         };
 
-        // thread local vector for sorting small object attributes
-        static thread_local std::vector<SortEntrySmall> SortObjectSmallEntries;
         // thread local vector for sorting large object attributes
         static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
 
@@ -129,25 +121,6 @@ namespace arangodb {
           _buffer.prealloc(len);
           _start = _buffer.data();
           _size = _buffer.size();
-        }
-
-        // Here comes infrastructure to sort object index tables:
-        static void doActualSortSmall (std::vector<SortEntrySmall>& entries,
-                                       uint8_t const* objBase) {
-          JASON_ASSERT(entries.size() > 1);
-          std::sort(entries.begin(), entries.end(), 
-            [objBase] (SortEntrySmall const& a, SortEntrySmall const& b) {
-              // return true iff a < b:
-              uint8_t const* pa = objBase + a.nameStartOffset;
-              uint16_t sizea = a.nameSize;
-              uint8_t const* pb = objBase + b.nameStartOffset;
-              uint16_t sizeb = b.nameSize;
-              size_t const compareLength
-                  = static_cast<size_t>((std::min)(sizea, sizeb));
-              int res = memcmp(pa, pb, compareLength);
-
-              return (res < 0 || (res == 0 && sizea < sizeb));
-            });
         }
 
         static void doActualSortLarge (std::vector<SortEntryLarge>& entries) {
