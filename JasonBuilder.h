@@ -188,25 +188,27 @@ namespace arangodb {
 
         static void sortObjectIndexShort (uint8_t* objBase,
                                           std::vector<JasonLength>& offsets) {
-          std::vector<SortEntrySmall>& entries = SortObjectSmallEntries; 
-          entries.clear();
-          entries.reserve(offsets.size());
-          for (JasonLength i = 0; i < offsets.size(); i++) {
-            SortEntrySmall e;
-            e.offset = static_cast<uint16_t>(offsets[i]);
-            uint64_t attrLen;
-            uint8_t const* nameStart = findAttrName(objBase + e.offset, attrLen);
-            e.nameStartOffset = static_cast<uint16_t>(nameStart - objBase);
-            e.nameSize = static_cast<uint16_t>(attrLen);
-            entries.push_back(e);
-          }
-          JASON_ASSERT(entries.size() == offsets.size());
-          doActualSortSmall(entries, objBase);
-
-          // copy back the sorted offsets 
-          for (JasonLength i = 0; i < offsets.size(); i++) {
-            offsets[i] = entries[i].offset;
-          }
+          auto cmp = [&] (JasonLength a, JasonLength b) -> bool {
+            uint8_t const* aa = objBase + a;
+            uint8_t const* bb = objBase + b;
+            if (*aa >= 0x40 && *aa <= 0xbf &&
+                *bb >= 0x40 && *bb <= 0xbf) {
+              // The fast path, short strings:
+              uint8_t m = (std::min)(*aa - 0x40, *bb - 0x40);
+              int c = memcmp(aa+1, bb+1, static_cast<size_t>(m));
+              return (c < 0 || (c == 0 && *aa < *bb));
+            }
+            else {
+              uint64_t lena;
+              uint64_t lenb;
+              aa = findAttrName(aa, lena);
+              bb = findAttrName(bb, lenb);
+              uint64_t m = (std::min)(lena, lenb);
+              int c = memcmp(aa, bb, m);
+              return (c < 0 || (c == 0 && lena < lenb));
+            }
+          };
+          std::sort(offsets.begin(), offsets.end(), cmp);
         }
 
         static void sortObjectIndexLong (uint8_t* objBase,
