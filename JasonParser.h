@@ -189,6 +189,7 @@ namespace arangodb {
           }
           if (c == ' ') {
             if (_pos+1 >= _size) {
+              _pos++;
               throw JasonParserError(err);
             }
             c = _start[_pos+1];
