@@ -142,7 +142,8 @@ am__v_AR_1 =
 libjason_a_AR = $(AR) $(ARFLAGS)
 libjason_a_LIBADD =
 am_libjason_a_OBJECTS = libjason_a-JasonAsm.$(OBJEXT) \
-	libjason_a-Jason.$(OBJEXT) libjason_a-JasonParser.$(OBJEXT)
+	libjason_a-Jason.$(OBJEXT) libjason_a-JasonParser.$(OBJEXT) \
+	libjason_a-JasonBuilder.$(OBJEXT)
 libjason_a_OBJECTS = $(am_libjason_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_JasonAsm_OBJECTS = JasonAsm-JasonAsm.$(OBJEXT)
@@ -370,7 +371,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = "-Im4"
 lib_LIBRARIES = libjason.a
-libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp
+libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
 libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 bench_SOURCES = bench.cpp fpconv.cpp
 bench_LDADD = libjason.a
@@ -505,6 +506,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bench-fpconv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-Jason.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonAsm.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonBuilder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonParser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-fpconv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-test.Po@am__quote@
@@ -571,6 +573,20 @@ libjason_a-JasonParser.obj: JasonParser.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='JasonParser.cpp' object='libjason_a-JasonParser.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -c -o libjason_a-JasonParser.obj `if test -f 'JasonParser.cpp'; then $(CYGPATH_W) 'JasonParser.cpp'; else $(CYGPATH_W) '$(srcdir)/JasonParser.cpp'; fi`
+
+libjason_a-JasonBuilder.o: JasonBuilder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -MT libjason_a-JasonBuilder.o -MD -MP -MF $(DEPDIR)/libjason_a-JasonBuilder.Tpo -c -o libjason_a-JasonBuilder.o `test -f 'JasonBuilder.cpp' || echo '$(srcdir)/'`JasonBuilder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libjason_a-JasonBuilder.Tpo $(DEPDIR)/libjason_a-JasonBuilder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='JasonBuilder.cpp' object='libjason_a-JasonBuilder.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -c -o libjason_a-JasonBuilder.o `test -f 'JasonBuilder.cpp' || echo '$(srcdir)/'`JasonBuilder.cpp
+
+libjason_a-JasonBuilder.obj: JasonBuilder.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -MT libjason_a-JasonBuilder.obj -MD -MP -MF $(DEPDIR)/libjason_a-JasonBuilder.Tpo -c -o libjason_a-JasonBuilder.obj `if test -f 'JasonBuilder.cpp'; then $(CYGPATH_W) 'JasonBuilder.cpp'; else $(CYGPATH_W) '$(srcdir)/JasonBuilder.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libjason_a-JasonBuilder.Tpo $(DEPDIR)/libjason_a-JasonBuilder.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='JasonBuilder.cpp' object='libjason_a-JasonBuilder.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -c -o libjason_a-JasonBuilder.obj `if test -f 'JasonBuilder.cpp'; then $(CYGPATH_W) 'JasonBuilder.cpp'; else $(CYGPATH_W) '$(srcdir)/JasonBuilder.cpp'; fi`
 
 JasonAsm-JasonAsm.o: JasonAsm.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(JasonAsm_CPPFLAGS) $(CPPFLAGS) $(JasonAsm_CXXFLAGS) $(CXXFLAGS) -MT JasonAsm-JasonAsm.o -MD -MP -MF $(DEPDIR)/JasonAsm-JasonAsm.Tpo -c -o JasonAsm-JasonAsm.o `test -f 'JasonAsm.cpp' || echo '$(srcdir)/'`JasonAsm.cpp

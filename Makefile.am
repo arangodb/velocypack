@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS="-Im4"
 
 lib_LIBRARIES = libjason.a
 
-libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp
+libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
 libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 
 noinst_PROGRAMS = bench test JasonAsm

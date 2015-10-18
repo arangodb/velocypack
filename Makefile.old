@@ -30,14 +30,17 @@ JasonAsm.o: Makefile.old JasonAsm.h JasonAsm.cpp
 JasonParser.o: Makefile.old JasonAsm.h JasonParser.h JasonParser.cpp
 	$(CC) $(CFLAGS) JasonParser.cpp -c -o JasonParser.o
 
+JasonBuilder.o: Makefile.old JasonAsm.h JasonParser.h JasonBuilder.h JasonBuilder.cpp
+	$(CC) $(CFLAGS) JasonBuilder.cpp -c -o JasonBuilder.o
+
 Jason.o: Makefile.old Jason.h JasonBuilder.h JasonDumper.h JasonParser.h JasonSlice.h JasonType.h Jason.cpp
 	$(CC) $(CFLAGS) Jason.cpp -c -o Jason.o
 
-test:	Makefile.old test.cpp fpconv.o Jason.h Jason.o JasonAsm.o JasonParser.o
-	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonAsm.o JasonParser.o googletest/googletest/libgtest.a -pthread -o test
+test:	Makefile.old test.cpp fpconv.o Jason.h Jason.o JasonAsm.o JasonParser.o JasonBuilder.o
+	$(CC) $(CFLAGS) -Igoogletest/googletest/include test.cpp fpconv.o Jason.o JasonAsm.o JasonParser.o JasonBuilder.o googletest/googletest/libgtest.a -pthread -o test
 
-bench: Makefile.old bench.cpp fpconv.o Jason.h Jason.o JasonAsm.o JasonParser.o
-	$(CC) $(CFLAGS) bench.cpp fpconv.o Jason.o JasonAsm.o JasonParser.o -o bench
+bench: Makefile.old bench.cpp fpconv.o Jason.h Jason.o JasonAsm.o JasonParser.o JasonBuilder.o
+	$(CC) $(CFLAGS) bench.cpp fpconv.o Jason.o JasonAsm.o JasonParser.o JasonBuilder.o -o bench
 
 JasonAsm: Makefile.old JasonAsm.h JasonAsm.cpp
 	$(CC) $(CFLAGS) JasonAsm.cpp -DCOMPILE_JASONASM_UNITTESTS -o JasonAsm
