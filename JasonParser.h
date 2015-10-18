@@ -215,7 +215,7 @@ namespace arangodb {
         // byte following the whitespace
         inline int skipWhiteSpace (char const* err) {
           if (_pos >= _size) {
-            return -1;
+            throw JasonParserError(err);
           }
           uint8_t c = _start[_pos];
           if (! isWhiteSpace(c)) {
