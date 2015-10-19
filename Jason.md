@@ -1,12 +1,7 @@
 Jason
 =====
 
-Version 0.9999
-
 Just Another SerializatiON
-
-This is a binary version of JSON with the intention to use it in
-ArangoDB to replace shaped JSON.
 
 Motivation
 ----------
