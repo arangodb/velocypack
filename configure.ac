@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([libjason], [1.00], [max@arangodb.com])
 ${CFLAGS=""}
 ${CXXFLAGS=""}
@@ -33,7 +33,7 @@ LT_INIT
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h unistd.h wchar.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_HEADER_STDBOOL
+AC_HEADER_STDBOOL
 AC_C_INLINE
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T

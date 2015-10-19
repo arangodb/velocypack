@@ -15,5 +15,6 @@ config.log
 config.status
 libjason.a
 stamp-h1
+config.h.in~
 jsonSample/fail*.json
 jsonSample/pass*.json
