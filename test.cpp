@@ -1591,8 +1591,11 @@ TEST(BuilderTest, ExternalUTCDate) {
   
   JasonSlice s(b.start());
   ASSERT_EQ(JasonType::External, s.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
- 
+#else
+  ASSERT_EQ(5ULL, s.byteSize());
+#endif
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
   ASSERT_EQ(JasonType::UTCDate, sExternal.type());
@@ -1609,8 +1612,12 @@ TEST(BuilderTest, ExternalDouble) {
   
   JasonSlice s(b.start());
   ASSERT_EQ(JasonType::External, s.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
- 
+#else
+  ASSERT_EQ(5ULL, s.byteSize());
+#endif 
+
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
   ASSERT_EQ(JasonType::Double, sExternal.type());
@@ -1627,7 +1634,11 @@ TEST(BuilderTest, ExternalBinary) {
   
   JasonSlice s(b.start());
   ASSERT_EQ(JasonType::External, s.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
+#else
+  ASSERT_EQ(5ULL, s.byteSize());
+#endif 
  
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
@@ -1648,7 +1659,11 @@ TEST(BuilderTest, ExternalString) {
   
   JasonSlice s(b.start());
   ASSERT_EQ(JasonType::External, s.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
+#else
+  ASSERT_EQ(5ULL, s.byteSize());
+#endif 
  
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
@@ -1673,11 +1688,19 @@ TEST(BuilderTest, ExternalExternal) {
   
   JasonSlice s(b.start());
   ASSERT_EQ(JasonType::External, s.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
- 
+#else
+  ASSERT_EQ(5ULL, s.byteSize());
+#endif
+
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(JasonType::External, sExternal.type());
+#ifdef JASON_64BIT
   ASSERT_EQ(9ULL, sExternal.byteSize());
+#else
+  ASSERT_EQ(5ULL, sExternal.byteSize());
+#endif 
 
   JasonSlice sExExternal(sExternal.getExternal());
   ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
