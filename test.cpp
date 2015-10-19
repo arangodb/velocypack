@@ -524,6 +524,25 @@ TEST(StaticFilesTest, Fail33Json) {
   ASSERT_FALSE(parseFile("jsonSample/fail33.json"));
 }
 
+TEST(TypesTest, TestNames) {
+  ASSERT_EQ("none", JasonTypeName(JasonType::None));
+  ASSERT_EQ("null", JasonTypeName(JasonType::Null));
+  ASSERT_EQ("bool", JasonTypeName(JasonType::Bool));
+  ASSERT_EQ("double", JasonTypeName(JasonType::Double));
+  ASSERT_EQ("string", JasonTypeName(JasonType::String));
+  ASSERT_EQ("array", JasonTypeName(JasonType::Array));
+  ASSERT_EQ("object", JasonTypeName(JasonType::Object));
+  ASSERT_EQ("external", JasonTypeName(JasonType::External));
+  ASSERT_EQ("id", JasonTypeName(JasonType::ID));
+  ASSERT_EQ("arangodb_id", JasonTypeName(JasonType::ArangoDB_id));
+  ASSERT_EQ("utc-date", JasonTypeName(JasonType::UTCDate));
+  ASSERT_EQ("int", JasonTypeName(JasonType::Int));
+  ASSERT_EQ("uint", JasonTypeName(JasonType::UInt));
+  ASSERT_EQ("smallint", JasonTypeName(JasonType::SmallInt));
+  ASSERT_EQ("binary", JasonTypeName(JasonType::Binary));
+  ASSERT_EQ("bcd", JasonTypeName(JasonType::BCD));
+}
+
 TEST(OutStreamTest, StringifyComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
