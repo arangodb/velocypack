@@ -5,6 +5,7 @@ branches:
 language: cpp
 compiler: 
   - g++
+  - clang
 
 sudo: false
 
@@ -14,9 +15,10 @@ addons:
     - ubuntu-toolchain-r-test
     packages:
     - g++-4.9
+    - clang
 
 install:
-- mkdir -p "$HOME/bin" && rm -f "$HOME/bin/g++" && ln -s /usr/bin/g++-4.9 "$HOME/bin/g++"
+- if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 
 script: "autoreconf -v && ./configure && make && ./test"
 
