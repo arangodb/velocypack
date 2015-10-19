@@ -55,13 +55,31 @@ AC_CHECK_FUNCS([memmove memset pow])
 SSE42OPTION=""
 TRY_CXX_OPTION([-msse4.2],
 [
-  SSE42OPTION="-msse4.2"
-  RAPIDJSONSSE42="-DRAPIDJSON_SSE42"
+  detectedsse42=yes
 ],
 [
+  detectedsse42=no
+])
+
+AC_ARG_ENABLE(sse42,
+  AS_HELP_STRING([--enable-sse42], [overwrite automatic recognition of SSE 4.2 for x86 platform (default: automatic)]),
+  [usesse42="${enableval:-yes}"],
+  [usesse42="auto"]
+)
+
+if test "x$usesse42" != "xauto"; then
+  echo "Overwriting SSE4.2 detection with $usesse42"
+  detectedsse42=$usesse42
+fi
+
+if test "x$detectedsse42" = "xyes"; then
+  SSE42OPTION="-msse4.2"
+  RAPIDJSONSSE42="-DRAPIDJSON_SSE42"
+else
   SSE42OPTION=""
   RAPIDJSONSSE42=""
-])
+fi
+
 AC_SUBST(SSE42OPTION, ${SSE42OPTION})
 AC_SUBST(RAPIDJSONSSE42, ${RAPIDJSONSSE42})
 

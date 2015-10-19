@@ -19,8 +19,6 @@
 
 * optional: support for other input encodings (e.g. UTF-16)
 
-* rapidjson source not in repo, but fetch dynamically as for gtest
-
 * separate "test" and "benchmark" targets
 
 * LICENSE, README
