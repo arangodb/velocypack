@@ -1,4 +1,3 @@
-#include <cstdbool>
 #include <cstring>
 
 #include "fpconv.h"

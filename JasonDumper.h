@@ -79,7 +79,7 @@ namespace arangodb {
         }
 
         void reset () {
-          _buffer.reset();
+          _buffer->reset();
         }
 
       private:
