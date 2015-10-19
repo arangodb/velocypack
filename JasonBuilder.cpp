@@ -2,6 +2,9 @@
 
 using namespace arangodb::jason;
 
+// thread local vector for sorting large object attributes
+thread_local std::vector<JasonBuilder::SortEntryLarge> JasonBuilder::SortObjectLargeEntries;
+
 void JasonBuilder::doActualSortLarge (std::vector<SortEntryLarge>& entries) {
   JASON_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(), 
