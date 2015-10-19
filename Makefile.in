@@ -383,7 +383,7 @@ test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include 
 JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
-BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h
+BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/rapidjson.h
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1030,6 +1030,10 @@ googletest/googletest/include/gtest/gtest.h:
 	git clone https://github.com/google/googletest.git
 	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
 	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
+
+rapidjson/rapidjson.h:
+	rm -rf rapidjson
+	git clone https://github.com/miloyip/rapidjson
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -20,10 +20,14 @@ JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
 
-BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h
+BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/rapidjson.h
 
 googletest/googletest/include/gtest/gtest.h:
 	rm -Rf googletest
 	git clone https://github.com/google/googletest.git
 	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
 	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
+
+rapidjson/rapidjson.h:
+	rm -rf rapidjson
+	git clone https://github.com/miloyip/rapidjson
