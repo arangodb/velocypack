@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <exception>
 
 // debug mode
 #ifdef JASON_DEBUG
@@ -70,6 +71,9 @@ namespace arangodb {
       // do nothing on a 64 bit platform 
     }
 #endif
+
+    // returns current value for UTCDate
+    int64_t CurrentUTCDateValue ();
 
     class Jason {
       // Convenience class for more compact notation

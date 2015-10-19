@@ -1,4 +1,4 @@
-#include <iostream>
+#include <ostream>
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
