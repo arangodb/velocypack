@@ -16,5 +16,5 @@ addons:
     packages:
     - g++-4.9
 
-script: "./configure && make && ./test"
+script: "autoreconf -v && ./configure && make && ./test"
 
