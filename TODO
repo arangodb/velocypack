@@ -9,10 +9,11 @@
 
 * JasonValue, JasonArray, JasonObject c++ access
 
-* implement BCD in Builder, Slice, Parser and Dumper
+* implement type BCD in Builder, Slice, Parser and Dumper
 
 * implement optional lookup table support in Builder, Slice, Parser and Dumper
 
+* implement serialization for External types
 
 
 * optional: support accessing arbitrary objects via JSONPointer etc.
