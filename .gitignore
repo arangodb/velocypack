@@ -6,6 +6,7 @@ JasonAsm
 *.orig
 *.rej
 googletest
+rapidjson
 .deps
 Makefile
 autom4te.cache
