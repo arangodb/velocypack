@@ -311,7 +311,7 @@ namespace arangodb {
             reserveSpace(1);
             _start[_pos++] = 0x30 + v;
           }
-          else if (v > static_cast<uint64_t>(INT64_MAX)) {
+          else if (v > 9223372036854775807) {
             // value is bigger than INT64_MAX. now save as a Double type
             addDouble(static_cast<double>(v));
           }
@@ -331,8 +331,8 @@ namespace arangodb {
               _start[_pos++] = 0x40 - v;
             }
           }
-          else if (v > static_cast<uint64_t>(- INT64_MIN)) {
-            // value is smaller than INT64_MIN. now save as Double
+          else if (v > 9223372036854775808ULL) {
+            // value would be smaller than INT64_MIN. now save as Double
             addDouble(- static_cast<double>(v));
           }
           else {
