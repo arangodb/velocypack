@@ -2,16 +2,16 @@ ACLOCAL_AMFLAGS="-Im4"
 
 lib_LIBRARIES = libjason.a
 
-libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
+libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
 libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -march=native
 
 noinst_PROGRAMS = bench test JasonAsm
 
-bench_SOURCES = bench.cpp fpconv.cpp
+bench_SOURCES = bench.cpp
 bench_LDADD = libjason.a
 bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${RAPIDJSONSSE42} ${SSE42OPTION} -march=native -Irapidjson/include
 
-test_SOURCES = test.cpp fpconv.cpp
+test_SOURCES = test.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
 test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native

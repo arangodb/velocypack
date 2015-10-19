@@ -141,8 +141,9 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libjason_a_AR = $(AR) $(ARFLAGS)
 libjason_a_LIBADD =
-am_libjason_a_OBJECTS = libjason_a-JasonAsm.$(OBJEXT) \
-	libjason_a-Jason.$(OBJEXT) libjason_a-JasonParser.$(OBJEXT) \
+am_libjason_a_OBJECTS = libjason_a-fpconv.$(OBJEXT) \
+	libjason_a-JasonAsm.$(OBJEXT) libjason_a-Jason.$(OBJEXT) \
+	libjason_a-JasonParser.$(OBJEXT) \
 	libjason_a-JasonBuilder.$(OBJEXT)
 libjason_a_OBJECTS = $(am_libjason_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
@@ -156,13 +157,13 @@ am__v_lt_1 =
 JasonAsm_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(JasonAsm_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am_bench_OBJECTS = bench-bench.$(OBJEXT) bench-fpconv.$(OBJEXT)
+am_bench_OBJECTS = bench-bench.$(OBJEXT)
 bench_OBJECTS = $(am_bench_OBJECTS)
 bench_DEPENDENCIES = libjason.a
 bench_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(bench_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-am_test_OBJECTS = test-test.$(OBJEXT) test-fpconv.$(OBJEXT)
+am_test_OBJECTS = test-test.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_DEPENDENCIES = libjason.a googletest/googletest/libgtest.a
 test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -373,12 +374,12 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = "-Im4"
 lib_LIBRARIES = libjason.a
-libjason_a_SOURCES = JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
+libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp Jason.cpp JasonParser.cpp JasonBuilder.cpp
 libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -march=native
-bench_SOURCES = bench.cpp fpconv.cpp
+bench_SOURCES = bench.cpp
 bench_LDADD = libjason.a
 bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${RAPIDJSONSSE42} ${SSE42OPTION} -march=native -Irapidjson/include
-test_SOURCES = test.cpp fpconv.cpp
+test_SOURCES = test.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
 test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native
@@ -506,12 +507,11 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/JasonAsm-JasonAsm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bench-bench.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bench-fpconv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-Jason.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonAsm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonBuilder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-JasonParser.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-fpconv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libjason_a-fpconv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-test.Po@am__quote@
 
 .cpp.o:
@@ -534,6 +534,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
+
+libjason_a-fpconv.o: fpconv.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -MT libjason_a-fpconv.o -MD -MP -MF $(DEPDIR)/libjason_a-fpconv.Tpo -c -o libjason_a-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libjason_a-fpconv.Tpo $(DEPDIR)/libjason_a-fpconv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='libjason_a-fpconv.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -c -o libjason_a-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
+
+libjason_a-fpconv.obj: fpconv.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -MT libjason_a-fpconv.obj -MD -MP -MF $(DEPDIR)/libjason_a-fpconv.Tpo -c -o libjason_a-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libjason_a-fpconv.Tpo $(DEPDIR)/libjason_a-fpconv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='libjason_a-fpconv.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -c -o libjason_a-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
 
 libjason_a-JasonAsm.o: JasonAsm.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libjason_a_CXXFLAGS) $(CXXFLAGS) -MT libjason_a-JasonAsm.o -MD -MP -MF $(DEPDIR)/libjason_a-JasonAsm.Tpo -c -o libjason_a-JasonAsm.o `test -f 'JasonAsm.cpp' || echo '$(srcdir)/'`JasonAsm.cpp
@@ -619,20 +633,6 @@ bench-bench.obj: bench.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bench_CXXFLAGS) $(CXXFLAGS) -c -o bench-bench.obj `if test -f 'bench.cpp'; then $(CYGPATH_W) 'bench.cpp'; else $(CYGPATH_W) '$(srcdir)/bench.cpp'; fi`
 
-bench-fpconv.o: fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bench_CXXFLAGS) $(CXXFLAGS) -MT bench-fpconv.o -MD -MP -MF $(DEPDIR)/bench-fpconv.Tpo -c -o bench-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/bench-fpconv.Tpo $(DEPDIR)/bench-fpconv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='bench-fpconv.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bench_CXXFLAGS) $(CXXFLAGS) -c -o bench-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
-
-bench-fpconv.obj: fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bench_CXXFLAGS) $(CXXFLAGS) -MT bench-fpconv.obj -MD -MP -MF $(DEPDIR)/bench-fpconv.Tpo -c -o bench-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/bench-fpconv.Tpo $(DEPDIR)/bench-fpconv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='bench-fpconv.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(bench_CXXFLAGS) $(CXXFLAGS) -c -o bench-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
-
 test-test.o: test.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -MT test-test.o -MD -MP -MF $(DEPDIR)/test-test.Tpo -c -o test-test.o `test -f 'test.cpp' || echo '$(srcdir)/'`test.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test-test.Tpo $(DEPDIR)/test-test.Po
@@ -646,20 +646,6 @@ test-test.obj: test.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='test.cpp' object='test-test.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -c -o test-test.obj `if test -f 'test.cpp'; then $(CYGPATH_W) 'test.cpp'; else $(CYGPATH_W) '$(srcdir)/test.cpp'; fi`
-
-test-fpconv.o: fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -MT test-fpconv.o -MD -MP -MF $(DEPDIR)/test-fpconv.Tpo -c -o test-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test-fpconv.Tpo $(DEPDIR)/test-fpconv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='test-fpconv.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -c -o test-fpconv.o `test -f 'fpconv.cpp' || echo '$(srcdir)/'`fpconv.cpp
-
-test-fpconv.obj: fpconv.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -MT test-fpconv.obj -MD -MP -MF $(DEPDIR)/test-fpconv.Tpo -c -o test-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test-fpconv.Tpo $(DEPDIR)/test-fpconv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fpconv.cpp' object='test-fpconv.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_CXXFLAGS) $(CXXFLAGS) -c -o test-fpconv.obj `if test -f 'fpconv.cpp'; then $(CYGPATH_W) 'fpconv.cpp'; else $(CYGPATH_W) '$(srcdir)/fpconv.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
