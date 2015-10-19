@@ -33,6 +33,7 @@ rapidjson/rapidjson.h:
 	git clone https://github.com/miloyip/rapidjson
 	cp rapidjson/bin/jsonchecker/fail* jsonSample
 	cp rapidjson/bin/jsonchecker/pass* jsonSample
+	cp rapidjson/bin/data/sample.json jsonSample
 
 distclean-local:
-	-rm -rf googletest rapidjson jsonSample/fail* jsonSample/pass*
+	-rm -rf googletest rapidjson jsonSample/sample.json jsonSample/fail* jsonSample/pass*
