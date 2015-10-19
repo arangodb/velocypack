@@ -164,7 +164,6 @@ bench_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_test_OBJECTS = test-test.$(OBJEXT) test-fpconv.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
-test_DEPENDENCIES = libjason.a googletest/googletest/libgtest.a
 test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(test_CXXFLAGS) \
 	$(CXXFLAGS) $(test_LDFLAGS) $(LDFLAGS) -o $@
@@ -380,7 +379,7 @@ test_SOURCES = test.cpp fpconv.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
 test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native
-EXTRA_test_DEPENDENCIES = googletest/googletest/include/gtest/gtest.h
+test_DEPENDENCIES = googletest/googletest/include/gtest/gtest.h
 JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
