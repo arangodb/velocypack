@@ -31,3 +31,8 @@ googletest/googletest/include/gtest/gtest.h:
 rapidjson/rapidjson.h:
 	rm -rf rapidjson
 	git clone https://github.com/miloyip/rapidjson
+	cp rapidjson/bin/jsonchecker/fail* jsonSample
+	cp rapidjson/bin/jsonchecker/pass* jsonSample
+
+distclean-local:
+	-rm -rf googletest rapidjson jsonSample/fail* jsonSample/pass*
