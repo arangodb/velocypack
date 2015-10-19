@@ -12,6 +12,8 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 
+m4_include([m4/configure.basics])
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_AWK
@@ -49,5 +51,10 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset pow])
 
+# Checks for compiler options.
+SSE42OPTION=""
+TRY_CXX_OPTION([-msse4.2withpenis], [SSE42OPTION="-msse4.2"],
+                           [SSE42OPTION=""])
+AC_SUBST(SSE42OPTION, ${SSE42OPTION})
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
