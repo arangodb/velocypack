@@ -635,6 +635,7 @@ ac_includes_default="\
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+RAPIDJSONSSE42
 SSE42OPTION
 LIBOBJS
 CXXCPP
@@ -16169,13 +16170,22 @@ $as_echo_n "checking -msse4.2 for $CXX... " >&6; }
   test $ac_status = 0; }; }; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-                SSE42OPTION="-msse4.2"
+
+  SSE42OPTION="-msse4.2"
+  RAPIDJSONSSE42="-DRAPIDJSON_SSE42"
+
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                SSE42OPTION=""
+
+  SSE42OPTION=""
+  RAPIDJSONSSE42=""
+
 fi
 SSE42OPTION=${SSE42OPTION}
+
+RAPIDJSONSSE42=${RAPIDJSONSSE42}
+
 
 ac_config_files="$ac_config_files Makefile"
 

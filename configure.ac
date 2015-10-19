@@ -53,8 +53,17 @@ AC_CHECK_FUNCS([memmove memset pow])
 
 # Checks for compiler options.
 SSE42OPTION=""
-TRY_CXX_OPTION([-msse4.2], [SSE42OPTION="-msse4.2"],
-                           [SSE42OPTION=""])
+TRY_CXX_OPTION([-msse4.2],
+[
+  SSE42OPTION="-msse4.2"
+  RAPIDJSONSSE42="-DRAPIDJSON_SSE42"
+],
+[
+  SSE42OPTION=""
+  RAPIDJSONSSE42=""
+])
 AC_SUBST(SSE42OPTION, ${SSE42OPTION})
+AC_SUBST(RAPIDJSONSSE42, ${RAPIDJSONSSE42})
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
