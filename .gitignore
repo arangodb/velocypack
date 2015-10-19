@@ -6,3 +6,11 @@ JasonAsm
 *.orig
 *.rej
 googletest
+.deps
+Makefile
+autom4te.cache
+config.h
+config.log
+config.status
+libjason.a
+stamp-h1
