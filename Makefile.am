@@ -9,7 +9,7 @@ noinst_PROGRAMS = bench test JasonAsm
 
 bench_SOURCES = bench.cpp fpconv.cpp
 bench_LDADD = libjason.a
-bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -DRAPIDJSON_SSE42 -msse4.2 -march=native
+bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -DRAPIDJSON_SSE42 -msse4.2 -march=native -Irapidjson/include
 
 test_SOURCES = test.cpp fpconv.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
