@@ -28,7 +28,7 @@ googletest/googletest/include/gtest/gtest.h:
 	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
 	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
 
-rapidjson/include/rapidjason/rapidjson.h:
+rapidjson/include/rapidjson/rapidjson.h:
 	rm -rf rapidjson
 	git clone https://github.com/miloyip/rapidjson
 	cp rapidjson/bin/jsonchecker/fail* jsonSample
