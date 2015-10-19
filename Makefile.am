@@ -15,11 +15,12 @@ test_SOURCES = test.cpp fpconv.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
 test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native
-test_DEPENDENCIES = googletest/googletest/include/gtest/gtest.h
 
 JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -msse4.2 -march=native
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
+
+BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h
 
 googletest/googletest/include/gtest/gtest.h:
 	rm -Rf googletest
