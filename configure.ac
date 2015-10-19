@@ -53,7 +53,7 @@ AC_CHECK_FUNCS([memmove memset pow])
 
 # Checks for compiler options.
 SSE42OPTION=""
-TRY_CXX_OPTION([-msse4.2withpenis], [SSE42OPTION="-msse4.2"],
+TRY_CXX_OPTION([-msse4.2], [SSE42OPTION="-msse4.2"],
                            [SSE42OPTION=""])
 AC_SUBST(SSE42OPTION, ${SSE42OPTION})
 AC_CONFIG_FILES([Makefile])
