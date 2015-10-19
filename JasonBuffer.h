@@ -2,7 +2,6 @@
 #define JASON_BUFFER_H 1
 
 #include <cstring>
-#include <iostream>
 
 #include "Jason.h"
 

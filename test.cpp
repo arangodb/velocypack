@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,7 +7,7 @@
 #include "Jason.h"
 #include "JasonBuffer.h"
 #include "JasonBuilder.h"
-#include "JasonDumper.h"
+#include "JasonDump.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
@@ -557,7 +556,7 @@ TEST(OutStreamTest, StringifyComplexObject) {
   result << s;
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
 }
-  
+
 TEST(PrettyDumperTest, SimpleObject) {
   std::string const value("{\"foo\":\"bar\"}");
 
@@ -767,6 +766,26 @@ TEST(StringDumperTest, AppendStringSliceRef) {
   dumper.append(&slice);
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+}
+
+TEST(StringDumperTest, AppendToOstream) {
+  std::string const value("{\"foo\":\"the quick brown fox\"}");
+
+  JasonParser parser;
+  parser.options.sortAttributeNames = false;
+  parser.parse(value);
+
+  JasonBuilder builder = parser.steal();
+  JasonSlice slice(builder.start());
+
+  std::string buffer;
+  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  dumper.dump(slice);
+
+  std::ostringstream out;
+  out << dumper;
+  
+  ASSERT_EQ(std::string("{\"foo\":\"the quick brown fox\"}"), out.str());
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {

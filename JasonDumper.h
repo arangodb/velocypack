@@ -2,7 +2,9 @@
 #define JASON_DUMPER_H 1
 
 #include <string>
+#include <cmath>
 #include <functional>
+#include <exception>
 
 #include "JasonBuffer.h"
 #include "JasonSlice.h"
@@ -43,6 +45,16 @@ namespace arangodb {
         }
 
         ~JasonDumper () {
+        }
+
+        friend std::ostream& operator<< (std::ostream& stream, JasonDumper const* dumper) {
+          stream << *dumper->_buffer;
+          return stream;
+        }
+
+        friend std::ostream& operator<< (std::ostream& stream, JasonDumper const& dumper) {
+          stream << *dumper._buffer;
+          return stream;
         }
 
         void setCallback (std::function<bool(T*, JasonSlice const*, JasonSlice const*)> const& callback) {
@@ -431,11 +443,6 @@ namespace arangodb {
         int _indentation;
 
     };
-
-    // some alias types for easier usage
-    typedef JasonDumper<JasonCharBuffer, false> JasonBufferDumper;
-    typedef JasonDumper<std::string, false> JasonStringDumper;
-    typedef JasonDumper<std::string, true> JasonStringPrettyDumper;
 
   }  // namespace arangodb::jason
 }  // namespace arangodb

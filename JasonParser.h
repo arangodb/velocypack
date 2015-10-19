@@ -1,7 +1,9 @@
 #ifndef JASON_PARSER_H
 #define JASON_PARSER_H 1
 
-#include <math.h>
+#include <string>
+#include <exception>
+#include <cmath>
 
 #include "JasonAsm.h"
 #include "JasonType.h"
