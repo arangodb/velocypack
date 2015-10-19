@@ -1,0 +1,20 @@
+branches:
+  only:
+    - master
+
+language: cpp
+compiler: 
+  - g++
+  - clang++
+
+sudo: false
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.9
+
+script: "./configure && make && ./test"
+
