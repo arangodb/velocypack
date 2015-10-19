@@ -34,18 +34,6 @@
 #error "Could not determine environment type (32 or 64 bits)"
 #endif
 
-// macros for likely/unlikely
-#if defined(__GNUC__) && __GNUC__ >= 4                                                                        
-#define LIKELY(x)   (__builtin_expect((x), 1))                                                                
-#define UNLIKELY(x) (__builtin_expect((x), 0))                                                                
-
-#else                                                                                                         
-
-#define LIKELY(x)   (x)                                                                                       
-#define UNLIKELY(x) (x)                                                                                       
-#endif   
-
-
 #include "JasonType.h"
 
 namespace arangodb {
