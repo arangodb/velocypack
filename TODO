@@ -1,4 +1,4 @@
-* implement types ArangoDB_id, ID 
+* implement types ID 
 
 * produce better error messages
 
