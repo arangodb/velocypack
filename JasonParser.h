@@ -13,45 +13,6 @@ namespace arangodb {
 
     class JasonParser {
 
-      struct ParsedNumber {
-        ParsedNumber ()
-          : intValue(0),
-            doubleValue(0.0),
-            isInteger(true) {
-        }
-
-        void addDigit (int i) {
-          if (isInteger) {
-            // check if adding another digit to the int will make it overflow
-            if (intValue < 1844674407370955161ULL ||
-                (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
-              // int won't overflow
-              intValue = intValue * 10 + (i - '0');
-              return;
-            }
-            // int would overflow
-            doubleValue = static_cast<double>(intValue);
-            isInteger = false;
-          }
-
-          doubleValue = doubleValue * 10.0 + (i - '0');
-          if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
-            throw JasonParserError("numeric value out of bounds");
-          }
-        }
-
-        double asDouble () const {
-          if (isInteger) {
-            return static_cast<double>(intValue);
-          }
-          return doubleValue;
-        }
-
-        uint64_t intValue;
-        double doubleValue;
-        bool isInteger;
-      };
-
       // This class can parse JSON very rapidly, but only from contiguous
       // blocks of memory. It builds the result using the JasonBuilder.
       //
@@ -71,6 +32,45 @@ namespace arangodb {
       //   JasonBuilder b = p.steal();
       //
       //   // p is now empty again and ready to parse more.
+
+        struct ParsedNumber {
+          ParsedNumber ()
+            : intValue(0),
+              doubleValue(0.0),
+              isInteger(true) {
+          }
+
+          void addDigit (int i) {
+            if (isInteger) {
+              // check if adding another digit to the int will make it overflow
+              if (intValue < 1844674407370955161ULL ||
+                  (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
+                // int won't overflow
+                intValue = intValue * 10 + (i - '0');
+                return;
+              }
+              // int would overflow
+              doubleValue = static_cast<double>(intValue);
+              isInteger = false;
+            }
+
+            doubleValue = doubleValue * 10.0 + (i - '0');
+            if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
+              throw JasonParserError("numeric value out of bounds");
+            }
+          }
+
+          double asDouble () const {
+            if (isInteger) {
+              return static_cast<double>(intValue);
+            }
+            return doubleValue;
+          }
+
+          uint64_t intValue;
+          double doubleValue;
+          bool isInteger;
+        };
 
         JasonBuilder   _b;
         uint8_t const* _start;
