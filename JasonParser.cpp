@@ -133,14 +133,16 @@ void JasonParser::parseString () {
   uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
 
   while (true) {
-#ifdef JASON_VALIDATEUTF8
-    int i = getOneOrThrow("scanString: Unfinished string detected.");
-#else
     size_t remainder = _size - _pos;
     if (remainder >= 16) {
       _b.reserveSpace(remainder);
+#ifdef JASON_VALIDATEUTF8
       size_t count = JSONStringCopy(_b._start + _b._pos, _start + _pos,
                                     remainder);
+#else
+      size_t count = JSONStringCopyCheckUtf8(_b._start + _b._pos, _start + _pos,
+                                             remainder);
+#endif
       _pos += count;
       _b._pos += count;
     }
@@ -152,7 +154,6 @@ void JasonParser::parseString () {
               _b._pos - (base + 1));
       _b._pos += 8;
     }
-#endif
     switch (i) {
       case '"':
         JasonLength len;
@@ -319,17 +320,6 @@ void JasonParser::parseString () {
         }
         break;
     }
-#ifdef JASON_VALIDATEUTF8
-    // If we do not do UTF8 validation, we must do this
-    // after the fast copy further up.
-    if (! large && _b._pos - (base + 1) > 127) {
-      large = true;
-      _b.reserveSpace(8);
-      memmove(_b._start + base + 9, _b._start + base + 1,
-              _b._pos - (base + 1));
-      _b._pos += 8;
-    }
-#endif
   }
 }
 
