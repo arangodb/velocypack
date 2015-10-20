@@ -6,11 +6,26 @@ Just Another SerializatiON
 Motivation
 ----------
 
-We need a binary format that
+These days, JSON is used in many cases where data has to be exchanged.
+Lots of protocols between different services use it, databases store
+JSON (document stores naturally but others increasingly as well). It
+is popular, because it is simple, human-readable, and yet surprisingly
+versatile, despite its limitations.
+
+At the same time there are a plethora of alternatives ranging from XML
+over Universal Binary JSON, MongoDB's BSON, MessagePack, BJSON (binary
+JSON), Apache Thrift till Google's protocol buffers and ArangoDB's
+shaped JSON.
+
+When looking into this, we were surprised to find that none of these
+formats manages to combine compactness, platform independence, fast
+access to subobjects and rapid conversion from and to JSON. 
+
+We have invented Jason because we need a binary format that
 
   - is compact
   - covers all of JSON plus dates, integers and binary data
-  - can be used in the database kernel to access subdocuments for
+  - can be used in a database kernel to access subdocuments for
     example for indexes, so it must be possible to access subdocuments
     (array and object members) efficiently
   - can be transferred to JSON and from JSON rapidly
@@ -26,15 +41,18 @@ This data format must be backed by good C++ classes to allow
   - easy and convenient buildup without too many memory allocations
   - fast access of subobjects (arrays and objects)
   - flexible memory management
+  - fast dumping to JSON
 
 The Jason format is an attempt to achieve all this.
+
 
 Data format
 -----------
 
-Jason is (unsigned) byte oriented, values are not necessarily aligned, so
-all access to larger subvalues must be properly organised to avoid
-alignment assumptions.
+Jason is (unsigned) byte oriented, so Jason values are simply sequences
+of bytes and are completely platform independent. Values are not
+necessarily aligned, so all access to larger subvalues must be properly
+organised to avoid alignment assumptions.
 
 We describe a single Jason value, which is recursive in nature, but
 resides (with two exceptions, see below) in a single contiguous block of
@@ -43,16 +61,19 @@ indicates the type (and often the length) of the Jason value at hand:
 
 ### Value types
 
+We first give an overview with a brief but accurate description for
+reference, for arrays and objects see below for details:
+
   - 0x00      : none - this indicates absence of any type and value
   - 0x01      : null
   - 0x02      : false
   - 0x03      : true
-  - 0x04      : double, 8 bytes follow, stored as little endian uint64
-                equivalent
+  - 0x04      : double IEEE-754, 8 bytes follow, stored as little 
+                endian uint64 equivalent
   - 0x05      : short array (< 256 entries, and all offset values are
                 < 65536)
   - 0x06      : long array (< 2^64 entries, < 2^64 bytes in length)
-  - 0x07      : short object (< 256 entries, andd all offset values are
+  - 0x07      : short object (< 256 entries, and all offset values are
                 < 65536)
   - 0x08      : long object (< 2^64 entries, < 2^64 bytes in length)
   - 0x09      : external (only in memory): a char* pointing to the actual
@@ -72,9 +93,9 @@ indicates the type (and often the length) of the Jason value at hand:
                 signed int, little endian, 2s complement
   - 0x0e-0x17 : reserved
   - 0x18-0x1f : positive int, little endian, 1-8 bytes, number is V-0x17.
-                max value is INT64_MAX
+                max allowed value is INT64_MAX
   - 0x20-0x27 : negative int, absolute value is stored as uint, 1-8
-                bytes, number is V-0x1f. max value is INT64_MIN
+                bytes, number is V-0x1f. max allowed value is INT64_MIN
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
   - 0x30-0x3f : small integers -8, -7, ... 0, 1, ... 7 in twos complement, 
                 that is, 0 is 0x30 and 0x37 is 7 and 0x38 is -8, etc. 
