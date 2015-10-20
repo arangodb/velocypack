@@ -137,11 +137,11 @@ void JasonParser::parseString () {
     if (remainder >= 16) {
       _b.reserveSpace(remainder);
 #ifdef JASON_VALIDATEUTF8
-      size_t count = JSONStringCopy(_b._start + _b._pos, _start + _pos,
-                                    remainder);
-#else
       size_t count = JSONStringCopyCheckUtf8(_b._start + _b._pos, _start + _pos,
                                              remainder);
+#else
+      size_t count = JSONStringCopy(_b._start + _b._pos, _start + _pos,
+                                    remainder);
 #endif
       _pos += count;
       _b._pos += count;
