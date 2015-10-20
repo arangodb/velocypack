@@ -3,21 +3,21 @@ ACLOCAL_AMFLAGS="-Im4"
 lib_LIBRARIES = libjason.a
 
 libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp JasonParser.cpp JasonBuilder.cpp JasonSlice.cpp JasonType.cpp Jason.cpp
-libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -march=native
+libjason_a_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
 
 noinst_PROGRAMS = bench test JasonAsm
 
 bench_SOURCES = bench.cpp
 bench_LDADD = libjason.a
-bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${RAPIDJSONSSE42} ${SSE42OPTION} -march=native -Irapidjson/include
+bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${RAPIDJSONSSE42} ${SSE42OPTION} -Irapidjson/include
 
 test_SOURCES = test.cpp
 test_LDADD = libjason.a googletest/googletest/libgtest.a
 test_LDFLAGS = -pthread
-test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -march=native
+test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include
 
 JasonAsm_SOURCES = JasonAsm.cpp
-JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -march=native
+JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
 
 BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/include/rapidjson/rapidjson.h
