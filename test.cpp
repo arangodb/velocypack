@@ -1531,6 +1531,147 @@ TEST(SliceTest, StringLong1) {
   ASSERT_EQ("foobar", slice.copyString());
 }
 
+TEST(SliceTest, IterateArrayValues) {
+  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonSlice s(parser.jason());
+
+  size_t state = 0;
+  s.iterate([&state] (JasonSlice const& value) -> bool {
+    switch (state++) {
+      case 0:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(1ULL, value.getUInt());
+        break;
+      case 1:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(2ULL, value.getUInt());
+        break;
+      case 2:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(3ULL, value.getUInt());
+        break;
+      case 3:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(4ULL, value.getUInt());
+        break;
+      case 4:
+        EXPECT_TRUE(value.isNull());
+        break;
+      case 5:
+        EXPECT_TRUE(value.isBoolean());
+        EXPECT_TRUE(value.getBoolean());
+        break;
+      case 6:
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("foo", value.copyString());
+        break;
+      case 7:
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("bar", value.copyString());
+        break;
+    }
+    return true;
+  });
+  ASSERT_EQ(8U, state);
+}
+
+TEST(SliceTest, IterateObjectKeys) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonSlice s(parser.jason());
+
+  size_t state = 0;
+  s.iterate([&state] (JasonSlice const& key, JasonSlice const& value) -> bool {
+    switch (state++) {
+      case 0:
+        EXPECT_EQ("1foo", key.copyString());
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("bar", value.copyString());
+        break;
+      case 1:
+        EXPECT_EQ("2baz", key.copyString());
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("quux", value.copyString());
+        break;
+      case 2:
+        EXPECT_EQ("3number", key.copyString());
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(1ULL, value.getUInt());
+        break;
+      case 3:
+        EXPECT_EQ("4boolean", key.copyString());
+        EXPECT_TRUE(value.isBoolean());
+        EXPECT_TRUE(value.getBoolean());
+        break;
+      case 4:
+        EXPECT_EQ("5empty", key.copyString());
+        EXPECT_TRUE(value.isNull());
+        break;
+    }
+    return true;
+  });
+  ASSERT_EQ(5U, state);
+}
+
+TEST(SliceTest, IterateObjectValues) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonSlice s(parser.jason());
+
+  std::vector<std::string> seenKeys;
+  s.iterate([&] (JasonSlice const& key, JasonSlice const&) -> bool {
+    seenKeys.emplace_back(key.copyString());
+    return true;
+  });
+
+  ASSERT_EQ(5U, seenKeys.size());
+  ASSERT_EQ("1foo", seenKeys[0]);
+  ASSERT_EQ("2baz", seenKeys[1]);
+  ASSERT_EQ("3number", seenKeys[2]);
+  ASSERT_EQ("4boolean", seenKeys[3]);
+  ASSERT_EQ("5empty", seenKeys[4]);
+}
+
+TEST(SliceTest, ObjectKeys) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonSlice s(parser.jason());
+
+  std::vector<std::string> keys = s.keys();
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
+}
+
+TEST(SliceTest, ObjectKeysRef) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  JasonParser parser;
+  parser.parse(value);
+  JasonSlice s(parser.jason());
+
+  std::vector<std::string> keys;
+  s.keys(keys);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
+}
+
 TEST(BuilderTest, Null) {
   JasonBuilder b;
   b.add(Jason());

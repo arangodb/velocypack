@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <functional>
 
 #include "Jason.h"
 #include "JasonType.h"
@@ -75,6 +76,11 @@ namespace arangodb {
         // check if slice is a Bool object
         bool isBool () const {
           return isType(JasonType::Bool);
+        }
+
+        // check if slice is a Bool object - this is an alias for isBool()
+        bool isBoolean () const {
+          return isBool();
         }
 
         // check if slice is a Double object
@@ -155,6 +161,11 @@ namespace arangodb {
         bool getBool () const {
           assertType(JasonType::Bool);
           return (head() == 0x03); // 0x02 == false, 0x03 == true
+        }
+
+        // return the value for a Bool object - this is an alias for getBool()
+        bool getBoolean () const {
+          return getBool();
         }
 
         // return the value for a Double object
@@ -351,6 +362,45 @@ namespace arangodb {
 
         JasonSlice operator[] (std::string const& attribute) const {
           return get(attribute);
+        }
+
+        void iterate (std::function<bool(JasonSlice const&)> const& callback) const {
+          JasonLength const n = length(); 
+          for (JasonLength i = 0; i < n; ++i) {
+            if (! callback(at(i))) {
+              return;
+            }
+          }
+        }
+
+        void iterate (std::function<bool(JasonSlice const&, JasonSlice const&)> const& callback) const {
+          JasonLength const n = length(); 
+          for (JasonLength i = 0; i < n; ++i) {
+            if (! callback(keyAt(i), valueAt(i))) {
+              return;
+            }
+          }
+        }
+        
+        std::vector<std::string> keys () const {
+          std::vector<std::string> keys;
+          JasonLength const n = length(); 
+          keys.reserve(n);
+          for (JasonLength i = 0; i < n; ++i) {
+            keys.emplace_back(keyAt(i).copyString());
+          }
+          return keys;
+        }
+
+        void keys (std::vector<std::string>& keys) const {
+          JasonLength const n = length(); 
+          if (! keys.empty()) {
+            keys.clear();
+          }
+          keys.reserve(n);
+          for (JasonLength i = 0; i < n; ++i) {
+            keys.emplace_back(keyAt(i).copyString());
+          }
         }
 
         // return the pointer to the data for an External object
@@ -641,7 +691,6 @@ namespace arangodb {
             }
           }
         }
-
          
         // assert that the slice is of a specific type
         // can be used for debugging and removed in production
