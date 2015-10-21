@@ -16,54 +16,7 @@ PackedJSON
 PackJSON
 Packson
 
-
-Motivation
-----------
-
-These days, JSON (JavaScript Object Notation, see [ECMA-404]
-(http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf))
-is used in many cases where data has to be exchanged.
-Lots of protocols between different services use it, databases store
-JSON (document stores naturally, but others increasingly as well). It
-is popular, because it is simple, human-readable, and yet surprisingly
-versatile, despite its limitations.
-
-At the same time there are a plethora of alternatives ranging from XML
-over Universal Binary JSON, MongoDB's BSON, MessagePack, BJSON (binary
-JSON), Apache Thrift till Google's protocol buffers and ArangoDB's
-shaped JSON.
-
-When looking into this, we were surprised to find that none of these
-formats manages to combine compactness, platform independence, fast
-access to subobjects and rapid conversion from and to JSON. 
-
-We have invented Jason because we need a binary format that
-
-  - is compact
-  - covers all of JSON plus dates, integers and binary data
-  - can be used in a database kernel to access subdocuments for
-    example for indexes, so it must be possible to access subdocuments
-    (array and object members) efficiently
-  - can be transferred to JSON and from JSON rapidly
-  - avoids too many memory allocations
-  - gives flexibility to assemble objects, such that subobjects reside
-    in the database in an unchanged way
-  - allows to use an external table for frequently used attribute names
-  - it is quick to read off the type and length of a given object
-
-This data format must be backed by good C++ classes to allow
-
-  - easy and fast parsing from JSON
-  - easy and convenient buildup without too many memory allocations
-  - fast access of subobjects (arrays and objects)
-  - flexible memory management
-  - fast dumping to JSON
-
-The Jason format is an attempt to achieve all this.
-
-
-Data format
------------
+## Generalities
 
 Jason is (unsigned) byte oriented, so Jason values are simply sequences
 of bytes and are completely platform independent. Values are not
@@ -75,7 +28,7 @@ resides (with two exceptions, see below) in a single contiguous block of
 memory. Assume that the value starts at address A, the first byte V 
 indicates the type (and often the length) of the Jason value at hand:
 
-### Value types
+## Value types
 
 We first give an overview with a brief but accurate description for
 reference, for arrays and objects see below for details:
@@ -135,8 +88,15 @@ reference, for arrays and objects see below for details:
   - 0xd8-0xef : reserved
   - 0xf0-0xff : user defined types
 
+## Null and boolean values
 
-### Arrays
+...
+
+## Doubles
+
+...
+
+## Arrays
 
 Arrays look like this:
 
@@ -202,7 +162,7 @@ in one linear go. It is however never necessary to have a 1-byte byte
 length in a long array.
 
 
-### Objects
+## Objects
 
 Objects look like this:
 
@@ -280,7 +240,27 @@ convenient (and indeed sometimes necessary!) when building the object
 in one linear go. It is however never necessary to have a 1-byte byte
 length in a long object.
 
-### User-defined types suggested so far:
+## Strings
+
+...
+
+## Integer types
+
+...
+
+## Dates
+
+...
+
+## Binary data
+
+...
+
+## Packed BCD long floats
+
+...
+
+## User-defined types suggested so far:
 
   - 0xf0      : ID, to be specified, contains a collection ID and a
                 string key, for example as a uint followed by a string,
@@ -289,18 +269,6 @@ length in a long object.
   - 0xf1      : the value of ArangoDB's _id attribute, it is generated
                 out of the collection name, "/" and the value of the
                 _key attribute when JSON is generated
-
-
-C++-Classes to handle Jason
---------------------------
-
-class JasonSlice;   // Represents a sub-JSON as above, read-only
-
-class JasonBuilder; // A way to build up JSON objects in memory
-
-class Jason;       // Helper for convenient notation
-
-enum JasonType;
 
 
 
