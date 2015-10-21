@@ -83,7 +83,7 @@ Using the Jason library
 
 Here are some examples of how the Jason library is used in C++ code.
 For a detailed documentation of the C++ classes see [the API
-documentation](api.md).
+documentation](API.md).
 
 ...
 
