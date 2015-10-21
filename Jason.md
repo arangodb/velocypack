@@ -1,14 +1,30 @@
 Jason
 =====
 
-Just Another SerializatiON
+Jason - Just Another SerializatiON
+
+More crazy ideas for names:
+
+Jextson - Json EXTended SerializatiON
+ExtJSON - EXTended JSON
+JSONExt - JSON EXTended
+Jetson - Json ExTended Serialization    ( Jetson ist schon ein der Name 
+                                          eines Development Boards von nVidia)
+IndexJSON - Indexed JSON
+JSONPack
+PackedJSON
+PackJSON
+Packson
+
 
 Motivation
 ----------
 
-These days, JSON is used in many cases where data has to be exchanged.
+These days, JSON (JavaScript Object Notation, see [ECMA-404]
+(http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf))
+is used in many cases where data has to be exchanged.
 Lots of protocols between different services use it, databases store
-JSON (document stores naturally but others increasingly as well). It
+JSON (document stores naturally, but others increasingly as well). It
 is popular, because it is simple, human-readable, and yet surprisingly
 versatile, despite its limitations.
 
@@ -78,13 +94,8 @@ reference, for arrays and objects see below for details:
   - 0x08      : long object (< 2^64 entries, < 2^64 bytes in length)
   - 0x09      : external (only in memory): a char* pointing to the actual
                 place in memory, where another Jason item resides
-  - 0x0a      : ID, to be specified, contains a collection ID and a
-                string key, for example as a uint followed by a string,
-                or as 8 bytes little endian unsigned int followed by a
-                string
-  - 0x0b      : the value of ArangoDB's _id attribute, it is generated
-                out of the collection name, "/" and the value of the
-                _key attribute when JSON is generated
+  - 0x0a      : reserved
+  - 0x0b      : reserved
   - 0x0c      : long UTF-8-string, next 8 bytes are length of string in
                 bytes (not Unicode chars) as little endian unsigned
                 integer, note that long strings are not zero-terminated
@@ -105,18 +116,24 @@ reference, for arrays and objects see below for details:
                 zero-terminated
   - 0xc0-0xc7 : binary blob, next V-0xbf bytes are length of blob in bytes,
                 note that binary blobs are not zero-terminated
-  - 0xc8-0xcf : positive long packed BCD-encoded integer, V-0xc7 bytes follow
+  - 0xc8-0xcf : positive long packed BCD-encoded float, V-0xc7 bytes follow
                 that encode in a little-endian way the length of the
-                long int in bytes. After that, that many bytes follow,
-                each byte encodes two digits in little-endian packed BCD
-                Example: 12345 decimal is encoded as
-                         0xc8 0x03 0x45 0x23 0x01
-  - 0xd0-0xd7 : negative long packed BCD-encoded integer, V-0xcf bytes
+                mantissa in bytes. Directly after that follow 4 bytes
+                encoding the (power of 10) exponent, by which the mantissa
+                is to be multiplied, stored as little endian 2s
+                complement signed 32-bit integer. After that, as many 
+                bytes follow as the length information at the beginning
+                has specified,
+                each byte encodes two digits in big-endian packed BCD
+                Example: 12345 decimal can be encoded as
+                         0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
+                      or 0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
+  - 0xd0-0xd7 : negative long packed BCD-encoded float, V-0xcf bytes
                 follow that encode in a little-endian way the length of
-                the long int in bytes. After that, that many bytes
-                follow, each byte encodes two digits in little-endian
-                packed BCD representation.
-  - 0xd8-0xff : reserved
+                the mantissa in bytes. After that, same as positive long
+                packed BCD-encoded float above.
+  - 0xd8-0xef : reserved
+  - 0xf0-0xff : user defined types
 
 
 ### Arrays
@@ -262,6 +279,17 @@ valid to have a small object with an 8-byte byte length. This can be
 convenient (and indeed sometimes necessary!) when building the object 
 in one linear go. It is however never necessary to have a 1-byte byte
 length in a long object.
+
+### User-defined types suggested so far:
+
+  - 0xf0      : ID, to be specified, contains a collection ID and a
+                string key, for example as a uint followed by a string,
+                or as 8 bytes little endian unsigned int followed by a
+                string
+  - 0xf1      : the value of ArangoDB's _id attribute, it is generated
+                out of the collection name, "/" and the value of the
+                _key attribute when JSON is generated
+
 
 C++-Classes to handle Jason
 --------------------------
