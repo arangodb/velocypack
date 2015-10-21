@@ -14,7 +14,8 @@ IndexJSON - Indexed JSON
 JSONPack
 PackedJSON
 PackJSON
-Packson
+Packson = acknops = sponkca = spankoc = conkspa
+
 
 ## Generalities
 
