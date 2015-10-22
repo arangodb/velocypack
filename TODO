@@ -8,7 +8,7 @@
 
 * add documentation for how to build
 
-* create include and src directories, move files
+* create `include` and `src` directories, move files
 
 * use CMake for building
 
@@ -30,7 +30,7 @@
 
 * finish implementation of JasonSlice for all types
 
-* support modification of Jason objects
+* support modification of Jason objects (removing, updating)
 
 * implement type BCD in Builder, Slice, Parser and Dumper
 
