@@ -1,3 +1,17 @@
+* 0x09 -> 0x0b (external)
+
+* 0x09 und 0x0a für sortierte Objekte
+
+* Parser: switchable sorting
+
+* Parser: switchable UTF-8 validation
+
+* Implement 0xf0 - 0xff
+
+* minKey and maxKey as 0x0e and 0x0f
+
+* arrays with fixed width elements
+
 * LICENSE, README
 
 * better documentation of format
