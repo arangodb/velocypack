@@ -46,9 +46,9 @@ reference, for arrays and objects see below for details:
   - 0x08      : object with 2-byte index table entries, sorted by attribute name
   - 0x09      : object with 4-byte index table entries, sorted by attribute name
   - 0x0a      : object with 8-byte index table entries, sorted by attribute name
-  - 0x0b      : object with 2-byte index table entries, unsorted by attribute name
-  - 0x0c      : object with 4-byte index table entries, unsorted by attribute name
-  - 0x0d      : object with 8-byte index table entries, unsorted by attribute name
+  - 0x0b      : object with 2-byte index table entries, not sorted by attribute name
+  - 0x0c      : object with 4-byte index table entries, not sorted by attribute name
+  - 0x0d      : object with 8-byte index table entries, not sorted by attribute name
   - 0x0e      : double IEEE-754, 8 bytes follow, stored as little 
                 endian uint64 equivalent
   - 0x0f      : UTC-date in milliseconds since the epoch, stored as 8 byte
@@ -185,7 +185,7 @@ format.
 Furthermore note that there is no direct correlation between the byte
 length format (1 or 8 bytes) and the array type. It is in particular
 valid to have a small array with an 8-byte byte length. This can be
-convenient (and indeed sometimes necessary!) when building the array i
+convenient (and indeed sometimes necessary!) when building the array 
 in one linear go.
 
 
@@ -209,6 +209,15 @@ NRITEMS is 1, 9 bytes as follows: The last byte is either
   0x00 to indicate that the 8 preceding bytes are the length 
        (little endian unsigned integer)
   0x01-0xff to directly store the length
+
+Object can be stored sorted or unsorted. The sorted object variants need
+to store key/value pair in order, sorted by bytewise comparions of the
+keys on each nesting level. Sorting has some overhead but will allow
+looking up keys in logarithmic time later. For the unsorted object variants,
+keys can be stored in arbitrary order, so key lookup later will require
+a linear search. 
+TODO: should we use a Unicode-aware sort for the keys or should the sort
+algorithm be pluggable?
 
 Objects have a small header including their byte length, then all the
 subvalues and an index table containing offsets to the subvalues and
@@ -250,7 +259,7 @@ convenient when only very few attribute names occur or some are repeated
 very often. The standard way to encode such an attribute name table is
 as a JSON-array as specified here.
 
-Example, the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
+Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
     08 
     16
@@ -296,7 +305,7 @@ the type byte. To guarantee platform-independentness the details of the
 byte order ar as follows. Encoding is done by using memcpy to copy the
 internal double value to an uint64\_t. This 64-bit unsigned integer is
 then stored as little endian 8 byte integer in the Jason value. Decoding
-works in the opposite direction. This should sort out the indetermined byte
+works in the opposite direction. This should sort out the undetermined byte
 order in IEEE-754 in practice.
 
 
@@ -350,7 +359,8 @@ Note that used-defined types should not be used for data exchange but
 only internally in systems. The C++ library classes have pluggable
 methods for them.
 
-So far, the following have been suggested so far:
+So far, the following user-defined types have been suggested for use
+in ArangoDB:
 
   - 0xf0      : ID, to be specified, contains a collection ID and a
                 string key, for example as a uint followed by a string,
