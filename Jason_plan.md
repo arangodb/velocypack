@@ -115,7 +115,7 @@ The INDEXTABLE consists of:
   - 2-byte sequences (little endian unsigned) for type 0x04
   - 4-byte sequences (little endian unsigned) for type 0x05
   - 8-byte sequences (little endian unsigned) for type 0x06
-  - not existent for type 0x07, then it is guaranteed that all items
+  - not existent for type 0x04, then it is guaranteed that all items
     have the same byte length.
 
 NRITEMS is 1, 9 bytes as follows: The last byte is either

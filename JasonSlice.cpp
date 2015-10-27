@@ -9,13 +9,13 @@ using JT                = arangodb::jason::JasonType;
         
 JT const JasonSlice::TypeMap[256] = {
   /* 0x00 */  JT::None,        /* 0x01 */  JT::Null,        /* 0x02 */  JT::Bool,        /* 0x03 */  JT::Bool,        
-  /* 0x04 */  JT::Double,      /* 0x05 */  JT::Array,       /* 0x06 */  JT::Array,       /* 0x07 */  JT::Object,      
-  /* 0x08 */  JT::Object,      /* 0x09 */  JT::External,    /* 0x0a */  JT::ID,          /* 0x0b */  JT::ArangoDB_id, 
-  /* 0x0c */  JT::String,      /* 0x0d */  JT::UTCDate,     /* 0x0e */  JT::None,        /* 0x0f */  JT::None,        
-  /* 0x10 */  JT::None,        /* 0x11 */  JT::None,        /* 0x12 */  JT::None,        /* 0x13 */  JT::None,     
+  /* 0x04 */  JT::Array,       /* 0x05 */  JT::Array,       /* 0x06 */  JT::Array,       /* 0x07 */  JT::Array,
+  /* 0x08 */  JT::Object,      /* 0x09 */  JT::Object,      /* 0x0a */  JT::Object,      /* 0x0b */  JT::Object, 
+  /* 0x0c */  JT::Object,      /* 0x0d */  JT::Object,      /* 0x0e */  JT::Double,      /* 0x0f */  JT::UTCDate,        
+  /* 0x10 */  JT::External,    /* 0x11 */  JT::MinKey,      /* 0x12 */  JT::MaxKey,      /* 0x13 */  JT::None,     
   /* 0x14 */  JT::None,        /* 0x15 */  JT::None,        /* 0x16 */  JT::None,        /* 0x17 */  JT::None,     
-  /* 0x18 */  JT::Int,         /* 0x19 */  JT::Int,         /* 0x1a */  JT::Int,         /* 0x1b */  JT::Int,         
-  /* 0x1c */  JT::Int,         /* 0x1d */  JT::Int,         /* 0x1e */  JT::Int,         /* 0x1f */  JT::Int,         
+  /* 0x18 */  JT::None,        /* 0x19 */  JT::None,        /* 0x1a */  JT::None,        /* 0x1b */  JT::None,         
+  /* 0x1c */  JT::None,        /* 0x1d */  JT::None,        /* 0x1e */  JT::None,        /* 0x1f */  JT::None,         
   /* 0x20 */  JT::Int,         /* 0x21 */  JT::Int,         /* 0x22 */  JT::Int,         /* 0x23 */  JT::Int,         
   /* 0x24 */  JT::Int,         /* 0x25 */  JT::Int,         /* 0x26 */  JT::Int,         /* 0x27 */  JT::Int,         
   /* 0x28 */  JT::UInt,        /* 0x29 */  JT::UInt,        /* 0x2a */  JT::UInt,        /* 0x2b */  JT::UInt,        
@@ -68,10 +68,10 @@ JT const JasonSlice::TypeMap[256] = {
   /* 0xe4 */  JT::None,        /* 0xe5 */  JT::None,        /* 0xe6 */  JT::None,        /* 0xe7 */  JT::None,        
   /* 0xe8 */  JT::None,        /* 0xe9 */  JT::None,        /* 0xea */  JT::None,        /* 0xeb */  JT::None,        
   /* 0xec */  JT::None,        /* 0xed */  JT::None,        /* 0xee */  JT::None,        /* 0xef */  JT::None,        
-  /* 0xf0 */  JT::None,        /* 0xf1 */  JT::None,        /* 0xf2 */  JT::None,        /* 0xf3 */  JT::None,        
-  /* 0xf4 */  JT::None,        /* 0xf5 */  JT::None,        /* 0xf6 */  JT::None,        /* 0xf7 */  JT::None,        
-  /* 0xf8 */  JT::None,        /* 0xf9 */  JT::None,        /* 0xfa */  JT::None,        /* 0xfb */  JT::None,        
-  /* 0xfc */  JT::None,        /* 0xfd */  JT::None,        /* 0xfe */  JT::None,        /* 0xff */  JT::None
+  /* 0xf0 */  JT::Custom,      /* 0xf1 */  JT::Custom,      /* 0xf2 */  JT::Custom,      /* 0xf3 */  JT::Custom,        
+  /* 0xf4 */  JT::Custom,      /* 0xf5 */  JT::Custom,      /* 0xf6 */  JT::Custom,      /* 0xf7 */  JT::Custom,        
+  /* 0xf8 */  JT::Custom,      /* 0xf9 */  JT::Custom,      /* 0xfa */  JT::Custom,      /* 0xfb */  JT::Custom,        
+  /* 0xfc */  JT::Custom,      /* 0xfd */  JT::Custom,      /* 0xfe */  JT::Custom,      /* 0xff */  JT::Custom
 }; 
        
 std::string JasonSlice::toString () const {
