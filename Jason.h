@@ -217,6 +217,11 @@ namespace arangodb {
             _size(size), _type(type) {
         }
 
+        explicit JasonPair (uint64_t size,
+                            JasonType type = JasonType::Binary)
+          : _start(nullptr), _size(size), _type(type) {
+        }
+
         uint8_t const* getStart () const {
           return _start;
         }

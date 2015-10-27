@@ -535,7 +535,14 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     // with valid UTF-8!
     return _start + _pos - size;
   }
-  throw JasonBuilderError("Only JasonType::Binary and JasonType::String are valid for JasonPair argument.");
+  else if (pair.jasonType() == JasonType::Custom) {
+    // We only reserve space here, the caller has to fill in the custom type
+    uint64_t size = pair.getSize();
+    reserveSpace(size);
+    _pos += size;
+    return _start + _pos - size;
+  }
+  throw JasonBuilderError("Only JasonType::Binary, JasonType::String and JasonType::Custom are valid for JasonPair argument.");
 }
 
 void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
