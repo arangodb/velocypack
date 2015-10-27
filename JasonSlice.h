@@ -103,16 +103,6 @@ namespace arangodb {
           return isType(JasonType::External);
         }
 
-        // check if slice is an ID object
-        bool isID () const {
-          return isType(JasonType::ID);
-        }
-
-        // check if slice is an ArangoDB_id object
-        bool isArangoDB_id () const {
-          return isType(JasonType::ArangoDB_id);
-        }
-
         // check if slice is a UTCDate object
         bool isUTCDate () const {
           return isType(JasonType::UTCDate);
@@ -540,8 +530,6 @@ namespace arangodb {
             case JasonType::None:
             case JasonType::Null:
             case JasonType::Bool: 
-            case JasonType::ArangoDB_id:
-            case JasonType::ID: 
             case JasonType::SmallInt: {
               return 1; 
             }
