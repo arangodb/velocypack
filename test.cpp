@@ -29,6 +29,15 @@ using JasonType         = arangodb::jason::JasonType;
   
 static char Buffer[4096];
 
+static void dumpDouble (double x, uint8_t* p) {
+  uint64_t u;
+  memcpy(&u, &x, sizeof(double));
+  for (size_t i = 0; i < 8; i++) {
+    p[i] = u & 0xff;
+    u >>= 8;
+  }
+}
+
 static std::string readFile (std::string const& filename) {
   std::string s;
   int fd = open(filename.c_str(), O_RDONLY);
@@ -985,10 +994,10 @@ TEST(SliceTest, True) {
 }
 
 TEST(SliceTest, Double) {
-  Buffer[0] = 0x4;
+  Buffer[0] = 0x0e;
 
   double value = 23.5;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -999,10 +1008,10 @@ TEST(SliceTest, Double) {
 }
 
 TEST(SliceTest, DoubleNegative) {
-  Buffer[0] = 0x4;
+  Buffer[0] = 0x0e;
 
   double value = -999.91355;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1756,9 +1765,9 @@ TEST(BuilderTest, Double) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[9] 
-    = { 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    = { 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   ASSERT_EQ(8ULL, sizeof(double));
-  memcpy(correctResult + 1, &value, sizeof(value));
+  dumpDouble(value, correctResult + 1);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1788,7 +1797,7 @@ TEST(BuilderTest, ArrayEmpty) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x05, 0x02 };
+    = { 0x04, 0x02 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
