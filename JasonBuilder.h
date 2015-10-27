@@ -430,8 +430,8 @@ namespace arangodb {
           // before we can cast it to an uint64_t:
           uint64_t shift2 = 1ULL << 63;
           int64_t shift = static_cast<int64_t>(shift2 - 1);
-          return x = v >= 0 ? static_cast<uint64_t>(v)
-                            : static_cast<uint64_t>((v + shift) + 1) + shift2;
+          return v >= 0 ? static_cast<uint64_t>(v)
+                        : static_cast<uint64_t>((v + shift) + 1) + shift2;
           // Note that g++ and clang++ with -O3 compile this away to
           // nothing. Further note that a plain cast from int64_t to
           // uint64_t is not guaranteed to work for negative values!
@@ -444,7 +444,7 @@ namespace arangodb {
                              : static_cast<int64_t>(v);
         }
            
-        void appendInt (int64_t v) {
+        void appendInt (int64_t v, uint8_t base) {
           uint8_t vSize = intLength(v);
           uint64_t x;
           if (vSize == 8) {
@@ -457,7 +457,7 @@ namespace arangodb {
           }
           reserveSpace(1 + vSize);
           _start[_pos++] = base + vSize;
-          for (uint64_t x; vSize > 0; vSize--) {
+          while (vSize-- > 0) {
             _start[_pos++] = x & 0xff;
             x >>= 8;
           }

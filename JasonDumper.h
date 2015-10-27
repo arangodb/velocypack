@@ -136,6 +136,20 @@ namespace arangodb {
           }
 
           switch (slice->type()) {
+            // FIXME: Handle Custom, MinKey and MaxKey, the following is
+            // only to make it compile:
+            case JasonType::Custom: {
+              handleUnsupportedType(slice);
+              break;
+            }
+            case JasonType::MinKey: {
+              handleUnsupportedType(slice);
+              break;
+            }
+            case JasonType::MaxKey: {
+              handleUnsupportedType(slice);
+              break;
+            }
             case JasonType::None: {
               handleUnsupportedType(slice);
               break; 
@@ -232,14 +246,6 @@ namespace arangodb {
             case JasonType::External: {
               JasonSlice const external(slice->getExternal());
               internalDump(&external, nullptr);
-              break;
-            }
-            case JasonType::ID: {
-              handleUnsupportedType(slice);
-              break;
-            }
-            case JasonType::ArangoDB_id: {
-              handleUnsupportedType(slice);
               break;
             }
             case JasonType::UTCDate: {

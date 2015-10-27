@@ -31,12 +31,12 @@
 using namespace arangodb::jason;
 
 // thread local vector for sorting large object attributes
-thread_local std::vector<JasonBuilder::SortEntryLarge> JasonBuilder::SortObjectEntries;
+thread_local std::vector<JasonBuilder::SortEntry> JasonBuilder::SortObjectEntries;
 
-void JasonBuilder::doActualSort (std::vector<SortEntryLarge>& entries) {
+void JasonBuilder::doActualSort (std::vector<SortEntry>& entries) {
   JASON_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(), 
-    [] (SortEntryLarge const& a, SortEntryLarge const& b) {
+    [] (SortEntry const& a, SortEntry const& b) {
       // return true iff a < b:
       uint8_t const* pa = a.nameStart;
       uint64_t sizea = a.nameSize;
@@ -96,11 +96,11 @@ void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
 
 void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
                                         std::vector<JasonLength>& offsets) {
-  std::vector<SortEntryLarge>& entries = SortObjectEntries; 
+  std::vector<SortEntry>& entries = SortObjectEntries; 
   entries.clear();
   entries.reserve(offsets.size());
   for (JasonLength i = 0; i < offsets.size(); i++) {
-    SortEntryLarge e;
+    SortEntry e;
     e.offset = offsets[i];
     e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
     entries.push_back(e);
@@ -135,8 +135,9 @@ void JasonBuilder::close () {
 
   // First determine byte length and its format:
   bool smallNrElms = index.size() <= 0xff;
-  int offsetSize;   // can be 0, 2, 4 or 8 for the byte length of the offsets,
-                    // where 0 indicates no offset table at all
+  unsigned int offsetSize;   
+        // can be 0, 2, 4 or 8 for the byte length of the offsets,
+        // where 0 indicates no offset table at all
   if (index.back() <= 0xffff) {
     offsetSize = 2;
   }
@@ -149,7 +150,8 @@ void JasonBuilder::close () {
   if (index.size() == 1) {
     offsetSize = 0;
   }
-  else if (_pos - index[0] == index.size() * (index[1] - index[0])) {
+  else if (_start[tos] == 0x05 &&   // an array
+           _pos - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
     bool noTable = true;
@@ -217,7 +219,7 @@ void JasonBuilder::close () {
         _start[tos] = offsetSize == 4 ? 0x06 : 0x07;
       }
       else {   // object case
-        _start[tos] =   (offsetSize == 4 ? 0x09 : 0x0y)
+        _start[tos] =   (offsetSize == 4 ? 0x09 : 0x0a)
                       + (options.sortAttributeNames ? 0 : 3);
       }
       if (index.size() >= 2 &&
@@ -225,13 +227,16 @@ void JasonBuilder::close () {
         sortObjectIndexLong(_start + tos, index);
       }
       for (size_t i = 0; i < index.size(); i++) {
-        x = index[i];
+        uint64_t x = index[i];
         for (size_t j = 0; j < offsetSize; j++) {
           _start[tableBase + offsetSize * i + j] = x & 0xff;
           x >>= 8;
         }
       }
     }
+  }
+  else {  // offsetSize == 0
+    _start[tos] = 0x04;
   }
 
   // Now write the number of elements:
@@ -276,6 +281,9 @@ void JasonBuilder::set (Jason const& item) {
   // append position. If this is an array or object, then an index
   // table is created and a new JasonLength is pushed onto the stack.
   switch (item.jasonType()) {
+    case JasonType::Custom: {
+      throw JasonBuilderError("Cannot set a JasonType::Custom with this method.");
+    }
     case JasonType::None: {
       throw JasonBuilderError("Cannot set a JasonType::None.");
     }
@@ -298,7 +306,8 @@ void JasonBuilder::set (Jason const& item) {
       break;
     }
     case JasonType::Double: {
-      static_assert(sizeof(double) == sizeof(uint64_t));
+      static_assert(sizeof(double) == sizeof(uint64_t),
+                    "size of double is not 8 bytes");
       double v = 0.0;
       uint64_t x;
       switch (ctype) {
@@ -472,8 +481,6 @@ void JasonBuilder::set (Jason const& item) {
         s = &value;
       }
       JasonLength v = s->size();
-      JasonLength size = uintLength(v);
-      reserveSpace(1 + size + v);
       appendUInt(v, 0xbf);
       memcpy(_start + _pos, s->c_str(), v);
       _pos += v;
@@ -502,8 +509,6 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
   // to build.
   if (pair.jasonType() == JasonType::Binary) {
     uint64_t v = pair.getSize();
-    JasonLength size = uintLength(v);
-    reserveSpace(1 + size + v);
     appendUInt(v, 0xbf);
     memcpy(_start + _pos, pair.getStart(), v);
     _pos += v;
