@@ -91,7 +91,7 @@ reference, for arrays and objects see below for details:
                 the mantissa in bytes. After that, same as positive long
                 packed BCD-encoded float above.
   - 0xd8-0xef : reserved
-  - 0xf0-0xff : user defined types
+  - 0xf0-0xff : custom types
 
 
 ## Null and boolean values
@@ -210,14 +210,12 @@ NRITEMS is 1, 9 bytes as follows: The last byte is either
        (little endian unsigned integer)
   0x01-0xff to directly store the length
 
-Object can be stored sorted or unsorted. The sorted object variants need
+Objects can be stored sorted or unsorted. The sorted object variants need
 to store key/value pair in order, sorted by bytewise comparions of the
 keys on each nesting level. Sorting has some overhead but will allow
 looking up keys in logarithmic time later. For the unsorted object variants,
 keys can be stored in arbitrary order, so key lookup later will require
 a linear search. 
-TODO: should we use a Unicode-aware sort for the keys or should the sort
-algorithm be pluggable?
 
 Objects have a small header including their byte length, then all the
 subvalues and an index table containing offsets to the subvalues and
@@ -353,9 +351,9 @@ bytes used (ranges 0x20-0x27 for signed and 0x28-0x2f for unsigned).
 
 ...
 
-## User-defined types
+## Custom types
 
-Note that used-defined types should not be used for data exchange but
+Note that custom types should not be used for data exchange but
 only internally in systems. The C++ library classes have pluggable
 methods for them.
 

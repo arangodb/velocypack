@@ -13,8 +13,6 @@ char const* arangodb::jason::JasonTypeName (JasonType type) {
     case JasonType::Array:       return "array";
     case JasonType::Object:      return "object";
     case JasonType::External:    return "external";
-    case JasonType::ID:          return "id";
-    case JasonType::ArangoDB_id: return "arangodb_id";
     case JasonType::UTCDate:     return "utc-date";
     case JasonType::Int:         return "int";
     case JasonType::UInt:        return "uint";

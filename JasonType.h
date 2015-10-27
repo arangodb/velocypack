@@ -22,19 +22,20 @@ namespace arangodb {
       None,           // not yet initialized
       Null,           // JSON null
       Bool,
-      Double,
-      String,
       Array,
       Object,
-      External,
-      ID,
-      ArangoDB_id,
+      Double,
       UTCDate,
+      External,
+      MinKey,
+      MaxKey,
       Int,
       UInt,
       SmallInt,
+      String,
+      Binary,
       BCD,
-      Binary
+      Custom
     };
 
     char const* JasonTypeName (JasonType);
