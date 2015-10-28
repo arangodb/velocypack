@@ -126,7 +126,8 @@ void JasonBuilder::close () {
   if (index.size() == 0) {
     _start[tos] = _start[tos] == 0x05 ? 0x04 : 0x08;
     _start[tos+1] = 0x02;
-    JASON_ASSERT(_pos == tos + 2);
+    JASON_ASSERT(_pos == tos + 10);
+    _pos -= 8;  // long bytelength not needed
     _stack.pop_back();
     // Intentionally leave _index[depth] intact to avoid future allocs!
     return;
