@@ -65,7 +65,7 @@ void JasonParser::parseNumber () {
       _b.addDouble(numberValue.doubleValue);
     }
     else if (negative) {
-      _b.addNegInt(numberValue.intValue);
+      _b.addInt(numberValue.intValue);
     }
     else {
       _b.addUInt(numberValue.intValue);

@@ -66,7 +66,7 @@ reference, for arrays and objects see below for details:
   - 0x3a-0x3f : small negative integers -6, -5, ..., -1
   - 0x40-0xbe : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
                 length 0 is possible, so 0x40 is the empty string,
-                maximal length is 127, note that strings here are not
+                maximal length is 126, note that strings here are not
                 zero-terminated
   - 0xbf      : long UTF-8-string, next 8 bytes are length of string in
                 bytes (not Unicode chars) as little endian unsigned

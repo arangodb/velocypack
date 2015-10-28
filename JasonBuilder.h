@@ -1,3 +1,31 @@
+////////////////////////////////////////////////////////////////////////////////
+/// @brief Library to build up Jason documents.
+///
+/// @file JasonBuilder.h
+///
+/// DISCLAIMER
+///
+/// Copyright 2015 ArangoDB GmbH, Cologne, Germany
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+/// Copyright holder is ArangoDB GmbH, Cologne, Germany
+///
+/// @author Max Neunhoeffer
+/// @author Jan Steemann
+/// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
+////////////////////////////////////////////////////////////////////////////////
+
 #ifndef JASON_BUILDER_H
 #define JASON_BUILDER_H
 
@@ -17,43 +45,7 @@ namespace arangodb {
 
     class JasonBuilder {
 
-        friend class JasonParser;
-
-      // This class organizes the buildup of a Jason object. It manages
-      // the memory allocation and allows convenience methods to build
-      // the object up recursively.
-      //
-      // Use as follows:                         to build Jason like this:
-      //   JasonBuilder b;
-      //   b.add(Jason(5, JasonType::Object));    b = {
-      //   b.add("a", Jason(1.0));                      "a": 1.0,
-      //   b.add("b", Jason());                         "b": null,
-      //   b.add("c", Jason(false));                    "c": false,
-      //   b.add("d", Jason("xyz"));                    "d": "xyz",
-      //   b.add("e", Jason(3, JasonType::Array));      "e": [
-      //   b.add(Jason(2.3));                                   2.3,
-      //   b.add(Jason("abc"));                                 "abc",
-      //   b.add(Jason(true));                                  true
-      //   b.close();                                         ],
-      //   b.add("f", Jason(2, JasonType::Object));     "f": {
-      //   b.add("hans", Jason("Wurst"));                       "hans": "wurst",
-      //   b.add("hallo", Jason(3.141));                        "hallo": 3.141
-      //   b.close();                                        }
-      //
-      // Or, if you like fancy syntactic sugar:
-      //   JasonBuilder b;
-      //   b(Jason(5, JasonType::Object))        b = {
-      //    ("a", Jason(1.0))                          "a": 1.0,
-      //    ("b", Jason())                             "b": null,
-      //    ("c", Jason(false))                        "c": false,
-      //    ("d", Jason("xyz"))                        "d": "xyz",
-      //    ("e", JasonType::Array, 3)                 "e": [
-      //      (Jason(2.3))                                    2.3,
-      //      (Jason("abc"))                                 "abc",
-      //      (Jason(true))()                                true ],
-      //    ("f", JasonType::Object, 2)                "f": {
-      //    ("hans", Jason("Wurst"))                          "hans": "wurst",
-      //    ("hallo", Jason(3.141)();                         "hallo": 3.141 }
+        friend class JasonParser;   // The parser needs access to internals.
 
       public:
 
@@ -70,23 +62,27 @@ namespace arangodb {
 
       private:
 
-        struct SortEntryLarge {
+        // A struct for sorting index tables for objects:
+
+        struct SortEntry {
           uint8_t const* nameStart;
           uint64_t nameSize;
           uint64_t offset;
         };
 
         // thread local vector for sorting large object attributes
-        static thread_local std::vector<SortEntryLarge> SortObjectLargeEntries;
+        static thread_local std::vector<SortEntry> SortObjectEntries;
 
-        JasonBuffer<uint8_t> _buffer;
-        uint8_t*             _start;
-        JasonLength          _size;
-        JasonLength          _pos;   // the current append position, always <= _size
+        JasonBuffer<uint8_t> _buffer;  // Here we collect the result
+        uint8_t*             _start;   // Always points to the start of _buffer
+        JasonLength          _size;    // Always contains the size of _buffer
+        JasonLength          _pos;     // the append position, always <= _size
         bool                 _attrWritten;  // indicates that an attribute name
                                             // in an object has been written
-        std::vector<JasonLength>              _stack;
-        std::vector<std::vector<JasonLength>> _index;
+        std::vector<JasonLength>              _stack;  // Start positions of
+                                                       // open objects/arrays
+        std::vector<std::vector<JasonLength>> _index;  // Indices for starts
+                                                       // of subindex
 
         // Here are the mechanics of how this building process works:
         // The whole Jason being built starts at where _start points to
@@ -123,8 +119,13 @@ namespace arangodb {
           _size = _buffer.size();
         }
 
-        static void doActualSortLarge (std::vector<SortEntryLarge>& entries);
+        // Sort the indices by attribute name:
+        static void doActualSort (std::vector<SortEntry>& entries);
 
+        // Find the actual bytes of the attribute name of the Jason value
+        // at position base, also determine the length len of the attribute.
+        // This takes into account the different possibilities for the format
+        // of attribute names:
         static uint8_t const* findAttrName (uint8_t const* base, uint64_t& len);
 
         static void sortObjectIndexShort (uint8_t* objBase,
@@ -136,6 +137,8 @@ namespace arangodb {
 
         JasonOptions options;
 
+        // Constructor and destructor:
+
         JasonBuilder ()
           : _buffer({ 0 }),
             _pos(0), 
@@ -143,6 +146,8 @@ namespace arangodb {
           _start = _buffer.data();
           _size = _buffer.size();
         }
+
+        // The rule of five:
 
         ~JasonBuilder () {
         }
@@ -205,76 +210,74 @@ namespace arangodb {
           return *this;
         }
 
+        // Clear and start from scratch:
         void clear () {
           _pos = 0;
           _attrWritten = false;
           _stack.clear();
         }
 
+        // Return a pointer to the start of the result:
         uint8_t* start () const {
           return _start;
         }
 
+        // Return a JasonSlice of the result:
         JasonSlice slice () const {
           return JasonSlice(_start);
         }
 
+        // Compute the actual size here, but only when sealed
         JasonLength size () const {
-          // Compute the actual size here, but only when sealed
           if (! _stack.empty()) {
             throw JasonBuilderError("Jason object not sealed.");
           }
           return _pos;
         }
 
+        // Add a subvalue into an object from a Jason:
         void add (std::string const& attrName, Jason const& sub);
 
+        // Add a subvalue into an object from a JasonPair:
         uint8_t* add (std::string const& attrName, JasonPair const& sub);
 
+        // Add a subvalue into an array from a Jason:
         void add (Jason const& sub);
 
+        // Add a subvalue into an array from a JasonPair:
         uint8_t* add (JasonPair const& sub);
 
+        // Seal the innermost array or object:
         void close ();
 
+        // Syntactic sugar for add:
         JasonBuilder& operator() (std::string const& attrName, Jason sub) {
           add(attrName, sub);
           return *this;
         }
 
+        // Syntactic sugar for add:
         JasonBuilder& operator() (std::string const& attrName, JasonPair sub) {
           add(attrName, sub);
           return *this;
         }
 
+        // Syntactic sugar for add:
         JasonBuilder& operator() (Jason sub) {
           add(sub);
           return *this;
         }
 
+        // Syntactic sugar for add:
         JasonBuilder& operator() (JasonPair sub) {
           add(sub);
           return *this;
         }
 
+        // Syntactic sugar for close:
         JasonBuilder& operator() () {
           close();
           return *this;
-        }
-
-        // returns number of bytes required to store the value
-        static JasonLength uintLength (uint64_t value) {
-          if (value <= 0xff) {
-            // shortcut for the common case
-            return 1;
-          }
-          JasonLength vSize = 0;
-          do {
-            vSize++;
-            value >>= 8;
-          } 
-          while (value != 0);
-          return vSize;
         }
 
       private:
@@ -295,54 +298,33 @@ namespace arangodb {
         }
 
         void addDouble (double v) {
+          static_assert(sizeof(double) == 8, "double is not 8 bytes");
+
           uint64_t dv;
           memcpy(&dv, &v, sizeof(double));
           JasonLength vSize = sizeof(double);
           reserveSpace(1 + vSize);
-          _start[_pos++] = 0x04;
+          _start[_pos++] = 0x0e;
           for (uint64_t x = dv; vSize > 0; vSize--) {
             _start[_pos++] = x & 0xff;
             x >>= 8;
           }
         }
 
-        void addPosInt (uint64_t v) {
-          if (v < 8) {
+        void addInt (int64_t v) {
+          if (v >= 0 && v <= 9) {
             reserveSpace(1);
             _start[_pos++] = 0x30 + v;
           }
-          else if (v > 9223372036854775807) {
-            // value is bigger than INT64_MAX. now save as a Double type
-            addDouble(static_cast<double>(v));
-          }
-          else {
-            // value is smaller than INT64_MAX: now save as an Int type
-            appendUInt(v, 0x17);
-          }
-        }
-
-        void addNegInt (uint64_t v) {
-          if (v < 9) {
+          else if (v < 0 && v >= -6) {
             reserveSpace(1);
-            if (v == 0) {
-              _start[_pos++] = 0x30;
-            }
-            else {
-              _start[_pos++] = 0x40 - v;
-            }
+            _start[_pos++] = 0x40 + v;
           }
-          else if (v > 9223372036854775808ULL) {
-            // value would be smaller than INT64_MIN. now save as Double
-            addDouble(- static_cast<double>(v));
-          }
-          else {
-            // value is bigger than INT64_MIN. now save as Int
-            appendUInt(v, 0x1f);
-          }
+          appendInt(v, 0x1f);
         }
 
         void addUInt (uint64_t v) {
-          if (v < 8) {
+          if (v <= 9) {
             reserveSpace(1);
             _start[_pos++] = 0x30 + v;
           }
@@ -352,25 +334,18 @@ namespace arangodb {
         }
 
         void addUTCDate (int64_t v) {
-          static_assert(sizeof(int64_t) == sizeof(uint64_t), "invalid int64 size");
-
-          uint64_t dv;
-          memcpy(&dv, &v, sizeof(int64_t));
-          dv = 1 + (~ dv);
-          JasonLength vSize = sizeof(int64_t);
+          uint8_t vSize = sizeof(int64_t);   // is always 8
+          uint64_t x = toUInt64(v);
           reserveSpace(1 + vSize);
-          _start[_pos++] = 0x0d;
-          for (uint64_t x = dv; vSize > 0; vSize--) {
-            _start[_pos++] = x & 0xff;
-            x >>= 8;
-          }
+          _start[_pos++] = 0x0f;
+          appendLength(x, 8);
         }
 
         uint8_t* addString (uint64_t strLen) {
           uint8_t* target;
-          if (strLen > 127) {
+          if (strLen > 126) {
             // long string
-            _start[_pos++] = 0x0c;
+            _start[_pos++] = 0xbf;
             // write string length
             appendLength(strLen, 8);
           }
@@ -401,7 +376,7 @@ namespace arangodb {
         }
           
         void addObject () {
-          addCompoundValue(0x07);
+          addCompoundValue(0x08);
         }
  
         void set (Jason const& item);
@@ -422,21 +397,69 @@ namespace arangodb {
         }
 
         void appendUInt (uint64_t v, uint8_t base) {
-          JasonLength vSize = uintLength(v);
-          reserveSpace(1 + vSize);
-          _start[_pos++] = base + vSize;
-          for (uint64_t x = v; vSize > 0; vSize--) {
-            _start[_pos++] = x & 0xff;
-            x >>= 8;
-          }
+          reserveSpace(9);
+          JasonLength save = _pos++;
+          uint8_t vSize = 0;
+          do {
+            vSize++;
+            _start[_pos++] = static_cast<uint8_t>(v & 0xff);
+            v >>= 8;
+          } while (v != 0);
+          _start[save] = base + vSize;
         }
 
-        void appendInt (int64_t v) {
-          if (v >= 0) {
-            appendUInt(static_cast<uint64_t>(v), 0x17);
+        // returns number of bytes required to store the value in 2s-complement
+        static inline uint8_t intLength (int64_t value) {
+          if (value >= -0x80 && value <= 0x7f) {
+            // shortcut for the common case
+            return 1;
+          }
+          uint64_t x = value >= 0 ? static_cast<uint64_t>(value)
+                                  : static_cast<uint64_t>(-(value + 1)) + 1;
+          uint8_t xSize = 0;
+          do {
+            xSize++;
+            x >>= 8;
+          } 
+          while (x >= 0x80);
+          return xSize + 1;
+        }
+
+        static inline uint64_t toUInt64 (int64_t v) {
+          // If v is negative, we need to add 2^63 to make it positive,
+          // before we can cast it to an uint64_t:
+          uint64_t shift2 = 1ULL << 63;
+          int64_t shift = static_cast<int64_t>(shift2 - 1);
+          return v >= 0 ? static_cast<uint64_t>(v)
+                        : static_cast<uint64_t>((v + shift) + 1) + shift2;
+          // Note that g++ and clang++ with -O3 compile this away to
+          // nothing. Further note that a plain cast from int64_t to
+          // uint64_t is not guaranteed to work for negative values!
+        }
+
+        static inline int64_t toInt64 (uint64_t v) {
+          uint64_t shift2 = 1ULL << 63;
+          int64_t shift = static_cast<int64_t>(shift2 - 1);
+          return v >= shift2 ? (static_cast<int64_t>(v - shift2) - shift) - 1
+                             : static_cast<int64_t>(v);
+        }
+           
+        void appendInt (int64_t v, uint8_t base) {
+          uint8_t vSize = intLength(v);
+          uint64_t x;
+          if (vSize == 8) {
+            x = toUInt64(v);
           }
           else {
-            appendUInt(static_cast<uint64_t>(-v), 0x1f);
+            int64_t shift = 1LL << (vSize * 8 - 1);  // will never overflow!
+            x = v >= 0 ? static_cast<uint64_t>(v)
+                       : static_cast<uint64_t>(v + shift) + shift;
+          }
+          reserveSpace(1 + vSize);
+          _start[_pos++] = base + vSize;
+          while (vSize-- > 0) {
+            _start[_pos++] = x & 0xff;
+            x >>= 8;
           }
         }
  

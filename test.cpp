@@ -29,6 +29,15 @@ using JasonType         = arangodb::jason::JasonType;
   
 static char Buffer[4096];
 
+static void dumpDouble (double x, uint8_t* p) {
+  uint64_t u;
+  memcpy(&u, &x, sizeof(double));
+  for (size_t i = 0; i < 8; i++) {
+    p[i] = u & 0xff;
+    u >>= 8;
+  }
+}
+
 static std::string readFile (std::string const& filename) {
   std::string s;
   int fd = open(filename.c_str(), O_RDONLY);
@@ -96,8 +105,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -106,6 +113,8 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
       break;
     case JasonType::Null:
       ASSERT_TRUE(s.isNull());
@@ -114,8 +123,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -124,6 +131,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Bool:
       ASSERT_FALSE(s.isNull());
@@ -132,8 +142,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -142,6 +150,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Double:
       ASSERT_FALSE(s.isNull());
@@ -150,8 +161,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -160,6 +169,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_TRUE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Array:
       ASSERT_FALSE(s.isNull());
@@ -168,8 +180,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_TRUE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -178,6 +188,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Object:
       ASSERT_FALSE(s.isNull());
@@ -186,8 +199,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_TRUE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -196,6 +207,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::External:
       ASSERT_FALSE(s.isNull());
@@ -204,8 +218,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_TRUE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -214,42 +226,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
-      break;
-    case JasonType::ID:
-      ASSERT_FALSE(s.isNull());
-      ASSERT_FALSE(s.isBool());
-      ASSERT_FALSE(s.isDouble());
-      ASSERT_FALSE(s.isArray());
-      ASSERT_FALSE(s.isObject());
-      ASSERT_FALSE(s.isExternal());
-      ASSERT_TRUE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
-      ASSERT_FALSE(s.isUTCDate());
-      ASSERT_FALSE(s.isInt());
-      ASSERT_FALSE(s.isUInt());
-      ASSERT_FALSE(s.isSmallInt());
-      ASSERT_FALSE(s.isString());
-      ASSERT_FALSE(s.isBinary());
-      ASSERT_FALSE(s.isNumber());
-      ASSERT_FALSE(s.isBCD());
-      break;
-    case JasonType::ArangoDB_id:
-      ASSERT_FALSE(s.isNull());
-      ASSERT_FALSE(s.isBool());
-      ASSERT_FALSE(s.isDouble());
-      ASSERT_FALSE(s.isArray());
-      ASSERT_FALSE(s.isObject());
-      ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_TRUE(s.isArangoDB_id());
-      ASSERT_FALSE(s.isUTCDate());
-      ASSERT_FALSE(s.isInt());
-      ASSERT_FALSE(s.isUInt());
-      ASSERT_FALSE(s.isSmallInt());
-      ASSERT_FALSE(s.isString());
-      ASSERT_FALSE(s.isBinary());
-      ASSERT_FALSE(s.isNumber());
-      ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::UTCDate:
       ASSERT_FALSE(s.isNull());
@@ -258,8 +237,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_TRUE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -268,6 +245,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Int:
       ASSERT_FALSE(s.isNull());
@@ -276,8 +256,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_TRUE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -286,6 +264,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_TRUE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::UInt:
       ASSERT_FALSE(s.isNull());
@@ -294,8 +275,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_TRUE(s.isUInt());
@@ -304,6 +283,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_TRUE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::SmallInt:
       ASSERT_FALSE(s.isNull());
@@ -312,8 +294,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -322,6 +302,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_TRUE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::String:
       ASSERT_FALSE(s.isNull());
@@ -330,8 +313,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -340,6 +321,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::Binary:
       ASSERT_FALSE(s.isNull());
@@ -348,8 +332,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -358,6 +340,9 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_TRUE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
       break;
     case JasonType::BCD:
       ASSERT_FALSE(s.isNull());
@@ -366,8 +351,6 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
       ASSERT_FALSE(s.isExternal());
-      ASSERT_FALSE(s.isID());
-      ASSERT_FALSE(s.isArangoDB_id());
       ASSERT_FALSE(s.isUTCDate());
       ASSERT_FALSE(s.isInt());
       ASSERT_FALSE(s.isUInt());
@@ -376,6 +359,66 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isBinary());
       ASSERT_FALSE(s.isNumber());
       ASSERT_TRUE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
+      break;
+    case JasonType::MinKey:
+      ASSERT_FALSE(s.isNull());
+      ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isDouble());
+      ASSERT_FALSE(s.isArray());
+      ASSERT_FALSE(s.isObject());
+      ASSERT_FALSE(s.isExternal());
+      ASSERT_FALSE(s.isUTCDate());
+      ASSERT_FALSE(s.isInt());
+      ASSERT_FALSE(s.isUInt());
+      ASSERT_FALSE(s.isSmallInt());
+      ASSERT_FALSE(s.isString());
+      ASSERT_FALSE(s.isBinary());
+      ASSERT_FALSE(s.isNumber());
+      ASSERT_FALSE(s.isBCD());
+      ASSERT_TRUE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
+      break;
+    case JasonType::MaxKey:
+      ASSERT_FALSE(s.isNull());
+      ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isDouble());
+      ASSERT_FALSE(s.isArray());
+      ASSERT_FALSE(s.isObject());
+      ASSERT_FALSE(s.isExternal());
+      ASSERT_FALSE(s.isUTCDate());
+      ASSERT_FALSE(s.isInt());
+      ASSERT_FALSE(s.isUInt());
+      ASSERT_FALSE(s.isSmallInt());
+      ASSERT_FALSE(s.isString());
+      ASSERT_FALSE(s.isBinary());
+      ASSERT_FALSE(s.isNumber());
+      ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_TRUE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
+      break;
+    case JasonType::Custom:
+      ASSERT_FALSE(s.isNull());
+      ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isDouble());
+      ASSERT_FALSE(s.isArray());
+      ASSERT_FALSE(s.isObject());
+      ASSERT_FALSE(s.isExternal());
+      ASSERT_FALSE(s.isUTCDate());
+      ASSERT_FALSE(s.isInt());
+      ASSERT_FALSE(s.isUInt());
+      ASSERT_FALSE(s.isSmallInt());
+      ASSERT_FALSE(s.isString());
+      ASSERT_FALSE(s.isBinary());
+      ASSERT_FALSE(s.isNumber());
+      ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_TRUE(s.isCustom());
       break;
   }
 }
@@ -532,14 +575,15 @@ TEST(TypesTest, TestNames) {
   ASSERT_EQ("array", JasonTypeName(JasonType::Array));
   ASSERT_EQ("object", JasonTypeName(JasonType::Object));
   ASSERT_EQ("external", JasonTypeName(JasonType::External));
-  ASSERT_EQ("id", JasonTypeName(JasonType::ID));
-  ASSERT_EQ("arangodb_id", JasonTypeName(JasonType::ArangoDB_id));
   ASSERT_EQ("utc-date", JasonTypeName(JasonType::UTCDate));
   ASSERT_EQ("int", JasonTypeName(JasonType::Int));
   ASSERT_EQ("uint", JasonTypeName(JasonType::UInt));
   ASSERT_EQ("smallint", JasonTypeName(JasonType::SmallInt));
   ASSERT_EQ("binary", JasonTypeName(JasonType::Binary));
   ASSERT_EQ("bcd", JasonTypeName(JasonType::BCD));
+  ASSERT_EQ("min-key", JasonTypeName(JasonType::MinKey));
+  ASSERT_EQ("max-key", JasonTypeName(JasonType::MaxKey));
+  ASSERT_EQ("custom", JasonTypeName(JasonType::Custom));
 }
 
 TEST(OutStreamTest, StringifyComplexObject) {
@@ -666,14 +710,15 @@ TEST(StringDumperTest, ArangoDBId) {
 TEST(StringDumperTest, ArangoDBIdCallback) {
   JasonBuilder b;
   b.add(Jason(JasonType::Object));
-  b.add("_id", Jason(JasonType::ArangoDB_id));
+  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
+  *p = 0xf0;
   b.close();
 
   bool sawArangoDBId = false;
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
   dumper.setCallback([&] (std::string*, JasonSlice const* slice, JasonSlice const*) -> bool {
-    if (slice->type() == JasonType::ArangoDB_id) {
+    if (slice->type() == JasonType::Custom) {
       sawArangoDBId = true;
       return true;
     }
@@ -686,7 +731,8 @@ TEST(StringDumperTest, ArangoDBIdCallback) {
 TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
   JasonBuilder b;
   b.add(Jason(JasonType::Object));
-  b.add("_id", Jason(JasonType::ArangoDB_id));
+  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
+  *p = 0xf0;
   b.add("_key", Jason("this is a key"));
   b.close();
 
@@ -694,7 +740,7 @@ TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
 
   dumper.setCallback([] (std::string* buffer, JasonSlice const* slice, JasonSlice const* parent) -> bool {
-    if (slice->type() == JasonType::ArangoDB_id) {
+    if (slice->type() == JasonType::Custom) {
       EXPECT_TRUE(parent->isObject());
       auto key = parent->get("_key");
       EXPECT_EQ(JasonType::String, key.type());
@@ -948,10 +994,10 @@ TEST(SliceTest, True) {
 }
 
 TEST(SliceTest, Double) {
-  Buffer[0] = 0x4;
+  Buffer[0] = 0x0e;
 
   double value = 23.5;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -962,10 +1008,10 @@ TEST(SliceTest, Double) {
 }
 
 TEST(SliceTest, DoubleNegative) {
-  Buffer[0] = 0x4;
+  Buffer[0] = 0x0e;
 
   double value = -999.91355;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -976,7 +1022,7 @@ TEST(SliceTest, DoubleNegative) {
 }
 
 TEST(SliceTest, SmallInt) {
-  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1 };
+  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -6, -5, -4, -3, -2, -1 };
 
   for (int i = 0; i < 16; ++i) {
     Buffer[0] = 0x30 + i;
@@ -991,7 +1037,7 @@ TEST(SliceTest, SmallInt) {
 }
 
 TEST(SliceTest, Int1) {
-  Buffer[0] = 0x18;
+  Buffer[0] = 0x20;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
@@ -1005,7 +1051,7 @@ TEST(SliceTest, Int1) {
 }
 
 TEST(SliceTest, Int2) {
-  Buffer[0] = 0x19;
+  Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1019,7 +1065,7 @@ TEST(SliceTest, Int2) {
 }
 
 TEST(SliceTest, Int3) {
-  Buffer[0] = 0x1a;
+  Buffer[0] = 0x22;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1034,40 +1080,40 @@ TEST(SliceTest, Int3) {
 }
 
 TEST(SliceTest, Int4) {
-  Buffer[0] = 0x1b;
+  Buffer[0] = 0x23;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
-  *p++ = 0xac;
+  *p++ = 0x7c;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
-  ASSERT_EQ(0xac664223LL, slice.getInt());
+  ASSERT_EQ(0x7c664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int5) {
-  Buffer[0] = 0x1c;
+  Buffer[0] = 0x24;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
-  *p++ = 0xff;
+  *p++ = 0x6f;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
-  ASSERT_EQ(0xffac664223LL, slice.getInt());
+  ASSERT_EQ(0x6fac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int6) {
-  Buffer[0] = 0x1d;
+  Buffer[0] = 0x25;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1085,7 +1131,7 @@ TEST(SliceTest, Int6) {
 }
 
 TEST(SliceTest, Int7) {
-  Buffer[0] = 0x1e;
+  Buffer[0] = 0x26;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1093,18 +1139,18 @@ TEST(SliceTest, Int7) {
   *p++ = 0xac;
   *p++ = 0xff;
   *p++ = 0x3f;
-  *p++ = 0xfa;
+  *p++ = 0x5a;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
-  ASSERT_EQ(0xfa3fffac664223LL, slice.getInt());
+  ASSERT_EQ(0x5a3fffac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int8) {
-  Buffer[0] = 0x1f;
+  Buffer[0] = 0x27;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1125,7 +1171,7 @@ TEST(SliceTest, Int8) {
 
 TEST(SliceTest, NegInt1) {
   Buffer[0] = 0x20;
-  uint8_t value = 0x33;
+  uint8_t value = 0xa3;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -1134,21 +1180,21 @@ TEST(SliceTest, NegInt1) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(2ULL, slice.byteSize());
 
-  ASSERT_EQ(- (0x33LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffffffa3ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt2) {
   Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
-  *p++ = 0x42;
+  *p++ = 0xe2;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(3ULL, slice.byteSize());
-  ASSERT_EQ(- (0x4223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffffe223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt3) {
@@ -1156,14 +1202,14 @@ TEST(SliceTest, NegInt3) {
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
-  *p++ = 0x66;
+  *p++ = 0xd6;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(4ULL, slice.byteSize());
-  ASSERT_EQ(- (0x664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffd64223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt4) {
@@ -1179,7 +1225,7 @@ TEST(SliceTest, NegInt4) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
-  ASSERT_EQ(- (0xac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt5) {
@@ -1196,7 +1242,7 @@ TEST(SliceTest, NegInt5) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
-  ASSERT_EQ(- (0xffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt6) {
@@ -1214,7 +1260,7 @@ TEST(SliceTest, NegInt6) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(7ULL, slice.byteSize());
-  ASSERT_EQ(- (0xefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt7) {
@@ -1233,7 +1279,7 @@ TEST(SliceTest, NegInt7) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
-  ASSERT_EQ(- (0xfaefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xfffaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt8) {
@@ -1246,14 +1292,14 @@ TEST(SliceTest, NegInt8) {
   *p++ = 0xff;
   *p++ = 0xef;
   *p++ = 0xfa;
-  *p++ = 0x6e;
+  *p++ = 0x8e;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(9ULL, slice.byteSize());
-  ASSERT_EQ(- (0x6efaefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0x8efaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, UInt1) {
@@ -1719,9 +1765,9 @@ TEST(BuilderTest, Double) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[9] 
-    = { 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    = { 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   ASSERT_EQ(8ULL, sizeof(double));
-  memcpy(correctResult + 1, &value, sizeof(value));
+  dumpDouble(value, correctResult + 1);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1751,7 +1797,7 @@ TEST(BuilderTest, ArrayEmpty) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x05, 0x02 };
+    = { 0x04, 0x02 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2118,16 +2164,16 @@ TEST(BuilderTest, UTCDateMax) {
 }
 
 TEST(BuilderTest, ID) {
-  char const* key = "\x02\x03\x05\x08\x0d";
+  // This is somewhat tautological, nevertheless...
+  static uint8_t const correctResult[]
+    = { 0xf1, 0x2b, 0x78, 0x56, 0x34, 0x12,
+        0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   JasonBuilder b;
-  b.add(JasonPair(key, 0x12345678, JasonType::ID));
+  uint8_t* p = b.add(JasonPair(sizeof(correctResult), JasonType::Custom));
+  memcpy(p, correctResult, sizeof(correctResult));
   uint8_t* result = b.start();
   JasonLength len = b.size();
-
-  static uint8_t const correctResult[]
-    = { 0x0a, 0x2b, 0x78, 0x56, 0x34, 0x12,
-        0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2136,7 +2182,8 @@ TEST(BuilderTest, ID) {
 TEST(BuilderTest, ArangoDB_id) {
   JasonBuilder b;
   b.add(Jason(JasonType::Object));
-  b.add("_id", Jason(JasonType::ArangoDB_id));
+  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
+  *p = 0xf0;
   b.close();
 
   JasonSlice s(b.start());
@@ -2147,8 +2194,8 @@ TEST(BuilderTest, ArangoDB_id) {
   std::string correct = "_id";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
-  ASSERT_EQ(JasonType::ArangoDB_id, ss.type());
-  checkBuild(ss, JasonType::ArangoDB_id, 1);
+  ASSERT_EQ(JasonType::Custom, ss.type());
+  checkBuild(ss, JasonType::Custom, 1);
 }
 
 TEST(ParserTest, Garbage1) {
