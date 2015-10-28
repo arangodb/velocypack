@@ -105,6 +105,7 @@ namespace arangodb {
           _size  = json.size();
           _pos   = 0;
           _b.clear();
+          _b.options = options;
           return parseInternal(multi);
         }
 
@@ -114,6 +115,7 @@ namespace arangodb {
           _size = size;
           _pos = 0;
           _b.clear();
+          _b.options = options;
           return parseInternal(multi);
         }
 
@@ -123,6 +125,7 @@ namespace arangodb {
           _size = size;
           _pos = 0;
           _b.clear();
+          _b.options = options;
           return parseInternal(multi);
         }
 
