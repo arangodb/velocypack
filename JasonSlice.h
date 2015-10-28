@@ -311,6 +311,24 @@ namespace arangodb {
           JasonLength nItemsSize = 1;
           JasonLength n = _start[end - 1];
           
+          if (n == 1) {
+            // Just one attribute, there is no index table!
+            JasonSlice attrName = JasonSlice(_start + 2);
+            if (! attrName.isString()) {
+              return JasonSlice();
+            }
+            JasonLength attrLength;
+            char const* k = attrName.getString(attrLength); 
+            if (attrLength != static_cast<JasonLength>(attribute.size())) {
+              // key must have the exact same length as the attribute we search for
+              return JasonSlice();
+            }
+            if (memcmp(k, attribute.c_str(), attribute.size()) != 0) {
+              return JasonSlice();
+            }
+            return JasonSlice(attrName.start() + attrName.byteSize());
+          }
+
           if (n == 0x00) {
             // preceding 8 bytes are the length
             n = readInteger<JasonLength>(_start + end - 1 - 8, 8);
@@ -319,7 +337,7 @@ namespace arangodb {
           
           JasonLength const ieBase = end - nItemsSize - n * ieSize;
 
-          if (isSorted(head()) && n > 2) {
+          if (isSorted(head())) {
             // This means, we have to handle the special case n == 1 only
             // in the linear search!
             return searchObjectKeyBinary(attribute, ieBase, ieSize, n);
