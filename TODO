@@ -1,16 +1,14 @@
-* 0x09 -> 0x0b (external)
-
-* 0x09 und 0x0a für sortierte Objekte
-
 * Parser: switchable sorting
 
 * Parser: switchable UTF-8 validation
 
-* Implement 0xf0 - 0xff
+* properly test custom types 0xf0 - 0xff
 
-* minKey and maxKey as 0x0e and 0x0f
+* finish implementation of JasonSlice for custom types
 
-* arrays with fixed width elements
+* tests for minKey and maxKey 
+
+* tests for arrays with fixed width elements
 
 * LICENSE, README
 
@@ -32,17 +30,11 @@
 
 * add performance tests and results
 
-* rename types ID and ArangoDB_id to Custom
-
-* properly implement and test types ID and ArangoDB_id
-
 * implement serialization for External type
 
 * produce better exception messages and error codes
 
 * use unified exceptions
-
-* finish implementation of JasonSlice for all types
 
 * support modification of Jason objects (removing, updating)
 
@@ -50,11 +42,6 @@
 
 * implement optional lookup table support in Builder, Slice, Parser and Dumper
 
-
 * optional: JasonArray, JasonObject c++ access
-
-* optional: support accessing arbitrary objects via JSONPointer etc.
-
-* optional: support for other input encodings (e.g. UTF-16)
 
 * separate "test" and "benchmark" targets
