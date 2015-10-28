@@ -62,10 +62,23 @@ void JasonParser::parseNumber () {
       unconsume();
     }
     if (! numberValue.isInteger) {
-      _b.addDouble(numberValue.doubleValue);
+      if (negative) {
+        _b.addDouble(-numberValue.doubleValue);
+      }
+      else {
+        _b.addDouble(numberValue.doubleValue);
+      }
     }
     else if (negative) {
-      _b.addInt(-numberValue.intValue);
+      if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
+        _b.addInt(-static_cast<int64_t>(numberValue.intValue));
+      }
+      else if (numberValue.intValue == toUInt64(INT64_MIN)) {
+        _b.addInt(INT64_MIN);
+      }
+      else {
+        _b.addDouble(-static_cast<double>(numberValue.intValue));
+      }
     }
     else {
       _b.addUInt(numberValue.intValue);
@@ -147,7 +160,7 @@ void JasonParser::parseString () {
       _b._pos += count;
     }
     int i = getOneOrThrow("scanString: Unfinished string detected.");
-    if (! large && _b._pos - (base + 1) > 127) {
+    if (! large && _b._pos - (base + 1) > 126) {
       large = true;
       _b.reserveSpace(8);
       memmove(_b._start + base + 9, _b._start + base + 1,
@@ -164,7 +177,7 @@ void JasonParser::parseString () {
         }
         else {
           len = _b._pos - (base + 9);
-          _b._start[base] = 0x0c;
+          _b._start[base] = 0xbf;
           for (JasonLength i = 1; i <= 8; i++) {
             _b._start[base + i] = len & 0xff;
             len >>= 8;

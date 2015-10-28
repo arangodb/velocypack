@@ -184,7 +184,7 @@ namespace arangodb {
             uint64_t dv;
             double d;
           } v;
-          memcpy(&v.dv, _start + 1, sizeof(double));
+          v.dv = readInteger<uint64_t>(_start + 1, 8);
           return v.d; 
         }
 
@@ -319,7 +319,9 @@ namespace arangodb {
           
           JasonLength const ieBase = end - nItemsSize - n * ieSize;
 
-          if (isSorted(head())) {
+          if (isSorted(head()) && n > 2) {
+            // This means, we have to handle the special case n == 1 only
+            // in the linear search!
             return searchObjectKeyBinary(attribute, ieBase, ieSize, n);
           }
 
@@ -655,7 +657,7 @@ namespace arangodb {
           // empty array case was already covered
           JASON_ASSERT(n > 0);
 
-          if (h == 0x04 || index == 0) {
+          if (h == 0x04 || n == 1) {
             // no index table, but all array items have the same length
             // now fetch first item and determine its length
             JasonSlice firstItem(_start + dataOffset);

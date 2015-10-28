@@ -320,7 +320,9 @@ namespace arangodb {
             reserveSpace(1);
             _start[_pos++] = 0x40 + v;
           }
-          appendInt(v, 0x1f);
+          else {
+            appendInt(v, 0x1f);
+          }
         }
 
         void addUInt (uint64_t v) {
@@ -415,7 +417,7 @@ namespace arangodb {
             return 1;
           }
           uint64_t x = value >= 0 ? static_cast<uint64_t>(value)
-                                  : static_cast<uint64_t>(-(value + 1)) + 1;
+                                  : static_cast<uint64_t>(-(value + 1));
           uint8_t xSize = 0;
           do {
             xSize++;

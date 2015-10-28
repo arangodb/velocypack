@@ -152,7 +152,7 @@ void JasonBuilder::close () {
     offsetSize = 0;
   }
   else if (_start[tos] == 0x05 &&   // an array
-           _pos - index[0] == index.size() * (index[1] - index[0])) {
+           (_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
     bool noTable = true;
@@ -162,6 +162,9 @@ void JasonBuilder::close () {
         noTable = false;
         break;
       }
+    }
+    if ((_pos - tos) - index[index.size()-1] != subLen) {
+      noTable = false;
     }
     if (noTable) {
       offsetSize = 0;
