@@ -1,14 +1,18 @@
 * Parser: switchable sorting
+  - parser already has a JasonOption sortAttributeNames,
+    and it seems to be honored. Builder also accepts the
+    option and creates either sorted or unsorted objects.
+    Seems no further action is required.
 
 * Parser: switchable UTF-8 validation
+  - already added JasonOptions.validateUtf8Strings, but it
+    still needs to be honored. Finally, the compile option
+    JASON_VALIDATEUTF8 needs to be removed.
+  - need tests with UTF-8 validation turned on and off
 
 * properly test custom types 0xf0 - 0xff
 
 * finish implementation of JasonSlice for custom types
-
-* tests for minKey and maxKey 
-
-* tests for arrays with fixed width elements
 
 * LICENSE, README
 

@@ -586,6 +586,24 @@ TEST(TypesTest, TestNames) {
   ASSERT_EQ(0, strcmp("custom", JasonTypeName(JasonType::Custom)));
 }
 
+TEST(TypesTest, TestNamesArrays) {
+  uint8_t const arrays[] = { 0x04, 0x05, 0x06, 0x07 };
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[0]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[1]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[2]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[3]).type())));
+}
+
+TEST(TypesTest, TestNamesObjects) {
+  uint8_t const objects[] = { 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d };
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[0]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[1]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[2]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[3]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[4]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[5]).type())));
+}
+
 TEST(OutStreamTest, StringifyComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
@@ -991,6 +1009,26 @@ TEST(SliceTest, True) {
   ASSERT_TRUE(slice.isBool());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_TRUE(slice.getBool());
+}
+
+TEST(SliceTest, MinKey) {
+  Buffer[0] = 0x11;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  ASSERT_EQ(JasonType::MinKey, slice.type());
+  ASSERT_TRUE(slice.isMinKey());
+  ASSERT_EQ(1ULL, slice.byteSize());
+}
+
+TEST(SliceTest, MaxKey) {
+  Buffer[0] = 0x12;
+
+  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+
+  ASSERT_EQ(JasonType::MaxKey, slice.type());
+  ASSERT_TRUE(slice.isMaxKey());
+  ASSERT_EQ(1ULL, slice.byteSize());
 }
 
 TEST(SliceTest, Double) {
@@ -1803,6 +1841,39 @@ TEST(BuilderTest, ArrayEmpty) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, ArraySingleEntry) {
+  JasonBuilder b;
+  b.add(Jason(JasonType::Array));
+  b.add(Jason(uint64_t(1)));
+  b.close();
+  uint8_t* result = b.start();
+  ASSERT_EQ(0x04U, *result);
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x04, 0x04, 0x31, 0x01 };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ArraySameSizeEntries) {
+  JasonBuilder b;
+  b.add(Jason(JasonType::Array));
+  b.add(Jason(uint64_t(1)));
+  b.add(Jason(uint64_t(2)));
+  b.add(Jason(uint64_t(3)));
+  b.close();
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x04, 0x06, 0x31, 0x32, 0x33, 0x03 };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
 TEST(BuilderTest, Array4) {
   double value = 2.3;
   JasonBuilder b;
@@ -1839,6 +1910,66 @@ TEST(BuilderTest, ObjectEmpty) {
 
   static uint8_t correctResult[] 
     = { 0x08, 0x02 };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ObjectSorted) {
+  double value = 2.3;
+  JasonBuilder b;
+  b.options.sortAttributeNames = true;
+  b.add(Jason(JasonType::Object));
+  b.add("d", Jason(uint64_t(1200)));
+  b.add("c", Jason(value));
+  b.add("b", Jason("abc"));
+  b.add("a", Jason(true));
+  b.close();
+
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x08, 0x24,
+        0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
+        0x41, 0x63, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
+                                             // "c": double(2.3)
+        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
+        0x41, 0x61, 0x03,                    // "a": true
+        0x18, 0x00, 0x12, 0x00, 0x07, 0x00, 0x02, 0x00,
+        0x04
+      };
+  dumpDouble(value, correctResult + 10);
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ObjectUnsorted) {
+  double value = 2.3;
+  JasonBuilder b;
+  b.options.sortAttributeNames = false;
+  b.add(Jason(JasonType::Object));
+  b.add("d", Jason(uint64_t(1200)));
+  b.add("c", Jason(value));
+  b.add("b", Jason("abc"));
+  b.add("a", Jason(true));
+  b.close();
+
+  uint8_t* result = b.start();
+  JasonLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x0b, 0x24,
+        0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
+        0x41, 0x63, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
+                                             // "c": double(2.3)
+        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
+        0x41, 0x61, 0x03,                    // "a": true
+        0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
+        0x04
+      };
+  dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));

@@ -160,6 +160,7 @@ namespace arangodb {
           _attrWritten = that._attrWritten;
           _stack = that._stack;
           _index = that._index;
+          options = that.options;
         }
 
         JasonBuilder& operator= (JasonBuilder const& that) {
@@ -170,6 +171,7 @@ namespace arangodb {
           _attrWritten = that._attrWritten;
           _stack = that._stack;
           _index = that._index;
+          options = that.options;
           return *this;
         }
 
@@ -185,6 +187,7 @@ namespace arangodb {
           _stack.swap(that._stack);
           _index.clear();
           _index.swap(that._index);
+          options = that.options;
           that._start = nullptr;
           that._size = 0;
           that._pos = 0;
@@ -203,6 +206,7 @@ namespace arangodb {
           _stack.swap(that._stack);
           _index.clear();
           _index.swap(that._index);
+          options = that.options;
           that._start = nullptr;
           that._size = 0;
           that._pos = 0;
