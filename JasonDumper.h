@@ -140,10 +140,12 @@ namespace arangodb {
               handleUnsupportedType(slice);
               break; 
             }
+
             case JasonType::Null: {
               _buffer->append("null", 4);
               break;
             }
+
             case JasonType::Bool: {
               if (slice->getBool()) {
                 _buffer->append("true", 4);
@@ -153,18 +155,7 @@ namespace arangodb {
               }
               break;
             }
-            case JasonType::Double: {
-              double const v = slice->getDouble();
-              if (std::isnan(v) || ! std::isfinite(v)) {
-                handleUnsupportedType(slice);
-              }
-              else {
-                char temp[24];
-                int len = fpconv_dtoa(v, &temp[0]);
-                _buffer->append(&temp[0], static_cast<JasonLength>(len));
-              }
-              break; 
-            }
+
             case JasonType::Array: {
               JasonLength const n = slice->length();
               if (PrettyPrint) {
@@ -195,6 +186,7 @@ namespace arangodb {
               }
               break;
             }
+
             case JasonType::Object: {
               JasonLength const n = slice->length();
               if (PrettyPrint) {
@@ -229,29 +221,44 @@ namespace arangodb {
               }
               break;
             }
+            
+            case JasonType::Double: {
+              double const v = slice->getDouble();
+              if (std::isnan(v) || ! std::isfinite(v)) {
+                handleUnsupportedType(slice);
+              }
+              else {
+                char temp[24];
+                int len = fpconv_dtoa(v, &temp[0]);
+                _buffer->append(&temp[0], static_cast<JasonLength>(len));
+              }
+              break; 
+            }
+            
+            case JasonType::UTCDate: {
+              handleUnsupportedType(slice);
+              break;
+            }
+
             case JasonType::External: {
               JasonSlice const external(slice->getExternal());
               internalDump(&external, nullptr);
               break;
             }
-            case JasonType::ID: {
+            
+            case JasonType::MinKey:
+            case JasonType::MaxKey: {
               handleUnsupportedType(slice);
               break;
             }
-            case JasonType::ArangoDB_id: {
-              handleUnsupportedType(slice);
-              break;
-            }
-            case JasonType::UTCDate: {
-              handleUnsupportedType(slice);
-              break;
-            }
+            
             case JasonType::Int:
             case JasonType::UInt:
             case JasonType::SmallInt: {
               dumpInteger(slice);
               break;
             }
+
             case JasonType::String: {
               JasonLength len;
               char const* p = slice->getString(len);
@@ -261,11 +268,19 @@ namespace arangodb {
               _buffer->push_back('"');
               break;
             }
+
             case JasonType::Binary: {
               handleUnsupportedType(slice);
               break;
             }
+            
             case JasonType::BCD: {
+              // TODO
+              handleUnsupportedType(slice);
+              break;
+            }
+            
+            case JasonType::Custom: {
               // TODO
               handleUnsupportedType(slice);
               break;
