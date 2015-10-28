@@ -200,12 +200,14 @@ void JasonBuilder::close () {
     if (offsetSize == 2) {
       // In this case the type 0x05 or 0x08 is already correct, unless
       // sorting of attribute names is switched off!
-      if (_start[tos] == 0x08 && ! options.sortAttributeNames) {
-        _start[tos] = 0x0b;
-      }
-      if (index.size() >= 2 &&
-          options.sortAttributeNames) {
-        sortObjectIndexShort(_start + tos, index);
+      if (_start[tos] == 0x08) {
+        if (! options.sortAttributeNames) {
+          _start[tos] = 0x0b;
+        }
+        else if (index.size() >= 2 &&
+                 options.sortAttributeNames) {
+          sortObjectIndexShort(_start + tos, index);
+        }
       }
       for (size_t i = 0; i < index.size(); i++) {
         uint16_t x = static_cast<uint16_t>(index[i]);
@@ -237,7 +239,10 @@ void JasonBuilder::close () {
     }
   }
   else {  // offsetSize == 0
-    _start[tos] = 0x04;
+    if (_start[tos] == 0x05) {
+      _start[tos] = 0x04;
+    }
+    // Leave 0x08 in the object case with 0 or 1 entries
   }
 
   // Now write the number of elements:

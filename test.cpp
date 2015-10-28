@@ -567,23 +567,23 @@ TEST(StaticFilesTest, Fail33Json) {
 }
 
 TEST(TypesTest, TestNames) {
-  ASSERT_EQ("none", JasonTypeName(JasonType::None));
-  ASSERT_EQ("null", JasonTypeName(JasonType::Null));
-  ASSERT_EQ("bool", JasonTypeName(JasonType::Bool));
-  ASSERT_EQ("double", JasonTypeName(JasonType::Double));
-  ASSERT_EQ("string", JasonTypeName(JasonType::String));
-  ASSERT_EQ("array", JasonTypeName(JasonType::Array));
-  ASSERT_EQ("object", JasonTypeName(JasonType::Object));
-  ASSERT_EQ("external", JasonTypeName(JasonType::External));
-  ASSERT_EQ("utc-date", JasonTypeName(JasonType::UTCDate));
-  ASSERT_EQ("int", JasonTypeName(JasonType::Int));
-  ASSERT_EQ("uint", JasonTypeName(JasonType::UInt));
-  ASSERT_EQ("smallint", JasonTypeName(JasonType::SmallInt));
-  ASSERT_EQ("binary", JasonTypeName(JasonType::Binary));
-  ASSERT_EQ("bcd", JasonTypeName(JasonType::BCD));
-  ASSERT_EQ("min-key", JasonTypeName(JasonType::MinKey));
-  ASSERT_EQ("max-key", JasonTypeName(JasonType::MaxKey));
-  ASSERT_EQ("custom", JasonTypeName(JasonType::Custom));
+  ASSERT_EQ(0, strcmp("none", JasonTypeName(JasonType::None)));
+  ASSERT_EQ(0, strcmp("null", JasonTypeName(JasonType::Null)));
+  ASSERT_EQ(0, strcmp("bool", JasonTypeName(JasonType::Bool)));
+  ASSERT_EQ(0, strcmp("double", JasonTypeName(JasonType::Double)));
+  ASSERT_EQ(0, strcmp("string", JasonTypeName(JasonType::String)));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonType::Array)));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonType::Object)));
+  ASSERT_EQ(0, strcmp("external", JasonTypeName(JasonType::External)));
+  ASSERT_EQ(0, strcmp("utc-date", JasonTypeName(JasonType::UTCDate)));
+  ASSERT_EQ(0, strcmp("int", JasonTypeName(JasonType::Int)));
+  ASSERT_EQ(0, strcmp("uint", JasonTypeName(JasonType::UInt)));
+  ASSERT_EQ(0, strcmp("smallint", JasonTypeName(JasonType::SmallInt)));
+  ASSERT_EQ(0, strcmp("binary", JasonTypeName(JasonType::Binary)));
+  ASSERT_EQ(0, strcmp("bcd", JasonTypeName(JasonType::BCD)));
+  ASSERT_EQ(0, strcmp("min-key", JasonTypeName(JasonType::MinKey)));
+  ASSERT_EQ(0, strcmp("max-key", JasonTypeName(JasonType::MaxKey)));
+  ASSERT_EQ(0, strcmp("custom", JasonTypeName(JasonType::Custom)));
 }
 
 TEST(OutStreamTest, StringifyComplexObject) {
@@ -1545,7 +1545,7 @@ TEST(SliceTest, StringNullBytes) {
 }
 
 TEST(SliceTest, StringLong1) {
-  Buffer[0] = 0x0c;
+  Buffer[0] = 0xbf;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
   uint8_t* p = (uint8_t*) &Buffer[1];
@@ -1819,12 +1819,12 @@ TEST(BuilderTest, Array4) {
   static uint8_t correctResult[] 
     = { 0x05, 0x1c,
         0x29, 0xb0, 0x04,   // uint(1200) = 0x4b0
-        0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
+        0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
         0x43, 0x61, 0x62, 0x63,
         0x03,
         0x02, 0x00, 0x05, 0x00, 0x0e, 0x00, 0x12, 0x00,
         0x04};
-  memcpy(correctResult + 6, &value, sizeof(double));
+  dumpDouble(value, correctResult + 6);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1838,7 +1838,7 @@ TEST(BuilderTest, ObjectEmpty) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x07, 0x02 };
+    = { 0x08, 0x02 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1858,16 +1858,16 @@ TEST(BuilderTest, Object4) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x07, 0x24,
+    = { 0x08, 0x24,
         0x41, 0x61, 0x29, 0xb0, 0x04,        // "a": uint(1200) = 0x4b0
-        0x41, 0x62, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
+        0x41, 0x62, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
                                              // "b": double(2.3)
         0x41, 0x63, 0x43, 0x61, 0x62, 0x63,  // "c": "abc"
         0x41, 0x64, 0x03,                    // "d": true
         0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
         0x04
       };
-  memcpy(correctResult + 10, &value, sizeof(double));
+  dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1883,7 +1883,7 @@ TEST(BuilderTest, External) {
 
   static uint8_t correctResult[1 + sizeof(char*)] 
     = { 0x00 };
-  correctResult[0] = 0x09;
+  correctResult[0] = 0x10;
   uint8_t* p = externalStuff;
   memcpy(correctResult + 1, &p, sizeof(uint8_t*));
 
@@ -2043,7 +2043,7 @@ TEST(BuilderTest, IntPos) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[]
-    = { 0x1e, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+    = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2057,7 +2057,7 @@ TEST(BuilderTest, IntNeg) {
   JasonLength len = b.size();
 
   static uint8_t correctResult[]
-    = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+    = { 0x26, 0x11, 0x32, 0x54, 0x87, 0xa9, 0xcb, 0xed };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2121,7 +2121,7 @@ TEST(BuilderTest, UTCDate) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_EQ(0x0fU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2133,7 +2133,7 @@ TEST(BuilderTest, UTCDateZero) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_EQ(0x0fU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2145,7 +2145,7 @@ TEST(BuilderTest, UTCDateMin) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_EQ(0x0fU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2157,7 +2157,7 @@ TEST(BuilderTest, UTCDateMax) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0dU, s.head());
+  ASSERT_EQ(0x0fU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2187,7 +2187,7 @@ TEST(BuilderTest, ArangoDB_id) {
   b.close();
 
   JasonSlice s(b.start());
-  ASSERT_EQ(10ULL, s.byteSize());
+  ASSERT_EQ(8ULL, s.byteSize());
 
   JasonSlice ss = s.keyAt(0);
   checkBuild(ss, JasonType::String, 4);

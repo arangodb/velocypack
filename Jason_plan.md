@@ -112,11 +112,12 @@ Arrays look like this:
   NRITEMS
 
 The INDEXTABLE consists of: 
-  - 2-byte sequences (little endian unsigned) for type 0x04
-  - 4-byte sequences (little endian unsigned) for type 0x05
-  - 8-byte sequences (little endian unsigned) for type 0x06
   - not existent for type 0x04, then it is guaranteed that all items
-    have the same byte length.
+    have the same byte length, this is always taken for arrays with
+    at most 1 element.
+  - 2-byte sequences (little endian unsigned) for type 0x05
+  - 4-byte sequences (little endian unsigned) for type 0x06
+  - 8-byte sequences (little endian unsigned) for type 0x07
 
 NRITEMS is 1, 9 bytes as follows: The last byte is either
   0x00 to indicate that the 8 preceding bytes are the length 
@@ -137,7 +138,9 @@ the first entry is either at adress A+2 or at address A+10, depending
 on whether the byte at address A+1 is non-zero or zero. The index table
 resides at the end of the space occupied by the value, just before the
 number of subvalues information. As a special case the empty array has
-A[1] set to 2 and no length information is needed.
+A[1] set to 2 and no length information is needed. Note that an array
+with just a single member is always of type 0x04, since all its
+subvalues have the same length.
 
 The number of subvalues is either stored as a single byte (last byte in
 item, possible values 0x01 to 0xff) containing the number N of entries,
@@ -160,18 +163,18 @@ no space used for N.
 
 `[1,2,3]` has the hex dump 
 
-    07 06 31 32 33 03 
+    04 06 31 32 33 03 
 
 in the most compact representation, but the following are equally
 possible:
 
 *Examples*:
 
-    04 0c 31 32 33 02 00 03 00 04 00 03
+    05 0c 31 32 33 02 00 03 00 04 00 03
 
-    05 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
+    06 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
 
-    06 1e 31 32 33
+    07 1e 31 32 33
     02 00 00 00 00 00 00 00 00
     03 00 00 00 00 00 00 00 00
     04 00 00 00 00 00 00 00 00 03
@@ -229,8 +232,11 @@ the next 8 bytes are the length as little endian unsigned integer. Thus,
 the first entry is either at adress A+2 or at address A+10, depending
 on whether the byte at address A+1 is non-zero or zero. The index table
 resides at the end of the space occupied by the value, just before the
-number of subvalues information. As a special case the empty object has
-A[1] set to 2 and no length information is needed.
+number of subvalues information. There are two special cases: the empty 
+object has A[1] set to 2 and no number of subvalue information or index 
+table is needed. An object with exactly one subvalue has a 0x01 to
+indicate the number of subvalues but does not have an index table
+either.
 
 The number of subvalues is either stored as a single byte (last byte in
 item, possible values 0x01 to 0xff) containing the number N of entries,

@@ -244,6 +244,25 @@ namespace arangodb {
       bool sortAttributeNames       = true;
     };
           
+    static inline uint64_t toUInt64 (int64_t v) {
+      // If v is negative, we need to add 2^63 to make it positive,
+      // before we can cast it to an uint64_t:
+      uint64_t shift2 = 1ULL << 63;
+      int64_t shift = static_cast<int64_t>(shift2 - 1);
+      return v >= 0 ? static_cast<uint64_t>(v)
+                    : static_cast<uint64_t>((v + shift) + 1) + shift2;
+      // Note that g++ and clang++ with -O3 compile this away to
+      // nothing. Further note that a plain cast from int64_t to
+      // uint64_t is not guaranteed to work for negative values!
+    }
+
+    static inline int64_t toInt64 (uint64_t v) {
+      uint64_t shift2 = 1ULL << 63;
+      int64_t shift = static_cast<int64_t>(shift2 - 1);
+      return v >= shift2 ? (static_cast<int64_t>(v - shift2) - shift) - 1
+                         : static_cast<int64_t>(v);
+    }
+       
   }  // namespace arangodb::jason
 }  // namespace arangodb
 

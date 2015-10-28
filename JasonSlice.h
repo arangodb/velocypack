@@ -380,10 +380,14 @@ namespace arangodb {
           if (h >= 0x20 && h <= 0x27) {
             // Int  T
             uint64_t v = readInteger<uint64_t>(_start + 1, h - 0x1f);
-            int64_t dv;
-            memcpy(&dv, &v, sizeof(int64_t));
-            dv -= 1;
-            return ~ dv;
+            if (h == 0x27) {
+              return toInt64(v);
+            }
+            else {
+              int64_t vv = static_cast<int64_t>(v);
+              int64_t shift = 1LL << ((h - 0x1f) * 8 - 1);
+              return vv < shift ? vv : vv - (shift << 1);
+            }
           }
 
           if (h >= 0x28 && h <= 0x2f) { 
@@ -456,10 +460,7 @@ namespace arangodb {
         int64_t getUTCDate () const {
           assertType(JasonType::UTCDate);
           uint64_t v = readInteger<uint64_t>(_start + 1, sizeof(uint64_t));
-          int64_t dv;
-          memcpy(&dv, &v, sizeof(int64_t));
-          dv -= 1;
-          return ~ dv;
+          return toInt64(v);
         }
 
         // return the value for a String object
@@ -654,7 +655,7 @@ namespace arangodb {
           // empty array case was already covered
           JASON_ASSERT(n > 0);
 
-          if (h == 0x04) {
+          if (h == 0x04 || index == 0) {
             // no index table, but all array items have the same length
             // now fetch first item and determine its length
             JasonSlice firstItem(_start + dataOffset);
