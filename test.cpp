@@ -1022,7 +1022,7 @@ TEST(SliceTest, DoubleNegative) {
 }
 
 TEST(SliceTest, SmallInt) {
-  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1 };
+  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -6, -5, -4, -3, -2, -1 };
 
   for (int i = 0; i < 16; ++i) {
     Buffer[0] = 0x30 + i;
@@ -1037,7 +1037,7 @@ TEST(SliceTest, SmallInt) {
 }
 
 TEST(SliceTest, Int1) {
-  Buffer[0] = 0x18;
+  Buffer[0] = 0x20;
   uint8_t value = 0x33;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
@@ -1051,7 +1051,7 @@ TEST(SliceTest, Int1) {
 }
 
 TEST(SliceTest, Int2) {
-  Buffer[0] = 0x19;
+  Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1065,7 +1065,7 @@ TEST(SliceTest, Int2) {
 }
 
 TEST(SliceTest, Int3) {
-  Buffer[0] = 0x1a;
+  Buffer[0] = 0x22;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1080,40 +1080,40 @@ TEST(SliceTest, Int3) {
 }
 
 TEST(SliceTest, Int4) {
-  Buffer[0] = 0x1b;
+  Buffer[0] = 0x23;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
-  *p++ = 0xac;
+  *p++ = 0x7c;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
-  ASSERT_EQ(0xac664223LL, slice.getInt());
+  ASSERT_EQ(0x7c664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int5) {
-  Buffer[0] = 0x1c;
+  Buffer[0] = 0x24;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
-  *p++ = 0xff;
+  *p++ = 0x6f;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
-  ASSERT_EQ(0xffac664223LL, slice.getInt());
+  ASSERT_EQ(0x6fac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int6) {
-  Buffer[0] = 0x1d;
+  Buffer[0] = 0x25;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1131,7 +1131,7 @@ TEST(SliceTest, Int6) {
 }
 
 TEST(SliceTest, Int7) {
-  Buffer[0] = 0x1e;
+  Buffer[0] = 0x26;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1139,18 +1139,18 @@ TEST(SliceTest, Int7) {
   *p++ = 0xac;
   *p++ = 0xff;
   *p++ = 0x3f;
-  *p++ = 0xfa;
+  *p++ = 0x5a;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
-  ASSERT_EQ(0xfa3fffac664223LL, slice.getInt());
+  ASSERT_EQ(0x5a3fffac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int8) {
-  Buffer[0] = 0x1f;
+  Buffer[0] = 0x27;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
@@ -1171,7 +1171,7 @@ TEST(SliceTest, Int8) {
 
 TEST(SliceTest, NegInt1) {
   Buffer[0] = 0x20;
-  uint8_t value = 0x33;
+  uint8_t value = 0xa3;
   memcpy(&Buffer[1], (void*) &value, sizeof(value));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
@@ -1180,21 +1180,21 @@ TEST(SliceTest, NegInt1) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(2ULL, slice.byteSize());
 
-  ASSERT_EQ(- (0x33LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffffffa3ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt2) {
   Buffer[0] = 0x21;
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
-  *p++ = 0x42;
+  *p++ = 0xe2;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(3ULL, slice.byteSize());
-  ASSERT_EQ(- (0x4223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffffe223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt3) {
@@ -1202,14 +1202,14 @@ TEST(SliceTest, NegInt3) {
   uint8_t* p = (uint8_t*) &Buffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
-  *p++ = 0x66;
+  *p++ = 0xd6;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(4ULL, slice.byteSize());
-  ASSERT_EQ(- (0x664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffffd64223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt4) {
@@ -1225,7 +1225,7 @@ TEST(SliceTest, NegInt4) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
-  ASSERT_EQ(- (0xac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt5) {
@@ -1242,7 +1242,7 @@ TEST(SliceTest, NegInt5) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
-  ASSERT_EQ(- (0xffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt6) {
@@ -1260,7 +1260,7 @@ TEST(SliceTest, NegInt6) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(7ULL, slice.byteSize());
-  ASSERT_EQ(- (0xefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xffffefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt7) {
@@ -1279,7 +1279,7 @@ TEST(SliceTest, NegInt7) {
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
-  ASSERT_EQ(- (0xfaefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0xfffaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt8) {
@@ -1292,14 +1292,14 @@ TEST(SliceTest, NegInt8) {
   *p++ = 0xff;
   *p++ = 0xef;
   *p++ = 0xfa;
-  *p++ = 0x6e;
+  *p++ = 0x8e;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(9ULL, slice.byteSize());
-  ASSERT_EQ(- (0x6efaefffac664223LL), slice.getInt());
+  ASSERT_EQ(static_cast<int64_t>(0x8efaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, UInt1) {
