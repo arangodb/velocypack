@@ -239,11 +239,6 @@ namespace arangodb {
         }
     };
 
-    struct JasonOptions {
-      bool checkAttributeUniqueness = false;
-      bool sortAttributeNames       = true;
-    };
-          
     static inline uint64_t toUInt64 (int64_t v) {
       // If v is negative, we need to add 2^63 to make it positive,
       // before we can cast it to an uint64_t:
@@ -263,6 +258,11 @@ namespace arangodb {
                          : static_cast<int64_t>(v);
     }
        
+    struct JasonOptions {
+      bool checkAttributeUniqueness = false;
+      bool sortAttributeNames       = true;
+    };
+          
   }  // namespace arangodb::jason
 }  // namespace arangodb
 

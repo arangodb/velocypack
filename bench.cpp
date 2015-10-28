@@ -84,6 +84,7 @@ int main (int argc, char* argv[]) {
     s.insert(s.begin(), inputs[0].begin(), inputs[0].end());
     inputs.push_back(s);
     outputs.push_back(new JasonParser());
+    outputs.back()->options.sortAttributeNames = false;
   }
 
   size_t count = 0;
