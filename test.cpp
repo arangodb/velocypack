@@ -698,7 +698,7 @@ TEST(StringDumperTest, True) {
 }
 
 TEST(StringDumperTest, ArangoDBId) {
-  Buffer[0] = 0xb;
+  Buffer[0] = 0xf0;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
