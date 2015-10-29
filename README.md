@@ -67,8 +67,10 @@ Building the Jason library
 Building the Jason library is straightforward. Simply execute the 
 following commands:
 
-    cmake . 
-    make
+```bash
+cmake . 
+make
+```
 
 This will build a static library `libjason.a` in the current directory in
 release mode.
@@ -80,7 +82,9 @@ Running the tests and the benchmark suite
 Building Jason's own test suite requires the [googletest framework](https://github.com/google/googletest)
 to be installed. To install it locally, run the following command:
 
-    ./download-gtest.sh
+```bash
+./download-gtest.sh
+```
 
 This will clone the repository from Github into the local subdirectory
 `googletest` and build it there.
@@ -89,22 +93,30 @@ The benchmark suite compares Jason against [RapidJson](https://github.com/miloyi
 RapidJson is not shipped with Jason, but it can be downloaded into the
 local subdirectory `rapidjson` with the following command:
 
-    ./download-rapidjson.sh
+```bash
+./download-rapidjson.sh
+```
 
 Afterwards, you are ready to build both the test suite and the benchmark
 suite:
 
-    cmake . -DBuildBench=ON -DBuildTests=ON -DEnableSSE=ON
-    make
+```bash
+cmake . -DBuildBench=ON -DBuildTests=ON -DEnableSSE=ON
+make
+```
 
 Afterwards, you can run the tests via:
 
-    ./tests
+```bash
+./tests
+```
 
 and the benchmark suite via
 
-    ./runBench.sh
+```bash
+./runBench.sh
 
+```
 
 Build Options
 -------------
@@ -141,37 +153,49 @@ documentation](API.md).
 If you want to build up a Jason object corresponding to this JSON
 object:
 
-    {
-      "b": 12,
-      "a": true,
-      "l": [1, 2, 3],
-      "name": "Gustav"
-    }
+```json
+{
+  "b": 12,
+  "a": true,
+  "l": [1, 2, 3],
+  "name": "Gustav"
+}
+```
 
 then you would use the `JasonBuilder` class as follows:
 
-    #include <JasonBuilder.h>
-    using namespace arangodb::jason;
-    JasonBuilder b;
-    b.add(Jason(JasonType::Object));
-    b.add("b", Jason(12));
-    b.add("a", Jason(true));
-    b.add("l", Jason(JasonType::Array));
-    b.add(Jason(1));
-    b.add(Jason(2));
-    b.add(Jason(3));
-    b.close();
-    b.add("name", Jason("Gustav"));
-    b.close();
+```cpp
+#include <JasonBuilder.h>
+using namespace arangodb::jason;
 
-The resulting Jason object can now be found at the memory location,
-where the `uint8_t*` 
+JasonBuilder b;
 
-    b.start()
+b.add(Jason(JasonType::Object));
+b.add("b", Jason(12));
+b.add("a", Jason(true));
 
-points to and has byte length
+b.add("l", Jason(JasonType::Array));
+b.add(Jason(1));
+b.add(Jason(2));
+b.add(Jason(3));
+b.close();
 
-    b.size()
+b.add("name", Jason("Gustav"));
+b.close();
+```
+
+The resulting Jason object can now be found at the memory location that
+the `uint8_t*` 
+
+```cpp
+b.start()
+```
+
+points to, and its byte length can be determined via
+
+```cpp
+b.size()
+```
 
 One can see that adding objects and arrays essentially "opens" them such
 that further additions go into the subvalue until one calls the
@@ -181,34 +205,40 @@ C++ type system for compact notation.
 If you fancy syntactic sugar using C++ callable objects, you could also
 write:
 
-    JasonBuilder b;
-    b(Jason(JasonType::Object))
-     ("b", Jason(12))
-     ("a", Jason(true))
-     ("l", Jason(JasonType::Array))
-       (Jason(1)) (Jason(2)) (Jason(3)) ()
-     ("name", Jason("Gustav")) ();
+```cpp
+JasonBuilder b;
 
+b(Jason(JasonType::Object))
+ ("b", Jason(12))
+ ("a", Jason(true))
+ ("l", Jason(JasonType::Array))
+   (Jason(1)) (Jason(2)) (Jason(3)) ()
+ ("name", Jason("Gustav")) ();
+```
 
 ### Parsing JSON to Jason in memory
 
-You use the JSON parser as follows:
+To create a Jason object from a JSON string, use the JSON parser shipped
+with Jason as follows:
 
-    #include <JasonParser.h>
-    using namespace arangodb::jason;
-    JasonParser p;
-    std::string json = "{\"a\":12}";
-    try {
-      size_t nr = p.parse(json);
-    }
-    catch (std::bad_alloc const& e) {
-      std::cout << "Out of memory!" << std::endl;
-    }
-    catch (JasonException const& e) {
-      std::cout << "Parse error: " << e.what() << std::endl;
-      std::cout << "Position of error: " << p.errorPos() << std::endl;
-    }
-    JasonBuilder b = p.steal();
+```cpp
+#include <JasonParser.h>
+using namespace arangodb::jason;
+
+JasonParser p;
+std::string const json = "{\"a\":12}";
+try {
+  size_t nr = p.parse(json);
+}
+catch (std::bad_alloc const& e) {
+  std::cout << "Out of memory!" << std::endl;
+}
+catch (JasonException const& e) {
+  std::cout << "Parse error: " << e.what() << std::endl;
+  std::cout << "Position of error: " << p.errorPos() << std::endl;
+}
+JasonBuilder b = p.steal();
+```
 
 The final `steal()` method is very efficient and does not copy the result.
 You can access the resulting Jason object as above via `b`.
@@ -224,22 +254,24 @@ and length from that. Therefore it is very cheap to create and destroy
 Use as follows, if the `uint8_t*` `jason` points to a Jason value, which
 holds `{ "a": 12, "b": true, "l": [1,2,3], "name": "Franz" }`, say:
 
-    #include <JasonSlice.h>
-    using namespace arangodb::jason;
-    JasonSlice s(p);
-    JasonType t = s.type();      // could be JasonType::Object, say
-    if (s.isObject()) {
-      JasonSlice ss = s.get("l");   // Now ss points to the subvalue under "l"
-      JasonLength l = ss.length();
-      JasonSlice ss3 = ss.at(1);
-      int i = ss3.getInt();
-    }
-    JasonSlice sss = s.get("name");
-    if (sss.isString()) {
-      JasonLength len;
-      std::string name = sss.getString(len);
-    }
+```cpp
+#include <JasonSlice.h>
+using namespace arangodb::jason;
 
+JasonSlice s(p);
+JasonType t = s.type();      // could be JasonType::Object, say
+if (s.isObject()) {
+  JasonSlice ss = s.get("l");   // Now ss points to the subvalue under "l"
+  JasonLength l = ss.length();
+  JasonSlice ss3 = ss.at(1);
+  int i = ss3.getInt();
+}
+JasonSlice sss = s.get("name");
+if (sss.isString()) {
+  JasonLength len;
+  std::string name = sss.getString(len);
+}
+```
 
 ### Dumping a Jason value to JSON
 
@@ -247,12 +279,13 @@ The template class JasonDumper is used for this. It in turn uses the
 `JasonSlice` class. Use as follows, if `JasonSlice` `slice` points to
 a valid Jason value:
 
-    #include <JasonDump.h>
-    #include <JasonSlice.h>
-    JasonCharBuffer buffer;
-    JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
-    dumper.dump(s);
-    std::string output(buffer.data(), buffer.size());
+```cpp
+#include <JasonDump.h>
+#include <JasonSlice.h>
 
-
+JasonCharBuffer buffer;
+JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+dumper.dump(s);
+std::string output(buffer.data(), buffer.size());
+```
 
