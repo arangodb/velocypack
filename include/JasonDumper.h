@@ -41,21 +41,21 @@
 namespace arangodb {
   namespace jason {
 
-    enum UnsupportedTypeStrategy {
-      STRATEGY_NULLIFY,
-      STRATEGY_FAIL
-    };
-        
     // Dumps Jason into a JSON output string
     template<typename T, bool PrettyPrint = false>
     class JasonDumper {
 
       public:
+    
+        enum UnsupportedTypeStrategy {
+          StrategyNullify,
+          StrategyFail
+        };
 
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) 
+        JasonDumper (T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) 
           : _buffer(&buffer), _strategy(strategy), _indentation(0) {
         }
 
@@ -81,24 +81,24 @@ namespace arangodb {
           internalDump(&slice, nullptr);
         }
 
-        static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(&slice, nullptr);
         }
 
-        static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice, nullptr);
         }
         
-        static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(&slice, nullptr);
           return buffer;
         }
 
-        static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice, nullptr);
@@ -454,7 +454,7 @@ namespace arangodb {
         }
 
         void handleUnsupportedType (JasonSlice const*) {
-          if (_strategy == STRATEGY_NULLIFY) {
+          if (_strategy == StrategyNullify) {
             _buffer->append("null", 4);
             return;
           }

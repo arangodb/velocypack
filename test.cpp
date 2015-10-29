@@ -105,7 +105,7 @@ static bool parseFile (std::string const& filename) {
 
 static void checkDump (JasonSlice s, std::string const& knownGood) {
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
   dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(knownGood, output);
@@ -679,7 +679,7 @@ TEST(BufferDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("null"), output);
@@ -691,7 +691,7 @@ TEST(StringDumperTest, Null) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -702,7 +702,7 @@ TEST(BufferDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("false"), output);
@@ -714,7 +714,7 @@ TEST(StringDumperTest, False) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("false"), buffer);
 }
@@ -725,7 +725,7 @@ TEST(BufferDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("true"), output);
@@ -737,7 +737,7 @@ TEST(StringDumperTest, True) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
 }
@@ -748,7 +748,7 @@ TEST(StringDumperTest, ArangoDBId) {
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -761,7 +761,7 @@ TEST(StringDumperTest, ArangoDBIdCallback) {
 
   bool sawArangoDBId = false;
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.setCallback([&] (std::string*, JasonSlice const* slice, JasonSlice const*) -> bool {
     if (slice->type() == JasonType::Custom) {
       sawArangoDBId = true;
@@ -782,7 +782,7 @@ TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
   b.close();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
 
   dumper.setCallback([] (std::string* buffer, JasonSlice const* slice, JasonSlice const* parent) -> bool {
     if (slice->type() == JasonType::Custom) {
@@ -803,7 +803,7 @@ TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
 
 TEST(StringDumperTest, AppendCharTest) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.appendString(std::string("this is a simple string"));
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -811,7 +811,7 @@ TEST(StringDumperTest, AppendCharTest) {
 
 TEST(StringDumperTest, AppendStringTest) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.appendString("this is a simple string");
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -819,7 +819,7 @@ TEST(StringDumperTest, AppendStringTest) {
 
 TEST(StringDumperTest, AppendCharTestSpecialChars) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
@@ -827,7 +827,7 @@ TEST(StringDumperTest, AppendCharTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringTestSpecialChars) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
@@ -835,7 +835,7 @@ TEST(StringDumperTest, AppendStringTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringSlice) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   JasonBuilder b;
@@ -848,7 +848,7 @@ TEST(StringDumperTest, AppendStringSlice) {
 
 TEST(StringDumperTest, AppendStringSliceRef) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   JasonBuilder b;
@@ -870,7 +870,7 @@ TEST(StringDumperTest, AppendToOstream) {
   JasonSlice slice(builder.start());
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.dump(slice);
 
   std::ostringstream out;
@@ -888,7 +888,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -901,7 +901,7 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -915,7 +915,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -928,7 +928,7 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -941,7 +941,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -953,7 +953,7 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -965,7 +965,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -976,7 +976,7 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -989,7 +989,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
@@ -1001,7 +1001,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   JasonSlice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_NULLIFY);
+  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }

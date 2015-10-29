@@ -26,7 +26,7 @@
 
 * support Windows
 
-* implement optional lookup table support in Builder, Slicer, Parser and Dumper
+* implement lookup table support in Builder, Slice, Parser and Dumper
 
 * create code examples for documentation purposes
 
@@ -36,5 +36,6 @@
 
 * support modification of Jason objects (removing, updating)
   - JasonHelper class
+  - move JasonSlice::iterate into JasonHelper class
 
 * implement type BCD in Builder, Slice, Parser and Dumper
