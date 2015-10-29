@@ -39,8 +39,10 @@ namespace arangodb {
         enum JasonExceptionType {
           InternalError,
           NotImplemented,
+          NoJsonEquivalent,
           IndexOutOfBounds,
           NumberOutOfRange,
+          InvalidUtf8Sequence,
           InvalidAttributePath,
           InvalidValueType,
           DuplicateAttributeName,
@@ -68,18 +70,26 @@ namespace arangodb {
           return _msg.c_str();
         }
 
+        JasonExceptionType errorCode () const noexcept {
+          return _type;
+        }
+
         static char const* message (JasonExceptionType type) noexcept {
           switch (type) {
             case InternalError:
               return "Internal error";
             case NotImplemented:
               return "Not implemented";
+            case NoJsonEquivalent:
+              return "Type has no equivalent in JSON";
             case DuplicateAttributeName:
               return "Duplicate attribute name";
             case IndexOutOfBounds:
               return "Index out of bounds";
             case NumberOutOfRange:
               return "Number out of range";
+            case InvalidUtf8Sequence:
+              return "Invalid UTF-8 sequence";
             case InvalidAttributePath:
               return "Invalid attribute path";
             case InvalidValueType:

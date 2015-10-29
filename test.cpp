@@ -47,7 +47,6 @@ using JasonBuilder      = arangodb::jason::JasonBuilder;
 using JasonBufferDumper = arangodb::jason::JasonBufferDumper;
 using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
 using JasonStringDumper = arangodb::jason::JasonStringDumper;
-using JasonDumperError  = arangodb::jason::JasonDumperError;
 using JasonException    = arangodb::jason::JasonException;
 using JasonLength       = arangodb::jason::JasonLength;
 using JasonPair         = arangodb::jason::JasonPair;
@@ -750,7 +749,7 @@ TEST(StringDumperTest, ArangoDBId) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ArangoDBIdCallback) {
@@ -890,7 +889,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
@@ -917,7 +916,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
@@ -943,7 +942,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
@@ -967,7 +966,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ConvertTypeBinary) {
@@ -991,7 +990,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, arangodb::jason::STRATEGY_FAIL);
-  EXPECT_THROW(dumper.dump(slice), JasonDumperError);
+  EXPECT_THROW(dumper.dump(slice), JasonException);
 }
 
 TEST(StringDumperTest, ConvertTypeUTCDate) {
