@@ -1,15 +1,15 @@
+* separate "test" and "benchmark" targets
+
+* README
+
 * properly test custom types 0xf0 - 0xff
   - Builder already has support for them
   - Dumper & Slicer need support
   - tests
 
-* README
-
 * adjust tests so they check for exception error codes instead of only type JasonException
 
 * documentation of C++ classes (// ...)
-
-* separate "test" and "benchmark" targets
 
 * use CMake for building
 
