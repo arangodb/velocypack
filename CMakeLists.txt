@@ -9,9 +9,8 @@ project(jason)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-include(TargetArch)
-target_architecture(ARCH)
-find_package(SSE)
+
+message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 
 set(JASON_VERSION "0.0.1" CACHE path "Jason version")
 
@@ -21,46 +20,63 @@ set(JASON_CONTACT "hackers@arangodb.org")
 
 set(JASON_FRIENDLY_STRING "Jason - Just Another SerializatiON")
 
+# test for SSE4.2 support
+include(TargetArch)
+target_architecture(ARCH)
+find_package(SSE)
+
 # compiler options
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
-  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_COMPTIONS} -O3")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O -g -DJASON_DEBUG=1")
+  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_OPTIONS}")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DJASON_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
-  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3")
+  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3 -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${BASE_COMPILER_OPTIONS} -O3 -g")
 
-  set(USE_SSE4_2 ${SSE4_2_FOUND} CACHE BOOL "Use SSE4.2 optimizations")
-  if(USE_SSE4_2)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -DRAPIDJSON_SSE42")
-  endif()
+  set(CAN_USE_SSE4_2 ${SSE4_2_FOUND} CACHE BOOL "Use SSE4.2 optimizations")
 
 elseif(CMAKE_COMPILER_IS_CLANGXX)
   set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
-  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_COMPTIONS} -O3")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O -g -DJASON_DEBUG=1")
+  set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_COMPTIONS}")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DJASON_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
-  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3")
+  set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3 -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${BASE_COMPILER_OPTIONS} -O3 -g")
   
-  set(USE_SSE4_2 ${SSE4_2_FOUND} CACHE BOOL "Use SSE4.2 optimizations")
-  if(USE_SSE4_2)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -DRAPIDJSON_SSE42")
-  endif()
+  set(CAN_USE_SSE4_2 ${SSE4_2_FOUND} CACHE BOOL "Use SSE4.2 optimizations")
 
 elseif(MSVC) 
   set(${CMAKE_CXX_FLAGS} "${CMAKE_CXX_FLAGS} /MT")
   set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  
+  set(CAN_USE_SSE4_2 True CACHE BOOL "Use SSE4.2 optimizations")
 endif()
 
+# options
 option(BuildBench "Build bench performance test suite" OFF)
+message(STATUS "Building bench performance test suite: ${BuildBench}")
+
 option(BuildTests "Build test suite" OFF)
+message(STATUS "Building test suite: ${BuildTests}")
+  
+if(CAN_USE_SSE4_2)
+  option(EnableSSE "Build using SSE4.2 optimizations" ON)
+else()
+  option(EnableSSE "Build using SSE4.2 optimizations" OFF)
+endif()
+  
+message(STATUS "Building with SSE 4.2 optimizations enabled: ${EnableSSE}")
+if(EnableSSE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+endif()
+
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 find_package(Threads)
 
-
+# build libjason
 add_library(
   jason
   STATIC
@@ -73,7 +89,12 @@ add_library(
   fpconv.cpp
 )
 
+# build bench.cpp
 if(BuildBench)
+  if(NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/rapidjson")
+    message(FATAL_ERROR "rapidjson library not found in subdirectory 'rapidjson'. Please run ./download-rapidjson.sh")
+  endif()
+
   include_directories(${PROJECT_SOURCE_DIR}/rapidjson/include)
 
   add_executable(
@@ -85,10 +106,19 @@ if(BuildBench)
     bench
     jason
   )
+
+  if(EnableSSE)
+    set_target_properties(bench PROPERTIES COMPILE_DEFINITIONS RAPIDJSON_SSE42)
+  endif()
 endif()
 
+# build tests.cpp
 if(BuildTests)
-  add_subdirectory(googletest/googletest)
+  if(NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/googletest")
+    message(FATAL_ERROR "gtest library not found in subdirectory 'googletest'. Please run ./download-gtest.sh")
+  endif()
+
+#  add_subdirectory("${PROJECT_SOURCE_DIR}/googletest/googletest")
   include_directories(${PROJECT_SOURCE_DIR}/googletest/googletest/include)
 
   find_library(GTEST_LIBRARY NAMES gtest gtest.a libgtest libgtest.a PATHS googletest/googletest)
