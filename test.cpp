@@ -4081,7 +4081,7 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
-  std::string const value("{\"foo\":1,\"foo\":2}");
+  std::string const value("{\"foo\":1,\"bar\":3,\"foo\":2}");
 
   JasonParser parser;
   parser.options.sortAttributeNames = false;

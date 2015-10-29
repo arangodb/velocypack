@@ -190,6 +190,11 @@ namespace arangodb {
         bool isNumber () const {
           return isInteger() || isDouble();
         }
+        
+        bool isSorted () const {
+          auto const h = head();
+          return (h >= 0x08 && h <= 0x0a);
+        }
 
         // return the value for a Bool object
         // - 0x02      : false
@@ -364,7 +369,7 @@ namespace arangodb {
           
           JasonLength const ieBase = end - nItemsSize - n * ieSize;
 
-          if (isSorted(head())) {
+          if (isSorted()) {
             // This means, we have to handle the special case n == 1 only
             // in the linear search!
             return searchObjectKeyBinary(attribute, ieBase, ieSize, n);
@@ -658,7 +663,7 @@ namespace arangodb {
         }
 
       private:
-
+        
         // extract the nth member from an Array or Object type
         JasonSlice getNth (JasonLength index) const {
           JASON_ASSERT(type() == JasonType::Array || type() == JasonType::Object);
@@ -711,10 +716,6 @@ namespace arangodb {
           
           JasonLength const ieBase = end - nItemsSize - n * ieSize + index * ieSize;
           return JasonSlice(_start + readInteger<JasonLength>(_start + ieBase, ieSize));
-        }
-
-        bool isSorted (uint8_t head) const {
-          return (head >= 0x08 && head <= 0x0a);
         }
 
         JasonLength indexEntrySize (uint8_t head) const {

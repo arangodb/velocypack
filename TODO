@@ -4,9 +4,6 @@
     JASON_VALIDATEUTF8 needs to be removed.
   - need tests with UTF-8 validation turned on and off
 
-* Builder: fix check for duplicate attribute names for the
-  unsorted objects case (JS)
-
 * properly test custom types 0xf0 - 0xff
   - Builder already has support for them
   - Dumper & Slicer need support

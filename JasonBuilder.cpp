@@ -26,6 +26,8 @@
 
 #include "JasonBuilder.h"
 
+#include <unordered_set>
+
 using namespace arangodb::jason;
 
 // thread local vector for sorting large object attributes
@@ -553,31 +555,48 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
 }
 
 void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
-  // FIXME: For the case ! options.sortAttributeNames, we have to use
-  // a different algorithm!
   JASON_ASSERT(options.sortAttributeNames == true);
   JasonLength const n = obj.length();
-  JasonSlice previous = obj.keyAt(0);
-  JasonLength len;
-  char const* p = previous.getString(len);
 
-  for (JasonLength i = 1; i < n; ++i) {
-    JasonSlice current = obj.keyAt(i);
-    if (! current.isString()) {
-      return;
-    }
-    
-    JasonLength len2;
-    char const* q = current.getString(len2);
+  if (obj.isSorted()) {
+    // object attributes are sorted
+    JasonSlice previous = obj.keyAt(0);
+    JasonLength len;
+    char const* p = previous.getString(len);
 
-    if (len == len2 && memcmp(p, q, len2) == 0) {
-      // identical key
-      throw JasonException(JasonException::DuplicateAttributeName);
+    // compare each two adjacent attribute names
+    for (JasonLength i = 1; i < n; ++i) {
+      JasonSlice current = obj.keyAt(i);
+      if (! current.isString()) {
+        throw JasonException(JasonException::InternalError, "Expecting String key");
+      }
+      
+      JasonLength len2;
+      char const* q = current.getString(len2);
+
+      if (len == len2 && memcmp(p, q, len2) == 0) {
+        // identical key
+        throw JasonException(JasonException::DuplicateAttributeName);
+      }
+      // re-use already calculated values for next round
+      len = len2;
+      p = q;
     }
-    // re-use already calculated values for next round
-    len = len2;
-    p = q;
-  } 
+  }
+  else {
+    std::unordered_set<std::string> keys;
+
+    for (size_t i = 0; i < n; ++i) {
+      JasonSlice key = obj.keyAt(i);
+      if (! key.isString()) {
+        throw JasonException(JasonException::InternalError, "Expecting String key");
+      }
+      
+      if (! keys.emplace(key.copyString()).second) {
+        throw JasonException(JasonException::DuplicateAttributeName);
+      }
+    }
+  }
 }
 
 void JasonBuilder::add (std::string const& attrName, Jason const& sub) {
