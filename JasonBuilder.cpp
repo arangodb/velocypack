@@ -392,7 +392,6 @@ void JasonBuilder::set (Jason const& item) {
           throw JasonBuilderError("Must give number for JasonType::Int.");
       }
       addInt(v);
-      //appendInt(v, 0x1f);
       break;
     }
     case JasonType::UInt: {
@@ -417,7 +416,6 @@ void JasonBuilder::set (Jason const& item) {
           throw JasonBuilderError("Must give number for JasonType::UInt.");
       }
       addUInt(v); 
-      //appendUInt(v, 0x27);
       break;
     }
     case JasonType::UTCDate: {
@@ -458,7 +456,6 @@ void JasonBuilder::set (Jason const& item) {
         reserveSpace(1 + size);
         _start[_pos++] = 0x40 + size;
         memcpy(_start + _pos, s->c_str(), size);
-        _pos += size;
       }
       else {
         // long string
@@ -467,6 +464,7 @@ void JasonBuilder::set (Jason const& item) {
         appendLength(size, 8);
         memcpy(_start + _pos, s->c_str(), size);
       }
+      _pos += size;
       break;
     }
     case JasonType::Array: {
