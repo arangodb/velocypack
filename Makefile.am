@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS="-Im4"
 
-love:	all test bench JasonAsm
+love:	all tests bench JasonAsm
 
 ARFLAGS = cr
 
@@ -9,16 +9,16 @@ lib_LIBRARIES = libjason.a
 libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp JasonParser.cpp JasonBuilder.cpp JasonSlice.cpp JasonType.cpp Jason.cpp
 libjason_a_CXXFLAGS = -Iinclude -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
 
-EXTRA_PROGRAMS = bench test JasonAsm
+EXTRA_PROGRAMS = bench tests JasonAsm
 
 bench_SOURCES = bench.cpp
 bench_LDADD = libjason.a
 bench_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${RAPIDJSONSSE42} ${SSE42OPTION} -Irapidjson/include -Iinclude
 
-test_SOURCES = test.cpp
-test_LDADD = libjason.a googletest/googletest/libgtest.a
-test_LDFLAGS = -pthread
-test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -Iinclude
+tests_SOURCES = tests.cpp
+tests_LDADD = libjason.a googletest/googletest/libgtest.a
+tests_LDFLAGS = -pthread
+tests_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -Iinclude
 
 JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -Iinclude
