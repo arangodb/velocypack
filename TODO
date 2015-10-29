@@ -1,51 +1,46 @@
-* Parser: switchable sorting
-  - parser already has a JasonOption sortAttributeNames,
-    and it seems to be honored. Builder also accepts the
-    option and creates either sorted or unsorted objects.
-    Seems no further action is required.
-
 * Parser: switchable UTF-8 validation
   - already added JasonOptions.validateUtf8Strings, but it
     still needs to be honored. Finally, the compile option
     JASON_VALIDATEUTF8 needs to be removed.
   - need tests with UTF-8 validation turned on and off
 
+* Builder: fix check for duplicate attribute names for the
+  unsorted objects case
+
 * properly test custom types 0xf0 - 0xff
+  - Builder already has support for them
+  - Dumper & Slicer need support
+  - tests
 
-* finish implementation of JasonSlice for custom types
-
-* LICENSE, README
+* README
 
 * better documentation of format
 
-* documentation of C++ classes
+* unify exceptions to JasonException with error code
+* check if error message texts are ok
+* adjust tests so they check for error codes
 
-* create examples
+* create `include` directory for public headers 
 
-* add documentation for how to build
+* documentation of C++ classes (// ...)
 
-* create `include` and `src` directories, move files
+* separate "test" and "benchmark" targets
 
 * use CMake for building
 
+* add documentation for how to build
+
 * support Windows
+
+* implement optional lookup table support in Builder, Slicer, Parser and Dumper
+
+* create code examples for documentation purposes
 
 * add tests on ARM
 
 * add performance tests and results
 
-* implement serialization for External type
-
-* produce better exception messages and error codes
-
-* use unified exceptions
-
 * support modification of Jason objects (removing, updating)
+  - JasonHelper class
 
 * implement type BCD in Builder, Slice, Parser and Dumper
-
-* implement optional lookup table support in Builder, Slice, Parser and Dumper
-
-* optional: JasonArray, JasonObject c++ access
-
-* separate "test" and "benchmark" targets
