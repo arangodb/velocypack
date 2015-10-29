@@ -14,8 +14,6 @@
 
 * README
 
-* better documentation of format
-
 * unify exceptions to JasonException with error code
 * check if error message texts are ok
 * adjust tests so they check for error codes
