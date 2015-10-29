@@ -28,13 +28,14 @@
 #define JASON_PARSER_H 1
 
 #include <string>
-#include <exception>
 #include <cmath>
 
-#include "JasonAsm.h"
-#include "JasonType.h"
 #include "Jason.h"
+#include "JasonAsm.h"
 #include "JasonBuilder.h"
+#include "JasonException.h"
+#include "JasonOptions.h"
+#include "JasonType.h"
 
 namespace arangodb {
   namespace jason {
@@ -50,10 +51,10 @@ namespace arangodb {
       //   try {
       //     size_t nr = p.parse(json);
       //   }
-      //   catch (std::bad_alloc e) {
+      //   catch (std::bad_alloc const& e) {
       //     std::cout << "Out of memory!" << std::endl;
       //   }
-      //   catch (JasonParserError e) {
+      //   catch (JasonException const& e) {
       //     std::cout << "Parse error: " << e.what() << std::endl;
       //     std::cout << "Position of error: " << p.errorPos() << std::endl;
       //   }
@@ -84,7 +85,7 @@ namespace arangodb {
 
             doubleValue = doubleValue * 10.0 + (i - '0');
             if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
-              throw JasonParserError("numeric value out of bounds");
+              throw JasonException(JasonException::NumberOutOfRange);
             }
           }
 
@@ -106,17 +107,6 @@ namespace arangodb {
         size_t         _pos;
 
       public:
-
-        struct JasonParserError : std::exception {
-          private:
-            std::string _msg;
-          public:
-            JasonParserError (std::string const& msg) : _msg(msg) {
-            }
-            char const* what() const noexcept {
-              return _msg.c_str();
-            }
-        };
 
         JasonOptions options;        
 
@@ -212,7 +202,7 @@ namespace arangodb {
         // byte following the whitespace
         int skipWhiteSpace (char const* err) {
           if (_pos >= _size) {
-            throw JasonParserError(err);
+            throw JasonException(JasonException::ParseError, err);
           }
           uint8_t c = _start[_pos];
           if (! isWhiteSpace(c)) {
@@ -221,7 +211,7 @@ namespace arangodb {
           if (c == ' ') {
             if (_pos+1 >= _size) {
               _pos++;
-              throw JasonParserError(err);
+              throw JasonException(JasonException::ParseError, err);
             }
             c = _start[_pos+1];
             if (! isWhiteSpace(c)) {
@@ -235,13 +225,13 @@ namespace arangodb {
           if (count < remaining) {
             return static_cast<int>(_start[_pos]);
           }
-          throw JasonParserError(err);
+          throw JasonException(JasonException::ParseError, err);
         }
 
         void parseTrue () {
           // Called, when main mode has just seen a 't', need to see "rue" next
           if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
-            throw JasonParserError("true expected");
+            throw JasonException(JasonException::ParseError, "Expecting 'true'");
           }
           _b.addTrue();
         }
@@ -250,7 +240,7 @@ namespace arangodb {
           // Called, when main mode has just seen a 'f', need to see "alse" next
           if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
               consume() != 'e') {
-            throw JasonParserError("false expected");
+            throw JasonException(JasonException::ParseError, "Expecting 'false'");
           }
           _b.addFalse();
         }
@@ -258,7 +248,7 @@ namespace arangodb {
         void parseNull () {
           // Called, when main mode has just seen a 'n', need to see "ull" next
           if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
-            throw JasonParserError("null expected");
+            throw JasonException(JasonException::ParseError, "Expecting 'null'");
           }
           _b.addNull();
         }
@@ -297,7 +287,7 @@ namespace arangodb {
         inline int getOneOrThrow (char const* msg) {
           int i = consume();
           if (i < 0) {
-            throw JasonParserError(msg);
+            throw JasonException(JasonException::ParseError, msg);
           }
           return i;
         }

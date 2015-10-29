@@ -36,6 +36,7 @@
 #include "Jason.h"
 #include "JasonBuffer.h"
 #include "JasonException.h"
+#include "JasonOptions.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
 

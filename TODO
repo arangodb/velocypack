@@ -1,6 +1,3 @@
-* Builder: fix check for duplicate attribute names for the
-  unsorted objects case
-
 * properly test custom types 0xf0 - 0xff
   - Builder already has support for them
   - Dumper & Slicer need support
@@ -8,9 +5,7 @@
 
 * README
 
-* unify exceptions to JasonException with error code
-* check if error message texts are ok
-* adjust tests so they check for error codes
+* adjust tests so they check for exception error codes instead of only type JasonException
 
 * documentation of C++ classes (// ...)
 
@@ -22,7 +17,7 @@
 
 * support Windows
 
-* implement optional lookup table support in Builder, Slicer, Parser and Dumper
+* implement lookup table support in Builder, Slice, Parser and Dumper
 
 * create code examples for documentation purposes
 
@@ -32,5 +27,6 @@
 
 * support modification of Jason objects (removing, updating)
   - JasonHelper class
+  - move JasonSlice::iterate into JasonHelper class
 
 * implement type BCD in Builder, Slice, Parser and Dumper

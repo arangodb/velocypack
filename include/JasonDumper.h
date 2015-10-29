@@ -30,43 +30,34 @@
 #include <string>
 #include <cmath>
 #include <functional>
-#include <exception>
 
+#include "Jason.h"
 #include "JasonBuffer.h"
+#include "JasonException.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
-#include "Jason.h"
-#include "fpconv.h"
 
 namespace arangodb {
   namespace jason {
 
-    enum UnsupportedTypeStrategy {
-      STRATEGY_NULLIFY,
-      STRATEGY_FAIL
-    };
-        
-    struct JasonDumperError : std::exception {
-      private:
-        std::string _msg;
-      public:
-        JasonDumperError (std::string const& msg) : _msg(msg) {
-        }
-        char const* what() const noexcept {
-          return _msg.c_str();
-        }
-    };
+    // forward for fpconv function declared elsewhere
+    int fpconv_dtoa (double fp, char dest[24]);
 
     // Dumps Jason into a JSON output string
     template<typename T, bool PrettyPrint = false>
     class JasonDumper {
 
       public:
+    
+        enum UnsupportedTypeStrategy {
+          StrategyNullify,
+          StrategyFail
+        };
 
         JasonDumper (JasonDumper const&) = delete;
         JasonDumper& operator= (JasonDumper const&) = delete;
 
-        JasonDumper (T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) 
+        JasonDumper (T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) 
           : _buffer(&buffer), _strategy(strategy), _indentation(0) {
         }
 
@@ -92,24 +83,24 @@ namespace arangodb {
           internalDump(&slice, nullptr);
         }
 
-        static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(&slice, nullptr);
         }
 
-        static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice, nullptr);
         }
         
-        static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(&slice, nullptr);
           return buffer;
         }
 
-        static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = STRATEGY_FAIL) {
+        static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
           dumper.internalDump(slice, nullptr);
@@ -381,7 +372,7 @@ namespace arangodb {
             _buffer->push_back('0' + v);
           }
           else {
-            throw JasonDumperError("unexpected number type");
+            throw JasonException(JasonException::InternalError, "Unexpected number type");
           }
         }
 
@@ -435,7 +426,7 @@ namespace arangodb {
             else if ((c & 0xe0) == 0xc0) {
               // two-byte sequence
               if (p + 1 >= e) {
-                throw JasonDumperError("unexpected end of string");
+                throw JasonException(JasonException::InvalidUtf8Sequence);
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 2);
@@ -444,7 +435,7 @@ namespace arangodb {
             else if ((c & 0xf0) == 0xe0) {
               // three-byte sequence
               if (p + 2 >= e) {
-                throw JasonDumperError("unexpected end of string");
+                throw JasonException(JasonException::InvalidUtf8Sequence);
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 3);
@@ -453,7 +444,7 @@ namespace arangodb {
             else if ((c & 0xf8) == 0xf0) {
               // four-byte sequence
               if (p + 3 >= e) {
-                throw JasonDumperError("unexpected end of string");
+                throw JasonException(JasonException::InvalidUtf8Sequence);
               }
 
               _buffer->append(reinterpret_cast<char const*>(p), 4);
@@ -465,12 +456,12 @@ namespace arangodb {
         }
 
         void handleUnsupportedType (JasonSlice const*) {
-          if (_strategy == STRATEGY_NULLIFY) {
+          if (_strategy == StrategyNullify) {
             _buffer->append("null", 4);
             return;
           }
 
-          throw JasonDumperError("unsupported type - cannot convert to JSON");
+          throw JasonException(JasonException::NoJsonEquivalent);
         }
 
       private:

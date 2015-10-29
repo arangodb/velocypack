@@ -57,7 +57,7 @@ JasonLength JasonParser::parseInternal (bool multi) {
     }
     if (! multi && _pos != _size) {
       consume();  // to get error reporting right
-      throw JasonParserError("expecting EOF");
+      throw JasonException(JasonException::ParseError, "Expecting EOF");
     }
   } 
   while (multi && _pos < _size);
@@ -71,11 +71,11 @@ void JasonParser::parseNumber () {
   // We know that a character is coming, and it's a number if it
   // starts with '-' or a digit. otherwise it's invalid
   if (i == '-') {
-    i = getOneOrThrow("scanNumber: incomplete number");
+    i = getOneOrThrow("Incomplete number");
     negative = true;
   }
   if (i < '0' || i > '9') {
-    throw JasonParserError("value expected");
+    throw JasonException(JasonException::ParseError, "Expecting digit");
   }
   
   if (i != '0') {
@@ -111,9 +111,9 @@ void JasonParser::parseNumber () {
     }
     return;
   }
-  i = getOneOrThrow("scanNumber: incomplete number");
+  i = getOneOrThrow("Incomplete number");
   if (i < '0' || i > '9') {
-    throw JasonParserError("scanNumber: incomplete number");
+    throw JasonException(JasonException::ParseError, "Incomplete number");
   }
   unconsume();
   double fractionalPart = scanDigitsFractional();
@@ -133,14 +133,14 @@ void JasonParser::parseNumber () {
     _b.addDouble(fractionalPart);
     return;
   }
-  i = getOneOrThrow("scanNumber: incomplete number");
+  i = getOneOrThrow("Incomplete number");
   negative = false;
   if (i == '+' || i == '-') {
     negative = (i == '-');
-    i = getOneOrThrow("scanNumber: incomplete number");
+    i = getOneOrThrow("Incomplete number");
   }
   if (i < '0' || i > '9') {
-    throw JasonParserError("scanNumber: incomplete number");
+    throw JasonException(JasonException::ParseError, "Incomplete number");
   }
   unconsume();
   ParsedNumber exponent;
@@ -152,7 +152,7 @@ void JasonParser::parseNumber () {
     fractionalPart *= pow(10, exponent.asDouble());
   }
   if (std::isnan(fractionalPart) || ! std::isfinite(fractionalPart)) {
-    throw JasonParserError("numeric value out of bounds");
+    throw JasonException(JasonException::NumberOutOfRange);
   }
   _b.addDouble(fractionalPart);
 }
@@ -186,7 +186,7 @@ void JasonParser::parseString () {
       _pos += count;
       _b._pos += count;
     }
-    int i = getOneOrThrow("scanString: Unfinished string detected.");
+    int i = getOneOrThrow("Unfinished string");
     if (! large && _b._pos - (base + 1) > 126) {
       large = true;
       _b.reserveSpace(8);
@@ -215,7 +215,7 @@ void JasonParser::parseString () {
         // Handle cases or throw error
         i = consume();
         if (i < 0) {
-          throw JasonParserError("scanString: Unfinished string detected.");
+          throw JasonException(JasonException::ParseError, "Invalid escape sequence");
         }
         switch (i) {
           case '"':
@@ -255,7 +255,7 @@ void JasonParser::parseString () {
             for (int j = 0; j < 4; j++) {
               i = consume();
               if (i < 0) {
-                throw JasonParserError("scanString: Unfinished \\uXXXX.");
+                throw JasonException(JasonException::ParseError, "Unfinished \\uXXXX escape sequence");
               }
               if (i >= '0' && i <= '9') {
                 v = (v << 4) + i - '0';
@@ -267,7 +267,7 @@ void JasonParser::parseString () {
                 v = (v << 4) + i - 'A' + 10;
               }
               else {
-                throw JasonParserError("scanString: Illegal hash digit.");
+                throw JasonException(JasonException::ParseError, "Illegal \\uXXXX escape sequence");
               }
             }
             if (v < 0x80) {
@@ -310,7 +310,7 @@ void JasonParser::parseString () {
             break;
           }
           default:
-            throw JasonParserError("scanString: Illegal \\ sequence.");
+            throw JasonException(JasonException::ParseError, "Invalid escape sequence");
         }
         break;
       default:
@@ -318,7 +318,7 @@ void JasonParser::parseString () {
           // non-UTF-8 sequence
           if (i < 0x20) {
             // control character
-            throw JasonParserError("scanString: Found control character.");
+            throw JasonException(JasonException::ParseError, "Unexpected control character");
           }
           highSurrogate = 0;
           _b.reserveSpace(1);
@@ -334,7 +334,7 @@ void JasonParser::parseString () {
             // multi-byte UTF-8 sequence!
             int follow = 0;
             if ((i & 0xe0) == 0x80) {
-              throw JasonParserError("scanString: Illegal UTF-8 byte.");
+              throw JasonException(JasonException::InvalidUtf8Sequence);
             }
             else if ((i & 0xe0) == 0xc0) {
               // two-byte sequence
@@ -349,7 +349,7 @@ void JasonParser::parseString () {
               follow = 3;
             }
             else {
-              throw JasonParserError("scanString: Illegal 5- or 6-byte sequence found in UTF-8 string.");
+              throw JasonException(JasonException::InvalidUtf8Sequence);
             }
 
             // validate follow up characters
@@ -358,7 +358,7 @@ void JasonParser::parseString () {
             for (int j = 0; j < follow; ++j) {
               i = getOneOrThrow("scanString: truncated UTF-8 sequence");
               if ((i & 0xc0) != 0x80) {
-                throw JasonParserError("scanString: invalid UTF-8 sequence");
+                throw JasonException(JasonException::InvalidUtf8Sequence);
               }
               _b._start[_b._pos++] = static_cast<uint8_t>(i);
             }
@@ -374,7 +374,7 @@ void JasonParser::parseArray () {
   JasonLength base = _b._pos;
   _b.addArray();
 
-  int i = skipWhiteSpace("scanArray: item or ] expected");
+  int i = skipWhiteSpace("Expecting item or ']'");
   if (i == ']') {
     // empty array
     ++_pos;   // the closing ']'
@@ -386,7 +386,7 @@ void JasonParser::parseArray () {
     // parse array element itself
     _b.reportAdd(base);
     parseJson();
-    i = skipWhiteSpace("scanArray: , or ] expected");
+    i = skipWhiteSpace("Expecting ',' or ']'");
     if (i == ']') {
       // end of array
       ++_pos;  // the closing ']'
@@ -395,7 +395,7 @@ void JasonParser::parseArray () {
     }
     // skip over ','
     if (i != ',') {
-      throw JasonParserError("scanArray: , or ] expected");
+      throw JasonException(JasonException::ParseError, "Expecting ',' or ']'");
     }
     ++_pos;  // the ','
   }
@@ -405,7 +405,7 @@ void JasonParser::parseObject () {
   JasonLength base = _b._pos;
   _b.addObject();
 
-  int i = skipWhiteSpace("scanObject: item or } expected");
+  int i = skipWhiteSpace("Expecting item or '}'");
   if (i == '}') {
     // empty array
     consume();   // the closing ']'
@@ -416,22 +416,22 @@ void JasonParser::parseObject () {
   while (true) {
     // always expecting a string attribute name here
     if (i != '"') {
-      throw JasonParserError("scanObject: \" or } expected");
+      throw JasonException(JasonException::ParseError, "Expecting '\"' or '}'");
     }
     // get past the initial '"'
     ++_pos;
 
     _b.reportAdd(base);
     parseString();
-    i = skipWhiteSpace("scanObject: : expected");
+    i = skipWhiteSpace("Expecting ':'");
     // always expecting the ':' here
     if (i != ':') {
-      throw JasonParserError("scanObject: : expected");
+      throw JasonException(JasonException::ParseError, "Expecting ':'");
     }
     ++_pos; // skip over the colon
 
     parseJson();
-    i = skipWhiteSpace("scanObject: , or } expected");
+    i = skipWhiteSpace("Expecting ',' or '}'");
     if (i == '}') {
       // end of object
       ++_pos;  // the closing '}'
@@ -439,16 +439,17 @@ void JasonParser::parseObject () {
       return;
     }
     if (i != ',') {
-      throw JasonParserError("scanObject: , or } expected");
+      throw JasonException(JasonException::ParseError, "Expecting ',' or '}'");
     } 
     // skip over ','
     ++_pos;  // the ','
-    i = skipWhiteSpace("scanObject: \" or } expected");
+    i = skipWhiteSpace("Expecting '\"' or '}'");
   }
 }
                        
 void JasonParser::parseJson () {
-  skipWhiteSpace("expecting item");
+  skipWhiteSpace("Expecting item");
+
   int i = consume();
   if (i < 0) {
     return; 

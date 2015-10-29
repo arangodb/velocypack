@@ -273,12 +273,6 @@ namespace arangodb {
                          : static_cast<int64_t>(v);
     }
        
-    struct JasonOptions {
-      bool validateUtf8Strings      = false;
-      bool checkAttributeUniqueness = false;
-      bool sortAttributeNames       = true;
-    };
-          
   }  // namespace arangodb::jason
 }  // namespace arangodb
 

@@ -1,6 +1,31 @@
+/* Fast and accurate double to string conversion based on Florian Loitsch's
+ * Grisu-algorithm[1].
+ *
+ * Input:
+ * fp -> the double to convert, dest -> destination buffer.
+ * The generated string will never be longer than 24 characters.
+ * Make sure to pass a pointer to at least 24 bytes of memory.
+ * The emitted string will not be null terminated.
+ *
+ * Output:
+ * The number of written characters.
+ *
+ * Exemplary usage:
+ *
+ * void print(double d)
+ * {
+ *      char buf[24 + 1] // plus null terminator
+ *      int str_len = fpconv_dtoa(d, buf);
+ *
+ *      buf[str_len] = '\0';
+ *      printf("%s", buf);
+ * }
+ *
+ * [1] http://florian.loitsch.com/publications/dtoa-pldi2010.pdf 
+ */
+
 #include <cstring>
 
-#include "fpconv.h"
 #include "powers.h"
 
 #define fracmask  0x000FFFFFFFFFFFFFU
@@ -11,6 +36,13 @@
 
 #define absv(n) ((n) < 0 ? -(n) : (n))
 #define minv(a, b) ((a) < (b) ? (a) : (b))
+
+namespace arangodb {
+  namespace jason {
+    // forward for fpconv function 
+    int fpconv_dtoa (double fp, char dest[24]);
+  }
+}
 
 static uint64_t tens[] = {
     10000000000000000000U, 1000000000000000000U, 100000000000000000U,
@@ -303,7 +335,7 @@ static int filter_special(double fp, char* dest)
     return 3;
 }
 
-int fpconv_dtoa(double d, char dest[24])
+int arangodb::jason::fpconv_dtoa (double d, char dest[24])
 {
     char digits[18];
 
