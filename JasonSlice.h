@@ -341,7 +341,7 @@ namespace arangodb {
           
           if (n == 1) {
             // Just one attribute, there is no index table!
-            JasonSlice attrName = JasonSlice(_start + 2 + (b == 0 ? : 8 : 0));
+            JasonSlice attrName = JasonSlice(_start + 2 + (b == 0 ? 8 : 0));
             if (! attrName.isString()) {
               return JasonSlice();
             }
