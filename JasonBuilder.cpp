@@ -473,7 +473,7 @@ void JasonBuilder::set (Jason const& item) {
     case JasonType::Binary: {
       if (ctype != Jason::CType::String &&
           ctype != Jason::CType::CharPtr) {
-        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give a string or char const* for JasonType::Binary");
+        throw JasonException(JasonException::BuilderUnexpectedValue, "Must provide std::string or char const* for JasonType::Binary");
       }
       std::string const* s;
       std::string value;

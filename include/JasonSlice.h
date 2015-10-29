@@ -222,7 +222,7 @@ namespace arangodb {
         // - 0x07      : array with 8-byte index table entries
         JasonSlice at (JasonLength index) const {
           if (! isType(JasonType::Array)) {
-            throw JasonException(JasonException::InvalidValueType, "expecting Array");
+            throw JasonException(JasonException::InvalidValueType, "Expecting Array");
           }
 
           return getNth(index);
@@ -235,7 +235,7 @@ namespace arangodb {
         // return the number of members for an Array or Object object
         JasonLength length () const {
           if (type() != JasonType::Array && type() != JasonType::Object) {
-            throw JasonException(JasonException::InvalidValueType, "expecting Array or Object");
+            throw JasonException(JasonException::InvalidValueType, "Expecting Array or Object");
           }
 
           uint8_t b = _start[1]; // byte length
@@ -274,7 +274,7 @@ namespace arangodb {
         // - 0x0d      : object with 8-byte index table entries, not sorted by attribute name
         JasonSlice keyAt (JasonLength index) const {
           if (! isType(JasonType::Object)) {
-            throw JasonException(JasonException::InvalidValueType, "expecting Object");
+            throw JasonException(JasonException::InvalidValueType, "Expecting Object");
           }
           
           return getNth(index);
@@ -312,7 +312,7 @@ namespace arangodb {
         // returns a JasonSlice(Jason::None) if not found
         JasonSlice get (std::string const& attribute) const {
           if (! isType(JasonType::Object)) {
-            throw JasonException(JasonException::InvalidValueType, "expecting Object");
+            throw JasonException(JasonException::InvalidValueType, "Expecting Object");
           }
 
           uint8_t b = _start[1];
@@ -451,7 +451,7 @@ namespace arangodb {
             return getSmallInt();
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type Int");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type Int");
         }
 
         // return the value for a UInt object
@@ -476,7 +476,7 @@ namespace arangodb {
             return static_cast<uint64_t>(h - 0x30);
           }
           
-          throw JasonException(JasonException::InvalidValueType, "expecting type UInt");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type UInt");
         }
 
         // return the value for a SmallInt object
@@ -500,7 +500,7 @@ namespace arangodb {
             return getInt();
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type Smallint");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type Smallint");
         }
 
         // return the value for a UTCDate object
@@ -526,7 +526,7 @@ namespace arangodb {
             return reinterpret_cast<char const*>(_start + 1 + 8);
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type String");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type String");
         }
 
         // return a copy of the value for a String object
@@ -544,7 +544,7 @@ namespace arangodb {
             return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type String");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type String");
         }
 
         // return the value for a Binary object
@@ -558,7 +558,7 @@ namespace arangodb {
             return _start + 1 + h - 0xbf;
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type Binary");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type Binary");
         }
 
         // return a copy of the value for a Binary object
@@ -575,7 +575,7 @@ namespace arangodb {
             return out; 
           }
 
-          throw JasonException(JasonException::InvalidValueType, "expecting type Binary");
+          throw JasonException(JasonException::InvalidValueType, "Expecting type Binary");
         }
 
         // get the total byte size for the slice, including the head byte

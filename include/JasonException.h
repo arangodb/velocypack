@@ -37,9 +37,10 @@ namespace arangodb {
     struct JasonException : std::exception {
       public:
         enum JasonExceptionType {
-          InternalError,
+          InternalError            = 1,
           NotImplemented,
           NoJsonEquivalent,
+          ParseError,
           IndexOutOfBounds,
           NumberOutOfRange,
           InvalidUtf8Sequence,
@@ -63,6 +64,9 @@ namespace arangodb {
         JasonException (JasonExceptionType type, std::string const& msg) : _type(type), _msg(msg) {
         }
         
+        JasonException (JasonExceptionType type, char const* msg) : _type(type), _msg(msg) {
+        }
+        
         explicit JasonException (JasonExceptionType type) : JasonException(type, message(type)) {
         }
       
@@ -82,6 +86,8 @@ namespace arangodb {
               return "Not implemented";
             case NoJsonEquivalent:
               return "Type has no equivalent in JSON";
+            case ParseError:
+              return "Parse error";
             case DuplicateAttributeName:
               return "Duplicate attribute name";
             case IndexOutOfBounds:
