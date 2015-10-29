@@ -16,9 +16,6 @@ config.status
 libjason.a
 stamp-h1
 config.h.in~
-jsonSample/fail*.json
-jsonSample/pass*.json
-jsonSample/sample.json
 examples/usebuilder
 examples/usebuilder2
 examples/useparser
