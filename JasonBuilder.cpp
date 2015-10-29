@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Library to build up Jason documents.
 ///
-/// @file JasonBuilder.cpp
-///
 /// DISCLAIMER
 ///
 /// Copyright 2015 ArangoDB GmbH, Cologne, Germany
@@ -66,7 +64,7 @@ uint8_t const* JasonBuilder::findAttrName (uint8_t const* base, uint64_t& len) {
     }
     return base + 1 + 8; // string starts here
   }
-  throw JasonBuilderError("Unimplemented attribute name type.");
+  throw JasonException(JasonException::NotImplemented);
 }
 
 void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
@@ -116,11 +114,11 @@ void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
 
 void JasonBuilder::close () {
   if (_stack.empty()) {
-    throw JasonBuilderError("Need open array or object for close() call.");
+    throw JasonException(JasonException::BuilderNeedOpenObject);
   }
   JasonLength& tos = _stack.back();
   if (_start[tos] != 0x05 && _start[tos] != 0x08) {
-    throw JasonBuilderError("Need open array or object for close() call.");
+    throw JasonException(JasonException::BuilderNeedOpenObject);
   }
   std::vector<JasonLength>& index = _index[_stack.size() - 1];
   if (index.empty()) {
@@ -290,11 +288,8 @@ void JasonBuilder::set (Jason const& item) {
   // append position. If this is an array or object, then an index
   // table is created and a new JasonLength is pushed onto the stack.
   switch (item.jasonType()) {
-    case JasonType::Custom: {
-      throw JasonBuilderError("Cannot set a JasonType::Custom with this method.");
-    }
     case JasonType::None: {
-      throw JasonBuilderError("Cannot set a JasonType::None.");
+      throw JasonException(JasonException::BuilderUnexpectedType, "Cannot set a JasonType::None");
     }
     case JasonType::Null: {
       reserveSpace(1);
@@ -303,7 +298,7 @@ void JasonBuilder::set (Jason const& item) {
     }
     case JasonType::Bool: {
       if (ctype != Jason::CType::Bool) {
-        throw JasonBuilderError("Must give bool for JasonType::Bool.");
+        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give bool for JasonType::Bool");
       }
       reserveSpace(1);
       if (item.getBool()) {
@@ -330,7 +325,7 @@ void JasonBuilder::set (Jason const& item) {
           v = static_cast<double>(item.getUInt64());
           break;
         default:
-          throw JasonBuilderError("Must give number for JasonType::Double.");
+          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::Double");
       }
       reserveSpace(1 + sizeof(double));
       _start[_pos++] = 0x0e;
@@ -340,7 +335,7 @@ void JasonBuilder::set (Jason const& item) {
     }
     case JasonType::External: {
       if (ctype != Jason::CType::VoidPtr) {
-        throw JasonBuilderError("Must give void pointer for JasonType::External.");
+        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give void pointer for JasonType::External");
       }
       reserveSpace(1 + sizeof(void*));
       // store pointer. this doesn't need to be portable
@@ -362,10 +357,10 @@ void JasonBuilder::set (Jason const& item) {
         case Jason::CType::UInt64:
           vv = static_cast<int64_t>(item.getUInt64());
         default:
-          throw JasonBuilderError("Must give number for JasonType::SmallInt.");
+          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::SmallInt");
       }
       if (vv < -6 || vv > 9) {
-        throw JasonBuilderError("Number out of range of JasonType::SmallInt.");
+        throw JasonException(JasonException::NumberOutOfRange, "Number out of range of JasonType::SmallInt");
       } 
       reserveSpace(1);
       if (vv >= 0) {
@@ -389,7 +384,7 @@ void JasonBuilder::set (Jason const& item) {
           v = toInt64(item.getUInt64());
           break;
         default:
-          throw JasonBuilderError("Must give number for JasonType::Int.");
+          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::Int");
       }
       addInt(v);
       break;
@@ -399,13 +394,13 @@ void JasonBuilder::set (Jason const& item) {
       switch (ctype) {
         case Jason::CType::Double:
           if (item.getDouble() < 0.0) {
-            throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
+            throw JasonException(JasonException::BuilderUnexpectedValue, "Must give non-negative number for JasonType::UInt");
           }
           v = static_cast<uint64_t>(item.getDouble());
           break;
         case Jason::CType::Int64:
           if (item.getInt64() < 0) {
-            throw JasonBuilderError("Must give non-negative number for JasonType::UInt.");
+            throw JasonException(JasonException::BuilderUnexpectedValue, "Must give non-negative number for JasonType::UInt");
           }
           v = static_cast<uint64_t>(item.getInt64());
           break;
@@ -413,7 +408,7 @@ void JasonBuilder::set (Jason const& item) {
           v = item.getUInt64();
           break;
         default:
-          throw JasonBuilderError("Must give number for JasonType::UInt.");
+          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::UInt");
       }
       addUInt(v); 
       break;
@@ -431,7 +426,7 @@ void JasonBuilder::set (Jason const& item) {
           v = toInt64(item.getUInt64());
           break;
         default:
-          throw JasonBuilderError("Must give number for JasonType::UTCDate.");
+          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::UTCDate");
       }
       addUTCDate(v);
       break;
@@ -439,7 +434,7 @@ void JasonBuilder::set (Jason const& item) {
     case JasonType::String: {
       if (ctype != Jason::CType::String &&
           ctype != Jason::CType::CharPtr) {
-        throw JasonBuilderError("Must give a string or char const* for JasonType::String.");
+        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give a string or char const* for JasonType::String");
       }
       std::string const* s;
       std::string value;
@@ -478,7 +473,7 @@ void JasonBuilder::set (Jason const& item) {
     case JasonType::Binary: {
       if (ctype != Jason::CType::String &&
           ctype != Jason::CType::CharPtr) {
-        throw JasonBuilderError("Must give a string or char const* for JasonType::Binary.");
+        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give a string or char const* for JasonType::Binary");
       }
       std::string const* s;
       std::string value;
@@ -506,7 +501,10 @@ void JasonBuilder::set (Jason const& item) {
       break;
     }
     case JasonType::BCD: {
-      throw JasonBuilderError("BCD not yet implemented.");
+      throw JasonException(JasonException::NotImplemented);
+    }
+    case JasonType::Custom: {
+      throw JasonException(JasonException::BuilderUnexpectedType, "Cannot set a JasonType::Custom with this method");
     }
   }
 }
@@ -551,7 +549,7 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     _pos += size;
     return _start + _pos - size;
   }
-  throw JasonBuilderError("Only JasonType::Binary, JasonType::String and JasonType::Custom are valid for JasonPair argument.");
+  throw JasonException(JasonException::BuilderUnexpectedType, "Only JasonType::Binary, JasonType::String and JasonType::Custom are valid for JasonPair argument");
 }
 
 void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
@@ -574,7 +572,7 @@ void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
 
     if (len == len2 && memcmp(p, q, len2) == 0) {
       // identical key
-      throw JasonBuilderError("duplicate attribute name.");
+      throw JasonException(JasonException::DuplicateAttributeName);
     }
     // re-use already calculated values for next round
     len = len2;
@@ -584,13 +582,13 @@ void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
 
 void JasonBuilder::add (std::string const& attrName, Jason const& sub) {
   if (_attrWritten) {
-    throw JasonBuilderError("Attribute name already written.");
+    throw JasonException(JasonException::InternalError, "Attribute name already written");
   }
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
     if (_start[tos] != 0x05 &&
         _start[tos] != 0x08) {
-      throw JasonBuilderError("Need open object for add() call.");
+      throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     reportAdd(tos);
   }
@@ -600,13 +598,13 @@ void JasonBuilder::add (std::string const& attrName, Jason const& sub) {
 
 uint8_t* JasonBuilder::add (std::string const& attrName, JasonPair const& sub) {
   if (_attrWritten) {
-    throw JasonBuilderError("Attribute name already written.");
+    throw JasonException(JasonException::InternalError, "Attribute name already written");
   }
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
     if (_start[tos] != 0x05 &&
         _start[tos] != 0x08) {
-      throw JasonBuilderError("Need open object for add() call.");
+      throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     reportAdd(tos);
   }
@@ -619,11 +617,11 @@ void JasonBuilder::add (Jason const& sub) {
     JasonLength& tos = _stack.back();
     if (_start[tos] != 0x05 && _start[tos] != 0x08) {
       // no array or object
-      throw JasonBuilderError("Need open array or object for add() call.");
+      throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     if (_start[tos] == 0x08) {   // object
       if (! _attrWritten && ! sub.isString()) {
-        throw JasonBuilderError("Need open object for this add() call.");
+        throw JasonException(JasonException::BuilderNeedOpenObject);
       }
       if (! _attrWritten) {
         reportAdd(tos);
@@ -641,11 +639,11 @@ uint8_t* JasonBuilder::add (JasonPair const& sub) {
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
     if (_start[tos] != 0x05 && _start[tos] != 0x08) {
-      throw JasonBuilderError("Need open array or object for add() call.");
+      throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     if (_start[tos] == 0x08) {   // object
       if (! _attrWritten && ! sub.isString()) {
-        throw JasonBuilderError("Need open object for this add() call.");
+        throw JasonException(JasonException::BuilderNeedOpenObject);
       }
       if (! _attrWritten) {
         reportAdd(tos);

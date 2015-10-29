@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Library to build up Jason documents.
 ///
-/// @file JasonBuilder.h
-///
 /// DISCLAIMER
 ///
 /// Copyright 2015 ArangoDB GmbH, Cologne, Germany
@@ -36,6 +34,7 @@
 #include "JasonBuffer.h"
 #include "JasonBuilder.h"
 #include "JasonDump.h"
+#include "JasonException.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
@@ -49,6 +48,7 @@ using JasonBufferDumper = arangodb::jason::JasonBufferDumper;
 using JasonPrettyDumper = arangodb::jason::JasonStringPrettyDumper;
 using JasonStringDumper = arangodb::jason::JasonStringDumper;
 using JasonDumperError  = arangodb::jason::JasonDumperError;
+using JasonException    = arangodb::jason::JasonException;
 using JasonLength       = arangodb::jason::JasonLength;
 using JasonPair         = arangodb::jason::JasonPair;
 using JasonParser       = arangodb::jason::JasonParser;
@@ -4077,7 +4077,7 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
 
   JasonParser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
+  EXPECT_THROW(parser.parse(value), JasonException);
 }
 
 TEST(ParserTest, DuplicateSubAttributesAllowed) {
@@ -4098,7 +4098,7 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
 
   JasonParser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_THROW(parser.parse(value), JasonBuilder::JasonBuilderError);
+  EXPECT_THROW(parser.parse(value), JasonException);
 }
 
 TEST(LookupTest, LookupShortObject) {

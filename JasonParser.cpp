@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Library to build up Jason documents.
 ///
-/// @file JasonBuilder.h
-///
 /// DISCLAIMER
 ///
 /// Copyright 2015 ArangoDB GmbH, Cologne, Germany

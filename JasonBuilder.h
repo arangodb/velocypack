@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Library to build up Jason documents.
 ///
-/// @file JasonBuilder.h
-///
 /// DISCLAIMER
 ///
 /// Copyright 2015 ArangoDB GmbH, Cologne, Germany
@@ -37,6 +35,7 @@
 
 #include "Jason.h"
 #include "JasonBuffer.h"
+#include "JasonException.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
 
@@ -46,19 +45,6 @@ namespace arangodb {
     class JasonBuilder {
 
         friend class JasonParser;   // The parser needs access to internals.
-
-      public:
-
-        struct JasonBuilderError : std::exception {
-          private:
-            std::string _msg;
-          public:
-            JasonBuilderError (std::string const& msg) : _msg(msg) {
-            }
-            char const* what() const noexcept {
-              return _msg.c_str();
-            }
-        };
 
       private:
 
@@ -234,7 +220,7 @@ namespace arangodb {
         // Compute the actual size here, but only when sealed
         JasonLength size () const {
           if (! _stack.empty()) {
-            throw JasonBuilderError("Jason object not sealed.");
+            throw JasonException(JasonException::BuilderObjectNotSealed);
           }
           return _pos;
         }
