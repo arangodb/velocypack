@@ -20,5 +20,5 @@ addons:
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 
-script: "autoreconf -v && ./configure && make && ./test"
+script: "autoreconf -v && ./configure && make love && ./test"
 
