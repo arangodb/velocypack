@@ -17,7 +17,7 @@ test_LDFLAGS = -pthread
 test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include -Iinclude
 
 JasonAsm_SOURCES = JasonAsm.cpp
-JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
+JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -Iinclude
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
 
 BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/include/rapidjson/rapidjson.h
