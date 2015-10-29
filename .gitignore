@@ -18,3 +18,4 @@ stamp-h1
 config.h.in~
 jsonSample/fail*.json
 jsonSample/pass*.json
+jsonSample/sample.json
