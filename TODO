@@ -1,5 +1,3 @@
-* separate "test" and "benchmark" targets
-
 * README
 
 * properly test custom types 0xf0 - 0xff

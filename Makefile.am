@@ -1,11 +1,15 @@
 ACLOCAL_AMFLAGS="-Im4"
 
+love:	all test bench
+
+ARFLAGS = cr
+
 lib_LIBRARIES = libjason.a
 
 libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp JasonParser.cpp JasonBuilder.cpp JasonSlice.cpp JasonType.cpp Jason.cpp
 libjason_a_CXXFLAGS = -Iinclude -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
 
-noinst_PROGRAMS = bench test JasonAsm
+EXTRA_PROGRAMS = bench test JasonAsm
 
 bench_SOURCES = bench.cpp
 bench_LDADD = libjason.a
@@ -20,13 +24,7 @@ JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -Iinclude
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
 
-BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/include/rapidjson/rapidjson.h
-
-googletest/googletest/include/gtest/gtest.h:
-	rm -Rf googletest
-	git clone https://github.com/google/googletest.git
-	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
-	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
+BUILT_SOURCES = rapidjson/include/rapidjson/rapidjson.h googletest/googletest/include/gtest/gtest.h
 
 rapidjson/include/rapidjson/rapidjson.h:
 	rm -rf rapidjson
@@ -35,5 +33,12 @@ rapidjson/include/rapidjson/rapidjson.h:
 	cp rapidjson/bin/jsonchecker/pass* jsonSample
 	cp rapidjson/bin/data/sample.json jsonSample
 
+googletest/googletest/include/gtest/gtest.h:
+	rm -Rf googletest
+	git clone https://github.com/google/googletest.git
+	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
+	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
+
 distclean-local:
 	-rm -rf googletest rapidjson jsonSample/sample.json jsonSample/fail* jsonSample/pass*
+
