@@ -1,8 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief Library to build up Jason documents.
 ///
-/// @file JasonBuilder.h
-///
 /// DISCLAIMER
 ///
 /// Copyright 2015 ArangoDB GmbH, Cologne, Germany
@@ -63,6 +61,7 @@
 #error "Could not determine environment type (32 or 64 bits)"
 #endif
 
+#include "JasonException.h"
 #include "JasonType.h"
 
 namespace arangodb {
@@ -74,18 +73,6 @@ namespace arangodb {
     typedef uint64_t JasonLength;
 
     static_assert(sizeof(JasonLength) >= sizeof(SIZE_MAX), "invalid value for SIZE_MAX");
-
-    // base exception class
-    struct JasonException : std::exception {
-      private:
-        std::string _msg;
-      public:
-        JasonException (std::string const& msg) : _msg(msg) {
-        }
-        char const* what() const noexcept {
-          return _msg.c_str();
-        }
-    };
 
 #ifndef JASON_64BIT
     // check if the length is beyond the size of a SIZE_MAX on this platform
