@@ -318,7 +318,7 @@ void JasonParser::parseString () {
           // non-UTF-8 sequence
           if (i < 0x20) {
             // control character
-            throw JasonException(JasonException::ParseError, "Unexpected control character");
+            throw JasonException(JasonException::UnexpectedControlCharacter);
           }
           highSurrogate = 0;
           _b.reserveSpace(1);

@@ -41,6 +41,7 @@ namespace arangodb {
           NotImplemented,
           NoJsonEquivalent,
           ParseError,
+          UnexpectedControlCharacter,
           IndexOutOfBounds,
           NumberOutOfRange,
           InvalidUtf8Sequence,
@@ -88,6 +89,8 @@ namespace arangodb {
               return "Type has no equivalent in JSON";
             case ParseError:
               return "Parse error";
+            case UnexpectedControlCharacter:
+              return "Unexpected control character";
             case DuplicateAttributeName:
               return "Duplicate attribute name";
             case IndexOutOfBounds:
