@@ -7,8 +7,6 @@
   - Dumper & Slicer need support
   - tests
 
-* adjust tests so they check for exception error codes instead of only type JasonException
-
 * documentation of C++ classes (// ...)
 
 * use CMake for building
