@@ -34,6 +34,7 @@
 #include "JasonAsm.h"
 #include "JasonBuilder.h"
 #include "JasonException.h"
+#include "JasonOptions.h"
 #include "JasonType.h"
 
 namespace arangodb {

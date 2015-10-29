@@ -35,6 +35,7 @@
 #include "JasonBuilder.h"
 #include "JasonDump.h"
 #include "JasonException.h"
+#include "JasonOptions.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
@@ -4075,6 +4076,15 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
   std::string const value("{\"foo\":1,\"foo\":2}");
 
   JasonParser parser;
+  parser.options.checkAttributeUniqueness = true;
+  EXPECT_THROW(parser.parse(value), JasonException);
+}
+
+TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
+  std::string const value("{\"foo\":1,\"foo\":2}");
+
+  JasonParser parser;
+  parser.options.sortAttributeNames = false;
   parser.options.checkAttributeUniqueness = true;
   EXPECT_THROW(parser.parse(value), JasonException);
 }
