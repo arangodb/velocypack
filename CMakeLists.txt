@@ -102,7 +102,7 @@ if(BuildTests)
 
   target_link_libraries(
     tests
-    gtest
+    ${GTEST_LIBRARY}
     jason
   )
 endif()
