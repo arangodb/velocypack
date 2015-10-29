@@ -1,16 +1,18 @@
-* 0x09 -> 0x0b (external)
-
-* 0x09 und 0x0a für sortierte Objekte
-
 * Parser: switchable sorting
+  - parser already has a JasonOption sortAttributeNames,
+    and it seems to be honored. Builder also accepts the
+    option and creates either sorted or unsorted objects.
+    Seems no further action is required.
 
 * Parser: switchable UTF-8 validation
+  - already added JasonOptions.validateUtf8Strings, but it
+    still needs to be honored. Finally, the compile option
+    JASON_VALIDATEUTF8 needs to be removed.
+  - need tests with UTF-8 validation turned on and off
 
-* Implement 0xf0 - 0xff
+* properly test custom types 0xf0 - 0xff
 
-* minKey and maxKey as 0x0e and 0x0f
-
-* arrays with fixed width elements
+* finish implementation of JasonSlice for custom types
 
 * LICENSE, README
 
@@ -32,17 +34,11 @@
 
 * add performance tests and results
 
-* rename types ID and ArangoDB_id to Custom
-
-* properly implement and test types ID and ArangoDB_id
-
 * implement serialization for External type
 
 * produce better exception messages and error codes
 
 * use unified exceptions
-
-* finish implementation of JasonSlice for all types
 
 * support modification of Jason objects (removing, updating)
 
@@ -50,11 +46,6 @@
 
 * implement optional lookup table support in Builder, Slice, Parser and Dumper
 
-
 * optional: JasonArray, JasonObject c++ access
-
-* optional: support accessing arbitrary objects via JSONPointer etc.
-
-* optional: support for other input encodings (e.g. UTF-16)
 
 * separate "test" and "benchmark" targets

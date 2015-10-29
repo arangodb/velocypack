@@ -259,6 +259,7 @@ namespace arangodb {
     }
        
     struct JasonOptions {
+      bool validateUtf8Strings      = false;
       bool checkAttributeUniqueness = false;
       bool sortAttributeNames       = true;
     };

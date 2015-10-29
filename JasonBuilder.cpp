@@ -123,9 +123,9 @@ void JasonBuilder::close () {
     throw JasonBuilderError("Need open array or object for close() call.");
   }
   std::vector<JasonLength>& index = _index[_stack.size() - 1];
-  if (index.size() == 0) {
+  if (index.empty()) {
     _start[tos] = _start[tos] == 0x05 ? 0x04 : 0x08;
-    _start[tos+1] = 0x02;
+    _start[tos + 1] = 0x02;
     JASON_ASSERT(_pos == tos + 10);
     _pos -= 8;  // long bytelength not needed
     _stack.pop_back();
@@ -157,8 +157,8 @@ void JasonBuilder::close () {
     // and we do not need an offset table at all:
     bool noTable = true;
     JasonLength subLen = index[1] - index[0];
-    for (size_t i = 1; i < index.size()-1; i++) {
-      if (index[i+1] - index[i] != subLen) {
+    for (size_t i = 1; i < index.size() - 1; i++) {
+      if (index[i + 1] - index[i] != subLen) {
         noTable = false;
         break;
       }
@@ -391,7 +391,8 @@ void JasonBuilder::set (Jason const& item) {
         default:
           throw JasonBuilderError("Must give number for JasonType::Int.");
       }
-      appendInt(v, 0x1f);
+      addInt(v);
+      //appendInt(v, 0x1f);
       break;
     }
     case JasonType::UInt: {
@@ -415,7 +416,8 @@ void JasonBuilder::set (Jason const& item) {
         default:
           throw JasonBuilderError("Must give number for JasonType::UInt.");
       }
-      appendUInt(v, 0x27);
+      addUInt(v); 
+      //appendUInt(v, 0x27);
       break;
     }
     case JasonType::UTCDate: {
