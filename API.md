@@ -22,7 +22,7 @@ b.add("e", Jason(3, JasonType::Array));      "e": [
 b.add(Jason(2.3));                                   2.3,
 b.add(Jason("abc"));                                 "abc",
 b.add(Jason(true));                                  true
-b.close();                                         ],
+b.close();                                        ],
 b.add("f", Jason(2, JasonType::Object));     "f": {
 b.add("hans", Jason("Wurst"));                       "hans": "wurst",
 b.add("hallo", Jason(3.141));                        "hallo": 3.141
