@@ -61,33 +61,72 @@ to other formats like JSON itself, MessagePack and BSON. We look at file
 sizes and parsing and conversion performance.
 
 
-Installation of the Jason library
----------------------------------
+Building the Jason library
+--------------------------
 
-Installation is straightforward, simply do
+Building the Jason library is straightforward. Simply execute the 
+following commands:
 
-    ./configure
+    cmake . 
     make
-    sudo make install
 
-For a standard installation.
-
-Note that this will download and compile the googletest suite and the
-rapidjson parser, which are only used for the tests and benchmarks.
+This will build a static library `libjason.a` in the current directory in
+release mode.
 
 
 Running the tests and the benchmark suite
 -----------------------------------------
 
-To compile and run the test suite do
+Building Jason's own test suite requires the [googletest framework](https://github.com/google/googletest)
+to be installed. To install it locally, run the following command:
 
-    make test
-    ./test
+    ./download-gtest.sh
 
-To compile and run the benchmarks do
+This will clone the repository from Github into the local subdirectory
+`googletest` and build it there.
 
-    make bench
+The benchmark suite compares Jason against [RapidJson](https://github.com/miloyip/rapidjson).
+RapidJson is not shipped with Jason, but it can be downloaded into the
+local subdirectory `rapidjson` with the following command:
+
+    ./download-rapidjson.sh
+
+Afterwards, you are ready to build both the test suite and the benchmark
+suite:
+
+    cmake . -DBuildBench=ON -DBuildTests=ON -DEnableSSE=ON
+    make
+
+Afterwards, you can run the tests via:
+
+    ./tests
+
+and the benchmark suite via
+
     ./runBench.sh
+
+
+Build Options
+-------------
+
+The following options can be set for building the Jason library:
+
+* `-DCMAKE_BUILD_TYPE=Release`: builds the Jason library in release mode. This
+  does not build debug symbols and turns on all optimizations. Use this mode for 
+  production.
+* `-DCMAKE_BUILD_TYPE=Debug`: builds the Jason library in debug mode. This
+  adds debug symbols and turns off optimizations. Use this mode for development,
+  but not for production or performance testing.
+* `-DBuildBench`: controls whether the benchmark suite should be built. The 
+  default is `OFF`, meaning the suite will not be built. Set the option to `ON` to
+  build it. Building the benchmark suite requires the subdirectory *rapidjson* to 
+  be present (see below). 
+* `-DBuildTests`: controls whether Jason's own test suite should be built. The
+  default is `OFF`. Set the option to `ON` for building the tests. This requires 
+  the subdirectory *googletest* to be present (see below). 
+* `-DEnableSSE`: controls whether SSE4.2 optimizations are compiled into the
+  library. The default is either `ON` or `OFF`, depending on the detected SSE4.2
+  support of the host platform.
 
 
 Using the Jason library

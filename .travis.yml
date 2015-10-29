@@ -20,5 +20,6 @@ addons:
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 
-script: "autoreconf -v && ./configure && make love && ./tests"
+before_script: "bash -c download-gtest.sh"
+script: "cmake -DBuildTests=ON -DEnableSSE=OFF . && make && ./tests"
 
