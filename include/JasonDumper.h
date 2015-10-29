@@ -36,10 +36,12 @@
 #include "JasonException.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
-#include "fpconv.h"
 
 namespace arangodb {
   namespace jason {
+
+    // forward for fpconv function declared elsewhere
+    int fpconv_dtoa (double fp, char dest[24]);
 
     // Dumps Jason into a JSON output string
     template<typename T, bool PrettyPrint = false>
