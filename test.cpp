@@ -710,6 +710,33 @@ TEST(StringDumperTest, Null) {
   ASSERT_EQ(std::string("null"), buffer);
 }
 
+TEST(StringDumperTest, Numbers) {
+  int64_t pp = 2;
+  for (int p = 1; p <= 62; p++) {
+    int64_t i;
+
+    auto check = [&] () -> void {
+      JasonBuilder b;
+      b.add(Jason(i));
+      JasonSlice s(b.start());
+      JasonCharBuffer buffer;
+      JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+      dumper.dump(s);
+      std::string output(buffer.data(), buffer.size());
+      ASSERT_EQ(std::to_string(i), output);
+    };
+
+    i = pp; check();
+    i = pp+1; check();
+    i = pp-1; check();
+    i = -pp; check();
+    i = -pp+1; check();
+    i = -pp-1; check();
+
+    pp *= 2;
+  }
+}
+
 TEST(BufferDumperTest, False) {
   Buffer[0] = 0x2;
 

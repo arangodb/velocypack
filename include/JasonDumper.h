@@ -333,14 +333,14 @@ namespace arangodb {
           } 
           else if (slice->isType(JasonType::Int)) {
             int64_t v = slice->getInt();
-            if (v < 0) {
-              _buffer->push_back('-');
-            }
             if (v == INT64_MIN) {
-              _buffer->append("9223372036854775808", 19);
+              _buffer->append("-9223372036854775808", 20);
               return;
             }
-            v = -v;
+            if (v < 0) {
+              _buffer->push_back('-');
+              v = -v;
+            }
           
             if (1000000000000000000LL <= v) { _buffer->push_back('0' + (v / 1000000000000000000LL) % 10); }
             if ( 100000000000000000LL <= v) { _buffer->push_back('0' + (v /  100000000000000000LL) % 10); }

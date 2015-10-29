@@ -78,7 +78,7 @@ namespace arangodb {
     // check if the length is beyond the size of a SIZE_MAX on this platform
     static inline void JasonCheckSize (JasonLength length) {
       if (length > static_cast<JasonLength>(SIZE_MAX)) {
-        throw JasonException("JasonLength out of bounds.");
+        throw JasonException(JasonException::NumberOutOfRange);
       }  
     }
 #else

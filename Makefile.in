@@ -1043,7 +1043,7 @@ uninstall-am: uninstall-libLIBRARIES
 .PRECIOUS: Makefile
 
 
-love:	all test bench
+love:	all test bench JasonAsm
 
 rapidjson/include/rapidjson/rapidjson.h:
 	rm -rf rapidjson

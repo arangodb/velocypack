@@ -44,23 +44,6 @@ namespace arangodb {
 
       // This class can parse JSON very rapidly, but only from contiguous
       // blocks of memory. It builds the result using the JasonBuilder.
-      //
-      // Use as follows:
-      //   JasonParser p;
-      //   std::string json = "{\"a\":12}";
-      //   try {
-      //     size_t nr = p.parse(json);
-      //   }
-      //   catch (std::bad_alloc const& e) {
-      //     std::cout << "Out of memory!" << std::endl;
-      //   }
-      //   catch (JasonException const& e) {
-      //     std::cout << "Parse error: " << e.what() << std::endl;
-      //     std::cout << "Position of error: " << p.errorPos() << std::endl;
-      //   }
-      //   JasonBuilder b = p.steal();
-      //
-      //   // p is now empty again and ready to parse more.
 
         struct ParsedNumber {
           ParsedNumber ()

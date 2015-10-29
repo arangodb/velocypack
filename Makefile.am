@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS="-Im4"
 
-love:	all test bench
+love:	all test bench JasonAsm
 
 ARFLAGS = cr
 
