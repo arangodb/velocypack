@@ -1,5 +1,3 @@
-* README
-
 * properly test custom types 0xf0 - 0xff
   - Builder already has support for them
   - Dumper & Slicer need support
