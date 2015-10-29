@@ -1,14 +1,14 @@
 # -*- mode: CMAKE; -*-
 
 cmake_minimum_required(VERSION 2.6)
-set(CMAKE_MODULE_PATH "cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_BINARY_DIR "${CMAKE_SOURCE_DIR}/build")
 
 project(jason)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-
 include(TargetArch)
 target_architecture(ARCH)
 find_package(SSE)
@@ -60,8 +60,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 find_package(Threads)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-  
+
 add_library(
   jason
   STATIC
@@ -89,11 +88,11 @@ if(BuildBench)
 endif()
 
 if(BuildTests)
+  add_subdirectory(googletest/googletest)
   include_directories(${PROJECT_SOURCE_DIR}/googletest/googletest/include)
 
   find_library(GTEST_LIBRARY NAMES gtest gtest.a libgtest libgtest.a PATHS googletest/googletest)
   message(STATUS "Gtest library found at: ${GTEST_LIBRARY}")
-
 
   add_executable(
     tests
@@ -104,6 +103,7 @@ if(BuildTests)
     tests
     ${GTEST_LIBRARY}
     jason
+    ${CMAKE_THREAD_LIBS_INIT}
   )
 endif()
 

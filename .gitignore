@@ -24,3 +24,8 @@ examples/usebuilder2
 examples/useparser
 examples/useslicer
 examples/usedumper
+
+CMakeCache.txt
+CMakeFiles/
+build/
+cmake_install.cmake
