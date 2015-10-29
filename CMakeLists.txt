@@ -89,7 +89,7 @@ if(EnableSSE)
 endif()
 
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 
 find_package(Threads)
 
@@ -97,13 +97,13 @@ find_package(Threads)
 add_library(
   jason
   STATIC
-  Jason.cpp
-  JasonAsm.cpp
-  JasonBuilder.cpp
-  JasonParser.cpp
-  JasonSlice.cpp
-  JasonType.cpp
-  fpconv.cpp
+  src/Jason.cpp
+  src/JasonAsm.cpp
+  src/JasonBuilder.cpp
+  src/JasonParser.cpp
+  src/JasonSlice.cpp
+  src/JasonType.cpp
+  src/fpconv.cpp
 )
 
 # build bench.cpp
@@ -116,7 +116,7 @@ if(BuildBench)
 
   add_executable(
     bench
-    bench.cpp
+    src/bench.cpp
   )
 
   target_link_libraries(
@@ -135,7 +135,6 @@ if(BuildTests)
     message(FATAL_ERROR "gtest library not found in subdirectory 'googletest'. Please run ./download-gtest.sh")
   endif()
 
-#  add_subdirectory("${PROJECT_SOURCE_DIR}/googletest/googletest")
   include_directories(${PROJECT_SOURCE_DIR}/googletest/googletest/include)
 
   find_library(GTEST_LIBRARY NAMES gtest gtest.a libgtest libgtest.a PATHS googletest/googletest)
@@ -143,7 +142,7 @@ if(BuildTests)
 
   add_executable(
     tests
-    tests.cpp
+    src/tests.cpp
   )
 
   target_link_libraries(
