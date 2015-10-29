@@ -54,6 +54,19 @@ using JasonPair         = arangodb::jason::JasonPair;
 using JasonParser       = arangodb::jason::JasonParser;
 using JasonSlice        = arangodb::jason::JasonSlice;
 using JasonType         = arangodb::jason::JasonType;
+
+// helper for catching Jason-specific exceptions
+#define EXPECT_JASON_EXCEPTION(operation, code) \
+  try {                                         \
+    operation;                                  \
+    EXPECT_FALSE(true);                         \
+  }                                             \
+  catch (JasonException const& ex) {            \
+    EXPECT_EQ(code, ex.errorCode());            \
+  }                                             \
+  catch (...) {                                 \
+    EXPECT_FALSE(true);                         \
+  } 
   
 static char Buffer[4096];
 
@@ -743,35 +756,35 @@ TEST(StringDumperTest, True) {
   ASSERT_EQ(std::string("true"), buffer);
 }
 
-TEST(StringDumperTest, ArangoDBId) {
+TEST(StringDumperTest, CustomWithoutHandler) {
   Buffer[0] = 0xf0;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
-TEST(StringDumperTest, ArangoDBIdCallback) {
+TEST(StringDumperTest, CustomWithCallback) {
   JasonBuilder b;
   b.add(Jason(JasonType::Object));
   uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
   *p = 0xf0;
   b.close();
 
-  bool sawArangoDBId = false;
+  bool sawCustom = false;
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
   dumper.setCallback([&] (std::string*, JasonSlice const* slice, JasonSlice const*) -> bool {
     if (slice->type() == JasonType::Custom) {
-      sawArangoDBId = true;
+      sawCustom = true;
       return true;
     }
     return false;
   });
   dumper.dump(b.slice());
-  ASSERT_TRUE(sawArangoDBId);
+  ASSERT_TRUE(sawCustom);
 }
 
 TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
@@ -890,7 +903,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
@@ -917,7 +930,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
@@ -943,7 +956,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
@@ -967,7 +980,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeBinary) {
@@ -991,7 +1004,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
 
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_THROW(dumper.dump(slice), JasonException);
+  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeUTCDate) {
@@ -2423,7 +2436,7 @@ TEST(ParserTest, Garbage1) {
   std::string const value("z");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2431,7 +2444,7 @@ TEST(ParserTest, Garbage2) {
   std::string const value("foo");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(1u, parser.errorPos());
 }
 
@@ -2439,7 +2452,7 @@ TEST(ParserTest, Garbage3) {
   std::string const value("truth");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(3u, parser.errorPos());
 }
 
@@ -2447,7 +2460,7 @@ TEST(ParserTest, Garbage4) {
   std::string const value("tru");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(2u, parser.errorPos());
 }
 
@@ -2455,7 +2468,7 @@ TEST(ParserTest, Garbage5) {
   std::string const value("truebar");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(4u, parser.errorPos());
 }
 
@@ -2463,7 +2476,7 @@ TEST(ParserTest, Garbage6) {
   std::string const value("fals");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(3u, parser.errorPos());
 }
 
@@ -2471,7 +2484,7 @@ TEST(ParserTest, Garbage7) {
   std::string const value("falselaber");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(5u, parser.errorPos());
 }
 
@@ -2479,15 +2492,23 @@ TEST(ParserTest, Garbage8) {
   std::string const value("zauberzauber");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
+}
+
+TEST(ParserTest, Garbage9) {
+  std::string const value("true,");
+
+  JasonParser parser;
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
+  ASSERT_EQ(4u, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation1) {
   std::string const value(",");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2495,7 +2516,7 @@ TEST(ParserTest, Punctuation2) {
   std::string const value("/");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2503,7 +2524,7 @@ TEST(ParserTest, Punctuation3) {
   std::string const value("@");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2511,7 +2532,7 @@ TEST(ParserTest, Punctuation4) {
   std::string const value(":");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2519,7 +2540,7 @@ TEST(ParserTest, Punctuation5) {
   std::string const value("!");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2586,7 +2607,7 @@ TEST(ParserTest, ZeroInvalid) {
   std::string const value("00");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(1u, parser.errorPos());
 }
 
@@ -2594,7 +2615,7 @@ TEST(ParserTest, NumberIncomplete) {
   std::string const value("-");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2856,35 +2877,35 @@ TEST(ParserTest, IntMinusInf) {
   std::string const value("-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::NumberOutOfRange);
 }
 
 TEST(ParserTest, IntPlusInf) {
   std::string const value("999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::NumberOutOfRange);
 }
 
 TEST(ParserTest, DoubleMinusInf) {
   std::string const value("-1.2345e999");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::NumberOutOfRange);
 }
 
 TEST(ParserTest, DoublePlusInf) {
   std::string const value("1.2345e999");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::NumberOutOfRange);
 }
 
 TEST(ParserTest, Empty) {
   std::string const value("");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -2892,7 +2913,7 @@ TEST(ParserTest, WhitespaceOnly) {
   std::string const value("  ");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(1u, parser.errorPos());
 }
 
@@ -2900,7 +2921,7 @@ TEST(ParserTest, UnterminatedStringLiteral) {
   std::string const value("\"der hund");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(8u, parser.errorPos());
 }
 
@@ -2953,7 +2974,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
 
   JasonParser parser;
   parser.options.validateUtf8Strings = true;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::InvalidUtf8Sequence);
   ASSERT_EQ(1u, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -2968,13 +2989,13 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
 
   JasonParser parser;
   parser.options.validateUtf8Strings = true;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::InvalidUtf8Sequence);
   ASSERT_EQ(1u, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
 
-TEST(ParserTest, StringLiteralInvalidUtfValue3) {
+TEST(ParserTest, StringLiteralControlCharacter) {
   for (char c = 0; c < 0x20; c++) {
     std::string value;
     value.push_back('"');
@@ -2982,7 +3003,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue3) {
     value.push_back('"');
 
     JasonParser parser;
-    EXPECT_THROW(parser.parse(value), JasonException);
+    EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::UnexpectedControlCharacter);
     ASSERT_EQ(1u, parser.errorPos());
   }
 }
@@ -2991,7 +3012,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
   std::string const value("\"\\u\"");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(3u, parser.errorPos());
 }
 
@@ -2999,7 +3020,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
   std::string const value("\"\\u0\"");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(4u, parser.errorPos());
 }
 
@@ -3007,7 +3028,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
   std::string const value("\"\\u01\"");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(5u, parser.errorPos());
 }
 
@@ -3015,7 +3036,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
   std::string const value("\"\\u012\"");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(6u, parser.errorPos());
 }
 
@@ -3415,7 +3436,7 @@ TEST(ParserTest, NestedArrayInvalid1) {
   std::string const value("[ [ ]");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(4u, parser.errorPos());
 }
 
@@ -3423,7 +3444,7 @@ TEST(ParserTest, NestedArrayInvalid2) {
   std::string const value("[ ] ]");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(4u, parser.errorPos());
 }
 
@@ -3431,7 +3452,7 @@ TEST(ParserTest, NestedArrayInvalid3) {
   std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ] ]");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(34u, parser.errorPos());
 }
 
@@ -3439,7 +3460,7 @@ TEST(ParserTest, BrokenArray1) {
   std::string const value("[");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -3447,7 +3468,7 @@ TEST(ParserTest, BrokenArray2) {
   std::string const value("[,");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(1u, parser.errorPos());
 }
 
@@ -3455,7 +3476,7 @@ TEST(ParserTest, BrokenArray3) {
   std::string const value("[1,");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(2u, parser.errorPos());
 }
 
@@ -3582,7 +3603,7 @@ TEST(ParserTest, BrokenObject1) {
   std::string const value("{");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -3590,7 +3611,7 @@ TEST(ParserTest, BrokenObject2) {
   std::string const value("{,");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -3598,7 +3619,7 @@ TEST(ParserTest, BrokenObject3) {
   std::string const value("{1,");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -3606,7 +3627,7 @@ TEST(ParserTest, BrokenObject4) {
   std::string const value("{\"foo");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(4u, parser.errorPos());
 }
 
@@ -3614,7 +3635,7 @@ TEST(ParserTest, BrokenObject5) {
   std::string const value("{\"foo\"");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(5u, parser.errorPos());
 }
 
@@ -3622,7 +3643,7 @@ TEST(ParserTest, BrokenObject6) {
   std::string const value("{\"foo\":");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(6u, parser.errorPos());
 }
 
@@ -3630,7 +3651,7 @@ TEST(ParserTest, BrokenObject7) {
   std::string const value("{\"foo\":\"foo");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(10u, parser.errorPos());
 }
 
@@ -3638,7 +3659,7 @@ TEST(ParserTest, BrokenObject8) {
   std::string const value("{\"foo\":\"foo\", ");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(13u, parser.errorPos());
 }
 
@@ -3646,7 +3667,7 @@ TEST(ParserTest, BrokenObject9) {
   std::string const value("{\"foo\":\"foo\", }");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(13u, parser.errorPos());
 }
 
@@ -3654,7 +3675,7 @@ TEST(ParserTest, BrokenObject10) {
   std::string const value("{\"foo\" }");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
   ASSERT_EQ(6u, parser.errorPos());
 }
 
@@ -3854,14 +3875,14 @@ TEST(ParserTest, ObjectInvalidQuotes) {
   std::string const value("{'foo':'bar' }");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
 }
 
 TEST(ParserTest, ObjectMissingQuotes) {
   std::string const value("{foo:\"bar\" }");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
 }
 
 TEST(ParserTest, ShortObjectMembers) {
@@ -4062,7 +4083,7 @@ TEST(ParserTest, Utf8BomBroken) {
   std::string const value("\xef\xbb");
 
   JasonParser parser;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
 }
 
 TEST(ParserTest, DuplicateAttributesAllowed) {
@@ -4083,7 +4104,7 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
 
   JasonParser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
@@ -4092,7 +4113,7 @@ TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
   JasonParser parser;
   parser.options.sortAttributeNames = false;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateSubAttributesAllowed) {
@@ -4113,7 +4134,7 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
 
   JasonParser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_THROW(parser.parse(value), JasonException);
+  EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::DuplicateAttributeName);
 }
 
 TEST(LookupTest, LookupShortObject) {
