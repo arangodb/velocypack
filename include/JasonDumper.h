@@ -334,7 +334,7 @@ namespace arangodb {
           else if (slice->isType(JasonType::Int)) {
             int64_t v = slice->getInt();
             if (v == INT64_MIN) {
-              _buffer->append("-9223372036854775808", 19);
+              _buffer->append("-9223372036854775808", 20);
               return;
             }
             if (v < 0) {
