@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -89,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = bench$(EXEEXT) test$(EXEEXT) JasonAsm$(EXEEXT)
+EXTRA_PROGRAMS = bench$(EXEEXT) test$(EXEEXT) JasonAsm$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -135,7 +134,6 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LIBRARIES = $(lib_LIBRARIES)
-ARFLAGS = cru
 AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
@@ -148,7 +146,6 @@ am_libjason_a_OBJECTS = libjason_a-fpconv.$(OBJEXT) \
 	libjason_a-JasonSlice.$(OBJEXT) libjason_a-JasonType.$(OBJEXT) \
 	libjason_a-Jason.$(OBJEXT)
 libjason_a_OBJECTS = $(am_libjason_a_OBJECTS)
-PROGRAMS = $(noinst_PROGRAMS)
 am_JasonAsm_OBJECTS = JasonAsm-JasonAsm.$(OBJEXT)
 JasonAsm_OBJECTS = $(am_JasonAsm_OBJECTS)
 JasonAsm_LDADD = $(LDADD)
@@ -241,10 +238,10 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/config/config.guess \
 	$(top_srcdir)/config/config.sub $(top_srcdir)/config/depcomp \
 	$(top_srcdir)/config/install-sh $(top_srcdir)/config/ltmain.sh \
-	$(top_srcdir)/config/missing COPYING ChangeLog TODO \
-	config/ar-lib config/compile config/config.guess \
-	config/config.sub config/depcomp config/install-sh \
-	config/ltmain.sh config/missing
+	$(top_srcdir)/config/missing ChangeLog TODO config/ar-lib \
+	config/compile config/config.guess config/config.sub \
+	config/depcomp config/install-sh config/ltmain.sh \
+	config/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -384,6 +381,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = "-Im4"
+ARFLAGS = cr
 lib_LIBRARIES = libjason.a
 libjason_a_SOURCES = fpconv.cpp JasonAsm.cpp JasonParser.cpp JasonBuilder.cpp JasonSlice.cpp JasonType.cpp Jason.cpp
 libjason_a_CXXFLAGS = -Iinclude -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION}
@@ -397,7 +395,7 @@ test_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g -Igoogletest/googletest/include 
 JasonAsm_SOURCES = JasonAsm.cpp
 JasonAsm_CXXFLAGS = -Wall -Wextra -std=c++11 -O3 -g ${SSE42OPTION} -Iinclude
 JasonAsm_CPPFLAGS = -DCOMPILE_JASONASM_UNITTESTS
-BUILT_SOURCES = googletest/googletest/include/gtest/gtest.h rapidjson/include/rapidjson/rapidjson.h
+BUILT_SOURCES = rapidjson/include/rapidjson/rapidjson.h googletest/googletest/include/gtest/gtest.h
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -487,15 +485,6 @@ libjason.a: $(libjason_a_OBJECTS) $(libjason_a_DEPENDENCIES) $(EXTRA_libjason_a_
 	$(AM_V_at)-rm -f libjason.a
 	$(AM_V_AR)$(libjason_a_AR) libjason.a $(libjason_a_OBJECTS) $(libjason_a_LIBADD)
 	$(AM_V_at)$(RANLIB) libjason.a
-
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
 
 JasonAsm$(EXEEXT): $(JasonAsm_OBJECTS) $(JasonAsm_DEPENDENCIES) $(EXTRA_JasonAsm_DEPENDENCIES) 
 	@rm -f JasonAsm$(EXEEXT)
@@ -921,7 +910,7 @@ distcleancheck: distclean
 check-am: all-am
 check: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) check-am
-all-am: Makefile $(LIBRARIES) $(PROGRAMS) config.h
+all-am: Makefile $(LIBRARIES) config.h
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -961,7 +950,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libLIBRARIES clean-libtool \
-	clean-noinstPROGRAMS mostlyclean-am
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1036,18 +1025,17 @@ uninstall-am: uninstall-libLIBRARIES
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-am clean \
 	clean-cscope clean-generic clean-libLIBRARIES clean-libtool \
-	clean-noinstPROGRAMS cscope cscopelist-am ctags ctags-am dist \
-	dist-all dist-bzip2 dist-gzip dist-lzip dist-shar dist-tarZ \
-	dist-xz dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-local distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am \
-	install-libLIBRARIES install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-lzip dist-shar dist-tarZ dist-xz dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-local distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLIBRARIES install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-libLIBRARIES
@@ -1055,11 +1043,7 @@ uninstall-am: uninstall-libLIBRARIES
 .PRECIOUS: Makefile
 
 
-googletest/googletest/include/gtest/gtest.h:
-	rm -Rf googletest
-	git clone https://github.com/google/googletest.git
-	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
-	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
+love:	all test bench
 
 rapidjson/include/rapidjson/rapidjson.h:
 	rm -rf rapidjson
@@ -1067,6 +1051,12 @@ rapidjson/include/rapidjson/rapidjson.h:
 	cp rapidjson/bin/jsonchecker/fail* jsonSample
 	cp rapidjson/bin/jsonchecker/pass* jsonSample
 	cp rapidjson/bin/data/sample.json jsonSample
+
+googletest/googletest/include/gtest/gtest.h:
+	rm -Rf googletest
+	git clone https://github.com/google/googletest.git
+	cd googletest/googletest && $(CC) -isystem ./include/ -I. -pthread -c ./src/gtest-all.cc
+	cd googletest/googletest && ar -rv libgtest.a gtest-all.o
 
 distclean-local:
 	-rm -rf googletest rapidjson jsonSample/sample.json jsonSample/fail* jsonSample/pass*

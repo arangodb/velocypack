@@ -24,7 +24,8 @@ access to subobjects and rapid conversion from and to JSON.
 We have invented Jason because we need a binary format that
 
   - is compact
-  - covers all of JSON plus dates, integers and binary data
+  - covers all of JSON plus dates, integers, binary data and arbitrary 
+    precision numbers
   - can be used in a database kernel to access subdocuments for
     example for indexes, so it must be possible to access subdocuments
     (array and object members) efficiently
@@ -33,7 +34,7 @@ We have invented Jason because we need a binary format that
   - gives flexibility to assemble objects, such that subobjects reside
     in the database in an unchanged way
   - allows to use an external table for frequently used attribute names
-  - it is quick to read off the type and length of a given object
+  - quickly allows to read off the type and length of a given object
 
 This data format must be backed by good C++ classes to allow
 
@@ -56,7 +57,7 @@ Performance
 -----------
 
 See [the file Performance.md](Performance.md) for a thorough comparison
-to other formats like JSON itself, MsgPack and BSON. We look at file
+to other formats like JSON itself, MessagePack and BSON. We look at file
 sizes and parsing and conversion performance.
 
 
@@ -71,11 +72,22 @@ Installation is straightforward, simply do
 
 For a standard installation.
 
+Note that this will download and compile the googletest suite and the
+rapidjson parser, which are only used for the tests and benchmarks.
+
 
 Running the tests and the benchmark suite
 -----------------------------------------
 
-...
+To compile and run the test suite do
+
+    make test
+    ./test
+
+To compile and run the benchmarks do
+
+    make bench
+    ./runBench.sh
 
 
 Using the Jason library
@@ -84,6 +96,4 @@ Using the Jason library
 Here are some examples of how the Jason library is used in C++ code.
 For a detailed documentation of the C++ classes see [the API
 documentation](API.md).
-
-...
 
