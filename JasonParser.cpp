@@ -175,13 +175,14 @@ void JasonParser::parseString () {
     size_t remainder = _size - _pos;
     if (remainder >= 16) {
       _b.reserveSpace(remainder);
-#ifdef JASON_VALIDATEUTF8
-      size_t count = JSONStringCopyCheckUtf8(_b._start + _b._pos, _start + _pos,
-                                             remainder);
-#else
-      size_t count = JSONStringCopy(_b._start + _b._pos, _start + _pos,
-                                    remainder);
-#endif
+      size_t count;
+      if (options.validateUtf8Strings) {
+        count = JSONStringCopyCheckUtf8(_b._start + _b._pos, _start + _pos,
+                                        remainder);
+      }
+      else {
+        count = JSONStringCopy(_b._start + _b._pos, _start + _pos, remainder);
+      }
       _pos += count;
       _b._pos += count;
     }
@@ -324,38 +325,45 @@ void JasonParser::parseString () {
           _b._start[_b._pos++] = static_cast<uint8_t>(i);
         }
         else {
-          // multi-byte UTF-8 sequence!
-          int follow = 0;
-          if ((i & 0xe0) == 0x80) {
-            throw JasonParserError("scanString: Illegal UTF-8 byte.");
-          }
-          else if ((i & 0xe0) == 0xc0) {
-            // two-byte sequence
-            follow = 1;
-          }
-          else if ((i & 0xf0) == 0xe0) {
-            // three-byte sequence
-            follow = 2;
-          }
-          else if ((i & 0xf8) == 0xf0) {
-            // four-byte sequence
-            follow = 3;
-          }
-          else {
-            throw JasonParserError("scanString: Illegal 5- or 6-byte sequence found in UTF-8 string.");
-          }
-
-          // validate follow up characters
-          _b.reserveSpace(1 + follow);
-          _b._start[_b._pos++] = static_cast<uint8_t>(i);
-          for (int j = 0; j < follow; ++j) {
-            i = getOneOrThrow("scanString: truncated UTF-8 sequence");
-            if ((i & 0xc0) != 0x80) {
-              throw JasonParserError("scanString: invalid UTF-8 sequence");
-            }
+          if (! options.validateUtf8Strings) {
+            highSurrogate = 0;
+            _b.reserveSpace(1);
             _b._start[_b._pos++] = static_cast<uint8_t>(i);
           }
-          highSurrogate = 0;
+          else {
+            // multi-byte UTF-8 sequence!
+            int follow = 0;
+            if ((i & 0xe0) == 0x80) {
+              throw JasonParserError("scanString: Illegal UTF-8 byte.");
+            }
+            else if ((i & 0xe0) == 0xc0) {
+              // two-byte sequence
+              follow = 1;
+            }
+            else if ((i & 0xf0) == 0xe0) {
+              // three-byte sequence
+              follow = 2;
+            }
+            else if ((i & 0xf8) == 0xf0) {
+              // four-byte sequence
+              follow = 3;
+            }
+            else {
+              throw JasonParserError("scanString: Illegal 5- or 6-byte sequence found in UTF-8 string.");
+            }
+
+            // validate follow up characters
+            _b.reserveSpace(1 + follow);
+            _b._start[_b._pos++] = static_cast<uint8_t>(i);
+            for (int j = 0; j < follow; ++j) {
+              i = getOneOrThrow("scanString: truncated UTF-8 sequence");
+              if ((i & 0xc0) != 0x80) {
+                throw JasonParserError("scanString: invalid UTF-8 sequence");
+              }
+              _b._start[_b._pos++] = static_cast<uint8_t>(i);
+            }
+            highSurrogate = 0;
+          }
         }
         break;
     }

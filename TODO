@@ -1,9 +1,3 @@
-* Parser: switchable UTF-8 validation
-  - already added JasonOptions.validateUtf8Strings, but it
-    still needs to be honored. Finally, the compile option
-    JASON_VALIDATEUTF8 needs to be removed.
-  - need tests with UTF-8 validation turned on and off
-
 * Builder: fix check for duplicate attribute names for the
   unsorted objects case
 

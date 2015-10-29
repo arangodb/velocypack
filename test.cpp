@@ -2952,8 +2952,11 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
   value.push_back('"');
 
   JasonParser parser;
+  parser.options.validateUtf8Strings = true;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
   ASSERT_EQ(1u, parser.errorPos());
+  parser.options.validateUtf8Strings = false;
+  ASSERT_EQ(1ULL, parser.parse(value));
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue2) {
@@ -2964,8 +2967,11 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
   value.push_back('"');
 
   JasonParser parser;
+  parser.options.validateUtf8Strings = true;
   EXPECT_THROW(parser.parse(value), JasonParser::JasonParserError);
   ASSERT_EQ(1u, parser.errorPos());
+  parser.options.validateUtf8Strings = false;
+  ASSERT_EQ(1ULL, parser.parse(value));
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue3) {
