@@ -18,8 +18,6 @@
 * check if error message texts are ok
 * adjust tests so they check for error codes
 
-* create `include` directory for public headers 
-
 * documentation of C++ classes (// ...)
 
 * separate "test" and "benchmark" targets
