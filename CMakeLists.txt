@@ -53,6 +53,9 @@ elseif(MSVC)
   set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
+option(BuildBench "Build bench performance test suite" OFF)
+option(BuildTests "Build test suite" OFF)
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 find_package(Threads)
@@ -60,7 +63,7 @@ find_package(Threads)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
   
 add_library(
-  LIB_JASON
+  jason
   STATIC
   Jason.cpp
   JasonAsm.cpp
@@ -71,15 +74,38 @@ add_library(
   fpconv.cpp
 )
 
-#add_executable(
-#  bench
-#  bench.cpp
-#)
+if(BuildBench)
+  include_directories(${PROJECT_SOURCE_DIR}/rapidjson/include)
 
-#add_executable(
-#  tests
-#  tests.cpp
-#)
+  add_executable(
+    bench
+    bench.cpp
+  )
+
+  target_link_libraries(
+    bench
+    jason
+  )
+endif()
+
+if(BuildTests)
+  include_directories(${PROJECT_SOURCE_DIR}/googletest/googletest/include)
+
+  find_library(GTEST_LIBRARY NAMES gtest gtest.a libgtest libgtest.a PATHS googletest/googletest)
+  message(STATUS "Gtest library found at: ${GTEST_LIBRARY}")
+
+
+  add_executable(
+    tests
+    tests.cpp
+  )
+
+  target_link_libraries(
+    tests
+    gtest
+    jason
+  )
+endif()
 
 ## Local Variables:
 ## mode: outline-minor
