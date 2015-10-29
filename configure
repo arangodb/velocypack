@@ -595,7 +595,7 @@ PACKAGE_STRING='libjason 1.00'
 PACKAGE_BUGREPORT='max@arangodb.com'
 PACKAGE_URL=''
 
-ac_unique_file="JasonParser.h"
+ac_unique_file="JasonParser.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

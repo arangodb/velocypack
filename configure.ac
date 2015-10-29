@@ -6,7 +6,7 @@ AC_INIT([libjason], [1.00], [max@arangodb.com])
 ${CFLAGS=""}
 ${CXXFLAGS=""}
 AC_CONFIG_AUX_DIR([config])
-AC_CONFIG_SRCDIR([JasonParser.h])
+AC_CONFIG_SRCDIR([JasonParser.cpp])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AM_SILENT_RULES([yes])
 AC_CONFIG_MACRO_DIR([m4])
