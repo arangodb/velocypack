@@ -39,7 +39,10 @@ namespace arangodb {
         enum JasonExceptionType {
           InternalError,
           NotImplemented,
+          IndexOutOfBounds,
           NumberOutOfRange,
+          InvalidAttributePath,
+          InvalidValueType,
           DuplicateAttributeName,
           BuilderObjectNotSealed,
           BuilderNeedOpenObject,
@@ -48,9 +51,11 @@ namespace arangodb {
 
           UnknownError
         };
+
       private:
         JasonExceptionType _type;
         std::string _msg;
+
       public:
 
         JasonException (JasonExceptionType type, std::string const& msg) : _type(type), _msg(msg) {
@@ -58,7 +63,7 @@ namespace arangodb {
         
         explicit JasonException (JasonExceptionType type) : JasonException(type, message(type)) {
         }
-
+      
         char const* what() const noexcept {
           return _msg.c_str();
         }
@@ -71,8 +76,14 @@ namespace arangodb {
               return "Not implemented";
             case DuplicateAttributeName:
               return "Duplicate attribute name";
+            case IndexOutOfBounds:
+              return "Index out of bounds";
             case NumberOutOfRange:
               return "Number out of range";
+            case InvalidAttributePath:
+              return "Invalid attribute path";
+            case InvalidValueType:
+              return "Invalid value type for operation";
             case BuilderObjectNotSealed:
               return "Object not sealed";
             case BuilderNeedOpenObject:

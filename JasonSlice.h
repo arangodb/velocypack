@@ -35,6 +35,7 @@
 #include <functional>
 
 #include "Jason.h"
+#include "JasonException.h"
 #include "JasonType.h"
 
 namespace arangodb {
@@ -221,7 +222,7 @@ namespace arangodb {
         // - 0x07      : array with 8-byte index table entries
         JasonSlice at (JasonLength index) const {
           if (! isType(JasonType::Array)) {
-            throw JasonTypeError("unexpected type. expecting array");
+            throw JasonException(JasonException::InvalidValueType, "expecting Array");
           }
 
           return getNth(index);
@@ -234,7 +235,7 @@ namespace arangodb {
         // return the number of members for an Array or Object object
         JasonLength length () const {
           if (type() != JasonType::Array && type() != JasonType::Object) {
-            throw JasonTypeError("unexpected type. expecting array or object");
+            throw JasonException(JasonException::InvalidValueType, "expecting Array or Object");
           }
 
           uint8_t b = _start[1]; // byte length
@@ -273,7 +274,7 @@ namespace arangodb {
         // - 0x0d      : object with 8-byte index table entries, not sorted by attribute name
         JasonSlice keyAt (JasonLength index) const {
           if (! isType(JasonType::Object)) {
-            throw JasonTypeError("unexpected type. expecting object");
+            throw JasonException(JasonException::InvalidValueType, "expecting Object");
           }
           
           return getNth(index);
@@ -289,7 +290,7 @@ namespace arangodb {
         JasonSlice get (std::vector<std::string> const& attributes) const { 
           size_t const n = attributes.size();
           if (n == 0) {
-            throw JasonTypeError("got empty attribute path");
+            throw JasonException(JasonException::InvalidAttributePath);
           }
 
           // use ourselves as the starting point
@@ -311,7 +312,7 @@ namespace arangodb {
         // returns a JasonSlice(Jason::None) if not found
         JasonSlice get (std::string const& attribute) const {
           if (! isType(JasonType::Object)) {
-            throw JasonTypeError("unexpected type. expecting object");
+            throw JasonException(JasonException::InvalidValueType, "expecting Object");
           }
 
           uint8_t b = _start[1];
@@ -440,7 +441,7 @@ namespace arangodb {
             // UInt
             uint64_t v = getUInt();
             if (v > static_cast<uint64_t>(INT64_MAX)) {
-              throw JasonTypeError("value out of range");
+              throw JasonException(JasonException::NumberOutOfRange);
             }
             return static_cast<int64_t>(v);
           }
@@ -450,7 +451,7 @@ namespace arangodb {
             return getSmallInt();
           }
 
-          throw JasonTypeError("unexpected type. expecting int");
+          throw JasonException(JasonException::InvalidValueType, "expecting type Int");
         }
 
         // return the value for a UInt object
@@ -465,7 +466,7 @@ namespace arangodb {
             // Int 
             int64_t v = getInt();
             if (v < 0) {
-              throw JasonTypeError("value out of range");
+              throw JasonException(JasonException::NumberOutOfRange);
             }
             return static_cast<int64_t>(v);
           }
@@ -475,7 +476,7 @@ namespace arangodb {
             return static_cast<uint64_t>(h - 0x30);
           }
           
-          throw JasonTypeError("unexpected type. expecting uint");
+          throw JasonException(JasonException::InvalidValueType, "expecting type UInt");
         }
 
         // return the value for a SmallInt object
@@ -499,7 +500,7 @@ namespace arangodb {
             return getInt();
           }
 
-          throw JasonTypeError("unexpected type. expecting smallint");
+          throw JasonException(JasonException::InvalidValueType, "expecting type Smallint");
         }
 
         // return the value for a UTCDate object
@@ -525,7 +526,7 @@ namespace arangodb {
             return reinterpret_cast<char const*>(_start + 1 + 8);
           }
 
-          throw JasonTypeError("unexpected type. expecting string");
+          throw JasonException(JasonException::InvalidValueType, "expecting type String");
         }
 
         // return a copy of the value for a String object
@@ -543,7 +544,7 @@ namespace arangodb {
             return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
           }
 
-          throw JasonTypeError("unexpected type. expecting string");
+          throw JasonException(JasonException::InvalidValueType, "expecting type String");
         }
 
         // return the value for a Binary object
@@ -557,7 +558,7 @@ namespace arangodb {
             return _start + 1 + h - 0xbf;
           }
 
-          throw JasonTypeError("unexpected type. expecting binary");
+          throw JasonException(JasonException::InvalidValueType, "expecting type Binary");
         }
 
         // return a copy of the value for a Binary object
@@ -574,7 +575,7 @@ namespace arangodb {
             return out; 
           }
 
-          throw JasonTypeError("unexpected type. expecting binary");
+          throw JasonException(JasonException::InvalidValueType, "expecting type Binary");
         }
 
         // get the total byte size for the slice, including the head byte
@@ -665,7 +666,7 @@ namespace arangodb {
           uint8_t b = _start[1]; // byte length
           if (b == 0x02) {
             // special case. empty array
-            throw JasonTypeError("index out of bounds");
+            throw JasonException(JasonException::IndexOutOfBounds);
           }
 
           auto const h = head();
@@ -695,7 +696,7 @@ namespace arangodb {
           }
 
           if (index >= n) {
-            throw JasonTypeError("index out of bounds");
+            throw JasonException(JasonException::IndexOutOfBounds);
           }
 
           // empty array case was already covered
