@@ -3,33 +3,21 @@ Jason
 
 Jason - Just Another SerializatiON
 
-More crazy ideas for names:
-
-Jextson - Json EXTended SerializatiON
-ExtJSON - EXTended JSON
-JSONExt - JSON EXTended
-Jetson - Json ExTended Serialization    ( Jetson ist schon ein der Name 
-                                          eines Development Boards von nVidia)
-IndexJSON - Indexed JSON
-JSONPack
-PackedJSON
-PackJSON
-Packson = acknops = sponkca = spankoc = conkspa
-
 
 ## Generalities
 
 Jason is (unsigned) byte oriented, so Jason values are simply sequences
-of bytes and are completely platform independent. Values are not
-necessarily aligned, so all access to larger subvalues must be properly
-organised to avoid alignment assumptions.
+of bytes and are platform independent. Values are not necessarily
+aligned, so all access to larger subvalues must be properly organised to
+avoid alignment assumptions of the CPU.
+
+
+## Value types
 
 We describe a single Jason value, which is recursive in nature, but
 resides (with two exceptions, see below) in a single contiguous block of
 memory. Assume that the value starts at address A, the first byte V 
 indicates the type (and often the length) of the Jason value at hand:
-
-## Value types
 
 We first give an overview with a brief but accurate description for
 reference, for arrays and objects see below for details:
@@ -39,54 +27,58 @@ reference, for arrays and objects see below for details:
   - 0x01      : null
   - 0x02      : false
   - 0x03      : true
-  - 0x04      : array without index table (all subitems have the same byte length)
+  - 0x04      : array without index table (all subitems have the same 
+                byte length)
   - 0x05      : array with 2-byte index table entries
   - 0x06      : array with 4-byte index table entries
   - 0x07      : array with 8-byte index table entries
   - 0x08      : object with 2-byte index table entries, sorted by attribute name
   - 0x09      : object with 4-byte index table entries, sorted by attribute name
   - 0x0a      : object with 8-byte index table entries, sorted by attribute name
-  - 0x0b      : object with 2-byte index table entries, not sorted by attribute name
-  - 0x0c      : object with 4-byte index table entries, not sorted by attribute name
-  - 0x0d      : object with 8-byte index table entries, not sorted by attribute name
+  - 0x0b      : object with 2-byte index table entries, not sorted by 
+                attribute name
+  - 0x0c      : object with 4-byte index table entries, not sorted by 
+                attribute name
+  - 0x0d      : object with 8-byte index table entries, not sorted by 
+                attribute name
   - 0x0e      : double IEEE-754, 8 bytes follow, stored as little 
                 endian uint64 equivalent
   - 0x0f      : UTC-date in milliseconds since the epoch, stored as 8 byte
-                signed int, little endian, 2s complement
+                signed int, little endian, two's complement
   - 0x10      : external (only in memory): a char* pointing to the actual
                 place in memory, where another Jason item resides, not
                 allowed in Jason values on disk or on the network
   - 0x11      : minKey, nonsensical value that compares < than all other values
   - 0x12      : maxKey, nonsensical value that compares > than all other values
   - 0x13-0x1f : reserved
-  - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V-0x1f, 
-                2s complement
+  - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f, 
+                two's complement
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
   - 0x30-0x39 : small integers 0, 1, ... 9
   - 0x3a-0x3f : small negative integers -6, -5, ..., -1
-  - 0x40-0xbe : UTF-8-string, using V-0x40 bytes (not Unicode-Characters!), 
+  - 0x40-0xbe : UTF-8-string, using V - 0x40 bytes (not Unicode characters!), 
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 126, note that strings here are not
                 zero-terminated
   - 0xbf      : long UTF-8-string, next 8 bytes are length of string in
-                bytes (not Unicode chars) as little endian unsigned
+                bytes (not Unicode characters) as little endian unsigned
                 integer, note that long strings are not zero-terminated
                 and may contain zero bytes
-  - 0xc0-0xc7 : binary blob, next V-0xbf bytes are length of blob in bytes,
-                note that binary blobs are not zero-terminated
-  - 0xc8-0xcf : positive long packed BCD-encoded float, V-0xc7 bytes follow
+  - 0xc0-0xc7 : binary blob, next V - 0xbf bytes are the length of blob in 
+                bytes, note that binary blobs are not zero-terminated
+  - 0xc8-0xcf : positive long packed BCD-encoded float, V - 0xc7 bytes follow
                 that encode in a little-endian way the length of the
                 mantissa in bytes. Directly after that follow 4 bytes
                 encoding the (power of 10) exponent, by which the mantissa
-                is to be multiplied, stored as little endian 2s
+                is to be multiplied, stored as little endian two's
                 complement signed 32-bit integer. After that, as many 
                 bytes follow as the length information at the beginning
-                has specified,
-                each byte encodes two digits in big-endian packed BCD
+                has specified, each byte encodes two digits in
+                big-endian packed BCD
                 Example: 12345 decimal can be encoded as
                          0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
                       or 0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
-  - 0xd0-0xd7 : negative long packed BCD-encoded float, V-0xcf bytes
+  - 0xd0-0xd7 : negative long packed BCD-encoded float, V - 0xcf bytes
                 follow that encode in a little-endian way the length of
                 the mantissa in bytes. After that, same as positive long
                 packed BCD-encoded float above.

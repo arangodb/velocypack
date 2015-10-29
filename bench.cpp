@@ -77,6 +77,7 @@ int main (int argc, char* argv[]) {
 
   inputs.push_back(s);
   outputs.push_back(new JasonParser());
+  outputs.back()->options.sortAttributeNames = false;
 
   for (size_t i = 1; i < copies; i++) {
     // Make an explicit copy:
