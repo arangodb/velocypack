@@ -5,7 +5,6 @@ JasonAsm
 *.o
 *.orig
 *.rej
-googletest
 rapidjson
 .deps
 Makefile
@@ -22,6 +21,7 @@ examples/useparser
 examples/useslicer
 examples/usedumper
 
+googletest/
 CMakeCache.txt
 CMakeFiles/
 build/

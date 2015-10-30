@@ -80,28 +80,10 @@ Running the tests and the benchmark suite
 -----------------------------------------
 
 Building Jason's own test suite requires the [googletest framework](https://github.com/google/googletest)
-to be installed. To install it locally, run the following command:
+to be built. To build the tests, run cmake with the option `-DBuildTests=ON`:
 
 ```bash
-./download-gtest.sh
-```
-
-This will clone the repository from Github into the local subdirectory
-`googletest` and build it there.
-
-The benchmark suite compares Jason against [RapidJson](https://github.com/miloyip/rapidjson).
-RapidJson is not shipped with Jason, but it can be downloaded into the
-local subdirectory `rapidjson` with the following command:
-
-```bash
-./download-rapidjson.sh
-```
-
-Afterwards, you are ready to build both the test suite and the benchmark
-suite:
-
-```bash
-cmake . -DBuildBench=ON -DBuildTests=ON -DEnableSSE=ON
+cmake -DBuildTests=ON . 
 make
 ```
 
@@ -111,7 +93,22 @@ Afterwards, you can run the tests via:
 ./tests
 ```
 
-and the benchmark suite via
+The benchmark suite compares Jason against [RapidJson](https://github.com/miloyip/rapidjson).
+RapidJson is not shipped with Jason, but it can be downloaded into the
+local subdirectory `rapidjson` with the following command:
+
+```bash
+./download-rapidjson.sh
+```
+
+Afterwards, you are ready to build the benchmark suite:
+
+```bash
+cmake . -DBuildBench=ON -DBuildTests=ON
+make
+```
+
+and then run the benchmark suite via
 
 ```bash
 ./runBench.sh

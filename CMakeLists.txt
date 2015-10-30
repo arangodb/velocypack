@@ -131,14 +131,9 @@ endif()
 
 # build tests.cpp
 if(BuildTests)
-  if(NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/googletest")
-    message(FATAL_ERROR "gtest library not found in subdirectory 'googletest'. Please run ./download-gtest.sh")
-  endif()
+  add_subdirectory(googletest/googletest)
 
-  include_directories(${PROJECT_SOURCE_DIR}/googletest/googletest/include)
-
-  find_library(GTEST_LIBRARY NAMES gtest gtest.a libgtest libgtest.a PATHS googletest/googletest)
-  message(STATUS "Gtest library found at: ${GTEST_LIBRARY}")
+  include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
   add_executable(
     tests
@@ -147,7 +142,7 @@ if(BuildTests)
 
   target_link_libraries(
     tests
-    ${GTEST_LIBRARY}
+    gtest
     jason
     ${CMAKE_THREAD_LIBS_INIT}
   )
