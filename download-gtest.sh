@@ -1,6 +1,6 @@
-export COMPILER="`which g++`"
-if test "x$CC" = "x"; then 
-  export COMPILER="`which clang++`"
+export COMPILER="`which gcc`"
+if test "x$COMPILER" = "x"; then 
+  export COMPILER="`which clang`"
 fi
 
 rm -Rf googletest

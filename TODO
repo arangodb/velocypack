@@ -1,3 +1,9 @@
+* Sort out bench (standard suite into C++ executable)
+  - keep generic functionality 
+  - delete runBench.sh
+
+* Install target for library
+
 * properly test custom types 0xf0 - 0xff
   - Builder already has support for them
   - Dumper & Slicer need support
@@ -14,7 +20,9 @@
 
 * create code examples for documentation purposes
 
-* add tests on ARM
+* run tests on ARM again
+
+* comparison with other formats
 
 * add performance tests and results
 
@@ -23,3 +31,6 @@
   - move JasonSlice::iterate into JasonHelper class
 
 * implement type BCD in Builder, Slice, Parser and Dumper
+
+* SWIG support
+
