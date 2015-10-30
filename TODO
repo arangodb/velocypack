@@ -4,6 +4,8 @@
 
 * Install target for library (JS)
 
+* create table with JSON/Jason size comparisons (JS)
+
 * properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
   - Dumper & Slicer need support
