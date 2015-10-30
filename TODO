@@ -6,10 +6,7 @@
 * documentation of C++ classes (// ...)
 
 * use CMake for building
-  - fix linking against gtest / pthreads
   - test on MacOS, ARM and Windows
-
-* add documentation for how to build
 
 * support Windows
 
