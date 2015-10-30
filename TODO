@@ -1,3 +1,5 @@
+* Include googletest, cmake target for it
+
 * Sort out bench (standard suite into C++ executable)
   - keep generic functionality 
   - delete runBench.sh
