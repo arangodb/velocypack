@@ -548,6 +548,10 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     // We only reserve space here, the caller has to fill in the custom type
     uint64_t size = pair.getSize();
     reserveSpace(size);
+    uint8_t const* p = pair.getStart();
+    if (p != nullptr) {
+      memcpy(_start + _pos, p, size);
+    }
     _pos += size;
     return _start + _pos - size;
   }

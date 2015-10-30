@@ -17,7 +17,7 @@
   - JasonHelper class
   - move JasonSlice::iterate into JasonHelper class
 
-* documentation of C++ classes (// ...)
+* documentation of C++ classes (// ...) (MN)
 
 * test on MacOS, ARM and Windows
 
