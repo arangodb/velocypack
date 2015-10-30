@@ -7,8 +7,6 @@ project(jason)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 set(CMAKE_BINARY_DIR "${CMAKE_SOURCE_DIR}/build")
 
-message(STATUS "path: ${CMAKE_MODULE_PATH}")
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
@@ -106,6 +104,19 @@ add_library(
   src/fpconv.cpp
 )
 
+
+# build jasonize.cpp
+add_executable(
+  jasonize
+  src/jasonize.cpp
+)
+
+target_link_libraries(
+  jasonize
+  jason
+)
+
+
 # build bench.cpp
 if(BuildBench)
   if(NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/rapidjson")
@@ -129,6 +140,7 @@ if(BuildBench)
   endif()
 endif()
 
+
 # build tests.cpp
 if(BuildTests)
   add_subdirectory(googletest/googletest)
@@ -147,6 +159,7 @@ if(BuildTests)
     ${CMAKE_THREAD_LIBS_INIT}
   )
 endif()
+
 
 ## Local Variables:
 ## mode: outline-minor

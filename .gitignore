@@ -1,5 +1,6 @@
 tests
 bench
+jasonize
 core 
 JasonAsm
 *.o
