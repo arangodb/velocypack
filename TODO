@@ -1,24 +1,23 @@
-* Sort out bench (standard suite into C++ executable)
+* Sort out bench (standard suite into C++ executable) (JS)
   - keep generic functionality 
   - delete runBench.sh
 
-* Install target for library
+* Install target for library (JS)
 
-* properly test custom types 0xf0 - 0xff
+* properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
   - Dumper & Slicer need support
   - tests
 
+* implement lookup table support in Builder, Slice, Parser and Dumper (MN)
+
+* support modification of Jason objects (removing, updating) (JS)
+  - JasonHelper class
+  - move JasonSlice::iterate into JasonHelper class
+
 * documentation of C++ classes (// ...)
 
-* use CMake for building
-  - test on MacOS, ARM and Windows
-
-* support Windows
-
-* implement lookup table support in Builder, Slice, Parser and Dumper
-
-* create code examples for documentation purposes
+* test on MacOS, ARM and Windows
 
 * run tests on ARM again
 
@@ -26,11 +25,9 @@
 
 * add performance tests and results
 
-* support modification of Jason objects (removing, updating)
-  - JasonHelper class
-  - move JasonSlice::iterate into JasonHelper class
+* create code examples for documentation purposes
 
 * implement type BCD in Builder, Slice, Parser and Dumper
 
-* SWIG support
+* SWIG support (MN)
 
