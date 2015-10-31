@@ -102,4 +102,14 @@ JT const JasonSlice::TypeMap[256] = {
 std::string JasonSlice::toString () const {
   return JasonPrettyDumper::Dump(this);
 }
+        
+std::ostream& operator<< (std::ostream& stream, JasonSlice const* slice) {
+  stream << "[JasonSlice " << JasonTypeName(slice->type()) << ", byteSize: " << slice->byteSize() << "]";
+  return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, JasonSlice const& slice) {
+  stream << "[JasonSlice " << JasonTypeName(slice.type()) << ", byteSize: " << slice.byteSize() << "]";
+  return stream;
+}
 

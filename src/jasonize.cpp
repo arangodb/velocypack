@@ -86,7 +86,8 @@ int main (int argc, char* argv[]) {
     parser.parse(s);
   }
   catch (JasonException const& ex) {
-    cerr << "An exception while parsing infile '" << argv[1] << "': " << ex.what() << endl;
+    cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << endl;
+    cerr << "Error position: " << parser.errorPos() << endl;
     return EXIT_FAILURE;
   }
   catch (...) {

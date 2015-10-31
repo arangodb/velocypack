@@ -867,16 +867,6 @@ namespace arangodb {
 
         std::string toString () const;
 
-        friend std::ostream& operator<< (std::ostream& stream, JasonSlice const* slice) {
-          stream << slice->toString();
-          return stream;
-        }
-
-        friend std::ostream& operator<< (std::ostream& stream, JasonSlice const& slice) {
-          stream << slice.toString();
-          return stream;
-        }
-
       private:
 
         static JasonType const TypeMap[256];
@@ -886,5 +876,9 @@ namespace arangodb {
 
   }  // namespace arangodb::jason
 }  // namespace arangodb
+        
+std::ostream& operator<< (std::ostream&, arangodb::jason::JasonSlice const*);
+
+std::ostream& operator<< (std::ostream&, arangodb::jason::JasonSlice const&);
 
 #endif

@@ -27,7 +27,7 @@
 #ifndef JASON_BUILDER_H
 #define JASON_BUILDER_H
 
-#include <iostream>
+#include <ostream>
 #include <vector>
 #include <cstring>
 #include <cstdint>

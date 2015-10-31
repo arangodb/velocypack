@@ -24,9 +24,9 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "JasonBuilder.h"
-
 #include <unordered_set>
+
+#include "JasonBuilder.h"
 
 using namespace arangodb::jason;
 
@@ -66,7 +66,7 @@ uint8_t const* JasonBuilder::findAttrName (uint8_t const* base, uint64_t& len) {
     }
     return base + 1 + 8; // string starts here
   }
-  throw JasonException(JasonException::NotImplemented);
+  throw JasonException(JasonException::NotImplemented, "Invalid Object key type");
 }
 
 void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,

@@ -98,12 +98,24 @@ add_library(
   src/Jason.cpp
   src/JasonAsm.cpp
   src/JasonBuilder.cpp
+  src/JasonException.cpp
   src/JasonParser.cpp
   src/JasonSlice.cpp
   src/JasonType.cpp
   src/fpconv.cpp
 )
 
+install(TARGETS jason DESTINATION lib)
+install(FILES include/Jason.h DESTINATION include)
+install(FILES include/JasonBuffer.h DESTINATION include)
+install(FILES include/JasonBuilder.h DESTINATION include)
+install(FILES include/JasonDump.h DESTINATION include)
+install(FILES include/JasonDumper.h DESTINATION include)
+install(FILES include/JasonException.h DESTINATION include)
+install(FILES include/JasonOptions.h DESTINATION include)
+install(FILES include/JasonParser.h DESTINATION include)
+install(FILES include/JasonSlice.h DESTINATION include)
+install(FILES include/JasonType.h DESTINATION include)
 
 # build jasonize.cpp
 add_executable(

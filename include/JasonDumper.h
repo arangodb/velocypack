@@ -30,6 +30,7 @@
 #include <string>
 #include <cmath>
 #include <functional>
+#include <ostream>
 
 #include "Jason.h"
 #include "JasonBuffer.h"

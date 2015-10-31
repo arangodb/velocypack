@@ -29,6 +29,7 @@
 
 #include <exception>
 #include <string>
+#include <ostream>
 
 namespace arangodb {
   namespace jason {
@@ -122,5 +123,9 @@ namespace arangodb {
 
   }  // namespace arangodb::jason
 }  // namespace arangodb
+        
+std::ostream& operator<< (std::ostream&, arangodb::jason::JasonException const*);
+
+std::ostream& operator<< (std::ostream&, arangodb::jason::JasonException const&);
 
 #endif
