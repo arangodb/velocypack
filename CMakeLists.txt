@@ -159,9 +159,3 @@ if(BuildTests)
     ${CMAKE_THREAD_LIBS_INIT}
   )
 endif()
-
-
-## Local Variables:
-## mode: outline-minor
-## outline-regexp: "### @brief\\|## --SECTION--\\|# -\\*- "
-## End:
