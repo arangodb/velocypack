@@ -75,6 +75,9 @@ message(STATUS "Building bench performance test suite: ${BuildBench}")
 option(BuildTests "Build test suite" OFF)
 message(STATUS "Building test suite: ${BuildTests}")
   
+option(BuildAsmTest "Build assembler test code" OFF)
+message(STATUS "Building assembler test suite: ${BuildAsmTest}")
+
 if(CAN_USE_SSE4_2)
   option(EnableSSE "Build using SSE4.2 optimizations" ON)
 else()
@@ -171,3 +174,21 @@ if(BuildTests)
     ${CMAKE_THREAD_LIBS_INIT}
   )
 endif()
+
+# build JasonAsm
+if (BuildAsmTest)
+  add_executable(
+    JasonAsm
+    src/JasonAsm.cpp
+  )
+
+  target_link_libraries(
+    JasonAsm
+    ${CMAKE_THREAD_LIBS_INIT}
+  )
+
+  set_target_properties(JasonAsm PROPERTIES COMPILE_FLAGS "-DCOMPILE_JASONASM_UNITTESTS")
+
+endif()
+
+
