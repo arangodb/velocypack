@@ -18,4 +18,6 @@ Allquick
 Arangar
 Gayson
 Lolson
+Jitson   Just in Time Serialization
+Yason - Yet Another Serialization Of Nonsense
 
