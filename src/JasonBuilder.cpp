@@ -227,10 +227,10 @@ void JasonBuilder::close () {
       else {   // object case
         _start[tos] =   (offsetSize == 4 ? 0x09 : 0x0a)
                       + (options.sortAttributeNames ? 0 : 3);
-      }
-      if (index.size() >= 2 &&
-          options.sortAttributeNames) {
-        sortObjectIndexLong(_start + tos, index);
+        if (index.size() >= 2 &&
+            options.sortAttributeNames) {
+          sortObjectIndexLong(_start + tos, index);
+        }
       }
       for (size_t i = 0; i < index.size(); i++) {
         uint64_t x = index[i];
