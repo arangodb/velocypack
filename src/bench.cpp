@@ -30,10 +30,6 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "Jason.h"
 #include "JasonBuilder.h"
@@ -88,18 +84,22 @@ int main (int argc, char* argv[]) {
   int runTime = stoi(argv[2]);
   vector<string> inputs;
   vector<JasonParser*> outputs;
-  string s;
-  int fd = open(argv[1], O_RDONLY);
-  char buffer[4096];
-  int len;
-  while (true) {
-    len = read(fd, buffer, 4096);
-    if (len <= 0) {
-      break;
-    }
-    s.append(buffer, len);
+
+  // read input file
+  std::string s;
+  std::ifstream ifs(argv[1], std::ifstream::in);
+
+  if (! ifs.is_open()) {
+    std::cerr << "Cannot open input file" << std::endl;
+    return EXIT_FAILURE;
   }
-  close(fd);
+  
+  char buffer[4096];
+  while (ifs.good()) {
+    ifs.read(&buffer[0], sizeof(buffer));
+    s.append(buffer, ifs.gcount());
+  }
+  ifs.close();
 
   inputs.push_back(s);
   outputs.push_back(new JasonParser());

@@ -70,9 +70,6 @@ int main (int argc, char* argv[]) {
   char buffer[4096];
   while (ifs.good()) {
     ifs.read(&buffer[0], sizeof(buffer));
-    if (! ifs) {
-      break;
-    }
     s.append(buffer, ifs.gcount());
   }
   ifs.close();

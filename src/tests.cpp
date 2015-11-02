@@ -25,10 +25,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <ostream>
+#include <fstream>
 #include <string>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "Jason.h"
 #include "JasonBuffer.h"
@@ -81,22 +79,18 @@ static void dumpDouble (double x, uint8_t* p) {
 
 static std::string readFile (std::string const& filename) {
   std::string s;
-  int fd = open(filename.c_str(), O_RDONLY);
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
 
-  if (fd < 0) {
+  if (! ifs.is_open()) {
     throw "cannot open input file";
   }
-
+  
   char buffer[4096];
-  int len;
-  while (true) {
-    len = read(fd, buffer, 4096);
-    if (len <= 0) {
-      break;
-    }
-    s.append(buffer, len);
+  while (ifs.good()) {
+    ifs.read(&buffer[0], sizeof(buffer));
+    s.append(buffer, ifs.gcount());
   }
-  close(fd);
+  ifs.close();
   return s;
 }
 
