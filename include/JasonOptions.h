@@ -34,6 +34,7 @@ namespace arangodb {
       bool validateUtf8Strings      = false;
       bool checkAttributeUniqueness = false;
       bool sortAttributeNames       = true;
+      bool escapeForwardSlashes     = false;
     };
           
   }  // namespace arangodb::jason

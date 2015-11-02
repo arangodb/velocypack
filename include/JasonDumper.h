@@ -35,6 +35,7 @@
 #include "Jason.h"
 #include "JasonBuffer.h"
 #include "JasonException.h"
+#include "JasonOptions.h"
 #include "JasonSlice.h"
 #include "JasonType.h"
 
@@ -49,6 +50,8 @@ namespace arangodb {
     class JasonDumper {
 
       public:
+
+        JasonOptions options;        
     
         enum UnsupportedTypeStrategy {
           StrategyNullify,
@@ -113,7 +116,7 @@ namespace arangodb {
         }
 
         void reset () {
-          _buffer->reset();
+          _buffer->clear();
         }
 
         void append (JasonSlice const& slice) {
@@ -410,7 +413,10 @@ namespace arangodb {
               char esc = EscapeTable[c];
 
               if (esc) {
-                _buffer->push_back('\\');
+                if (c != '/' || options.escapeForwardSlashes) {
+                  // escape forward slashes only when requested
+                  _buffer->push_back('\\');
+                }
                 _buffer->push_back(static_cast<char>(esc));
 
                 if (esc == 'u') { 

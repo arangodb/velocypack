@@ -116,6 +116,10 @@ namespace arangodb {
           return _pos;
         }
 
+        void clear () {
+          reset();
+        }
+
         void reset () {
           if (_buffer != _local) {
             delete[] _buffer;

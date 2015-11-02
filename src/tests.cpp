@@ -859,17 +859,31 @@ TEST(StringDumperTest, AppendStringTest) {
 TEST(StringDumperTest, AppendCharTestSpecialChars) {
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  dumper.options.escapeForwardSlashes = true;
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+
+  dumper.reset();
+  dumper.options.escapeForwardSlashes = false;
+  dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
+
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
 }
 
 TEST(StringDumperTest, AppendStringTestSpecialChars) {
   std::string buffer;
   JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  dumper.options.escapeForwardSlashes = true;
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+
+  dumper.reset();
+  dumper.options.escapeForwardSlashes = false;
+  dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
+
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
 }
 
 TEST(StringDumperTest, AppendStringSlice) {
@@ -880,9 +894,15 @@ TEST(StringDumperTest, AppendStringSlice) {
   JasonBuilder b;
   b.add(Jason(s));
   JasonSlice slice(b.start());
+  dumper.options.escapeForwardSlashes = true;
   dumper.append(slice);
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+
+  dumper.reset();
+  dumper.options.escapeForwardSlashes = false;
+  dumper.append(slice);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
 }
 
 TEST(StringDumperTest, AppendStringSliceRef) {
@@ -893,9 +913,15 @@ TEST(StringDumperTest, AppendStringSliceRef) {
   JasonBuilder b;
   b.add(Jason(s));
   JasonSlice slice(b.start());
+  dumper.options.escapeForwardSlashes = true;
   dumper.append(&slice);
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  
+  dumper.reset();
+  dumper.options.escapeForwardSlashes = false;
+  dumper.append(&slice);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
 }
 
 TEST(StringDumperTest, AppendToOstream) {
