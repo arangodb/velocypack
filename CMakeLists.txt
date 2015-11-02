@@ -156,6 +156,17 @@ target_link_libraries(
   jason
 )
 
+# build jsonize.cpp
+add_executable(
+  jsonize
+  src/jsonize.cpp
+)
+
+target_link_libraries(
+  jsonize
+  jason
+)
+
 
 # build bench.cpp
 if(BuildBench)
