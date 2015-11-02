@@ -49,8 +49,16 @@ int main (int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  // treat "-" as stdin
+  std::string infile = argv[1];
+#ifdef __linux__
+  if (infile == "-") {
+    infile = "/proc/self/fd/0";
+  }
+#endif
+
   std::string s;
-  std::ifstream ifs(argv[1], std::ifstream::in);
+  std::ifstream ifs(infile, std::ifstream::in);
 
   if (! ifs.is_open()) {
     std::cerr << "Cannot read infile '" << argv[1] << "'" << std::endl;
