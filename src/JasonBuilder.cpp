@@ -94,17 +94,19 @@ void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
 void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
                                         std::vector<JasonLength>& offsets) {
 
+  // on some platforms we can use a thread-local vector
 #if __llvm__ == 1
-  //nono thread local
-  std::vector<JasonBuilder::SortEntry> SortObjectEntries;
+  // nono thread local
+  std::vector<JasonBuilder::SortEntry> entries;
 #elif defined(_WIN32) && defined(_MSC_VER)
-  __declspec( thread ) std::vector<JasonBuilder::SortEntry> SortObjectEntries;
+  __declspec(thread) std::vector<JasonBuilder::SortEntry> entries;
+  entries.clear();
 #else
   // thread local vector for sorting large object attributes
-  thread_local std::vector<JasonBuilder::SortEntry> SortObjectEntries;
-#endif
-  std::vector<SortEntry>& entries = SortObjectEntries; 
+  thread_local std::vector<JasonBuilder::SortEntry> entries;
   entries.clear();
+#endif
+  
   entries.reserve(offsets.size());
   for (JasonLength i = 0; i < offsets.size(); i++) {
     SortEntry e;
