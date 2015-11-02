@@ -303,7 +303,7 @@ void JasonBuilder::set (Jason const& item) {
     }
     case JasonType::Null: {
       reserveSpace(1);
-      _start[_pos++] = 0x01;
+      _start[_pos++] = 0x13;
       break;
     }
     case JasonType::Bool: {
@@ -312,10 +312,10 @@ void JasonBuilder::set (Jason const& item) {
       }
       reserveSpace(1);
       if (item.getBool()) {
-        _start[_pos++] = 0x03;
+        _start[_pos++] = 0x15;
       }
       else {
-        _start[_pos++] = 0x02;
+        _start[_pos++] = 0x14;
       }
       break;
     }

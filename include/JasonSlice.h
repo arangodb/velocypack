@@ -202,7 +202,7 @@ namespace arangodb {
         // - 0x03      : true
         bool getBool () const {
           assertType(JasonType::Bool);
-          return (head() == 0x03); // 0x02 == false, 0x03 == true
+          return (head() == 0x15); // 0x14 == false, 0x15 == true
         }
 
         // return the value for a Bool object - this is an alias for getBool()

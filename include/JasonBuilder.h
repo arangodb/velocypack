@@ -270,17 +270,17 @@ namespace arangodb {
 
         void addNull () {
           reserveSpace(1);
-          _start[_pos++] = 0x01;
+          _start[_pos++] = 0x13;
         }
 
         void addFalse () {
           reserveSpace(1);
-          _start[_pos++] = 0x02;
+          _start[_pos++] = 0x14;
         }
 
         void addTrue () {
           reserveSpace(1);
-          _start[_pos++] = 0x03;
+          _start[_pos++] = 0x15;
         }
 
         void addDouble (double v) {

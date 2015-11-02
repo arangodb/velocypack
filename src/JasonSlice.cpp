@@ -33,12 +33,12 @@ using JasonSlice        = arangodb::jason::JasonSlice;
 using JT                = arangodb::jason::JasonType;
         
 JT const JasonSlice::TypeMap[256] = {
-  /* 0x00 */  JT::None,        /* 0x01 */  JT::Null,        /* 0x02 */  JT::Bool,        /* 0x03 */  JT::Bool,        
+  /* 0x00 */  JT::None,        /* 0x01 */  JT::None,        /* 0x02 */  JT::None,        /* 0x03 */  JT::None,        
   /* 0x04 */  JT::Array,       /* 0x05 */  JT::Array,       /* 0x06 */  JT::Array,       /* 0x07 */  JT::Array,
   /* 0x08 */  JT::Object,      /* 0x09 */  JT::Object,      /* 0x0a */  JT::Object,      /* 0x0b */  JT::Object, 
   /* 0x0c */  JT::Object,      /* 0x0d */  JT::Object,      /* 0x0e */  JT::Double,      /* 0x0f */  JT::UTCDate,        
-  /* 0x10 */  JT::External,    /* 0x11 */  JT::MinKey,      /* 0x12 */  JT::MaxKey,      /* 0x13 */  JT::None,     
-  /* 0x14 */  JT::None,        /* 0x15 */  JT::None,        /* 0x16 */  JT::None,        /* 0x17 */  JT::None,     
+  /* 0x10 */  JT::External,    /* 0x11 */  JT::MinKey,      /* 0x12 */  JT::MaxKey,      /* 0x13 */  JT::Null,     
+  /* 0x14 */  JT::Bool,        /* 0x15 */  JT::Bool,        /* 0x16 */  JT::None,        /* 0x17 */  JT::None,     
   /* 0x18 */  JT::None,        /* 0x19 */  JT::None,        /* 0x1a */  JT::None,        /* 0x1b */  JT::None,         
   /* 0x1c */  JT::None,        /* 0x1d */  JT::None,        /* 0x1e */  JT::None,        /* 0x1f */  JT::None,         
   /* 0x20 */  JT::Int,         /* 0x21 */  JT::Int,         /* 0x22 */  JT::Int,         /* 0x23 */  JT::Int,         
