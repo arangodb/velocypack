@@ -27,35 +27,25 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <thread>
 
 #include "Jason.h"
 #include "JasonBuilder.h"
 #include "JasonException.h"
 #include "JasonParser.h"
 #include "JasonSlice.h"
-#include "JasonType.h"
 
-using Jason            = arangodb::jason::Jason;
-using JasonBuilder     = arangodb::jason::JasonBuilder;
-using JasonException   = arangodb::jason::JasonException;
-using JasonLength      = arangodb::jason::JasonLength;
-using JasonParser      = arangodb::jason::JasonParser;
-using JasonSlice       = arangodb::jason::JasonSlice;
-using JasonType        = arangodb::jason::JasonType;
+using namespace arangodb::jason;
 
-using namespace std;
-
-static void usage () {
-  cout << "Usage: INFILE OUTFILE" << endl;
-  cout << "This program reads the JSON INFILE into a string and saves its" << endl;
-  cout << "Jason representation in file OUTFILE. Will work only for input" << endl;
-  cout << "files up to 2 GB size." << endl;
+static void usage (char* argv[]) {
+  std::cout << "Usage: " << argv[0] << " INFILE OUTFILE" << std::endl;
+  std::cout << "This program reads the JSON INFILE into a string and saves its" << std::endl;
+  std::cout << "Jason representation in file OUTFILE. Will work only for input" << std::endl;
+  std::cout << "files up to 2 GB size." << std::endl;
 }
 
 int main (int argc, char* argv[]) {
   if (argc < 3) {
-    usage();
+    usage(argv);
     return EXIT_FAILURE;
   }
 
@@ -63,7 +53,7 @@ int main (int argc, char* argv[]) {
   std::ifstream ifs(argv[1], std::ifstream::in);
 
   if (! ifs.is_open()) {
-    cerr << "Cannot read infile '" << argv[1] << "'" << endl;
+    std::cerr << "Cannot read infile '" << argv[1] << "'" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -79,19 +69,19 @@ int main (int argc, char* argv[]) {
     parser.parse(s);
   }
   catch (JasonException const& ex) {
-    cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << endl;
-    cerr << "Error position: " << parser.errorPos() << endl;
+    std::cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << std::endl;
+    std::cerr << "Error position: " << parser.errorPos() << std::endl;
     return EXIT_FAILURE;
   }
   catch (...) {
-    cerr << "An unknown exception occurred while parsing infile '" << argv[1] << "'" << endl;
+    std::cerr << "An unknown exception occurred while parsing infile '" << argv[1] << "'" << std::endl;
     return EXIT_FAILURE;
   }
   
   std::ofstream ofs(argv[2], std::ofstream::out);
  
   if (! ofs.is_open()) {
-    cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
+    std::cerr << "Cannot write outfile '" << argv[2] << "'" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -104,16 +94,16 @@ int main (int argc, char* argv[]) {
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
   if (! ofs) {
-    cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
+    std::cerr << "Cannot write outfile '" << argv[2] << "'" << std::endl;
     ofs.close();
     return EXIT_FAILURE;
   }
 
   ofs.close();
 
-  cout << "Successfully converted JSON infile '" << argv[1] << "'" << endl;
-  cout << "JSON Infile size:   " << s.size() << endl;
-  cout << "Jason Outfile size: " << builder.size() << endl;
+  std::cout << "Successfully converted JSON infile '" << argv[1] << "'" << std::endl;
+  std::cout << "JSON Infile size:   " << s.size() << std::endl;
+  std::cout << "Jason Outfile size: " << builder.size() << std::endl;
   
   return EXIT_SUCCESS;
 }

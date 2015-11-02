@@ -116,10 +116,6 @@ namespace arangodb {
           return _pos;
         }
 
-        JasonLength capacity () const {
-          return _alloc;
-        }
-
         void reset () {
           if (_buffer != _local) {
             delete[] _buffer;
@@ -197,6 +193,11 @@ namespace arangodb {
         }
        
       private:
+
+        JasonLength capacity () const {
+          return _alloc;
+        }
+
  
         T*          _buffer;
         JasonLength _alloc;

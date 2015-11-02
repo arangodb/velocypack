@@ -77,6 +77,10 @@ namespace arangodb {
           return TypeMap[head()];
         }
 
+        char const* typeName () const {
+          return JasonTypeName(type());
+        }
+
         // pointer to the head byte
         uint8_t const* start () const {
           return _start;

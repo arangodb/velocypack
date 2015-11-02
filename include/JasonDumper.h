@@ -65,6 +65,10 @@ namespace arangodb {
         ~JasonDumper () {
         }
 
+        T* buffer () const {
+          return _buffer;
+        }
+
         friend std::ostream& operator<< (std::ostream& stream, JasonDumper const* dumper) {
           stream << *dumper->_buffer;
           return stream;
@@ -207,8 +211,8 @@ namespace arangodb {
 
             case JasonType::Object: {
               JasonLength const n = slice->length();
+              _buffer->push_back('{');
               if (PrettyPrint) {
-                _buffer->push_back('{');
                 _buffer->push_back('\n');
                 ++_indentation;
                 for (JasonLength i = 0; i < n; ++i) {
@@ -223,10 +227,8 @@ namespace arangodb {
                 }
                 --_indentation;
                 indent();
-                _buffer->push_back('}');
               }
               else {
-                _buffer->push_back('{');
                 for (JasonLength i = 0; i < n; ++i) {
                   if (i > 0) {
                     _buffer->push_back(',');
@@ -235,8 +237,8 @@ namespace arangodb {
                   _buffer->push_back(':');
                   internalDump(slice->valueAt(i), slice);
                 }
-                _buffer->push_back('}');
               }
+              _buffer->push_back('}');
               break;
             }
             

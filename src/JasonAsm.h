@@ -24,6 +24,9 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef JASON_ASM_H
+#define JASON_ASM_H 1
+
 #include <cstdint>
 #include <cstring>
 
@@ -94,3 +97,4 @@ static inline size_t JSONSkipWhiteSpaceInline (uint8_t const* ptr,
 size_t JSONSkipWhiteSpaceC (uint8_t const* ptr, size_t limit);
 extern size_t (*JSONSkipWhiteSpace)(uint8_t const*, size_t);
 
+#endif

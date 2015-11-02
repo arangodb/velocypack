@@ -1,3 +1,6 @@
+#ifndef JASON_POWERS_H
+#define JASON_POWERS_H 1
+
 #include <cstdint>
 
 #define npowers     87
@@ -85,3 +88,5 @@ static Fp find_cachedpow10(int exp, int* k)
         return powers_ten[idx];
     }
 }
+
+#endif
