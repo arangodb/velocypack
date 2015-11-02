@@ -88,30 +88,37 @@ namespace arangodb {
 
         void dump (JasonSlice const& slice) {
           _indentation = 0;
+          _buffer->reserve(slice.byteSize());
           internalDump(&slice, nullptr);
+        }
+
+        void dump (JasonSlice const* slice) {
+          _indentation = 0;
+          _buffer->reserve(slice->byteSize());
+          internalDump(slice, nullptr);
         }
 
         static void Dump (JasonSlice const& slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
-          dumper.internalDump(&slice, nullptr);
+          dumper.dump(slice);
         }
 
         static void Dump (JasonSlice const* slice, T& buffer, UnsupportedTypeStrategy strategy = StrategyFail) {
           JasonDumper dumper(buffer, strategy);
-          dumper.internalDump(slice, nullptr);
+          dumper.dump(slice);
         }
         
         static T Dump (JasonSlice const& slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
-          dumper.internalDump(&slice, nullptr);
+          dumper.dump(slice);
           return buffer;
         }
 
         static T Dump (JasonSlice const* slice, UnsupportedTypeStrategy strategy = StrategyFail) {
           T buffer;
           JasonDumper dumper(buffer, strategy);
-          dumper.internalDump(slice, nullptr);
+          dumper.dump(slice);
           return buffer;
         }
 
