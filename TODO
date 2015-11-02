@@ -2,8 +2,6 @@
   - keep generic functionality 
   - delete runBench.sh
 
-* Install target for library (JS)
-
 * create table with JSON/Jason size comparisons (JS)
 
 * properly test custom types 0xf0 - 0xff (JS)
