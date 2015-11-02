@@ -41,57 +41,25 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-using Jason            = arangodb::jason::Jason;
-using JasonBuilder     = arangodb::jason::JasonBuilder;
-using JasonLength      = arangodb::jason::JasonLength;
-using JasonPair        = arangodb::jason::JasonPair;
-using JasonParser      = arangodb::jason::JasonParser;
-using JasonSlice       = arangodb::jason::JasonSlice;
-using JasonType        = arangodb::jason::JasonType;
+using namespace arangodb::jason;
   
-using namespace std;
-
-static void usage () {
-  cout << "Usage: FILENAME.json RUNTIME_IN_SECONDS COPIES TYPE" << endl;
-  cout << "This program reads the file into a string, makes COPIES copies" << endl;
-  cout << "and then parses the copies in a round-robin fashion to Jason." << endl;
-  cout << "1 copy means its running in cache, more copies make it run" << endl;
-  cout << "out of cache. The target areas are also in a different memory" << endl;
-  cout << "area for each copy." << endl;
-  cout << "TYPE must be either 'jason' or 'rapidjson'." << endl;
+static void usage (char* argv[]) {
+  std::cout << "Usage: " << argv[0] << " FILENAME.json RUNTIME_IN_SECONDS COPIES TYPE" << std::endl;
+  std::cout << "This program reads the file into a string, makes COPIES copies" << std::endl;
+  std::cout << "and then parses the copies in a round-robin fashion to Jason." << std::endl;
+  std::cout << "1 copy means its running in cache, more copies make it run" << std::endl;
+  std::cout << "out of cache. The target areas are also in a different memory" << std::endl;
+  std::cout << "area for each copy." << std::endl;
+  std::cout << "TYPE must be either 'jason' or 'rapidjson'." << std::endl;
 }
 
-int main (int argc, char* argv[]) {
-  if (argc < 5) {
-    usage();
-    return EXIT_FAILURE;
-  }
-
-  bool useJason;
-  if (strcmp(argv[4], "jason") == 0) {
-    useJason = true;
-  }
-  else if (strcmp(argv[4], "rapidjson") == 0) {
-    useJason = false;
-  }
-  else {
-    usage();
-    return EXIT_FAILURE;
-  }
-    
-
-  size_t copies = stoul(argv[3]);
-  int runTime = stoi(argv[2]);
-  vector<string> inputs;
-  vector<JasonParser*> outputs;
-
-  // read input file
+static std::string readFile (std::string const& filename) {
   std::string s;
-  std::ifstream ifs(argv[1], std::ifstream::in);
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
 
   if (! ifs.is_open()) {
-    std::cerr << "Cannot open input file" << std::endl;
-    return EXIT_FAILURE;
+    std::cerr << "Cannot open input file '" << filename << "'" << std::endl;
+    ::exit(EXIT_FAILURE);
   }
   
   char buffer[4096];
@@ -101,57 +69,138 @@ int main (int argc, char* argv[]) {
   }
   ifs.close();
 
-  inputs.push_back(s);
+  return s;
+}
+
+static void run (std::string& data, int runTime, size_t copies, bool useJason, bool fullOutput) {
+  std::vector<std::string> inputs;
+  std::vector<JasonParser*> outputs;
+  inputs.push_back(data);
   outputs.push_back(new JasonParser());
   outputs.back()->options.sortAttributeNames = false;
 
   for (size_t i = 1; i < copies; i++) {
     // Make an explicit copy:
-    s.clear();
-    s.insert(s.begin(), inputs[0].begin(), inputs[0].end());
-    inputs.push_back(s);
+    data.clear();
+    data.insert(data.begin(), inputs[0].begin(), inputs[0].end());
+    inputs.push_back(data);
     outputs.push_back(new JasonParser());
     outputs.back()->options.sortAttributeNames = false;
   }
 
   size_t count = 0;
   size_t total = 0;
-  auto start = chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
   decltype(start) now;
 
-  do {
-    for (int i = 0; i < 2; i++) {
-      if (useJason) {
-        outputs[count]->clear();
-        outputs[count]->parse(inputs[count]);
+  try {
+    do {
+      for (int i = 0; i < 2; i++) {
+        if (useJason) {
+          outputs[count]->clear();
+          outputs[count]->parse(inputs[count]);
+        }
+        else {
+          rapidjson::Document d;
+          d.Parse(inputs[count].c_str());
+        }
+        count++;
+        if (count >= copies) {
+          count = 0;
+        }
+        total++;
       }
-      else {
-        rapidjson::Document d;
-        d.Parse(inputs[count].c_str());
-      }
-      count++;
-      if (count >= copies) {
-        count = 0;
-      }
-      total++;
-    }
-    now = chrono::high_resolution_clock::now();
-  } while (chrono::duration_cast<chrono::duration<int>>(now - start).count() < runTime);
+      now = std::chrono::high_resolution_clock::now();
+    } 
+    while (std::chrono::duration_cast<std::chrono::duration<int>>(now - start).count() < runTime);
 
-  chrono::duration<double> totalTime 
-      = chrono::duration_cast<chrono::duration<double>>(now - start);
-  cout << "Total runtime: " << totalTime.count() << " s" << endl;
-  cout << "Have parsed " << total << " times with " << argv[4] << " using " << copies
-       << " copies of JSON data, each of size " << inputs[0].size() << "."
-       << endl;
-  cout << "Parsed " << inputs[0].size() * total << " bytes in total." << endl;
-  cout << "This is " << static_cast<double>(inputs[0].size() * total) /
-                        totalTime.count() << " bytes/s"
-       << " or " << total / totalTime.count() 
-       << " JSON docs per second." << endl;
+    std::chrono::duration<double> totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
+
+    if (fullOutput) {
+      std::cout << "Total runtime: " << totalTime.count() << " s" << std::endl;
+      std::cout << "Have parsed " << total << " times with " << (useJason ? "jason" : "rapidjson") << " using " << copies
+                << " copies of JSON data, each of size " << inputs[0].size() << "." << std::endl;
+      std::cout << "Parsed " << inputs[0].size() * total << " bytes in total." << std::endl;
+    }
+    std::cout << "This is " << static_cast<double>(inputs[0].size() * total) / totalTime.count() << " bytes/s"
+              << " or " << total / totalTime.count() 
+              << " JSON docs per second." << std::endl;
+  }
+  catch (JasonException const& ex) {
+    std::cerr << "An exception occurred while running bench: " << ex.what() << std::endl;
+    ::exit(EXIT_FAILURE);
+  }
+  catch (std::exception const& ex) {
+    std::cerr << "An exception occurred while running bench: " << ex.what() << std::endl;
+    ::exit(EXIT_FAILURE);
+  }
+  catch (...) {
+    std::cerr << "An unknown exception occurred while running bench" << std::endl;
+    ::exit(EXIT_FAILURE);
+  }
 
   for (auto& it : outputs) {
     delete it;
   }
+}
+
+static void runDefaultBench () {
+  auto runComparison = [] (std::string const& filename) {
+    std::string path("jsonSample/");
+    path += filename;
+    std::string data = std::move(readFile(path));
+
+    std::cout << std::endl;
+    std::cout << "# " << filename << " ";
+    for (size_t i = 0; i < 30 - filename.size(); ++i) {
+      std::cout << "#";
+    }
+    std::cout << std::endl;
+
+    std::cout << "jason:        ";
+    run(data, 10, 1, true, false);
+
+    std::cout << "rapidjson:    ";
+    run(data, 10, 1, false, false);
+  };
+
+  runComparison("small.json");
+  runComparison("sample.json");
+  runComparison("sampleNoWhite.json");
+  runComparison("commits.json");
+} 
+
+int main (int argc, char* argv[]) {
+  if (argc == 1) {
+    runDefaultBench();
+    return EXIT_FAILURE;
+  }
+
+  if (argc != 5) {
+    usage(argv);
+    return EXIT_FAILURE;
+  }
+
+  bool useJason;
+  if (::strcmp(argv[4], "jason") == 0) {
+    useJason = true;
+  }
+  else if (::strcmp(argv[4], "rapidjson") == 0) {
+    useJason = false;
+  }
+  else {
+    usage(argv);
+    return EXIT_FAILURE;
+  }
+    
+
+  size_t copies = std::stoul(argv[3]);
+  int runTime = std::stoi(argv[2]);
+
+  // read input file
+  std::string s = std::move(readFile(argv[1]));
+
+  run(s, runTime, copies, useJason, true);
+
   return EXIT_SUCCESS;
 }
