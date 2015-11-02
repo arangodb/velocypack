@@ -30,9 +30,6 @@
 
 using namespace arangodb::jason;
 
-// thread local vector for sorting large object attributes
-thread_local std::vector<JasonBuilder::SortEntry> JasonBuilder::SortObjectEntries;
-
 void JasonBuilder::doActualSort (std::vector<SortEntry>& entries) {
   JASON_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(), 
@@ -96,8 +93,19 @@ void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
 
 void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
                                         std::vector<JasonLength>& offsets) {
-  std::vector<SortEntry>& entries = SortObjectEntries; 
+
+  // on some platforms we can use a thread-local vector
+#if __llvm__ == 1
+  // nono thread local
+  std::vector<JasonBuilder::SortEntry> entries;
+#elif defined(_WIN32) && defined(_MSC_VER)
+  std::vector<JasonBuilder::SortEntry> entries;
+#else
+  // thread local vector for sorting large object attributes
+  thread_local std::vector<JasonBuilder::SortEntry> entries;
   entries.clear();
+#endif
+  
   entries.reserve(offsets.size());
   for (JasonLength i = 0; i < offsets.size(); i++) {
     SortEntry e;
@@ -259,7 +267,7 @@ void JasonBuilder::close () {
 
   // Fix the byte length in the beginning:
   if (smallByteLength) {
-    _start[tos + 1] = _pos - tos;
+    _start[tos + 1] = static_cast<uint8_t>(_pos - tos);
   }
   else {
     _start[tos + 1] = 0x00;
@@ -451,7 +459,7 @@ void JasonBuilder::set (Jason const& item) {
       if (size <= 126) {
         // short string
         reserveSpace(1 + size);
-        _start[_pos++] = 0x40 + size;
+        _start[_pos++] = static_cast<uint8_t>(0x40 + size);
         memcpy(_start + _pos, s->c_str(), size);
       }
       else {
@@ -535,7 +543,7 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     else {
       // short string
       reserveSpace(1 + size);
-      _start[_pos++] = 0x40 + size;
+      _start[_pos++] = static_cast<uint8_t>(0x40 + size);
       _pos += size;
     }
     // Note that the data is not filled in! It is the responsibility

@@ -25,10 +25,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <ostream>
+#include <fstream>
 #include <string>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "Jason.h"
 #include "JasonBuffer.h"
@@ -81,22 +79,18 @@ static void dumpDouble (double x, uint8_t* p) {
 
 static std::string readFile (std::string const& filename) {
   std::string s;
-  int fd = open(filename.c_str(), O_RDONLY);
+  std::ifstream ifs(filename.c_str(), std::ifstream::in);
 
-  if (fd < 0) {
+  if (! ifs.is_open()) {
     throw "cannot open input file";
   }
-
+  
   char buffer[4096];
-  int len;
-  while (true) {
-    len = read(fd, buffer, 4096);
-    if (len <= 0) {
-      break;
-    }
-    s.append(buffer, len);
+  while (ifs.good()) {
+    ifs.read(&buffer[0], sizeof(buffer));
+    s.append(buffer, ifs.gcount());
   }
-  close(fd);
+  ifs.close();
   return s;
 }
 
@@ -657,7 +651,11 @@ TEST(OutStreamTest, StringifyComplexObject) {
 
   std::ostringstream result;
   result << s;
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
+
+  ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
+  
+  std::string prettyResult = JasonPrettyDumper::Dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, SimpleObject) {
@@ -684,7 +682,7 @@ TEST(PrettyDumperTest, ComplexObject) {
   JasonSlice s(builder.start());
 
   std::string result = JasonPrettyDumper::Dump(s);
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
 }
 
 TEST(BufferDumperTest, Null) {
@@ -784,7 +782,7 @@ TEST(StringDumperTest, True) {
 }
 
 TEST(StringDumperTest, CustomWithoutHandler) {
-  Buffer[0] = 0xf0;
+  Buffer[0] = static_cast<char>(0xf0);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -975,7 +973,8 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
-  double v = 1.0 / 0.0;
+  double v = std::nan("1");
+  EXPECT_TRUE(std::isnan(v));
   JasonBuilder b;
   b.add(Jason(v));
 
@@ -987,7 +986,8 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
-  double v = 1.0 / 0.0;
+  double v = std::nan("1");
+  EXPECT_TRUE(std::isnan(v));
   JasonBuilder b;
   b.add(Jason(v));
 
@@ -1110,7 +1110,7 @@ TEST(SliceTest, Double) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  ASSERT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_DOUBLE_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, DoubleNegative) {
@@ -1124,7 +1124,7 @@ TEST(SliceTest, DoubleNegative) {
   ASSERT_EQ(JasonType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
-  ASSERT_FLOAT_EQ(value, slice.getDouble());
+  ASSERT_DOUBLE_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, SmallInt) {
@@ -1570,7 +1570,7 @@ TEST(SliceTest, StringEmpty) {
 }
 
 TEST(SliceTest, String1) {
-  Buffer[0] = 0x40 + strlen("foobar");
+  Buffer[0] = 0x40 + static_cast<char>(strlen("foobar"));
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
   uint8_t* p = (uint8_t*) &Buffer[1];
@@ -1651,7 +1651,7 @@ TEST(SliceTest, StringNullBytes) {
 }
 
 TEST(SliceTest, StringLong1) {
-  Buffer[0] = 0xbf;
+  Buffer[0] = static_cast<char>(0xbf);
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
   uint8_t* p = (uint8_t*) &Buffer[1];
@@ -1691,7 +1691,7 @@ TEST(SliceTest, IterateArrayValues) {
   JasonSlice s(parser.jason());
 
   size_t state = 0;
-  s.iterate([&state] (JasonSlice const& value) -> bool {
+  s.iterateArray([&state] (JasonSlice const& value) -> bool {
     switch (state++) {
       case 0:
         EXPECT_TRUE(value.isNumber());
@@ -1738,7 +1738,7 @@ TEST(SliceTest, IterateObjectKeys) {
   JasonSlice s(parser.jason());
 
   size_t state = 0;
-  s.iterate([&state] (JasonSlice const& key, JasonSlice const& value) -> bool {
+  s.iterateObject([&state] (JasonSlice const& key, JasonSlice const& value) -> bool {
     switch (state++) {
       case 0:
         EXPECT_EQ("1foo", key.copyString());
@@ -1778,7 +1778,7 @@ TEST(SliceTest, IterateObjectValues) {
   JasonSlice s(parser.jason());
 
   std::vector<std::string> seenKeys;
-  s.iterate([&] (JasonSlice const& key, JasonSlice const&) -> bool {
+  s.iterateObject([&] (JasonSlice const& key, JasonSlice const&) -> bool {
     seenKeys.emplace_back(key.copyString());
     return true;
   });
@@ -2166,7 +2166,7 @@ TEST(BuilderTest, ExternalDouble) {
   JasonSlice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
   ASSERT_EQ(JasonType::Double, sExternal.type());
-  ASSERT_FLOAT_EQ(v, sExternal.getDouble());
+  ASSERT_DOUBLE_EQ(v, sExternal.getDouble());
 }
 
 TEST(BuilderTest, ExternalBinary) {
@@ -2718,7 +2718,7 @@ TEST(ParserTest, UIntMaxNeg) {
   JasonSlice s(builder.start());
   checkBuild(s, JasonType::Double, 9ULL);
   // handle rounding errors
-  ASSERT_FLOAT_EQ(-18446744073709551615., s.getDouble());
+  ASSERT_DOUBLE_EQ(-18446744073709551615., s.getDouble());
 }
 
 TEST(ParserTest, IntMin) {
@@ -2746,7 +2746,7 @@ TEST(ParserTest, IntMinMinusOne) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   checkBuild(s, JasonType::Double, 9ULL);
-  ASSERT_FLOAT_EQ(-9223372036854775809., s.getDouble());
+  ASSERT_DOUBLE_EQ(-9223372036854775809., s.getDouble());
 }
 
 TEST(ParserTest, IntMax) {
@@ -2804,7 +2804,7 @@ TEST(ParserTest, UIntMaxPlusOne) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   checkBuild(s, JasonType::Double, 9ULL);
-  ASSERT_FLOAT_EQ(18446744073709551616., s.getDouble());
+  ASSERT_DOUBLE_EQ(18446744073709551616., s.getDouble());
 }
 
 TEST(ParserTest, Double1) {
@@ -4182,7 +4182,7 @@ TEST(LookupTest, LookupShortObject) {
 
   v = s.get("baz");  
   ASSERT_TRUE(v.isDouble());
-  ASSERT_FLOAT_EQ(13.53, v.getDouble());
+  ASSERT_DOUBLE_EQ(13.53, v.getDouble());
 
   v = s.get("qux");  
   ASSERT_TRUE(v.isArray());

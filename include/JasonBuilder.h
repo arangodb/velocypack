@@ -47,18 +47,15 @@ namespace arangodb {
 
         friend class JasonParser;   // The parser needs access to internals.
 
-      private:
-
+      public:
         // A struct for sorting index tables for objects:
-
         struct SortEntry {
           uint8_t const* nameStart;
           uint64_t nameSize;
           uint64_t offset;
         };
 
-        // thread local vector for sorting large object attributes
-        static thread_local std::vector<SortEntry> SortObjectEntries;
+      private:
 
         JasonBuffer<uint8_t> _buffer;  // Here we collect the result
         uint8_t*             _start;   // Always points to the start of _buffer
@@ -121,7 +118,7 @@ namespace arangodb {
         static void sortObjectIndexLong (uint8_t* objBase,
                                          std::vector<JasonLength>& offsets);
       public:
-
+        
         JasonOptions options;
 
         // Constructor and destructor:
@@ -303,11 +300,11 @@ namespace arangodb {
         void addInt (int64_t v) {
           if (v >= 0 && v <= 9) {
             reserveSpace(1);
-            _start[_pos++] = 0x30 + v;
+            _start[_pos++] = static_cast<uint8_t>(0x30 + v);
           }
           else if (v < 0 && v >= -6) {
             reserveSpace(1);
-            _start[_pos++] = 0x40 + v;
+            _start[_pos++] = static_cast<uint8_t>(0x40 + v);
           }
           else {
             appendInt(v, 0x1f);
@@ -317,7 +314,7 @@ namespace arangodb {
         void addUInt (uint64_t v) {
           if (v <= 9) {
             reserveSpace(1);
-            _start[_pos++] = 0x30 + v;
+            _start[_pos++] = static_cast<uint8_t>(0x30 + v);
           }
           else {
             appendUInt(v, 0x27);
@@ -342,7 +339,7 @@ namespace arangodb {
           }
           else {
             // short string
-            _start[_pos++] = 0x40 + strLen;
+            _start[_pos++] = static_cast<uint8_t>(0x40 + strLen);
           }
           target = _start + _pos;
           _pos += strLen;

@@ -72,15 +72,15 @@ namespace arangodb {
         explicit JasonException (JasonExceptionType type) : JasonException(type, message(type)) {
         }
       
-        char const* what() const noexcept {
+        char const* what() const throw() {
           return _msg.c_str();
         }
 
-        JasonExceptionType errorCode () const noexcept {
+        JasonExceptionType errorCode () const throw() {
           return _type;
         }
 
-        static char const* message (JasonExceptionType type) noexcept {
+        static char const* message (JasonExceptionType type) throw() {
           switch (type) {
             case InternalError:
               return "Internal error";

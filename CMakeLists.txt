@@ -53,9 +53,9 @@ elseif(MSVC)
   message(STATUS "Compiler type MSVC: ${CMAKE_CXX_COMPILER}")
   set(${CMAKE_CXX_FLAGS} "${CMAKE_CXX_FLAGS} /MT")
   set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  add_definitions("-D_CRT_SECURE_NO_WARNINGS=1")
   
   set(CAN_USE_SSE4_2 True CACHE BOOL "Use SSE4.2 optimizations")
-
 else()
   # unknown compiler
   message(STATUS "Compiler type UNKNOWN: ${CMAKE_CXX_COMPILER}")
@@ -85,7 +85,7 @@ else()
 endif()
   
 message(STATUS "Building with SSE 4.2 optimizations enabled: ${EnableSSE}")
-if(EnableSSE)
+if(EnableSSE AND NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
 endif()
 
