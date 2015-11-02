@@ -657,7 +657,11 @@ TEST(OutStreamTest, StringifyComplexObject) {
 
   std::ostringstream result;
   result << s;
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
+
+  ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
+  
+  std::string prettyResult = JasonPrettyDumper::Dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    \{\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, SimpleObject) {
