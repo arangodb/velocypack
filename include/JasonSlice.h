@@ -367,10 +367,15 @@ namespace arangodb {
             n = readInteger<JasonLength>(_start + end - 1 - 8, 8);
             nItemsSize = 9;
           }
+          // n now contains the correct number of entries
           
           JasonLength const ieBase = end - nItemsSize - n * ieSize;
 
-          if (isSorted()) {
+          // only use binary search for attributes if we have at least this many entries
+          // otherwise we'll always use the linear search
+          static JasonLength const SortedSearchEntriesThreshold = 4;
+
+          if (isSorted() && n >= SortedSearchEntriesThreshold) {
             // This means, we have to handle the special case n == 1 only
             // in the linear search!
             return searchObjectKeyBinary(attribute, ieBase, ieSize, n);
