@@ -94,29 +94,24 @@ reference, for arrays and objects see below for details:
   - 0xf0-0xff : custom types
 
 
-## Null and boolean values
-
-These three values use a single byte to store the corresponding JSON
-values.
-
-
 ## Arrays
 
 Arrays look like this:
 
-  0x04 or 0x05 or 0x06 or 0x07
+  0x01 or 0x02 or 0x03 or 0x04 or 0x05
   BYTELENGTH (one or 9 bytes)
   sub Jason values
   optional INDEXTABLE
   NRITEMS
 
 The INDEXTABLE consists of: 
-  - not existent for type 0x04, then it is guaranteed that all items
+  - not existent for type 0x01, then it is guaranteed that all items
     have the same byte length, this type is always taken for arrays with
     at most 1 element.
-  - 2-byte offsets (little endian unsigned) for type 0x05
-  - 4-byte offsets sequences (little endian unsigned) for type 0x06
-  - 8-byte offsets sequences (little endian unsigned) for type 0x07
+  - 1-byte offsets (unsigned) for type 0x02
+  - 2-byte offsets (little endian unsigned) for type 0x03
+  - 4-byte offsets sequences (little endian unsigned) for type 0x04
+  - 8-byte offsets sequences (little endian unsigned) for type 0x05
 
 NRITEMS is 1 or 9 bytes as follows: The last byte is either
   0x00 to indicate that the 8 preceding bytes are the length 
@@ -138,7 +133,7 @@ on whether the byte at address A+1 is non-zero or zero. The index table
 resides at the end of the space occupied by the value, just before the
 number of subvalues information. As a special case the empty array has
 A[1] set to 2 and no length information is needed. Note that an array
-with just a single member is always of type 0x04, since all its
+with just a single member is always of type 0x01, since all its
 subvalues have the same byte length.
 
 The number of subvalues is either stored as a single byte (last byte in
@@ -147,13 +142,14 @@ or, if that last byte is 0x00, in the preceding 8 bytes as a little
 endian unsigned int.
 
 The index table resides before this number of items information and
-its format depends on the type byte. For type 0x04 there is no index
+its format depends on the type byte. For type 0x01 there is no index
 table but it is guaranteed that all items have the same length (which
 can either be determined by looking at the first subitem or by dividing
 the byte length of the subitem area by the number of subitems. For type
-0x05 the offsets in the index table are 2-byte sequences (little endian
-unsigned int), for type 0x06, the entries are 4-byte sequences, and for
-type 0x07 the entries are 8-byte sequences. All offsets are measured
+0x02 the offsets in the index table are single unsigned bytes, for type
+0x03 they are 2-byte sequences (little endian
+unsigned int), for type 0x04, the entries are 4-byte sequences, and for
+type 0x05 the entries are 8-byte sequences. All offsets are measured
 from base A. Recall that for N=0, the byte length is 0x02 and there is
 no space used for N.
 
@@ -162,18 +158,20 @@ no space used for N.
 
 `[1,2,3]` has the hex dump 
 
-    04 06 31 32 33 03 
+    01 06 31 32 33 03 
 
 in the most compact representation, but the following are equally
 possible, though not advised to use:
 
 *Examples*:
 
-    05 0c 31 32 33 02 00 03 00 04 00 03
+    02 09 31 32 33 02 03 04 03
 
-    06 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
+    03 0c 31 32 33 02 00 03 00 04 00 03
 
-    07 1e 31 32 33
+    04 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
+
+    05 1e 31 32 33
     02 00 00 00 00 00 00 00 00
     03 00 00 00 00 00 00 00 00
     04 00 00 00 00 00 00 00 00 03
@@ -192,16 +190,17 @@ in one linear go.
 
 Objects look like this:
 
-  one of 0x08 - 0x0d, indicating the structure of the index
+  one of 0x06 - 0x0d, indicating the structure of the index
   BYTELENGTH (one or 9 bytes)
   sub Jason values as pairs of attribute and value
   optional INDEXTABLE
   NRITEMS
 
 The INDEXTABLE consists of: 
-  - 2-byte offsets (little endian unsigned) for types 0x08 and 0x0b
-  - 4-byte offsets sequences (little endian unsigned) for types 0x09 and 0x0c
-  - 8-byte offsets sequences (little endian unsigned) for types 0x0a and 0x0d
+  - 1-byte offsets (unsigned) for types 0x06 and 0x0a
+  - 2-byte offsets (little endian unsigned) for types 0x07 and 0x0b
+  - 4-byte offsets sequences (little endian unsigned) for types 0x08 and 0x0c
+  - 8-byte offsets sequences (little endian unsigned) for types 0x09 and 0x0d
 
 NRITEMS is 1 or 9 bytes as follows: The last byte is either
   0x00 to indicate that the 8 preceding bytes are the length 
@@ -232,12 +231,13 @@ or, if that last byte is 0x00, in the preceding 8 bytes as a little
 endian unsigned int.
 
 The index table resides before this number of items information and its
-format depends on the type byte. For types 0x08 and 0x0b the offsets in
-the index table are 2-byte sequences (little endian unsigned int), for
-types 0x09 and 0x0c, the offsets are 4-byte sequences, and for types
-0x0a and 0x0d the offsets are 8-byte sequences. All offsets are measured
-from base A. Recall that for N=0, the byte length is 0x02 and there is
-no space used for N, and that for N=1 there is no index table.
+format depends on the type byte. For types 0x06 and 0x0a, the offsets
+are single bytes, for types 0x07 and 0x0b the offsets in the index table
+are 2-byte sequences (little endian unsigned int), for types 0x08 and
+0x0c, the offsets are 4-byte sequences, and for types 0x09 and 0x0d the
+offsets are 8-byte sequences. All offsets are measured from base A.
+Recall that for N=0, the byte length is 0x02 and there is no space used
+for N, and that for N=1 there is no index table.
 
 Each entry consists of two parts, the key and the value, they are
 encoded as normal Jason values as above, the first is always a short or
@@ -263,32 +263,32 @@ one can build up a complex Jason value by writing linearly.
 
 Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    08 
-    16
+    06 
+    13
     41 62 03 
     41 61 28 0c 
     41 63 43 78 79 7a
-    05 00 02 00 09 00 03
+    05 02 09 03
 
 The same object could have been done with an index table with longer
 entries, as in this example:
 
-    09 
+    08 
     1c
     41 62 03 
     41 61 28 0c 
     41 63 43 78 79 7a
     05 00 00 00 02 00 00 00 09 00 00 00 03
 
-Similarly with type 0x0a and 8-byte offsets. Furthermore, it could be
-stored unsorted like in:
+Similarly with type 0x07 and 2-byte offsets, or with type 0x09 and
+8-byte offsets. Furthermore, it could be stored unsorted like in:
 
-    0b 
-    16
+    0a 
+    13
     41 62 03 
     41 61 28 0c 
     41 63 43 78 79 7a
-    02 00 05 00 09 00 03
+    02 05 09 03
 
 Note that it is not recommended to encode short arrays with too long
 index tables.
@@ -342,6 +342,12 @@ inclusively there are specific type bytes in the range 0x30 to 0x3f to
 allow for storage in a single byte. After that there are signed and
 unsigned integer types that can code in the type byte the number of
 bytes used (ranges 0x20-0x27 for signed and 0x28-0x2f for unsigned).
+
+
+## Null and boolean values
+
+These three values use a single byte to store the corresponding JSON
+values.
 
 
 ## Strings
