@@ -24,19 +24,21 @@ reference, for arrays and objects see below for details:
 
   - 0x00      : none - this indicates absence of any type and value,
                 this is not allowed in Jason values
-  - 0x01      : null
-  - 0x02      : false
-  - 0x03      : true
-  - 0x04      : array without index table (all subitems have the same 
+  - 0x01      : array without index table (all subitems have the same 
                 byte length)
-  - 0x05      : array with 2-byte index table entries
-  - 0x06      : array with 4-byte index table entries
-  - 0x07      : array with 8-byte index table entries
-  - 0x08      : object with 2-byte index table entries, sorted by 
+  - 0x02      : array with 1-byte index table entries
+  - 0x03      : array with 2-byte index table entries
+  - 0x04      : array with 4-byte index table entries
+  - 0x05      : array with 8-byte index table entries
+  - 0x06      : object with 1-byte index table entries, sorted by 
                 attribute name
-  - 0x09      : object with 4-byte index table entries, sorted by 
+  - 0x07      : object with 2-byte index table entries, sorted by 
                 attribute name
-  - 0x0a      : object with 8-byte index table entries, sorted by 
+  - 0x08      : object with 4-byte index table entries, sorted by 
+                attribute name
+  - 0x09      : object with 8-byte index table entries, sorted by 
+                attribute name
+  - 0x0a      : object with 1-byte index table entries, not sorted by 
                 attribute name
   - 0x0b      : object with 2-byte index table entries, not sorted by 
                 attribute name
@@ -53,7 +55,10 @@ reference, for arrays and objects see below for details:
                 allowed in Jason values on disk or on the network
   - 0x11      : minKey, nonsensical value that compares < than all other values
   - 0x12      : maxKey, nonsensical value that compares > than all other values
-  - 0x13-0x1f : reserved
+  - 0x13      : null
+  - 0x14      : false
+  - 0x15      : true
+  - 0x16-0x1f : reserved
   - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f, 
                 two's complement
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
