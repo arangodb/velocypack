@@ -407,7 +407,7 @@ void JasonParser::parseObject () {
 
   int i = skipWhiteSpace("Expecting item or '}'");
   if (i == '}') {
-    // empty array
+    // empty object
     consume();   // the closing ']'
     _b.close();
     return;

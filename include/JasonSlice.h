@@ -44,8 +44,6 @@ namespace arangodb {
 
     class JasonSlice {
 
-      using JT = JasonType;
-
       // This class provides read only access to a Jason value, it is
       // intentionally light-weight (only one pointer value), such that
       // it can easily be used to traverse larger Jason values.
