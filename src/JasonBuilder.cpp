@@ -567,7 +567,7 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
 }
 
 void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
-  JASON_ASSERT(options.sortAttributeNames == true);
+  JASON_ASSERT(options.checkAttributeUniqueness == true);
   JasonLength const n = obj.length();
 
   if (obj.isSorted()) {

@@ -686,7 +686,7 @@ TEST(PrettyDumperTest, ComplexObject) {
 }
 
 TEST(BufferDumperTest, Null) {
-  Buffer[0] = 0x1;
+  Buffer[0] = 0x13;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -698,7 +698,7 @@ TEST(BufferDumperTest, Null) {
 }
 
 TEST(StringDumperTest, Null) {
-  Buffer[0] = 0x1;
+  Buffer[0] = 0x13;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -736,7 +736,7 @@ TEST(StringDumperTest, Numbers) {
 }
 
 TEST(BufferDumperTest, False) {
-  Buffer[0] = 0x2;
+  Buffer[0] = 0x14;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -748,7 +748,7 @@ TEST(BufferDumperTest, False) {
 }
 
 TEST(StringDumperTest, False) {
-  Buffer[0] = 0x2;
+  Buffer[0] = 0x14;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -759,7 +759,7 @@ TEST(StringDumperTest, False) {
 }
 
 TEST(BufferDumperTest, True) {
-  Buffer[0] = 0x3;
+  Buffer[0] = 0x15;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -771,7 +771,7 @@ TEST(BufferDumperTest, True) {
 }
 
 TEST(StringDumperTest, True) {
-  Buffer[0] = 0x3;
+  Buffer[0] = 0x15;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1048,7 +1048,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
 }
 
 TEST(SliceTest, Null) {
-  Buffer[0] = 0x1;
+  Buffer[0] = 0x13;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1058,7 +1058,7 @@ TEST(SliceTest, Null) {
 }
 
 TEST(SliceTest, False) {
-  Buffer[0] = 0x2;
+  Buffer[0] = 0x14;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1069,7 +1069,7 @@ TEST(SliceTest, False) {
 }
 
 TEST(SliceTest, True) {
-  Buffer[0] = 0x3;
+  Buffer[0] = 0x15;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1831,7 +1831,7 @@ TEST(BuilderTest, Null) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x01 };
+    = { 0x13 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1844,7 +1844,7 @@ TEST(BuilderTest, False) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x02 };
+    = { 0x14 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1857,7 +1857,7 @@ TEST(BuilderTest, True) {
   JasonLength len = b.size();
 
   static uint8_t const correctResult[] 
-    = { 0x03 };
+    = { 0x15 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1996,7 +1996,7 @@ TEST(BuilderTest, Array4) {
         0x29, 0xb0, 0x04,   // uint(1200) = 0x4b0
         0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
         0x43, 0x61, 0x62, 0x63,
-        0x03,
+        0x15,
         0x02, 0x00, 0x05, 0x00, 0x0e, 0x00, 0x12, 0x00,
         0x04};
   dumpDouble(value, correctResult + 6);
@@ -2039,7 +2039,7 @@ TEST(BuilderTest, ObjectSorted) {
         0x41, 0x63, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
                                              // "c": double(2.3)
         0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
-        0x41, 0x61, 0x03,                    // "a": true
+        0x41, 0x61, 0x15,                    // "a": true
         0x18, 0x00, 0x12, 0x00, 0x07, 0x00, 0x02, 0x00,
         0x04
       };
@@ -2069,7 +2069,7 @@ TEST(BuilderTest, ObjectUnsorted) {
         0x41, 0x63, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
                                              // "c": double(2.3)
         0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
-        0x41, 0x61, 0x03,                    // "a": true
+        0x41, 0x61, 0x15,                    // "a": true
         0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
         0x04
       };
@@ -2098,7 +2098,7 @@ TEST(BuilderTest, Object4) {
         0x41, 0x62, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
                                              // "b": double(2.3)
         0x41, 0x63, 0x43, 0x61, 0x62, 0x63,  // "c": "abc"
-        0x41, 0x64, 0x03,                    // "d": true
+        0x41, 0x64, 0x15,                    // "d": true
         0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
         0x04
       };
