@@ -66,7 +66,7 @@ using JasonType         = arangodb::jason::JasonType;
     EXPECT_FALSE(true);                         \
   } 
   
-static char Buffer[4096];
+static unsigned char Buffer[4096];
 
 static void dumpDouble (double x, uint8_t* p) {
   uint64_t u;
@@ -782,7 +782,7 @@ TEST(StringDumperTest, True) {
 }
 
 TEST(StringDumperTest, CustomWithoutHandler) {
-  Buffer[0] = static_cast<char>(0xf0);
+  Buffer[0] = 0xf0;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1651,7 +1651,7 @@ TEST(SliceTest, StringNullBytes) {
 }
 
 TEST(SliceTest, StringLong1) {
-  Buffer[0] = static_cast<char>(0xbf);
+  Buffer[0] = 0xbf;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
   uint8_t* p = (uint8_t*) &Buffer[1];

@@ -51,10 +51,35 @@ elseif(CMAKE_COMPILER_IS_CLANGCXX)
 
 elseif(MSVC) 
   message(STATUS "Compiler type MSVC: ${CMAKE_CXX_COMPILER}")
-  set(${CMAKE_CXX_FLAGS} "${CMAKE_CXX_FLAGS} /MT")
-  set(${CMAKE_CXX_FLAGS_DEBUG} "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
+  set(DEBUG_MODE False)
   add_definitions("-D_CRT_SECURE_NO_WARNINGS=1")
-  
+
+  foreach (flag_var
+           CMAKE_CXX_FLAGS
+           CMAKE_CXX_FLAGS_DEBUG
+           CMAKE_CXX_FLAGS_RELEASE
+           CMAKE_CXX_FLAGS_MINSIZEREL
+           CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+    if (${flag_var} MATCHES "/MD")
+      string(REGEX REPLACE "/MDd?" "" ${flag_var} "${${flag_var}}")
+    endif()
+
+    if (flag_var MATCHES "DEBUG")
+      set(${flag_var} "${${flag_var}} /MTd")
+      set(DEBUG_MODE True)
+    else ()
+      set(${flag_var} "${${flag_var}} /MT")
+    endif ()
+  endforeach()
+
+  # https://msdn.microsoft.com/en-us/library/aa267384%28VS.60%29.aspx
+  if(DEBUG_MODE)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE /LTCG /ignore:4099 /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:msvcrtd.lib")
+  else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE /LTCG /ignore:4099 /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:msvcrtd.lib")
+  endif()
+
   set(CAN_USE_SSE4_2 True CACHE BOOL "Use SSE4.2 optimizations")
 else()
   # unknown compiler
