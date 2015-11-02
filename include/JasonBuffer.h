@@ -133,23 +133,23 @@ namespace arangodb {
         }
 
         void push_back (char c) {
-          reserve(_pos + 1); 
+          reserve(1); 
           _buffer[_pos++] = c;
         }
 
         void append (char c) {
-          reserve(_pos + 1); 
+          reserve(1); 
           _buffer[_pos++] = c;
         }
 
         void append (char const* p, JasonLength len) {
-          reserve(_pos + len);
+          reserve(len);
           memcpy(_buffer + _pos, p, len);
           _pos += len;
         }
 
         void append (uint8_t const* p, JasonLength len) {
-          reserve(_pos + len);
+          reserve(len);
           memcpy(_buffer + _pos, p, len);
           _pos += len;
         }
