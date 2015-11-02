@@ -30,8 +30,21 @@
 
 using namespace arangodb::jason;
 
+// redefine thread_local for some platforms
+#ifdef __APPLE__
+
+#if __llvm__ == 1
+#define thread_local __thread
+#endif
+
+#elif defined(_WIN32) && defined(_MSC_VER)
+
+#define thread_local __declspec( thread )
+
+#endif
+
 // thread local vector for sorting large object attributes
-thread_local std::vector<JasonBuilder::SortEntry> JasonBuilder::SortObjectEntries;
+thread_local std::vector<JasonBuilder::SortEntry> SortObjectEntries;
 
 void JasonBuilder::doActualSort (std::vector<SortEntry>& entries) {
   JASON_ASSERT(entries.size() > 1);

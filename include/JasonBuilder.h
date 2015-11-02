@@ -47,18 +47,15 @@ namespace arangodb {
 
         friend class JasonParser;   // The parser needs access to internals.
 
-      private:
-
+      public:
         // A struct for sorting index tables for objects:
-
         struct SortEntry {
           uint8_t const* nameStart;
           uint64_t nameSize;
           uint64_t offset;
         };
 
-        // thread local vector for sorting large object attributes
-        static thread_local std::vector<SortEntry> SortObjectEntries;
+      private:
 
         JasonBuffer<uint8_t> _buffer;  // Here we collect the result
         uint8_t*             _start;   // Always points to the start of _buffer
@@ -121,7 +118,7 @@ namespace arangodb {
         static void sortObjectIndexLong (uint8_t* objBase,
                                          std::vector<JasonLength>& offsets);
       public:
-
+        
         JasonOptions options;
 
         // Constructor and destructor:
