@@ -271,8 +271,6 @@ namespace arangodb {
           return *this;
         }
 
-      private:
-
         void addNull () {
           reserveSpace(1);
           _start[_pos++] = 0x01;
@@ -351,6 +349,16 @@ namespace arangodb {
           return target;
         }
 
+        void addArray () {
+          addCompoundValue(0x05);
+        }
+
+        void addObject () {
+          addCompoundValue(0x08);
+        }
+
+      private:
+
         void addCompoundValue (uint8_t type) {
           reserveSpace(10);
           // an array is started:
@@ -364,14 +372,6 @@ namespace arangodb {
           _pos += 8;              // Possible space for long bytelength
         }
 
-        void addArray () {
-          addCompoundValue(0x05);
-        }
-          
-        void addObject () {
-          addCompoundValue(0x08);
-        }
- 
         void set (Jason const& item);
 
         uint8_t* set (JasonPair const& pair);
