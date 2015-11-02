@@ -33,6 +33,7 @@
 #include <vector>
 #include <ostream>
 #include <functional>
+#include <algorithm>
 
 #include "Jason.h"
 #include "JasonException.h"
@@ -382,7 +383,7 @@ namespace arangodb {
           return get(attribute);
         }
 
-        void iterate (std::function<bool(JasonSlice const&)> const& callback) const {
+        void iterateArray (std::function<bool(JasonSlice const&)> const& callback) const {
           JasonLength const n = length(); 
           for (JasonLength i = 0; i < n; ++i) {
             if (! callback(at(i))) {
@@ -391,7 +392,7 @@ namespace arangodb {
           }
         }
 
-        void iterate (std::function<bool(JasonSlice const&, JasonSlice const&)> const& callback) const {
+        void iterateObject (std::function<bool(JasonSlice const&, JasonSlice const&)> const& callback) const {
           JasonLength const n = length(); 
           for (JasonLength i = 0; i < n; ++i) {
             if (! callback(keyAt(i), valueAt(i))) {

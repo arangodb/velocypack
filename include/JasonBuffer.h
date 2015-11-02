@@ -120,7 +120,7 @@ namespace arangodb {
           return _alloc;
         }
 
-        void reset () noexcept {
+        void reset () {
           if (_buffer != _local) {
             delete[] _buffer;
             _buffer = _local;
@@ -172,7 +172,7 @@ namespace arangodb {
           static double const GrowthFactor = 1.25;
           if (_pos > 0 && newLen < GrowthFactor * _pos) {
             // ensure the buffer grows sensibly and not by 1 byte only
-            newLen = GrowthFactor * _pos;
+            newLen = static_cast<JasonLength>(GrowthFactor * _pos);
           }
           JASON_ASSERT(newLen > _pos);
 

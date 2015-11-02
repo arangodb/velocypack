@@ -99,8 +99,7 @@ void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
   // nono thread local
   std::vector<JasonBuilder::SortEntry> entries;
 #elif defined(_WIN32) && defined(_MSC_VER)
-  __declspec(thread) std::vector<JasonBuilder::SortEntry> entries;
-  entries.clear();
+  std::vector<JasonBuilder::SortEntry> entries;
 #else
   // thread local vector for sorting large object attributes
   thread_local std::vector<JasonBuilder::SortEntry> entries;
@@ -268,7 +267,7 @@ void JasonBuilder::close () {
 
   // Fix the byte length in the beginning:
   if (smallByteLength) {
-    _start[tos + 1] = _pos - tos;
+    _start[tos + 1] = static_cast<uint8_t>(_pos - tos);
   }
   else {
     _start[tos + 1] = 0x00;
@@ -460,7 +459,7 @@ void JasonBuilder::set (Jason const& item) {
       if (size <= 126) {
         // short string
         reserveSpace(1 + size);
-        _start[_pos++] = 0x40 + size;
+        _start[_pos++] = static_cast<uint8_t>(0x40 + size);
         memcpy(_start + _pos, s->c_str(), size);
       }
       else {
@@ -544,7 +543,7 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     else {
       // short string
       reserveSpace(1 + size);
-      _start[_pos++] = 0x40 + size;
+      _start[_pos++] = static_cast<uint8_t>(0x40 + size);
       _pos += size;
     }
     // Note that the data is not filled in! It is the responsibility

@@ -370,7 +370,7 @@ namespace arangodb {
               _buffer->push_back('-');
               v = -v;
             }
-            _buffer->push_back('0' + v);
+            _buffer->push_back('0' + static_cast<char>(v));
           }
           else {
             throw JasonException(JasonException::InternalError, "Unexpected number type");

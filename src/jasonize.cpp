@@ -28,7 +28,6 @@
 #include <string>
 #include <fstream>
 #include <thread>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -47,7 +46,26 @@ using JasonLength      = arangodb::jason::JasonLength;
 using JasonParser      = arangodb::jason::JasonParser;
 using JasonSlice       = arangodb::jason::JasonSlice;
 using JasonType        = arangodb::jason::JasonType;
-  
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#include <io.h>
+#include <stdio.h>
+
+#define S_IRUSR _S_IREAD
+#define S_IWUSR _S_IWRITE
+#define S_IRGRP _S_IREAD
+#define S_IWGRP _S_IWRITE
+
+#define open(...) _open(__VA_ARGS__)
+#define read(fd, dest, length) _read(fd, dest, length)
+#define write(fd, start, length) _write(fd, start, static_cast<unsigned int>(length))
+#define close(fd) _close(fd)
+#define ftruncate(fd, offset) _chsize(fd, offset)
+
+#else
+#include <unistd.h>
+#endif
+
 using namespace std;
 
 static void usage () {

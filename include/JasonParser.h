@@ -177,7 +177,7 @@ namespace arangodb {
 
         JasonLength parseInternal (bool multi);
 
-        inline bool isWhiteSpace (uint8_t i) const noexcept {
+        inline bool isWhiteSpace (uint8_t i) const throw() {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
         }
 
