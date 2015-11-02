@@ -28,9 +28,6 @@
 #include <string>
 #include <fstream>
 #include <thread>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "Jason.h"
 #include "JasonBuilder.h"
@@ -46,25 +43,6 @@ using JasonLength      = arangodb::jason::JasonLength;
 using JasonParser      = arangodb::jason::JasonParser;
 using JasonSlice       = arangodb::jason::JasonSlice;
 using JasonType        = arangodb::jason::JasonType;
-
-#if defined(_WIN32) && defined(_MSC_VER)
-#include <io.h>
-#include <stdio.h>
-
-#define S_IRUSR _S_IREAD
-#define S_IWUSR _S_IWRITE
-#define S_IRGRP _S_IREAD
-#define S_IWGRP _S_IWRITE
-
-#define open(...) _open(__VA_ARGS__)
-#define read(fd, dest, length) _read(fd, dest, length)
-#define write(fd, start, length) _write(fd, start, static_cast<unsigned int>(length))
-#define close(fd) _close(fd)
-#define ftruncate(fd, offset) _chsize(fd, offset)
-
-#else
-#include <unistd.h>
-#endif
 
 using namespace std;
 
@@ -82,23 +60,23 @@ int main (int argc, char* argv[]) {
   }
 
   std::string s;
-  int fd = ::open(argv[1], O_RDONLY);
-  if (fd < 0) {
+  std::ifstream ifs(argv[1], std::ifstream::in);
+
+  if (! ifs.is_open()) {
     cerr << "Cannot read infile '" << argv[1] << "'" << endl;
     return EXIT_FAILURE;
   }
 
   char buffer[4096];
-  int len;
-  while (true) {
-    len = ::read(fd, buffer, 4096);
-    if (len <= 0) {
+  while (ifs.good()) {
+    ifs.read(&buffer[0], sizeof(buffer));
+    if (! ifs) {
       break;
     }
-    s.append(buffer, len);
+    s.append(buffer, ifs.gcount());
   }
-  ::close(fd);
-  
+  ifs.close();
+
   JasonParser parser;
   try {
     parser.parse(s);
@@ -113,40 +91,28 @@ int main (int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
   
+  std::ofstream ofs(argv[2], std::ofstream::out);
+ 
+  if (! ofs.is_open()) {
+    cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
+    return EXIT_FAILURE;
+  }
+
+  // reset stream
+  ofs.seekp(0);
+
+  // write into stream
   JasonBuilder builder = parser.steal();
   uint8_t const* start = builder.start();
-  size_t end = static_cast<size_t>(builder.size());
- 
-  fd = ::open(argv[2], O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+  ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
-  if (fd < 0) {
+  if (! ofs) {
     cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
-    return EXIT_FAILURE;
-  }
-  int res = ::ftruncate(fd, 0);
-  if (res < 0) {
-    cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
-    ::close(fd);
+    ofs.close();
     return EXIT_FAILURE;
   }
 
-  size_t current = 0;
-  while (current < end) {
-    size_t toWrite = end - current;
-    if (toWrite > 16384) {
-      toWrite = 16384;
-    }
-    int len = ::write(fd, start + current, toWrite);
-    if (len > 0) {
-      current += static_cast<size_t>(len);
-    }
-    else if (len <= 0) {
-      ::close(fd);
-      cerr << "Cannot write outfile '" << argv[2] << "'" << endl;
-      return EXIT_FAILURE;
-    }
-  }
-  ::close(fd);
+  ofs.close();
 
   cout << "Successfully converted JSON infile '" << argv[1] << "'" << endl;
   cout << "JSON Infile size:   " << s.size() << endl;
