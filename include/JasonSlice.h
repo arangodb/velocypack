@@ -706,12 +706,11 @@ namespace arangodb {
           JasonLength const ieSize = indexEntrySize(h);
           JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
 
-          JasonLength dataOffset = 0;
+          JasonLength dataOffset = findDataOffset(h);
           
           // find the number of items
           JasonLength n;
           if (h <= 0x05) {    // No offset table or length, need to compute:
-            dataOffset = findDataOffset(h);
             JasonSlice first(_start + dataOffset);
             n = (end - dataOffset) / first.byteSize();
           }
