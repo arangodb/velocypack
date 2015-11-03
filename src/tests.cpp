@@ -622,21 +622,28 @@ TEST(TypesTest, TestNames) {
 }
 
 TEST(TypesTest, TestNamesArrays) {
-  uint8_t const arrays[] = { 0x04, 0x05, 0x06, 0x07 };
+  uint8_t const arrays[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x9 };
   ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[0]).type())));
   ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[1]).type())));
   ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[2]).type())));
   ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[3]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[4]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[5]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[6]).type())));
+  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[7]).type())));
 }
 
 TEST(TypesTest, TestNamesObjects) {
-  uint8_t const objects[] = { 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d };
+  uint8_t const objects[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12 };
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[0]).type())));
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[1]).type())));
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[2]).type())));
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[3]).type())));
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[4]).type())));
   ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[5]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[6]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[7]).type())));
+  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[8]).type())));
 }
 
 TEST(OutStreamTest, StringifyComplexObject) {
@@ -652,6 +659,7 @@ TEST(OutStreamTest, StringifyComplexObject) {
   std::ostringstream result;
   result << s;
 
+  // TODO: fix byteSize
   ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
   
   std::string prettyResult = JasonPrettyDumper::Dump(s);
@@ -666,9 +674,15 @@ TEST(PrettyDumperTest, SimpleObject) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
+  
+  std::ostringstream result;
+  result << s;
 
-  std::string result = JasonPrettyDumper::Dump(s);
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result);
+  // TODO: fix byteSize
+  ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
+
+  std::string prettyResult = JasonPrettyDumper::Dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, ComplexObject) {
@@ -686,7 +700,7 @@ TEST(PrettyDumperTest, ComplexObject) {
 }
 
 TEST(BufferDumperTest, Null) {
-  Buffer[0] = 0x13;
+  Buffer[0] = 0x18;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -698,7 +712,7 @@ TEST(BufferDumperTest, Null) {
 }
 
 TEST(StringDumperTest, Null) {
-  Buffer[0] = 0x13;
+  Buffer[0] = 0x18;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -725,18 +739,18 @@ TEST(StringDumperTest, Numbers) {
     };
 
     i = pp; check();
-    i = pp+1; check();
-    i = pp-1; check();
+    i = pp + 1; check();
+    i = pp - 1; check();
     i = -pp; check();
-    i = -pp+1; check();
-    i = -pp-1; check();
+    i = -pp + 1; check();
+    i = -pp - 1; check();
 
     pp *= 2;
   }
 }
 
 TEST(BufferDumperTest, False) {
-  Buffer[0] = 0x14;
+  Buffer[0] = 0x19;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -748,7 +762,7 @@ TEST(BufferDumperTest, False) {
 }
 
 TEST(StringDumperTest, False) {
-  Buffer[0] = 0x14;
+  Buffer[0] = 0x19;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -759,7 +773,7 @@ TEST(StringDumperTest, False) {
 }
 
 TEST(BufferDumperTest, True) {
-  Buffer[0] = 0x15;
+  Buffer[0] = 0x1a;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -771,7 +785,7 @@ TEST(BufferDumperTest, True) {
 }
 
 TEST(StringDumperTest, True) {
-  Buffer[0] = 0x15;
+  Buffer[0] = 0x1a;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -812,7 +826,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   ASSERT_TRUE(sawCustom);
 }
 
-TEST(StringDumperTest, ArangoDBIdCallbackMulti) {
+TEST(StringDumperTest, CustomWithCallbackWithContent) {
   JasonBuilder b;
   b.add(Jason(JasonType::Object));
   uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
@@ -1074,7 +1088,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
 }
 
 TEST(SliceTest, Null) {
-  Buffer[0] = 0x13;
+  Buffer[0] = 0x18;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1084,7 +1098,7 @@ TEST(SliceTest, Null) {
 }
 
 TEST(SliceTest, False) {
-  Buffer[0] = 0x14;
+  Buffer[0] = 0x19;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1095,7 +1109,7 @@ TEST(SliceTest, False) {
 }
 
 TEST(SliceTest, True) {
-  Buffer[0] = 0x15;
+  Buffer[0] = 0x1a;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1106,7 +1120,7 @@ TEST(SliceTest, True) {
 }
 
 TEST(SliceTest, MinKey) {
-  Buffer[0] = 0x11;
+  Buffer[0] = 0x1e;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1116,7 +1130,7 @@ TEST(SliceTest, MinKey) {
 }
 
 TEST(SliceTest, MaxKey) {
-  Buffer[0] = 0x12;
+  Buffer[0] = 0x1f;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
@@ -1126,7 +1140,7 @@ TEST(SliceTest, MaxKey) {
 }
 
 TEST(SliceTest, Double) {
-  Buffer[0] = 0x0e;
+  Buffer[0] = 0x1b;
 
   double value = 23.5;
   dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
@@ -1140,7 +1154,7 @@ TEST(SliceTest, Double) {
 }
 
 TEST(SliceTest, DoubleNegative) {
-  Buffer[0] = 0x0e;
+  Buffer[0] = 0x1b;
 
   double value = -999.91355;
   dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
@@ -1567,15 +1581,13 @@ TEST(SliceTest, UInt8) {
 }
 
 TEST(SliceTest, ArrayEmpty) {
-  Buffer[0] = 0x05;
-  uint8_t* p = (uint8_t*) &Buffer[1];
-  *p++ = 0x02;
+  Buffer[0] = 0x01;
 
   JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
 
   ASSERT_EQ(JasonType::Array, slice.type());
   ASSERT_TRUE(slice.isArray());
-  ASSERT_EQ(2ULL, slice.byteSize());
+  ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_EQ(0ULL, slice.length());
 }
 
@@ -1856,8 +1868,7 @@ TEST(BuilderTest, Null) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t const correctResult[] 
-    = { 0x13 };
+  static uint8_t const correctResult[] = { 0x18 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1869,8 +1880,7 @@ TEST(BuilderTest, False) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t const correctResult[] 
-    = { 0x14 };
+  static uint8_t const correctResult[] = { 0x19 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1882,8 +1892,7 @@ TEST(BuilderTest, True) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t const correctResult[] 
-    = { 0x15 };
+  static uint8_t const correctResult[] = { 0x1a };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1896,8 +1905,7 @@ TEST(BuilderTest, Double) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[9] 
-    = { 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  static uint8_t correctResult[9] = { 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   ASSERT_EQ(8ULL, sizeof(double));
   dumpDouble(value, correctResult + 1);
 
@@ -1928,8 +1936,7 @@ TEST(BuilderTest, ArrayEmpty) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x04, 0x02 };
+  static uint8_t correctResult[] = { 0x01 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1941,11 +1948,10 @@ TEST(BuilderTest, ArraySingleEntry) {
   b.add(Jason(uint64_t(1)));
   b.close();
   uint8_t* result = b.start();
-  ASSERT_EQ(0x04U, *result);
+  ASSERT_EQ(0x02U, *result);
   JasonLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x04, 0x04, 0x31, 0x01 };
+  static uint8_t correctResult[] = { 0x02, 0x03, 0x31 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1958,12 +1964,11 @@ TEST(BuilderTest, ArraySingleEntryLong) {
   b.add(Jason(value));
   b.close();
   uint8_t* result = b.start();
-  ASSERT_EQ(0x04U, *result);
+  ASSERT_EQ(0x03U, *result);
   JasonLength len = b.size(); 
 
   static uint8_t correctResult[] = {
-    0x04, 0x00, 0x2e, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x1a, 0x01, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x6e, 0x67, 0x64, 0x64, 0x64, 0x64, 0x64, 0x6c, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 
+    0x03, 0x1d, 0x01, 0x6e, 0x67, 0x64, 0x64, 0x64, 0x64, 0x64, 0x6c, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 
     0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 
     0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x73, 0x64, 0x64, 0x64, 0x66, 0x66, 
     0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 
@@ -1980,7 +1985,7 @@ TEST(BuilderTest, ArraySingleEntryLong) {
     0x6b, 0x6b, 0x6b, 0x6b, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 
     0x64, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x66, 0x76, 0x76, 0x76, 0x76, 
     0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 
-    0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x66, 0x76, 0x67, 0x66, 0x66, 0x66, 0x01,     
+    0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x66, 0x76, 0x67, 0x66, 0x66, 0x66     
   };
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -1997,8 +2002,7 @@ TEST(BuilderTest, ArraySameSizeEntries) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x04, 0x06, 0x31, 0x32, 0x33, 0x03 };
+  static uint8_t correctResult[] = { 0x02, 0x05, 0x31, 0x32, 0x33 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
