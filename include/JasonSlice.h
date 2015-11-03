@@ -728,6 +728,7 @@ namespace arangodb {
             // no index table, but all array items have the same length
             // now fetch first item and determine its length
             // Note that dataOffset is already set!
+            JASON_ASSERT(dataOffset > 0);
             JasonSlice firstItem(_start + dataOffset);
             return JasonSlice(_start + dataOffset + index * firstItem.byteSize());
           }
