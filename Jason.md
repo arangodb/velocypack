@@ -24,41 +24,49 @@ reference, for arrays and objects see below for details:
 
   - 0x00      : none - this indicates absence of any type and value,
                 this is not allowed in Jason values
-  - 0x01      : array without index table (all subitems have the same 
-                byte length)
-  - 0x02      : array with 1-byte index table entries
-  - 0x03      : array with 2-byte index table entries
-  - 0x04      : array with 4-byte index table entries
-  - 0x05      : array with 8-byte index table entries
-  - 0x06      : object with 1-byte index table entries, sorted by 
-                attribute name
-  - 0x07      : object with 2-byte index table entries, sorted by 
-                attribute name
-  - 0x08      : object with 4-byte index table entries, sorted by 
-                attribute name
-  - 0x09      : object with 8-byte index table entries, sorted by 
-                attribute name
-  - 0x0a      : object with 1-byte index table entries, not sorted by 
-                attribute name
-  - 0x0b      : object with 2-byte index table entries, not sorted by 
-                attribute name
-  - 0x0c      : object with 4-byte index table entries, not sorted by 
-                attribute name
-  - 0x0d      : object with 8-byte index table entries, not sorted by 
-                attribute name
-  - 0x0e      : double IEEE-754, 8 bytes follow, stored as little 
+  - 0x01      : empty array
+  - 0x02      : array without index table (all subitems have the same 
+                byte length), 1-byte byte length
+  - 0x03      : array without index table (all subitems have the same 
+                byte length), 2-byte byte length
+  - 0x04      : array without index table (all subitems have the same 
+                byte length), 4-byte byte length
+  - 0x05      : array without index table (all subitems have the same 
+                byte length), 8-byte byte length
+  - 0x06      : array with 1-byte index table offsets, bytelen and # subvals
+  - 0x07      : array with 2-byte index table offsets, bytelen and # subvals
+  - 0x08      : array with 4-byte index table offsets, bytelen and # subvals
+  - 0x09      : array with 8-byte index table offsets, bytelen and # subvals
+  - 0x0a      : empty object
+  - 0x0b      : object with 1-byte index table offsets, sorted by 
+                attribute name, 1-byte bytelen and # subvals
+  - 0x0c      : object with 2-byte index table offsets, sorted by 
+                attribute name, 2-byte bytelen and # subvals
+  - 0x0d      : object with 4-byte index table offsets, sorted by 
+                attribute name, 4-byte bytelen and # subvals
+  - 0x0e      : object with 8-byte index table offsets, sorted by 
+                attribute name, 8-byte bytelen and # subvals
+  - 0x0f      : object with 1-byte index table offsets, not sorted by 
+                attribute name, 1-byte bytelen and # subvals
+  - 0x10      : object with 2-byte index table offsets, not sorted by 
+                attribute name, 2-byte bytelen and # subvals
+  - 0x11      : object with 4-byte index table offsets, not sorted by 
+                attribute name, 4-byte bytelen and # subvals
+  - 0x12      : object with 8-byte index table offsets, not sorted by 
+                attribute name, 8-byte bytelen and # subvals
+  - 0x13-0x17 : reserved
+  - 0x18      : null
+  - 0x19      : false
+  - 0x1a      : true
+  - 0x1b      : double IEEE-754, 8 bytes follow, stored as little 
                 endian uint64 equivalent
-  - 0x0f      : UTC-date in milliseconds since the epoch, stored as 8 byte
+  - 0x1c      : UTC-date in milliseconds since the epoch, stored as 8 byte
                 signed int, little endian, two's complement
-  - 0x10      : external (only in memory): a char* pointing to the actual
+  - 0x1d      : external (only in memory): a char* pointing to the actual
                 place in memory, where another Jason item resides, not
                 allowed in Jason values on disk or on the network
-  - 0x11      : minKey, nonsensical value that compares < than all other values
-  - 0x12      : maxKey, nonsensical value that compares > than all other values
-  - 0x13      : null
-  - 0x14      : false
-  - 0x15      : true
-  - 0x16-0x1f : reserved
+  - 0x1e      : minKey, nonsensical value that compares < than all other values
+  - 0x1f      : maxKey, nonsensical value that compares > than all other values
   - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f, 
                 two's complement
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
@@ -96,80 +104,73 @@ reference, for arrays and objects see below for details:
 
 ## Arrays
 
-Arrays look like this:
+Empty arrays are simply a single byte 0x01.
 
-  0x01 or 0x02 or 0x03 or 0x04 or 0x05
-  BYTELENGTH (one or 9 bytes)
+Nonempty arrays look like this:
+
+  one of 0x02 to 0x09
+  BYTELENGTH
   sub Jason values
   optional INDEXTABLE
-  NRITEMS
+  optional NRITEMS
+
+Numbers (for byte length, number of subvalues and offsets in the
+INDEXTABLE) are little endian unsigned integers, using 1 byte for
+types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
+0x04 and 0x08, and 8 bytes for types 0x05 and 0x09.
 
 The INDEXTABLE consists of: 
-  - not existent for type 0x01, then it is guaranteed that all items
-    have the same byte length, this type is always taken for arrays with
-    at most 1 element.
-  - 1-byte offsets (unsigned) for type 0x02
-  - 2-byte offsets (little endian unsigned) for type 0x03
-  - 4-byte offsets sequences (little endian unsigned) for type 0x04
-  - 8-byte offsets sequences (little endian unsigned) for type 0x05
+  - not existent for types 0x02-0x05, then it is guaranteed that all 
+    items have the same byte length, one of these types is always 
+    taken for arrays with 1 element.
+  - for types 0x06-0x09 an array of offsets (unaligned, in the number
+    format described above) earlier offsets reside at lower addresses.
 
-NRITEMS is 1 or 9 bytes as follows: The last byte is either
-  0x00 to indicate that the 8 preceding bytes are the length 
-       (little endian unsigned integer)
-  0x01-0xff to directly store the length
+NRITEMS is a single number as described above.
 
 
-Arrays have a small header including their byte length, then all the
-subvalues and an index table containing offsets to the subvalues and
-finally the number of subvalues. To find the index table, find the end,
-then the number of subvalues and from that the base of the index table,
-considering how long its entries are. There are two variants for this
-byte length, a one byte variant with values between 0x02 and 0xff, or an 8
-byte integer. The small values are specified by one byte following the
-type byte with values 0x02 to 0xff. If this length byte is 0x00, then
-the next 8 bytes are the length as little endian unsigned integer. Thus,
-the first entry is either at adress A+2 or at address A+10, depending
-on whether the byte at address A+1 is non-zero or zero. The index table
-resides at the end of the space occupied by the value, just before the
-number of subvalues information. As a special case the empty array has
-A[1] set to 2 and no length information is needed. Note that an array
-with just a single member is always of type 0x01, since all its
-subvalues have the same byte length.
+Nonempty arrays have a small header including their byte length, then
+all the subvalues and an index table containing offsets to the subvalues
+and finally the number of subvalues. To find the index table, find the
+end, then the number of subvalues and from that the base of the index
+table, considering how wide its entries are.
 
-The number of subvalues is either stored as a single byte (last byte in
-item, possible values 0x01 to 0xff) containing the number N of entries,
-or, if that last byte is 0x00, in the preceding 8 bytes as a little
-endian unsigned int.
+For types 0x02 to 0x05 there is no offset table and no number of items.
+The first item begins at address A+2, A+3, A+5 or respectively A+9 and
+one can determine the number by finding the byte length of the first
+subvalue and dividing the amount of available space by it.
 
-The index table resides before this number of items information and
-its format depends on the type byte. For type 0x01 there is no index
-table but it is guaranteed that all items have the same length (which
-can either be determined by looking at the first subitem or by dividing
-the byte length of the subitem area by the number of subitems. For type
-0x02 the offsets in the index table are single unsigned bytes, for type
-0x03 they are 2-byte sequences (little endian
-unsigned int), for type 0x04, the entries are 4-byte sequences, and for
-type 0x05 the entries are 8-byte sequences. All offsets are measured
-from base A. Recall that for N=0, the byte length is 0x02 and there is
-no space used for N.
+For types 0x06 to 0x09 the offset table describes where the subvalues
+reside. It is not necessary for the subvalues to start immediately after
+the byte length field. For performance reasons when building the value,
+it could be desirable to reserve 8 bytes for the byte length and not
+fill the gap, even though it turns out later that offsets and thus the
+byte length only uses 2 bytes, say. The number of subvalues is stored
+after the offset table as another number in the format described above.
+
+All offsets are measured from base A.
 
 
 *Example*:
 
 `[1,2,3]` has the hex dump 
 
-    01 06 31 32 33 03 
+    02 05 31 32 33
 
 in the most compact representation, but the following are equally
-possible, though not advised to use:
+possible, though not necessarily advised to use:
 
 *Examples*:
 
-    02 09 31 32 33 02 03 04 03
+    03 06 00 31 32 33
 
-    03 0c 31 32 33 02 00 03 00 04 00 03
+    04 08 00 00 00 31 32 33
 
-    04 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
+    05 0c 00 00 00 00 00 00 00 31 32 33
+
+    06 09 31 32 33 02 03 04 03
+
+    07 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
 
     05 1e 31 32 33
     02 00 00 00 00 00 00 00 00
