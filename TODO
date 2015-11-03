@@ -1,5 +1,7 @@
 * create table with JSON/Jason size comparisons (JS)
 
+* split tests into multiple files
+
 * properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
   - Dumper & Slicer need support
