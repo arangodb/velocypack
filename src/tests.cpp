@@ -659,7 +659,7 @@ TEST(OutStreamTest, StringifyComplexObject) {
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[JasonSlice object, byteSize: 107]", result.str());
+  ASSERT_EQ("[JasonSlice object (0x0f), byteSize: 107]", result.str());
   
   std::string prettyResult = JasonPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
@@ -677,7 +677,7 @@ TEST(PrettyDumperTest, SimpleObject) {
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[JasonSlice object, byteSize: 11]", result.str());
+  ASSERT_EQ("[JasonSlice object (0x0b), byteSize: 11]", result.str());
 
   std::string prettyResult = JasonPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
@@ -3535,7 +3535,7 @@ TEST(ParserTest, ShortArrayMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(7ULL, s.head()); 
-  checkBuild(s, JasonType::Array, 251);
+  checkBuild(s, JasonType::Array, 1019);
   ASSERT_EQ(255ULL, s.length());
   
   for (size_t i = 0; i < 255; ++i) {
@@ -3577,7 +3577,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(4ULL, s.head());
-  checkBuild(s, JasonType::Array, 82);
+  checkBuild(s, JasonType::Array, 67154);
   ASSERT_EQ(67149ULL, s.length());
   
   for (size_t i = 0; i < 65; ++i) {
@@ -3607,7 +3607,7 @@ TEST(ParserTest, LongArrayManyMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(7ULL, s.head()); 
-  checkBuild(s, JasonType::Array, 1033);
+  checkBuild(s, JasonType::Array, 1023);
   ASSERT_EQ(256ULL, s.length());
   
   for (size_t i = 0; i < 256; ++i) {
@@ -3864,7 +3864,7 @@ TEST(ParserTest, ObjectMixed) {
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
-  checkBuild(ss, JasonType::String, 3);
+  checkBuild(ss, JasonType::String, 4);
   std::string correct = "bar";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
@@ -3949,7 +3949,7 @@ TEST(ParserTest, ShortObjectMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(0xcULL, s.head()); 
-  checkBuild(s, JasonType::Object, 3061);
+  checkBuild(s, JasonType::Object, 3059);
   ASSERT_EQ(255ULL, s.length());
   
   for (size_t i = 0; i < 255; ++i) {
@@ -4013,7 +4013,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(0x0dULL, s.head()); // object with offset size 4
-  checkBuild(s, JasonType::Object, 66891);
+  checkBuild(s, JasonType::Object, 66889);
   ASSERT_EQ(64ULL, s.length());
   
   for (size_t i = 0; i < 64; ++i) {
@@ -4064,7 +4064,7 @@ TEST(ParserTest, LongObjectManyMembers) {
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
   ASSERT_EQ(0x0cULL, s.head()); // long object
-  checkBuild(s, JasonType::Object, 3081);
+  checkBuild(s, JasonType::Object, 3071);
   ASSERT_EQ(256ULL, s.length());
   
   for (size_t i = 0; i < 256; ++i) {

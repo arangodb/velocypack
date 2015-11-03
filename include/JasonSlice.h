@@ -609,14 +609,7 @@ namespace arangodb {
                 return 1;
               }
 
-              uint8_t b = _start[1];
-              if (b != 0x00) {
-                // 1 byte length: already got the length
-                return static_cast<JasonLength>(b);
-              }
-
-              // 8 byte length: read the following 8 bytes
-              return readInteger<JasonLength>(_start + 1 + 1, 8);
+              return readInteger<JasonLength>(_start + 1, WidthMap[h]);
             }
 
             case JasonType::External: {
@@ -670,6 +663,9 @@ namespace arangodb {
           JASON_ASSERT(false);
           return 0;
         }
+
+        std::string toString () const;
+        std::string hexType () const;
 
       private:
         
@@ -862,8 +858,6 @@ namespace arangodb {
           memcpy(&binary[0], _start + 1, sizeof(T));
           return value; 
         }
-
-        std::string toString () const;
 
       private:
 
