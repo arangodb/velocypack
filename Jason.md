@@ -110,14 +110,17 @@ Nonempty arrays look like this:
 
   one of 0x02 to 0x09
   BYTELENGTH
+  optional NRITEMS 
   sub Jason values
   optional INDEXTABLE
-  optional NRITEMS
+  optional NRITEMS if numbers are 8 bytes
 
 Numbers (for byte length, number of subvalues and offsets in the
 INDEXTABLE) are little endian unsigned integers, using 1 byte for
 types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
 0x04 and 0x08, and 8 bytes for types 0x05 and 0x09.
+
+NRITEMS is a single number as described above.
 
 The INDEXTABLE consists of: 
   - not existent for types 0x02-0x05, then it is guaranteed that all 
@@ -125,14 +128,13 @@ The INDEXTABLE consists of:
     taken for arrays with 1 element.
   - for types 0x06-0x09 an array of offsets (unaligned, in the number
     format described above) earlier offsets reside at lower addresses.
+    Offsets are measured from the start of the Jason value.
 
-NRITEMS is a single number as described above.
 
-
-Nonempty arrays have a small header including their byte length, then
-all the subvalues and an index table containing offsets to the subvalues
-and finally the number of subvalues. To find the index table, find the
-end, then the number of subvalues and from that the base of the index
+Nonempty arrays have a small header including their byte length, the
+number of subvalues, then all the subvalues and finally an index table
+containing offsets to the subvalues. To find the index table, find the
+number of subvalues, then the end, and from that the base of the index
 table, considering how wide its entries are.
 
 For types 0x02 to 0x05 there is no offset table and no number of items.
@@ -142,11 +144,15 @@ subvalue and dividing the amount of available space by it.
 
 For types 0x06 to 0x09 the offset table describes where the subvalues
 reside. It is not necessary for the subvalues to start immediately after
-the byte length field. For performance reasons when building the value,
-it could be desirable to reserve 8 bytes for the byte length and not
-fill the gap, even though it turns out later that offsets and thus the
-byte length only uses 2 bytes, say. The number of subvalues is stored
-after the offset table as another number in the format described above.
+the number of subvalues field. For performance reasons when building the
+value, it could be desirable to reserve 8 bytes for the byte length and
+number of subvalues and not fill the gap, even though it turns out later
+that offsets and thus the byte length only uses 2 bytes, say.
+
+There is one exception for the 8-byte numbers case: In this case the
+number of elements is moved behind the index table. This is to get away
+without moving memory when one has reserved 8 bytes in the beginning
+and later noticed that all 8 bytes are needed for the byte length.
 
 All offsets are measured from base A.
 
@@ -168,77 +174,72 @@ possible, though not necessarily advised to use:
 
     05 0c 00 00 00 00 00 00 00 31 32 33
 
-    06 09 31 32 33 02 03 04 03
+    06 09 03 31 32 33 03 04 05
 
-    07 12 31 32 33 02 00 00 00 03 00 00 00 04 00 00 00 03 
+    07 0e 00 03 00 31 32 33 07 00 09 00 0b 00
 
-    05 1e 31 32 33
-    02 00 00 00 00 00 00 00 00
+    08 18 00 00 00 03 00 00 00 31 32 33 05 00 00 00 06 00 00 00 07 00 00 00
+
+    09 
+    2c 00 00 00 00 00 00 00 00
+    31 32 33
+    09 00 00 00 00 00 00 00 00
+    0a 00 00 00 00 00 00 00 00
+    0b 00 00 00 00 00 00 00 00 
     03 00 00 00 00 00 00 00 00
-    04 00 00 00 00 00 00 00 00 03
 
 Note that it is not recommended to encode short arrays in too long a
 format.
 
-Furthermore note that there is no direct correlation between the byte
-length format (1 or 8 bytes) and the array type. It is in particular
-valid to have a small array with an 8-byte byte length. This can be
-convenient (and indeed sometimes necessary!) when building the array 
-in one linear go.
-
 
 ## Objects
 
-Objects look like this:
+Empty objects are simply a single byte 0x0a.
 
-  one of 0x06 - 0x0d, indicating the structure of the index
-  BYTELENGTH (one or 9 bytes)
+Nonempty objects look like this:
+
+  one of 0x0b - 0x12
+  BYTELENGTH
+  optional NRITEMS
   sub Jason values as pairs of attribute and value
   optional INDEXTABLE
-  NRITEMS
+  NRITEMS for the 8-byte case
+
+Numbers (for byte length, number of subvalues and offsets in the
+INDEXTABLE) are little endian unsigned integers, using 1 byte for
+types 0x0b and 0x0f, 2 bytes for types 0x0c and 0x10, 4 bytes for types
+0x0d and 0x11, and 8 bytes for types 0x0e and 0x12.
+
+NRITEMS is a single number as described above.
 
 The INDEXTABLE consists of: 
-  - 1-byte offsets (unsigned) for types 0x06 and 0x0a
-  - 2-byte offsets (little endian unsigned) for types 0x07 and 0x0b
-  - 4-byte offsets sequences (little endian unsigned) for types 0x08 and 0x0c
-  - 8-byte offsets sequences (little endian unsigned) for types 0x09 and 0x0d
+  - an array of offsets (unaligned, in the number format described
+    above) earlier offsets reside at lower addresses.
+    Offsets are measured from the beginning of the Jason value.
 
-NRITEMS is 1 or 9 bytes as follows: The last byte is either
-  0x00 to indicate that the 8 preceding bytes are the length 
-       (little endian unsigned integer)
-  0x01-0xff to directly store the length
+Nonempty objects have a small header including their byte length, the
+number of subvalues, then all the subvalues and finally an index table
+containing offsets to the subvalues. To find the index table, find
+number of subvalues, then the end, and from that the base of the index
+table, considering how wide its entries are.
 
-Objects have a small header including their byte length, then all the
-subvalues and an index table containing offsets to the subvalues and
-finally the number of subvalues. To find the index table, find the end,
-then the number of subvalues and from that the base of the index table,
-considering how long its entries are. There are two variants for the
-byte length, a one byte variant with values between 0x02 and 0xff, or an 8
-byte integer. The small values are specified by one byte following the
-type byte with values 0x02 to 0xff. If this length byte is 0x00, then
-the next 8 bytes are the length as little endian unsigned integer. Thus,
-the first subvalue is either at adress A+2 or at address A+10, depending
-on whether the byte at address A+1 is non-zero or zero. The index table
-resides at the end of the space occupied by the value, just before the
-number of subvalues information. There are two special cases: the empty 
-object has A[1] set to 2 and no number of subvalue information or index 
-table is needed. An object with exactly one subvalue has a 0x01 to
-indicate the number of subvalues but does not have an index table
-either.
+For all types the offset table describes where the subvalues reside. It
+is not necessary for the subvalues to start immediately after the number
+of subvalues field. For performance reasons when building the value, it
+could be desirable to reserve 8 bytes for the byte length and the number
+of subvalues and not fill the gap, even though it turns out later that
+offsets and thus the byte length only uses 2 bytes, say.
 
-The number of subvalues is either stored as a single byte (last byte in
-item, possible values 0x01 to 0xff) containing the number N of entries,
-or, if that last byte is 0x00, in the preceding 8 bytes as a little
-endian unsigned int.
+There are two special cases: the empty object is simply stored as the
+single byte 0x0a and objects with exactly one element have no offset
+table at all.
 
-The index table resides before this number of items information and its
-format depends on the type byte. For types 0x06 and 0x0a, the offsets
-are single bytes, for types 0x07 and 0x0b the offsets in the index table
-are 2-byte sequences (little endian unsigned int), for types 0x08 and
-0x0c, the offsets are 4-byte sequences, and for types 0x09 and 0x0d the
-offsets are 8-byte sequences. All offsets are measured from base A.
-Recall that for N=0, the byte length is 0x02 and there is no space used
-for N, and that for N=1 there is no index table.
+There is another exception: For 8-byte numbers the number of subvalues
+is stored behind the INDEXTABLE. This is to get away without moving
+memory when one has reserved 8 bytes in the beginning and later noticed
+that all 8 bytes are needed for the byte length.
+
+All offsets are measured from base A.
 
 Each entry consists of two parts, the key and the value, they are
 encoded as normal Jason values as above, the first is always a short or
@@ -264,46 +265,42 @@ one can build up a complex Jason value by writing linearly.
 
 Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    06 
-    13
-    41 62 03 
+    0b 
+    13 03
+    41 62 1a 
     41 61 28 0c 
     41 63 43 78 79 7a
-    05 02 09 03
+    06 03 0a
 
 The same object could have been done with an index table with longer
 entries, as in this example:
 
-    08 
-    1c
+    0d 
+    22 00 00 00
+    03 00 00 00
     41 62 03 
     41 61 28 0c 
     41 63 43 78 79 7a
-    05 00 00 00 02 00 00 00 09 00 00 00 03
+    0c 00 00 00 09 00 00 00 10 00 00 00
 
-Similarly with type 0x07 and 2-byte offsets, or with type 0x09 and
-8-byte offsets. Furthermore, it could be stored unsorted like in:
+Similarly with type 0x0c and 2-byte offsets, byte length and number of
+subvalues, or with type 0x09 and 8-byte numbers. Furthermore, it could
+be stored unsorted like in:
 
-    0a 
-    13
+    0f 
+    13 03
     41 62 03 
     41 61 28 0c 
     41 63 43 78 79 7a
-    02 05 09 03
+    03 06 0a
 
 Note that it is not recommended to encode short arrays with too long
 index tables.
 
-Furthermore note that there is no direct correlation between the byte
-length format (1 or 9 bytes) and the object size. It is in particular
-valid to have an object with a 2-byte entry index table and an 8-byte
-byte length. This can be convenient (and indeed sometimes necessary!)
-when building the object in one linear go.
-
 
 ## Doubles
 
-Type 0x0e indicates a double IEEE-754 value using the 8 bytes following
+Type 0x1b indicates a double IEEE-754 value using the 8 bytes following
 the type byte. To guarantee platform-independentness the details of the
 byte order are as follows. Encoding is done by using memcpy to copy the
 internal double value to an uint64\_t. This 64-bit unsigned integer is
@@ -314,7 +311,7 @@ byte order in IEEE-754 in practice.
 
 ## Dates
 
-Type 0x0f indicates a signed 64-int integer stored in 8 bytes little
+Type 0x1c indicates a signed 64-int integer stored in 8 bytes little
 endian two's complement notation directly after the type. The value means
 a universal UTC-time measured in milliseconds since the epoch, which is
 00:00 on 1 January 1970 UTC.
@@ -330,7 +327,7 @@ points to the actual Jason value elsewhere in memory.
 
 ## Artifical minimal and maximal keys
 
-These values of types 0x11 and 0x12 have no meaning other than comparing
+These values of types 0x1e and 0x1f have no meaning other than comparing
 smaller or greater respectively than any other Jason value. The idea is
 that these can be used in systems that define a total order on all Jason
 values to specify left or right ends of infinite intervals.
