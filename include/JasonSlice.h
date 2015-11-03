@@ -196,7 +196,7 @@ namespace arangodb {
         
         bool isSorted () const {
           auto const h = head();
-          return (h >= 0x08 && h <= 0x0a);
+          return (h >= 0x0b && h <= 0x12);
         }
 
         // return the value for a Bool object
@@ -204,7 +204,7 @@ namespace arangodb {
         // - 0x03      : true
         bool getBool () const {
           assertType(JasonType::Bool);
-          return (head() == 0x15); // 0x14 == false, 0x15 == true
+          return (head() == 0x1a); // 0x19 == false, 0x1a == true
         }
 
         // return the value for a Bool object - this is an alias for getBool()
@@ -224,10 +224,18 @@ namespace arangodb {
         }
 
         // extract the array value at the specified index
-        // - 0x04      : array without index table (all subitems have the same byte length)
-        // - 0x05      : array with 2-byte index table entries
-        // - 0x06      : array with 4-byte index table entries
-        // - 0x07      : array with 8-byte index table entries
+        // - 0x02      : array without index table (all subitems have the same
+        //               byte length), bytelen and number subvalues 1 byte)
+        // - 0x03      : array without index table (all subitems have the same
+        //               byte length), bytelen and number subvalues 2 bytes)
+        // - 0x04      : array without index table (all subitems have the same
+        //               byte length), bytelen and number subvalues 4 bytes)
+        // - 0x05      : array without index table (all subitems have the same
+        //               byte length), bytelen and number subvalues 8 bytes)
+        // - 0x06      : array with 1-byte index table entries
+        // - 0x07      : array with 2-byte index table entries
+        // - 0x08      : array with 4-byte index table entries
+        // - 0x09      : array with 8-byte index table entries
         JasonSlice at (JasonLength index) const {
           if (! isType(JasonType::Array)) {
             throw JasonException(JasonException::InvalidValueType, "Expecting Array");
@@ -246,40 +254,38 @@ namespace arangodb {
             throw JasonException(JasonException::InvalidValueType, "Expecting Array or Object");
           }
 
-          uint8_t b = _start[1]; // byte length
-          if (b == 0x02) {
+          uint8_t h = head();
+          if (h == 0x01 || h == 0x0a) {
             // special case: empty!
             return 0;
           }
 
-          JasonLength end;
-          if (b == 0x00) {
-            // read the following 8 bytes
-            end = readInteger<JasonLength>(_start + 2, 8);
+          JasonLength offsetSize = indexEntrySize(h);
+          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
+
+          // find number of items
+          if (h <= 0x05) {    // No offset table or length, need to compute:
+            JasonLength firstSubOffset = findDataOffset(h);
+            JasonSlice first(_start + firstSubOffset);
+            return (end - firstSubOffset) / first.byteSize();
+          } else if (offsetSize < 8) {
+            return readInteger<JasonLength>(_start + offsetSize + 1, offsetSize);
           }
           else {
-            // 1 byte length: use this as length
-            end = static_cast<JasonLength>(b);
+            return readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
           }
-
-          // read number of items
-          JasonLength n = _start[end - 1];
-
-          if (n == 0x00) {
-            // preceding 8 bytes are the length
-            n = readInteger<JasonLength>(_start + end - 1 - 8, 8);
-          }
-
-          return n;
         }
 
         // extract a key from an Object at the specified index
-        // - 0x08      : object with 2-byte index table entries, sorted by attribute name
-        // - 0x09      : object with 4-byte index table entries, sorted by attribute name
-        // - 0x0a      : object with 8-byte index table entries, sorted by attribute name
-        // - 0x0b      : object with 2-byte index table entries, not sorted by attribute name
-        // - 0x0c      : object with 4-byte index table entries, not sorted by attribute name
-        // - 0x0d      : object with 8-byte index table entries, not sorted by attribute name
+        // - 0x0a      : empty object
+        // - 0x0b      : object with 1-byte index table entries, sorted by attribute name
+        // - 0x0c      : object with 2-byte index table entries, sorted by attribute name
+        // - 0x0d      : object with 4-byte index table entries, sorted by attribute name
+        // - 0x0e      : object with 8-byte index table entries, sorted by attribute name
+        // - 0x0f      : object with 1-byte index table entries, not sorted by attribute name
+        // - 0x10      : object with 2-byte index table entries, not sorted by attribute name
+        // - 0x11      : object with 4-byte index table entries, not sorted by attribute name
+        // - 0x12      : object with 8-byte index table entries, not sorted by attribute name
         JasonSlice keyAt (JasonLength index) const {
           if (! isType(JasonType::Object)) {
             throw JasonException(JasonException::InvalidValueType, "Expecting Object");
@@ -323,32 +329,27 @@ namespace arangodb {
             throw JasonException(JasonException::InvalidValueType, "Expecting Object");
           }
 
-          uint8_t b = _start[1];
-          if (b == 0x02) {
+          auto const h = head();
+          if (h == 0xa) {
             // special case, empty object
             return JasonSlice();
           }
           
-          auto const h = head();
           JasonLength const ieSize = indexEntrySize(h);
-          JasonLength end;
+          JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
 
-          if (b == 0x00) {
-            // read the following 8 bytes
-            end = readInteger<JasonLength>(_start + 2, 8);
+          // read number of items
+          JasonLength n;
+          if (ieSize < 8) {
+            n = readInteger<JasonLength>(_start + ieSize, ieSize);
           }
           else {
-            // 1 byte length: use this as length
-            end = static_cast<JasonLength>(b);
+            n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
           }
-          
-          // read number of items
-          JasonLength nItemsSize = 1;
-          JasonLength n = _start[end - 1];
           
           if (n == 1) {
             // Just one attribute, there is no index table!
-            JasonSlice attrName = JasonSlice(_start + 2 + (b == 0 ? 8 : 0));
+            JasonSlice attrName = JasonSlice(_start + findDataOffset(h));
             if (! attrName.isString()) {
               return JasonSlice();
             }
@@ -364,14 +365,8 @@ namespace arangodb {
             return JasonSlice(attrName.start() + attrName.byteSize());
           }
 
-          if (n == 0x00) {
-            // preceding 8 bytes are the length
-            n = readInteger<JasonLength>(_start + end - 1 - 8, 8);
-            nItemsSize = 9;
-          }
-          // n now contains the correct number of entries
-          
-          JasonLength const ieBase = end - nItemsSize - n * ieSize;
+          JasonLength const ieBase = end - n * ieSize 
+                                     - (ieSize == 8 ? ieSize : 0);
 
           // only use binary search for attributes if we have at least this many entries
           // otherwise we'll always use the linear search
@@ -672,40 +667,48 @@ namespace arangodb {
 
       private:
         
+        JasonLength findDataOffset (uint8_t const head) const {
+          // Must be called for a nonempty array or object at start():
+          unsigned int fsm = FirstSubMap[head];
+          if (fsm <= 2 && _start[2] != 0) {
+            return 2;
+          }
+          if (fsm <= 3 && _start[3] != 0) {
+            return 3;
+          }
+          if (fsm <= 5 && _start[5] != 0) {
+            return 5;
+          }
+          return 8;
+        }
+          
         // extract the nth member from an Array or Object type
         JasonSlice getNth (JasonLength index) const {
           JASON_ASSERT(type() == JasonType::Array || type() == JasonType::Object);
 
-          uint8_t b = _start[1]; // byte length
-          if (b == 0x02) {
-            // special case. empty array
+          auto const h = head();
+          if (h == 0x01 || h == 0x0a) {
+            // special case. empty array or object
             throw JasonException(JasonException::IndexOutOfBounds);
           }
 
-          auto const h = head();
           JasonLength const ieSize = indexEntrySize(h);
-          JasonLength end;
-          JasonLength dataOffset;
+          JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
 
-          if (b == 0x00) {
-            // read the following 8 bytes
-            end = readInteger<JasonLength>(_start + 2, 8);
-            dataOffset = 10;
+          JasonLength dataOffset = 0;
+          
+          // find the number of items
+          JasonLength n;
+          if (h <= 0x05) {    // No offset table or length, need to compute:
+            dataOffset = findDataOffset(h);
+            JasonSlice first(_start + dataOffset);
+            n = (end - dataOffset) / first.byteSize();
+          }
+          else if (ieSize < 8) {
+            n = readInteger<JasonLength>(_start + ieSize, ieSize);
           }
           else {
-            // 1 byte length: use this as length
-            end = static_cast<JasonLength>(b);
-            dataOffset = 2;
-          }
-
-          // read number of items
-          JasonLength nItemsSize = 1;
-          JasonLength n = _start[end - 1];
-
-          if (n == 0x00) {
-            // preceding 8 bytes are the length
-            n = readInteger<JasonLength>(_start + end - 1 - 8, 8);
-            nItemsSize = 9;
+            n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
           }
 
           if (index >= n) {
@@ -715,43 +718,21 @@ namespace arangodb {
           // empty array case was already covered
           JASON_ASSERT(n > 0);
 
-          if (h == 0x04 || n == 1) {
+          if (h <= 0x05 || n == 1) {
             // no index table, but all array items have the same length
             // now fetch first item and determine its length
+            // Note that dataOffset is already set!
             JasonSlice firstItem(_start + dataOffset);
             return JasonSlice(_start + dataOffset + index * firstItem.byteSize());
           }
           
-          JasonLength const ieBase = end - nItemsSize - n * ieSize + index * ieSize;
+          JasonLength const ieBase = end - n * ieSize + index * ieSize
+                                     - (ieSize == 8 ? 8 : 0);
           return JasonSlice(_start + readInteger<JasonLength>(_start + ieBase, ieSize));
         }
 
         JasonLength indexEntrySize (uint8_t head) const {
-          JasonLength indexEntrySize = 0;
-
-          switch (head) {
-            case 0x07:
-            case 0x0a:
-            case 0x0d:
-              indexEntrySize += 4;
-              // break statement intentionally missing
-            case 0x06: 
-            case 0x09: 
-            case 0x0c: 
-              indexEntrySize += 2;
-              // break statement intentionally missing
-            case 0x05: 
-            case 0x08: 
-            case 0x0b: 
-              indexEntrySize += 2;
-              // break statement intentionally missing
-            case 0x04:
-            default: {
-              break;
-            }
-          }
-
-          return indexEntrySize;
+          return static_cast<JasonLength>(WidthMap[head]);
         }
 
         // perform a linear search for the specified attribute inside an Object
@@ -878,6 +859,8 @@ namespace arangodb {
       private:
 
         static JasonType const TypeMap[256];
+        static unsigned int const WidthMap[0x13];
+        static unsigned int const FirstSubMap[0x13];
     };
 
     static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");

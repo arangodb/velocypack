@@ -99,6 +99,50 @@ JT const JasonSlice::TypeMap[256] = {
   /* 0xfc */  JT::Custom,      /* 0xfd */  JT::Custom,      /* 0xfe */  JT::Custom,      /* 0xff */  JT::Custom
 }; 
        
+unsigned int const JasonSlice::WidthMap[0x13] =
+  { 0,   // 0x00, None
+    1,   // 0x01, empty array
+    1,   // 0x02, array without index table
+    2,   // 0x03, array without index table
+    4,   // 0x04, array without index table
+    8,   // 0x05, array without index table
+    1,   // 0x06, array with index table
+    2,   // 0x07, array with index table
+    4,   // 0x08, array with index table
+    8,   // 0x09, array with index table
+    1,   // 0x0a, empty object
+    1,   // 0x0b, object with sorted index table
+    2,   // 0x0c, object with sorted index table
+    4,   // 0x0d, object with sorted index table
+    8,   // 0x0e, object with sorted index table
+    1,   // 0x0f, object with unsorted index table
+    2,   // 0x10, object with unsorted index table
+    4,   // 0x11, object with unsorted index table
+    8    // 0x12, object with unsorted index table
+  };
+
+unsigned int const JasonSlice::FirstSubMap[0x13] =
+  { 0,   // 0x00, None
+    1,   // 0x01, empty array
+    2,   // 0x02, array without index table
+    3,   // 0x03, array without index table
+    5,   // 0x04, array without index table
+    9,   // 0x05, array without index table
+    3,   // 0x06, array with index table
+    5,   // 0x07, array with index table
+    8,   // 0x08, array with index table
+    8,   // 0x09, array with index table
+    1,   // 0x0a, empty object
+    3,   // 0x0b, object with sorted index table
+    5,   // 0x0c, object with sorted index table
+    8,   // 0x0d, object with sorted index table
+    8,   // 0x0e, object with sorted index table
+    3,   // 0x0f, object with unsorted index table
+    5,   // 0x10, object with unsorted index table
+    8,   // 0x11, object with unsorted index table
+    8    // 0x12, object with unsorted index table
+  };
+
 std::string JasonSlice::toString () const {
   return JasonPrettyDumper::Dump(this);
 }

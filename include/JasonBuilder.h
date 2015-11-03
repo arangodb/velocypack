@@ -117,6 +117,10 @@ namespace arangodb {
 
         static void sortObjectIndexLong (uint8_t* objBase,
                                          std::vector<JasonLength>& offsets);
+
+        static void sortObjectIndex (uint8_t* objBase,
+                                     std::vector<JasonLength>& offsets);
+
       public:
         
         JasonOptions options;
@@ -270,17 +274,17 @@ namespace arangodb {
 
         void addNull () {
           reserveSpace(1);
-          _start[_pos++] = 0x13;
+          _start[_pos++] = 0x18;
         }
 
         void addFalse () {
           reserveSpace(1);
-          _start[_pos++] = 0x14;
+          _start[_pos++] = 0x19;
         }
 
         void addTrue () {
           reserveSpace(1);
-          _start[_pos++] = 0x15;
+          _start[_pos++] = 0x1a;
         }
 
         void addDouble (double v) {
@@ -290,7 +294,7 @@ namespace arangodb {
           memcpy(&dv, &v, sizeof(double));
           JasonLength vSize = sizeof(double);
           reserveSpace(1 + vSize);
-          _start[_pos++] = 0x0e;
+          _start[_pos++] = 0x1b;
           for (uint64_t x = dv; vSize > 0; vSize--) {
             _start[_pos++] = x & 0xff;
             x >>= 8;
@@ -325,7 +329,7 @@ namespace arangodb {
           uint8_t vSize = sizeof(int64_t);   // is always 8
           uint64_t x = toUInt64(v);
           reserveSpace(1 + vSize);
-          _start[_pos++] = 0x0f;
+          _start[_pos++] = 0x1c;
           appendLength(x, 8);
         }
 
@@ -347,17 +351,17 @@ namespace arangodb {
         }
 
         void addArray () {
-          addCompoundValue(0x05);
+          addCompoundValue(0x06);
         }
 
         void addObject () {
-          addCompoundValue(0x08);
+          addCompoundValue(0x0b);
         }
 
       private:
 
         void addCompoundValue (uint8_t type) {
-          reserveSpace(10);
+          reserveSpace(9);
           // an array is started:
           _stack.push_back(_pos);
           while (_stack.size() > _index.size()) {
@@ -365,8 +369,7 @@ namespace arangodb {
           }
           _index[_stack.size() - 1].clear();
           _start[_pos++] = type;
-          _start[_pos++] = 0x00;  // Will be filled later with short bytelength
-          _pos += 8;              // Possible space for long bytelength
+          _pos += 8;    // Will be filled later with bytelength and nr subs
         }
 
         void set (Jason const& item);

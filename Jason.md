@@ -138,16 +138,29 @@ number of subvalues, then the end, and from that the base of the index
 table, considering how wide its entries are.
 
 For types 0x02 to 0x05 there is no offset table and no number of items.
-The first item begins at address A+2, A+3, A+5 or respectively A+9 and
-one can determine the number by finding the byte length of the first
-subvalue and dividing the amount of available space by it.
+The first item begins at address A+2, A+3, A+5 or respectively A+9,
+depending on the type and thus the width of the byte length field. Note
+the following special rule: The actual position of the first subvalue
+is allowed to be further back, provided there are zero bytes at the
+earlier possible positions. For example, if 4 bytes are used for the
+byte length, then the first item may be at A+9, provided A[5], is a
+zero byte. This is to give a program that builds a Jason value the
+opportunity to reserve 8 bytes in the beginning and only later find out
+that fewer bytes suffice to write the byte length. One can determine the
+number of subvalues by finding the first subvalue, its byte length, and
+dividing the amount of available space by it.
 
 For types 0x06 to 0x09 the offset table describes where the subvalues
 reside. It is not necessary for the subvalues to start immediately after
-the number of subvalues field. For performance reasons when building the
-value, it could be desirable to reserve 8 bytes for the byte length and
-number of subvalues and not fill the gap, even though it turns out later
-that offsets and thus the byte length only uses 2 bytes, say.
+the number of subvalues field. As above, it is allowed to start at a
+later position, provided there are zero bytes in the earlier possible
+positions. For example, the first subvalue could be at address A+9,
+although the number of bytes of the byte length and number of subvalues
+is only 2, in that case, A[5] must be a zero byte. This rule is devised,
+because for performance reasons when building the value, it could be
+desirable to reserve 8 bytes for the byte length and number of subvalues
+and not fill the gap, even though it turns out later that offsets and
+thus the byte length only uses 2 bytes, say.
 
 There is one exception for the 8-byte numbers case: In this case the
 number of elements is moved behind the index table. This is to get away

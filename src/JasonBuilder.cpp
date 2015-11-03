@@ -122,44 +122,41 @@ void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
   }
 }
 
+void JasonBuilder::sortObjectIndex (uint8_t* objBase,
+                                    std::vector<JasonLength>& offsets) {
+  if (offsets.size() > 32) {
+    sortObjectIndexLong(objBase, offsets);
+  }
+  else {
+    sortObjectIndexShort(objBase, offsets);
+  }
+}
+
+
 void JasonBuilder::close () {
   if (_stack.empty()) {
     throw JasonException(JasonException::BuilderNeedOpenObject);
   }
   JasonLength& tos = _stack.back();
-  if (_start[tos] != 0x05 && _start[tos] != 0x08) {
+  if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
     throw JasonException(JasonException::BuilderNeedOpenObject);
   }
   std::vector<JasonLength>& index = _index[_stack.size() - 1];
   if (index.empty()) {
-    _start[tos] = _start[tos] == 0x05 ? 0x04 : 0x08;
-    _start[tos + 1] = 0x02;
-    JASON_ASSERT(_pos == tos + 10);
-    _pos -= 8;  // long bytelength not needed
+    _start[tos] = (_start[tos] == 0x06) ? 0x01 : 0x0a;
+    JASON_ASSERT(_pos == tos + 9);
+    _pos -= 8;  // no bytelength and number subvalues needed
     _stack.pop_back();
     // Intentionally leave _index[depth] intact to avoid future allocs!
     return;
   }
   // From now on index.size() > 0
 
-  // First determine byte length and its format:
-  bool smallNrElms = index.size() <= 0xff;
-  unsigned int offsetSize;   
-        // can be 0, 2, 4 or 8 for the byte length of the offsets,
-        // where 0 indicates no offset table at all
-  if (index.back() <= 0xffff) {
-    offsetSize = 2;
-  }
-  else if (index.back() <= 0xffffffffu) {
-    offsetSize = 4;
-  }
-  else {
-    offsetSize = 8;
-  }
+  bool needIndexTable = true;
   if (index.size() == 1) {
-    offsetSize = 0;
+    needIndexTable = false;
   }
-  else if (_start[tos] == 0x05 &&   // an array
+  else if (_start[tos] == 0x06 &&   // an array
            (_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
@@ -175,104 +172,102 @@ void JasonBuilder::close () {
       noTable = false;
     }
     if (noTable) {
-      offsetSize = 0;
+      needIndexTable = false;
     }
   }
 
-  // Determine whether we need a small byte length or a large one:
-  bool smallByteLength;
-  if (_pos - tos - 8 + 1 + offsetSize * index.size() < 0x100) {
-    // This is the condition for a one-byte bytelength, since in
-    // that case we can save 8 bytes in the beginning and the
-    // table fits in the 256 bytes as well, using the small format.
-    // Note that the number of elements will be < 256 anyway, since 
-    // each subvalue needs at least one byte, so we do not have to
-    // consider smallNrElms == false here.
-    if (_pos > (tos + 10)) {
-      memmove(_start + tos + 2, _start + tos + 10,
-              _pos - (tos + 10));
-    }
-    _pos -= 8;
-    for (size_t i = 0; i < index.size(); i++) {
-      index[i] -= 8;
-    }
-    smallByteLength = true;
+  // First determine byte length and its format:
+  unsigned int offsetSize;   
+        // can be 1, 2, 4 or 8 for the byte width of the offsets,
+        // the byte length and the number of subvalues:
+  if (_pos - tos + (needIndexTable ? index.size() : 0) - 6 <= 0xff) {
+    // We have so far used _pos - tos bytes, including the reserved 8
+    // bytes for byte length and number of subvalues. In the 1-byte number
+    // case we would win back 6 bytes but would need one byte per subvalue
+    // for the index table
+    offsetSize = 1;
+  }
+  else if (_pos - tos + (needIndexTable ? 2 * index.size() : 0) <= 0xffff) {
+    offsetSize = 2;
+  }
+  else if (_pos - tos + (needIndexTable ? 4 * index.size() : 0) <= 0xffffffffu) {
+    offsetSize = 4;
   }
   else {
-    smallByteLength = false;
+    offsetSize = 8;
   }
+
+  // Maybe we need to move down data:
+  if (offsetSize == 1) {
+    unsigned int targetPos = 3;
+    if (! needIndexTable && _start[tos] == 0x06) {
+      targetPos = 2;
+    }
+    if (_pos > (tos + 9)) {
+      memmove(_start + tos + targetPos, _start + tos + 9,
+              _pos - (tos + 9));
+    }
+    _pos -= (9 - targetPos);
+    for (size_t i = 0; i < index.size(); i++) {
+      index[i] -= (9 - targetPos);
+    }
+  }
+  // One could move down things in the offsetSize == 2 case as well,
+  // since we only need 4 bytes in the beginning. However, saving these
+  // 4 bytes has been sacrificed on the Altar of Performance.
 
   // Now build the table:
-  JasonLength tableBase;
-  reserveSpace(offsetSize * index.size() + (smallNrElms ? 1 : 9));
-  if (offsetSize > 0) {
+  if (needIndexTable) {
+    JasonLength tableBase;
+    reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
     tableBase = _pos;
     _pos += offsetSize * index.size();
+    if (_start[tos] == 0x0b) {  // an object
+      if (! options.sortAttributeNames) {
+        _start[tos] = 0x0f;  // unsorted
+      }
+      else if (index.size() >= 2 &&
+               options.sortAttributeNames) {
+        sortObjectIndex(_start + tos, index);
+      }
+    }
+    for (size_t i = 0; i < index.size(); i++) {
+      uint64_t x = index[i];
+      for (size_t j = 0; j < offsetSize; j++) {
+        _start[tableBase + offsetSize * i + j] = x & 0xff;
+        x >>= 8;
+      }
+    }
+  }
+  else {  // no index table
+    if (_start[tos] == 0x06) {
+      _start[tos] = 0x02;
+    }
+  }
+  // Finally fix the byte width in the type byte:
+  if (offsetSize > 1) {
     if (offsetSize == 2) {
-      // In this case the type 0x05 or 0x08 is already correct, unless
-      // sorting of attribute names is switched off!
-      if (_start[tos] == 0x08) {
-        if (! options.sortAttributeNames) {
-          _start[tos] = 0x0b;
-        }
-        else if (index.size() >= 2 &&
-                 options.sortAttributeNames) {
-          sortObjectIndexShort(_start + tos, index);
-        }
-      }
-      for (size_t i = 0; i < index.size(); i++) {
-        uint16_t x = static_cast<uint16_t>(index[i]);
-        _start[tableBase + 2 * i] = x & 0xff;
-        _start[tableBase + 2 * i + 1] = x >> 8;
-      }
+      _start[tos] += 1;
     }
-    else {
-      // large table:
-      // Make sure we use the right type:
-      if (_start[tos] == 0x05) {   // array case
-        _start[tos] = offsetSize == 4 ? 0x06 : 0x07;
-      }
-      else {   // object case
-        _start[tos] =   (offsetSize == 4 ? 0x09 : 0x0a)
-                      + (options.sortAttributeNames ? 0 : 3);
-        if (index.size() >= 2 &&
-            options.sortAttributeNames) {
-          sortObjectIndexLong(_start + tos, index);
-        }
-      }
-      for (size_t i = 0; i < index.size(); i++) {
-        uint64_t x = index[i];
-        for (size_t j = 0; j < offsetSize; j++) {
-          _start[tableBase + offsetSize * i + j] = x & 0xff;
-          x >>= 8;
-        }
-      }
+    else if (offsetSize == 4) {
+      _start[tos] += 2;
     }
-  }
-  else {  // offsetSize == 0
-    if (_start[tos] == 0x05) {
-      _start[tos] = 0x04;
+    else {   // offsetSize == 8
+      _start[tos] += 3;
+      appendLength(index.size(), 8);
     }
-    // Leave 0x08 in the object case with 0 or 1 entries
-  }
-
-  // Now write the number of elements:
-  if (smallNrElms) {
-    _start[_pos++] = static_cast<uint8_t>(index.size());
-  }
-  else {
-    appendLength(index.size(), 8);
-    _start[_pos++] = 0;
   }
 
   // Fix the byte length in the beginning:
-  if (smallByteLength) {
-    _start[tos + 1] = static_cast<uint8_t>(_pos - tos);
+  JasonLength x = _pos - tos;
+  for (unsigned int i = 1; i <= offsetSize; i++) {
+    _start[tos + i] = x & 0xff;
+    x >>= 8;
   }
-  else {
-    _start[tos + 1] = 0x00;
-    JasonLength x = _pos - tos;
-    for (size_t i = 2; i <= 9; i++) {
+
+  if (offsetSize < 8) {
+    x = index.size();
+    for (unsigned int i = offsetSize + 1; i <= 2 * offsetSize; i++) {
       _start[tos + i] = x & 0xff;
       x >>= 8;
     }
@@ -280,7 +275,7 @@ void JasonBuilder::close () {
 
   // And, if desired, check attribute uniqueness:
   if (options.checkAttributeUniqueness && index.size() > 1 &&
-      _start[tos] >= 0x08) {
+      _start[tos] >= 0x0b) {
     // check uniqueness of attribute names
     checkAttributeUniqueness(JasonSlice(_start + tos));
   }
@@ -303,7 +298,7 @@ void JasonBuilder::set (Jason const& item) {
     }
     case JasonType::Null: {
       reserveSpace(1);
-      _start[_pos++] = 0x13;
+      _start[_pos++] = 0x18;
       break;
     }
     case JasonType::Bool: {
@@ -312,10 +307,10 @@ void JasonBuilder::set (Jason const& item) {
       }
       reserveSpace(1);
       if (item.getBool()) {
-        _start[_pos++] = 0x15;
+        _start[_pos++] = 0x1a;
       }
       else {
-        _start[_pos++] = 0x14;
+        _start[_pos++] = 0x19;
       }
       break;
     }
@@ -338,7 +333,7 @@ void JasonBuilder::set (Jason const& item) {
           throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::Double");
       }
       reserveSpace(1 + sizeof(double));
-      _start[_pos++] = 0x0e;
+      _start[_pos++] = 0x1b;
       memcpy(&x, &v, sizeof(double));
       appendLength(x, 8);
       break;
@@ -349,7 +344,7 @@ void JasonBuilder::set (Jason const& item) {
       }
       reserveSpace(1 + sizeof(void*));
       // store pointer. this doesn't need to be portable
-      _start[_pos++] = 0x10;
+      _start[_pos++] = 0x1d;
       void const* value = item.getExternal();
       memcpy(_start + _pos, &value, sizeof(void*));
       _pos += sizeof(void*);
@@ -502,12 +497,12 @@ void JasonBuilder::set (Jason const& item) {
     }
     case JasonType::MinKey: {
       reserveSpace(1);
-      _start[_pos++] = 0x11;
+      _start[_pos++] = 0x1e;
       break;
     }
     case JasonType::MaxKey: {
       reserveSpace(1);
-      _start[_pos++] = 0x12;
+      _start[_pos++] = 0x1f;
       break;
     }
     case JasonType::BCD: {
@@ -617,8 +612,8 @@ void JasonBuilder::add (std::string const& attrName, Jason const& sub) {
   }
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
-    if (_start[tos] != 0x05 &&
-        _start[tos] != 0x08) {
+    if (_start[tos] != 0x06 &&
+        _start[tos] != 0x0b) {
       throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     reportAdd(tos);
@@ -633,8 +628,8 @@ uint8_t* JasonBuilder::add (std::string const& attrName, JasonPair const& sub) {
   }
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
-    if (_start[tos] != 0x05 &&
-        _start[tos] != 0x08) {
+    if (_start[tos] != 0x06 &&
+        _start[tos] != 0x0b) {
       throw JasonException(JasonException::BuilderNeedOpenObject);
     }
     reportAdd(tos);
@@ -646,11 +641,11 @@ uint8_t* JasonBuilder::add (std::string const& attrName, JasonPair const& sub) {
 void JasonBuilder::add (Jason const& sub) {
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
-    if (_start[tos] != 0x05 && _start[tos] != 0x08) {
+    if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
       // no array or object
       throw JasonException(JasonException::BuilderNeedOpenObject);
     }
-    if (_start[tos] == 0x08) {   // object
+    if (_start[tos] == 0x0b) {   // object
       if (! _attrWritten && ! sub.isString()) {
         throw JasonException(JasonException::BuilderNeedOpenObject);
       }
@@ -669,10 +664,10 @@ void JasonBuilder::add (Jason const& sub) {
 uint8_t* JasonBuilder::add (JasonPair const& sub) {
   if (! _stack.empty()) {
     JasonLength& tos = _stack.back();
-    if (_start[tos] != 0x05 && _start[tos] != 0x08) {
+    if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
       throw JasonException(JasonException::BuilderNeedOpenObject);
     }
-    if (_start[tos] == 0x08) {   // object
+    if (_start[tos] == 0x06) {   // object
       if (! _attrWritten && ! sub.isString()) {
         throw JasonException(JasonException::BuilderNeedOpenObject);
       }
