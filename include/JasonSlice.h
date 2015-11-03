@@ -690,7 +690,7 @@ namespace arangodb {
           if (fsm <= 5 && _start[5] != 0) {
             return 5;
           }
-          return 8;
+          return 9;
         }
           
         // extract the nth member from an Array or Object type

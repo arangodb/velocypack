@@ -369,6 +369,7 @@ namespace arangodb {
           }
           _index[_stack.size() - 1].clear();
           _start[_pos++] = type;
+          memset(_start + _pos, 0, 8);
           _pos += 8;    // Will be filled later with bytelength and nr subs
         }
 
