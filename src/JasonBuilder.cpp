@@ -132,7 +132,6 @@ void JasonBuilder::sortObjectIndex (uint8_t* objBase,
   }
 }
 
-
 void JasonBuilder::close () {
   if (_stack.empty()) {
     throw JasonException(JasonException::BuilderNeedOpenObject);
@@ -265,7 +264,10 @@ void JasonBuilder::close () {
     x >>= 8;
   }
 
-  if (offsetSize < 8) {
+  // write number of items
+  bool writeNrItems = (_start[tos] >= 0x06);
+
+  if (offsetSize < 8 && writeNrItems) {
     x = index.size();
     for (unsigned int i = offsetSize + 1; i <= 2 * offsetSize; i++) {
       _start[tos + i] = x & 0xff;

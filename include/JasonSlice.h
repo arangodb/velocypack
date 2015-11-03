@@ -340,7 +340,7 @@ namespace arangodb {
           // read number of items
           JasonLength n;
           if (ieSize < 8) {
-            n = readInteger<JasonLength>(_start + ieSize, ieSize);
+            n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
           }
           else {
             n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
@@ -711,10 +711,12 @@ namespace arangodb {
             n = (end - dataOffset) / first.byteSize();
           }
           else if (ieSize < 8) {
-            n = readInteger<JasonLength>(_start + ieSize, ieSize);
+            n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
+            dataOffset = 1 + ieSize + ieSize;
           }
           else {
             n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
+            dataOffset = 1 + 8;
           }
 
           if (index >= n) {

@@ -3260,7 +3260,7 @@ TEST(ParserTest, Array3) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 34);
+  checkBuild(s, JasonType::Array, 29);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s[0];
@@ -3296,7 +3296,7 @@ TEST(ParserTest, Array4) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 41);
+  checkBuild(s, JasonType::Array, 34);
   ASSERT_EQ(7ULL, s.length());
 
   JasonSlice ss = s[0];
@@ -3342,11 +3342,11 @@ TEST(ParserTest, NestedArray1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 5);
+  checkBuild(s, JasonType::Array, 3);
   ASSERT_EQ(1ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 2);
+  checkBuild(ss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut = "[[]]";
@@ -3361,55 +3361,55 @@ TEST(ParserTest, NestedArray2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 45);
+  checkBuild(s, JasonType::Array, 27);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 2);
+  checkBuild(ss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, ss.length());
 
   ss = s[1];
-  checkBuild(ss, JasonType::Array, 5);
+  checkBuild(ss, JasonType::Array, 3);
   ASSERT_EQ(1ULL, ss.length());
 
   JasonSlice sss = ss[0];
-  checkBuild(sss, JasonType::Array, 2);
+  checkBuild(sss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, sss.length());
 
   ss = s[2];
-  checkBuild(ss, JasonType::Array, 2);
+  checkBuild(ss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, ss.length());
 
   ss = s[3];
-  checkBuild(ss, JasonType::Array, 21);
+  checkBuild(ss, JasonType::Array, 13);
   ASSERT_EQ(1ULL, ss.length());
 
   sss = ss[0];
-  checkBuild(sss, JasonType::Array, 18);
+  checkBuild(sss, JasonType::Array, 11);
   ASSERT_EQ(2ULL, sss.length());
 
   JasonSlice ssss = sss[0];
-  checkBuild(ssss, JasonType::Array, 9);
+  checkBuild(ssss, JasonType::Array, 5);
   ASSERT_EQ(3ULL, ssss.length());
 
   JasonSlice sssss = ssss[0];
-  checkBuild(sssss, JasonType::Array, 2);
+  checkBuild(sssss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, sssss.length());
 
   sssss = ssss[1];
-  checkBuild(sssss, JasonType::Array, 2);
+  checkBuild(sssss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, sssss.length());
 
   sssss = ssss[2];
-  checkBuild(sssss, JasonType::Array, 2);
+  checkBuild(sssss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, sssss.length());
 
   ssss = sss[1];
-  checkBuild(ssss, JasonType::Array, 2);
+  checkBuild(ssss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, ssss.length());
 
   ss = s[4];
-  checkBuild(ss, JasonType::Array, 2);
+  checkBuild(ss, JasonType::Array, 1);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut = "[[],[[]],[],[[[[],[],[]],[]]],[]]";
@@ -3425,11 +3425,11 @@ TEST(ParserTest, NestedArray3) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 51);
+  checkBuild(s, JasonType::Array, 42);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s[0];
-  checkBuild(ss, JasonType::Array, 35);
+  checkBuild(ss, JasonType::Array, 28);
   ASSERT_EQ(4ULL, ss.length());
 
   JasonSlice sss = ss[0];
@@ -3438,7 +3438,7 @@ TEST(ParserTest, NestedArray3) {
   ASSERT_EQ(correct, sss.copyString());
 
   sss = ss[1];
-  checkBuild(sss, JasonType::Array, 18);
+  checkBuild(sss, JasonType::Array, 15);
   ASSERT_EQ(3ULL, sss.length());
 
   JasonSlice ssss = sss[0];
@@ -3534,8 +3534,8 @@ TEST(ParserTest, ShortArrayMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(5ULL, s.head()); // short array
-  checkBuild(s, JasonType::Array, 1021);
+  ASSERT_EQ(7ULL, s.head()); 
+  checkBuild(s, JasonType::Array, 251);
   ASSERT_EQ(255ULL, s.length());
   
   for (size_t i = 0; i < 255; ++i) {
@@ -3576,9 +3576,9 @@ TEST(ParserTest, LongArrayFewMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(4ULL, s.head()); // array without index table
-  checkBuild(s, JasonType::Array, 67156);
-  ASSERT_EQ(65ULL, s.length());
+  ASSERT_EQ(4ULL, s.head());
+  checkBuild(s, JasonType::Array, 82);
+  ASSERT_EQ(67149ULL, s.length());
   
   for (size_t i = 0; i < 65; ++i) {
     JasonSlice ss = s[i];
@@ -3606,7 +3606,7 @@ TEST(ParserTest, LongArrayManyMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(5ULL, s.head()); // array without index table
+  ASSERT_EQ(7ULL, s.head()); 
   checkBuild(s, JasonType::Array, 1033);
   ASSERT_EQ(256ULL, s.length());
   
@@ -3751,7 +3751,7 @@ TEST(ParserTest, ObjectSimple2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 20);
+  checkBuild(s, JasonType::Object, 18);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -3784,7 +3784,7 @@ TEST(ParserTest, ObjectDenseNotation) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 15);
+  checkBuild(s, JasonType::Object, 13);
   ASSERT_EQ(2ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -3817,7 +3817,7 @@ TEST(ParserTest, ObjectReservedKeys) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 38);
+  checkBuild(s, JasonType::Object, 35);
   ASSERT_EQ(3ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
@@ -3860,11 +3860,11 @@ TEST(ParserTest, ObjectMixed) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 50);
+  checkBuild(s, JasonType::Object, 43);
   ASSERT_EQ(5ULL, s.length());
 
   JasonSlice ss = s.keyAt(0);
-  checkBuild(ss, JasonType::String, 4);
+  checkBuild(ss, JasonType::String, 3);
   std::string correct = "bar";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(0);
@@ -3891,7 +3891,7 @@ TEST(ParserTest, ObjectMixed) {
   correct = "qux";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(3);
-  checkBuild(ss, JasonType::Array, 4);
+  checkBuild(ss, JasonType::Array, 3);
 
   JasonSlice sss = ss[0];
   checkBuild(sss, JasonType::SmallInt, 1);
@@ -3902,7 +3902,7 @@ TEST(ParserTest, ObjectMixed) {
   correct = "quz";
   ASSERT_EQ(correct, ss.copyString());
   ss = s.valueAt(4);
-  checkBuild(ss, JasonType::Object, 2);
+  checkBuild(ss, JasonType::Object, 1);
   ASSERT_EQ(0ULL, ss.length());
 
   std::string const valueOut("{\"bar\":true,\"baz\":13.53,\"foo\":null,\"qux\":[1],\"quz\":{}}");
@@ -3948,7 +3948,7 @@ TEST(ParserTest, ShortObjectMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(8ULL, s.head()); // object with offset size 2
+  ASSERT_EQ(0xcULL, s.head()); 
   checkBuild(s, JasonType::Object, 3061);
   ASSERT_EQ(255ULL, s.length());
   
@@ -4012,7 +4012,7 @@ TEST(ParserTest, LongObjectFewMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(9ULL, s.head()); // object with offset size 4
+  ASSERT_EQ(0x0dULL, s.head()); // object with offset size 4
   checkBuild(s, JasonType::Object, 66891);
   ASSERT_EQ(64ULL, s.length());
   
@@ -4063,7 +4063,7 @@ TEST(ParserTest, LongObjectManyMembers) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  ASSERT_EQ(8ULL, s.head()); // long object
+  ASSERT_EQ(0x0cULL, s.head()); // long object
   checkBuild(s, JasonType::Object, 3081);
   ASSERT_EQ(256ULL, s.length());
   
