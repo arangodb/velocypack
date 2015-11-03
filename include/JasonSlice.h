@@ -196,12 +196,10 @@ namespace arangodb {
         
         bool isSorted () const {
           auto const h = head();
-          return (h >= 0x0b && h <= 0x12);
+          return (h >= 0x0b && h <= 0x0e);
         }
 
         // return the value for a Bool object
-        // - 0x02      : false
-        // - 0x03      : true
         bool getBool () const {
           assertType(JasonType::Bool);
           return (head() == 0x1a); // 0x19 == false, 0x1a == true
@@ -268,7 +266,8 @@ namespace arangodb {
             JasonLength firstSubOffset = findDataOffset(h);
             JasonSlice first(_start + firstSubOffset);
             return (end - firstSubOffset) / first.byteSize();
-          } else if (offsetSize < 8) {
+          } 
+          else if (offsetSize < 8) {
             return readInteger<JasonLength>(_start + offsetSize + 1, offsetSize);
           }
           else {
@@ -604,6 +603,12 @@ namespace arangodb {
 
             case JasonType::Array:
             case JasonType::Object: {
+              auto const h = head();
+              if (h == 0x01 || h == 0x0a) {
+                // empty array or object
+                return 1;
+              }
+
               uint8_t b = _start[1];
               if (b != 0x00) {
                 // 1 byte length: already got the length
@@ -618,8 +623,9 @@ namespace arangodb {
               return 1 + sizeof(char*);
             }
 
-            case JasonType::UTCDate:
+            case JasonType::UTCDate: {
               return 1 + sizeof(int64_t);
+            }
 
             case JasonType::Int: {
               return static_cast<JasonLength>(1 + (head() - 0x1f));
