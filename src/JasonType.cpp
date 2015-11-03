@@ -26,7 +26,7 @@
 
 #include "JasonType.h"
 
-using JasonType = arangodb::jason::JasonType;
+using namespace arangodb::jason;
 
 char const* arangodb::jason::JasonTypeName (JasonType type) {
   switch (type) {
