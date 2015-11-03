@@ -659,8 +659,7 @@ TEST(OutStreamTest, StringifyComplexObject) {
   std::ostringstream result;
   result << s;
 
-  // TODO: fix byteSize
-  ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
+  ASSERT_EQ("[JasonSlice object, byteSize: 107]", result.str());
   
   std::string prettyResult = JasonPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
@@ -678,8 +677,7 @@ TEST(PrettyDumperTest, SimpleObject) {
   std::ostringstream result;
   result << s;
 
-  // TODO: fix byteSize
-  ASSERT_EQ("[JasonSlice object, byteSize: 125]", result.str());
+  ASSERT_EQ("[JasonSlice object, byteSize: 11]", result.str());
 
   std::string prettyResult = JasonPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
@@ -2021,14 +2019,16 @@ TEST(BuilderTest, Array4) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
+  // TODO: this will be incorrect
   static uint8_t correctResult[] 
-    = { 0x05, 0x1c,
+    = { 0x02, 0x1c,
         0x29, 0xb0, 0x04,   // uint(1200) = 0x4b0
         0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
         0x43, 0x61, 0x62, 0x63,
         0x15,
         0x02, 0x00, 0x05, 0x00, 0x0e, 0x00, 0x12, 0x00,
         0x04};
+  // TODO: incorrect offset
   dumpDouble(value, correctResult + 6);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -2042,8 +2042,7 @@ TEST(BuilderTest, ObjectEmpty) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x08, 0x02 };
+  static uint8_t correctResult[] = { 0x0a };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2063,6 +2062,7 @@ TEST(BuilderTest, ObjectSorted) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
+  // TODO: incorrect and needs to be fixed
   static uint8_t correctResult[] 
     = { 0x08, 0x24,
         0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
@@ -2073,6 +2073,7 @@ TEST(BuilderTest, ObjectSorted) {
         0x18, 0x00, 0x12, 0x00, 0x07, 0x00, 0x02, 0x00,
         0x04
       };
+  // TODO: incorrect offset
   dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -2093,6 +2094,7 @@ TEST(BuilderTest, ObjectUnsorted) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
+  // TODO: incorrect and must be fixed
   static uint8_t correctResult[] 
     = { 0x0b, 0x24,
         0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
@@ -2103,6 +2105,7 @@ TEST(BuilderTest, ObjectUnsorted) {
         0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
         0x04
       };
+  // TODO: fix offset
   dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -2122,6 +2125,7 @@ TEST(BuilderTest, Object4) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
+  // TODO: incorrect and needs to be fixed
   static uint8_t correctResult[] 
     = { 0x08, 0x24,
         0x41, 0x61, 0x29, 0xb0, 0x04,        // "a": uint(1200) = 0x4b0
@@ -2132,6 +2136,7 @@ TEST(BuilderTest, Object4) {
         0x02, 0x00, 0x07, 0x00, 0x12, 0x00, 0x18, 0x00,
         0x04
       };
+  // TODO: fix offset
   dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -2146,9 +2151,8 @@ TEST(BuilderTest, External) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[1 + sizeof(char*)] 
-    = { 0x00 };
-  correctResult[0] = 0x10;
+  static uint8_t correctResult[1 + sizeof(char*)] = { 0x00 };
+  correctResult[0] = 0x1d;
   uint8_t* p = externalStuff;
   memcpy(correctResult + 1, &p, sizeof(uint8_t*));
 
@@ -2397,8 +2401,7 @@ TEST(BuilderTest, Binary) {
   uint8_t* result = b.start();
   JasonLength len = b.size();
 
-  static uint8_t correctResult[]
-    = { 0xc0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
+  static uint8_t correctResult[] = { 0xc0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2410,7 +2413,7 @@ TEST(BuilderTest, UTCDate) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0fU, s.head());
+  ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2422,7 +2425,7 @@ TEST(BuilderTest, UTCDateZero) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0fU, s.head());
+  ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2434,7 +2437,7 @@ TEST(BuilderTest, UTCDateMin) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0fU, s.head());
+  ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2446,7 +2449,7 @@ TEST(BuilderTest, UTCDateMax) {
   b.add(Jason(value, JasonType::UTCDate));
 
   JasonSlice s(b.start());
-  ASSERT_EQ(0x0fU, s.head());
+  ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
   ASSERT_EQ(value, s.getUTCDate());
@@ -2468,33 +2471,12 @@ TEST(BuilderTest, ID) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
-/* TODO: activate & fix this test
-TEST(BuilderTest, ArangoDB_id) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
-  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
-  *p = 0xf0;
-  b.close();
-
-  JasonSlice s(b.start());
-  ASSERT_EQ(8ULL, s.byteSize());
-
-  JasonSlice ss = s.keyAt(0);
-  checkBuild(ss, JasonType::String, 4);
-  std::string correct = "_id";
-  ASSERT_EQ(correct, ss.copyString());
-  ss = s.valueAt(0);
-  ASSERT_EQ(JasonType::Custom, ss.type());
-  checkBuild(ss, JasonType::Custom, 1);
-}
-*/
-
 TEST(ParserTest, Garbage1) {
   std::string const value("z");
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage2) {
@@ -2502,7 +2484,7 @@ TEST(ParserTest, Garbage2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(1u, parser.errorPos());
+  ASSERT_EQ(1U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage3) {
@@ -2510,7 +2492,7 @@ TEST(ParserTest, Garbage3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(3u, parser.errorPos());
+  ASSERT_EQ(3U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage4) {
@@ -2518,7 +2500,7 @@ TEST(ParserTest, Garbage4) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(2u, parser.errorPos());
+  ASSERT_EQ(2U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage5) {
@@ -2526,7 +2508,7 @@ TEST(ParserTest, Garbage5) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage6) {
@@ -2534,7 +2516,7 @@ TEST(ParserTest, Garbage6) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(3u, parser.errorPos());
+  ASSERT_EQ(3U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage7) {
@@ -2542,7 +2524,7 @@ TEST(ParserTest, Garbage7) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(5u, parser.errorPos());
+  ASSERT_EQ(5U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage8) {
@@ -2550,7 +2532,7 @@ TEST(ParserTest, Garbage8) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Garbage9) {
@@ -2558,7 +2540,7 @@ TEST(ParserTest, Garbage9) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation1) {
@@ -2566,7 +2548,7 @@ TEST(ParserTest, Punctuation1) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation2) {
@@ -2574,7 +2556,7 @@ TEST(ParserTest, Punctuation2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation3) {
@@ -2582,7 +2564,7 @@ TEST(ParserTest, Punctuation3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation4) {
@@ -2590,7 +2572,7 @@ TEST(ParserTest, Punctuation4) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Punctuation5) {
@@ -2598,7 +2580,7 @@ TEST(ParserTest, Punctuation5) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, Null) {
@@ -2963,7 +2945,7 @@ TEST(ParserTest, Empty) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, WhitespaceOnly) {
@@ -2971,7 +2953,7 @@ TEST(ParserTest, WhitespaceOnly) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(1u, parser.errorPos());
+  ASSERT_EQ(1U, parser.errorPos());
 }
 
 TEST(ParserTest, UnterminatedStringLiteral) {
@@ -2979,7 +2961,7 @@ TEST(ParserTest, UnterminatedStringLiteral) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(8u, parser.errorPos());
+  ASSERT_EQ(8U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteral) {
@@ -3032,7 +3014,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
   JasonParser parser;
   parser.options.validateUtf8Strings = true;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::InvalidUtf8Sequence);
-  ASSERT_EQ(1u, parser.errorPos());
+  ASSERT_EQ(1U, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
@@ -3047,7 +3029,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
   JasonParser parser;
   parser.options.validateUtf8Strings = true;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::InvalidUtf8Sequence);
-  ASSERT_EQ(1u, parser.errorPos());
+  ASSERT_EQ(1U, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
@@ -3061,7 +3043,7 @@ TEST(ParserTest, StringLiteralControlCharacter) {
 
     JasonParser parser;
     EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::UnexpectedControlCharacter);
-    ASSERT_EQ(1u, parser.errorPos());
+    ASSERT_EQ(1U, parser.errorPos());
   }
 }
 
@@ -3070,7 +3052,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(3u, parser.errorPos());
+  ASSERT_EQ(3U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
@@ -3078,7 +3060,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
@@ -3086,7 +3068,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(5u, parser.errorPos());
+  ASSERT_EQ(5U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
@@ -3094,7 +3076,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(6u, parser.errorPos());
+  ASSERT_EQ(6U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
@@ -3155,7 +3137,6 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
   std::string out = s.copyString();
   ASSERT_EQ(correct, out);
 
-//  std::string const valueOut("\"der mötör kö\\u00F6t\\u00F6r kl\\u00F6t\\u00F6rte m\\u00E4t d\\u00E4n f\\u00F6\\u00DFen\"");
   checkDump(s, value);
 }
 
@@ -3210,7 +3191,7 @@ TEST(ParserTest, EmptyArray) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 2);
+  checkBuild(s, JasonType::Array, 1);
   ASSERT_EQ(0ULL, s.length());
 
   checkDump(s, value);
@@ -3225,7 +3206,7 @@ TEST(ParserTest, WhitespacedArray) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 2);
+  checkBuild(s, JasonType::Array, 1);
   ASSERT_EQ(0ULL, s.length());
 
   std::string const valueOut = "[]";
@@ -3241,7 +3222,7 @@ TEST(ParserTest, Array1) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 4);
+  checkBuild(s, JasonType::Array, 3);
   ASSERT_EQ(1ULL, s.length());
   JasonSlice ss = s[0];
   checkBuild(ss, JasonType::SmallInt, 1);
@@ -3259,7 +3240,7 @@ TEST(ParserTest, Array2) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Array, 5);
+  checkBuild(s, JasonType::Array, 4);
   ASSERT_EQ(2ULL, s.length());
   JasonSlice ss = s[0];
   checkBuild(ss, JasonType::SmallInt, 1);
@@ -3494,7 +3475,7 @@ TEST(ParserTest, NestedArrayInvalid1) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, NestedArrayInvalid2) {
@@ -3502,7 +3483,7 @@ TEST(ParserTest, NestedArrayInvalid2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, NestedArrayInvalid3) {
@@ -3510,7 +3491,7 @@ TEST(ParserTest, NestedArrayInvalid3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(34u, parser.errorPos());
+  ASSERT_EQ(34U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray1) {
@@ -3518,7 +3499,7 @@ TEST(ParserTest, BrokenArray1) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray2) {
@@ -3526,7 +3507,7 @@ TEST(ParserTest, BrokenArray2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(1u, parser.errorPos());
+  ASSERT_EQ(1U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenArray3) {
@@ -3534,7 +3515,7 @@ TEST(ParserTest, BrokenArray3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(2u, parser.errorPos());
+  ASSERT_EQ(2U, parser.errorPos());
 }
 
 TEST(ParserTest, ShortArrayMembers) {
@@ -3650,7 +3631,7 @@ TEST(ParserTest, EmptyObject) {
 
   JasonBuilder builder = parser.steal();
   JasonSlice s(builder.start());
-  checkBuild(s, JasonType::Object, 2);
+  checkBuild(s, JasonType::Object, 1);
   ASSERT_EQ(0ULL, s.length());
 
   checkDump(s, value);
@@ -3661,7 +3642,7 @@ TEST(ParserTest, BrokenObject1) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject2) {
@@ -3669,7 +3650,7 @@ TEST(ParserTest, BrokenObject2) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject3) {
@@ -3677,7 +3658,7 @@ TEST(ParserTest, BrokenObject3) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(0u, parser.errorPos());
+  ASSERT_EQ(0U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject4) {
@@ -3685,7 +3666,7 @@ TEST(ParserTest, BrokenObject4) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(4u, parser.errorPos());
+  ASSERT_EQ(4U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject5) {
@@ -3693,7 +3674,7 @@ TEST(ParserTest, BrokenObject5) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(5u, parser.errorPos());
+  ASSERT_EQ(5U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject6) {
@@ -3701,7 +3682,7 @@ TEST(ParserTest, BrokenObject6) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(6u, parser.errorPos());
+  ASSERT_EQ(6U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject7) {
@@ -3709,7 +3690,7 @@ TEST(ParserTest, BrokenObject7) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(10u, parser.errorPos());
+  ASSERT_EQ(10U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject8) {
@@ -3717,7 +3698,7 @@ TEST(ParserTest, BrokenObject8) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(13u, parser.errorPos());
+  ASSERT_EQ(13U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject9) {
@@ -3725,7 +3706,7 @@ TEST(ParserTest, BrokenObject9) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(13u, parser.errorPos());
+  ASSERT_EQ(13U, parser.errorPos());
 }
 
 TEST(ParserTest, BrokenObject10) {
@@ -3733,7 +3714,7 @@ TEST(ParserTest, BrokenObject10) {
 
   JasonParser parser;
   EXPECT_JASON_EXCEPTION(parser.parse(value), JasonException::ParseError);
-  ASSERT_EQ(6u, parser.errorPos());
+  ASSERT_EQ(6U, parser.errorPos());
 }
 
 TEST(ParserTest, ObjectSimple1) {
