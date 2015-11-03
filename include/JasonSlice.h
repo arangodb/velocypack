@@ -252,13 +252,13 @@ namespace arangodb {
             throw JasonException(JasonException::InvalidValueType, "Expecting Array or Object");
           }
 
-          uint8_t h = head();
+          auto const h = head();
           if (h == 0x01 || h == 0x0a) {
             // special case: empty!
             return 0;
           }
 
-          JasonLength offsetSize = indexEntrySize(h);
+          JasonLength const offsetSize = indexEntrySize(h);
           JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
 
           // find number of items
@@ -270,9 +270,8 @@ namespace arangodb {
           else if (offsetSize < 8) {
             return readInteger<JasonLength>(_start + offsetSize + 1, offsetSize);
           }
-          else {
-            return readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
-          }
+
+          return readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
         }
 
         // extract a key from an Object at the specified index
@@ -334,8 +333,8 @@ namespace arangodb {
             return JasonSlice();
           }
           
-          JasonLength const ieSize = indexEntrySize(h);
-          JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
+          JasonLength const offsetSize = indexEntrySize(h);
+          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
           JasonLength dataOffset = 0;
 
           // read number of items
@@ -345,11 +344,11 @@ namespace arangodb {
             JasonSlice first(_start + dataOffset);
             n = (end - dataOffset) / first.byteSize();
           } 
-          else if (ieSize < 8) {
-            n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
+          else if (offsetSize < 8) {
+            n = readInteger<JasonLength>(_start + 1 + offsetSize, offsetSize);
           }
           else {
-            n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
+            n = readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
           }
           
           if (n == 1) {
@@ -373,8 +372,8 @@ namespace arangodb {
             return JasonSlice(attrName.start() + attrName.byteSize());
           }
 
-          JasonLength const ieBase = end - n * ieSize 
-                                     - (ieSize == 8 ? ieSize : 0);
+          JasonLength const ieBase = end - n * offsetSize 
+                                     - (offsetSize == 8 ? offsetSize : 0);
 
           // only use binary search for attributes if we have at least this many entries
           // otherwise we'll always use the linear search
@@ -383,10 +382,10 @@ namespace arangodb {
           if (isSorted() && n >= SortedSearchEntriesThreshold) {
             // This means, we have to handle the special case n == 1 only
             // in the linear search!
-            return searchObjectKeyBinary(attribute, ieBase, ieSize, n);
+            return searchObjectKeyBinary(attribute, ieBase, offsetSize, n);
           }
 
-          return searchObjectKeyLinear(attribute, ieBase, ieSize, n);
+          return searchObjectKeyLinear(attribute, ieBase, offsetSize, n);
         }
 
         JasonSlice operator[] (std::string const& attribute) const {
@@ -703,8 +702,8 @@ namespace arangodb {
             throw JasonException(JasonException::IndexOutOfBounds);
           }
 
-          JasonLength const ieSize = indexEntrySize(h);
-          JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
+          JasonLength const offsetSize = indexEntrySize(h);
+          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
 
           JasonLength dataOffset = findDataOffset(h);
           
@@ -714,11 +713,11 @@ namespace arangodb {
             JasonSlice first(_start + dataOffset);
             n = (end - dataOffset) / first.byteSize();
           }
-          else if (ieSize < 8) {
-            n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
+          else if (offsetSize < 8) {
+            n = readInteger<JasonLength>(_start + 1 + offsetSize, offsetSize);
           }
           else {
-            n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
+            n = readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
           }
 
           if (index >= n) {
@@ -738,9 +737,9 @@ namespace arangodb {
             return JasonSlice(_start + dataOffset + index * firstItem.byteSize());
           }
           
-          JasonLength const ieBase = end - n * ieSize + index * ieSize
-                                     - (ieSize == 8 ? 8 : 0);
-          return JasonSlice(_start + readInteger<JasonLength>(_start + ieBase, ieSize));
+          JasonLength const ieBase = end - n * offsetSize + index * offsetSize
+                                     - (offsetSize == 8 ? 8 : 0);
+          return JasonSlice(_start + readInteger<JasonLength>(_start + ieBase, offsetSize));
         }
 
         JasonLength indexEntrySize (uint8_t head) const {
@@ -750,11 +749,11 @@ namespace arangodb {
         // perform a linear search for the specified attribute inside an Object
         JasonSlice searchObjectKeyLinear (std::string const& attribute, 
                                           JasonLength ieBase, 
-                                          JasonLength ieSize, 
+                                          JasonLength offsetSize, 
                                           JasonLength n) const {
           for (JasonLength index = 0; index < n; ++index) {
-            JasonLength offset = ieBase + index * ieSize;
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, ieSize));
+            JasonLength offset = ieBase + index * offsetSize;
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object
               return JasonSlice();
@@ -781,7 +780,7 @@ namespace arangodb {
         // perform a binary search for the specified attribute inside an Object
         JasonSlice searchObjectKeyBinary (std::string const& attribute, 
                                           JasonLength ieBase,
-                                          JasonLength ieSize, 
+                                          JasonLength offsetSize, 
                                           JasonLength n) const {
           JASON_ASSERT(n > 0);
             
@@ -794,8 +793,8 @@ namespace arangodb {
             // midpoint
             JasonLength index = l + ((r - l) / 2);
 
-            JasonLength offset = ieBase + index * ieSize;
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, ieSize));
+            JasonLength offset = ieBase + index * offsetSize;
+            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object
               return JasonSlice();
