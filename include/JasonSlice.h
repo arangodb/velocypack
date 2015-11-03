@@ -223,13 +223,13 @@ namespace arangodb {
 
         // extract the array value at the specified index
         // - 0x02      : array without index table (all subitems have the same
-        //               byte length), bytelen and number subvalues 1 byte)
+        //               byte length), bytelen 1 byte, no number of subvalues
         // - 0x03      : array without index table (all subitems have the same
-        //               byte length), bytelen and number subvalues 2 bytes)
+        //               byte length), bytelen 2 bytes, no number of subvalues
         // - 0x04      : array without index table (all subitems have the same
-        //               byte length), bytelen and number subvalues 4 bytes)
+        //               byte length), bytelen 4 bytes, no number of subvalues
         // - 0x05      : array without index table (all subitems have the same
-        //               byte length), bytelen and number subvalues 8 bytes)
+        //               byte length), bytelen 8 bytes, no number of subvalues
         // - 0x06      : array with 1-byte index table entries
         // - 0x07      : array with 2-byte index table entries
         // - 0x08      : array with 4-byte index table entries
@@ -336,10 +336,16 @@ namespace arangodb {
           
           JasonLength const ieSize = indexEntrySize(h);
           JasonLength end = readInteger<JasonLength>(_start + 1, ieSize);
+          JasonLength dataOffset = 0;
 
           // read number of items
           JasonLength n;
-          if (ieSize < 8) {
+          if (h <= 0x05) {    // No offset table or length, need to compute:
+            dataOffset = findDataOffset(h);
+            JasonSlice first(_start + dataOffset);
+            n = (end - dataOffset) / first.byteSize();
+          } 
+          else if (ieSize < 8) {
             n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
           }
           else {
@@ -348,7 +354,10 @@ namespace arangodb {
           
           if (n == 1) {
             // Just one attribute, there is no index table!
-            JasonSlice attrName = JasonSlice(_start + findDataOffset(h));
+            if (dataOffset == 0) {
+              dataOffset = findDataOffset(h);
+            }
+            JasonSlice attrName = JasonSlice(_start + dataOffset);
             if (! attrName.isString()) {
               return JasonSlice();
             }
@@ -708,11 +717,9 @@ namespace arangodb {
           }
           else if (ieSize < 8) {
             n = readInteger<JasonLength>(_start + 1 + ieSize, ieSize);
-            dataOffset = 1 + ieSize + ieSize;
           }
           else {
             n = readInteger<JasonLength>(_start + end - ieSize, ieSize);
-            dataOffset = 1 + 8;
           }
 
           if (index >= n) {
@@ -725,8 +732,9 @@ namespace arangodb {
           if (h <= 0x05 || n == 1) {
             // no index table, but all array items have the same length
             // now fetch first item and determine its length
-            // Note that dataOffset is already set!
-            JASON_ASSERT(dataOffset > 0);
+            if (dataOffset == 0) {
+              dataOffset = findDataOffset(h);
+            }
             JasonSlice firstItem(_start + dataOffset);
             return JasonSlice(_start + dataOffset + index * firstItem.byteSize());
           }
