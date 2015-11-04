@@ -209,6 +209,18 @@ if(BuildTests)
     jason
     ${CMAKE_THREAD_LIBS_INIT}
   )
+
+  add_executable(
+    testsLarge
+    src/testsLarge.cpp
+  )
+
+  target_link_libraries(
+    testsLarge
+    gtest
+    jason
+    ${CMAKE_THREAD_LIBS_INIT}
+  )
 endif()
 
 # build JasonAsm
