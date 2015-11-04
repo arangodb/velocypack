@@ -2061,7 +2061,209 @@ TEST(SliceTest, ArrayCases17) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
-// TODO: Add similar cases for Objects.
+TEST(SliceTest, ObjectCases1) {
+  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
+                    0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases2) {
+  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31,
+                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
+                    0x0b };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases3) {
+  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
+                    0x63, 0x33, 0x09, 0x0c, 0x0f };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases4) {
+  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
+                    0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases5) {
+  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31,
+                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
+                    0x0b };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases6) {
+  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
+                    0x63, 0x33, 0x09, 0x0c, 0x0f };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases7) {
+  uint8_t buf[] = { 0x0c, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31,
+                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
+                    0x08, 0x00, 0x0b, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases8) {
+  uint8_t buf[] = { 0x0c, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases9) {
+  uint8_t buf[] = { 0x10, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31,
+                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
+                    0x08, 0x00, 0x0b, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases10) {
+  uint8_t buf[] = { 0x10, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases11) {
+  uint8_t buf[] = { 0x0d, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
+                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases12) {
+  uint8_t buf[] = { 0x11, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
+                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases13) {
+  uint8_t buf[] = { 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00};
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, ObjectCases14) {
+  uint8_t buf[] = { 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00};
+  buf[1] = sizeof(buf);  // set the bytelength
+  JasonSlice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  JasonSlice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+}
 
 TEST(BuilderTest, Null) {
   JasonBuilder b;
