@@ -55,6 +55,10 @@ namespace arangodb {
           uint64_t offset;
         };
 
+        void reserve (JasonLength len) {
+          reserveSpace(len);
+        }
+
       private:
 
         JasonBuffer<uint8_t> _buffer;  // Here we collect the result

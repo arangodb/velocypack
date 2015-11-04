@@ -152,8 +152,13 @@ void JasonBuilder::close () {
   // From now on index.size() > 0
 
   bool needIndexTable = true;
+  bool needNrSubs = true;
   if (index.size() == 1) {
     needIndexTable = false;
+    if (_start[tos] == 0x06) {
+      needNrSubs = false;
+    }
+    // For objects we leave needNrSubs at true here!
   }
   else if (_start[tos] == 0x06 &&   // an array
            (_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
@@ -172,6 +177,7 @@ void JasonBuilder::close () {
     }
     if (noTable) {
       needIndexTable = false;
+      needNrSubs = false;
     }
   }
 
@@ -179,7 +185,8 @@ void JasonBuilder::close () {
   unsigned int offsetSize;   
         // can be 1, 2, 4 or 8 for the byte width of the offsets,
         // the byte length and the number of subvalues:
-  if (_pos - tos + (needIndexTable ? index.size() : 0) - 6 <= 0xff) {
+  if (_pos - tos + (needIndexTable ? index.size() : 0) 
+                 - (needNrSubs ? 6 : 7) <= 0xff) {
     // We have so far used _pos - tos bytes, including the reserved 8
     // bytes for byte length and number of subvalues. In the 1-byte number
     // case we would win back 6 bytes but would need one byte per subvalue
@@ -253,7 +260,9 @@ void JasonBuilder::close () {
     }
     else {   // offsetSize == 8
       _start[tos] += 3;
-      appendLength(index.size(), 8);
+      if (needNrSubs) {
+        appendLength(index.size(), 8);
+      }
     }
   }
 
@@ -264,10 +273,7 @@ void JasonBuilder::close () {
     x >>= 8;
   }
 
-  // write number of items
-  bool writeNrItems = (_start[tos] >= 0x06);
-
-  if (offsetSize < 8 && writeNrItems) {
+  if (offsetSize < 8 && needNrSubs) {
     x = index.size();
     for (unsigned int i = offsetSize + 1; i <= 2 * offsetSize; i++) {
       _start[tos + i] = x & 0xff;

@@ -4842,6 +4842,53 @@ TEST(LookupTest, LookupBinaryLongObject) {
   } 
 }
 
+TEST(BuilderTest, FixedArraysSizes) {
+  JasonLength const kB = 1024;
+  JasonLength const GB = 1024*1024*1024;
+  JasonLength const nrs[] = {1,               // bytelen < 256
+                             2,               // 256 <= bytelen < 64k
+                             (64*kB)/127 - 1, // 256 <= bytelen < 64k
+                             (64*kB)/127,     // 64k <= bytelen < 4G
+                             (4*GB)/127,      // 64k <= bytelen < 4G
+                             (4*GB)/127+1};   // 4G <= bytelen
+  JasonLength const byteSizes[] = {1 + 1 + 1 * 127,
+                                   1 + 8 + 2 * 127,
+                                   1 + 8 + ((64 * kB) / 127 - 1) * 127,
+                                   1 + 8 + ((64 * kB) / 127) * 127,
+                                   1 + 8 + ((4 * GB) / 127) * 127,
+                                   1 + 8 + ((4 * GB) / 127 + 1) * 127};
+  int nr = sizeof(nrs) / sizeof(JasonLength);
+
+  std::string x;
+  for (size_t i = 0; i < 128-2; i++) {
+    x.push_back('x');
+  }
+  // Now x has length 128-2 and thus will use 128 bytes as an entry in an array
+
+  for (int i = 0; i < nr; i++) {
+    JasonBuilder b;
+    b.reserve(byteSizes[i]);
+    b.add(Jason(JasonType::Array));
+    for (JasonLength j = 0; j < nrs[i]; j++) {
+      b.add(Jason(x));
+    }
+    b.close();
+    uint8_t* start = b.start();
+
+    ASSERT_EQ(byteSizes[i], b.size());
+    ASSERT_TRUE(0x02 <= *start && *start <= 0x05);  // Array without index tab
+    JasonSlice s(start);
+    ASSERT_TRUE(s.isArray());
+    ASSERT_EQ(nrs[i], s.length());
+    ASSERT_TRUE(s[0].isString());
+    JasonLength len;
+    char const* p = s[0].getString(len);
+    ASSERT_EQ(x.size(), len);
+    ASSERT_EQ(x, std::string(p, len));
+  }
+}
+
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
