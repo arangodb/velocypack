@@ -868,8 +868,8 @@ namespace arangodb {
       private:
 
         static JasonType const TypeMap[256];
-        static unsigned int const WidthMap[0x13];
-        static unsigned int const FirstSubMap[0x13];
+        static unsigned int const WidthMap[256];
+        static unsigned int const FirstSubMap[256];
     };
 
     static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
