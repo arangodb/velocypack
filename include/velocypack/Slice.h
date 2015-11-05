@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,8 +24,8 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_SLICE_H
-#define JASON_SLICE_H 1
+#ifndef VELOCYPACK_SLICE_H
+#define VELOCYPACK_SLICE_H 1
 
 #include <cstdint>
 #include <cstring>
@@ -35,35 +35,36 @@
 #include <functional>
 #include <algorithm>
 
-#include "Jason.h"
-#include "JasonException.h"
-#include "JasonType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
-    class JasonSlice {
+    class Slice {
 
-      // This class provides read only access to a Jason value, it is
+      // This class provides read only access to a VPack value, it is
       // intentionally light-weight (only one pointer value), such that
-      // it can easily be used to traverse larger Jason values.
+      // it can easily be used to traverse larger VPack values.
 
-        friend class JasonBuilder;
+        friend class Builder;
 
         uint8_t const* _start;
 
       public:
  
-        // constructor for an empty Jason of type None 
-        JasonSlice () 
-          : JasonSlice("\x00") {
+        // constructor for an empty Value of type None 
+        Slice () 
+          : Slice("\x00") {
         }
 
-        explicit JasonSlice (uint8_t const* start) 
+        explicit Slice (uint8_t const* start) 
           : _start(start) {
         }
 
-        explicit JasonSlice (char const* start) 
+        explicit Slice (char const* start) 
           : _start(reinterpret_cast<uint8_t const*>(start)) {
         }
 
@@ -71,12 +72,12 @@ namespace arangodb {
         // standard copy, and move constructors, behaves like a pointer.
 
         // get the type for the slice
-        inline JasonType type () const {
+        inline ValueType type () const {
           return TypeMap[head()];
         }
 
         char const* typeName () const {
-          return JasonTypeName(type());
+          return ValueTypeName(type());
         }
 
         // pointer to the head byte
@@ -90,23 +91,23 @@ namespace arangodb {
         }
 
         // check if slice is of the specified type
-        inline bool isType (JasonType t) const {
+        inline bool isType (ValueType t) const {
           return type() == t;
         }
 
         // check if slice is a None object
         bool isNone () const {
-          return isType(JasonType::None);
+          return isType(ValueType::None);
         }
 
         // check if slice is a Null object
         bool isNull () const {
-          return isType(JasonType::Null);
+          return isType(ValueType::Null);
         }
 
         // check if slice is a Bool object
         bool isBool () const {
-          return isType(JasonType::Bool);
+          return isType(ValueType::Bool);
         }
 
         // check if slice is a Bool object - this is an alias for isBool()
@@ -116,77 +117,77 @@ namespace arangodb {
 
         // check if slice is an Array object
         bool isArray () const {
-          return isType(JasonType::Array);
+          return isType(ValueType::Array);
         }
 
         // check if slice is an Object object
         bool isObject () const {
-          return isType(JasonType::Object);
+          return isType(ValueType::Object);
         }
         
         // check if slice is a Double object
         bool isDouble () const {
-          return isType(JasonType::Double);
+          return isType(ValueType::Double);
         }
         
         // check if slice is a UTCDate object
         bool isUTCDate () const {
-          return isType(JasonType::UTCDate);
+          return isType(ValueType::UTCDate);
         }
 
         // check if slice is an External object
         bool isExternal () const {
-          return isType(JasonType::External);
+          return isType(ValueType::External);
         }
 
         // check if slice is a MinKey object
         bool isMinKey () const {
-          return isType(JasonType::MinKey);
+          return isType(ValueType::MinKey);
         }
         
         // check if slice is a MaxKey object
         bool isMaxKey () const {
-          return isType(JasonType::MaxKey);
+          return isType(ValueType::MaxKey);
         }
 
         // check if slice is an Int object
         bool isInt () const {
-          return isType(JasonType::Int);
+          return isType(ValueType::Int);
         }
         
         // check if slice is a UInt object
         bool isUInt () const {
-          return isType(JasonType::UInt);
+          return isType(ValueType::UInt);
         }
 
         // check if slice is a SmallInt object
         bool isSmallInt () const {
-          return isType(JasonType::SmallInt);
+          return isType(ValueType::SmallInt);
         }
 
         // check if slice is a String object
         bool isString () const {
-          return isType(JasonType::String);
+          return isType(ValueType::String);
         }
 
         // check if slice is a Binary object
         bool isBinary () const {
-          return isType(JasonType::Binary);
+          return isType(ValueType::Binary);
         }
 
         // check if slice is a BCD
         bool isBCD () const {
-          return isType(JasonType::BCD);
+          return isType(ValueType::BCD);
         }
         
         // check if slice is a custom type
         bool isCustom () const {
-          return isType(JasonType::Custom);
+          return isType(ValueType::Custom);
         }
         
         // check if a slice is any number type
         bool isInteger () const {
-          return isType(JasonType::Int) || isType(JasonType::UInt) || isType(JasonType::SmallInt);
+          return isType(ValueType::Int) || isType(ValueType::UInt) || isType(ValueType::SmallInt);
         }
 
         // check if slice is any Number-type object
@@ -201,7 +202,7 @@ namespace arangodb {
 
         // return the value for a Bool object
         bool getBool () const {
-          assertType(JasonType::Bool);
+          assertType(ValueType::Bool);
           return (head() == 0x1a); // 0x19 == false, 0x1a == true
         }
 
@@ -212,7 +213,7 @@ namespace arangodb {
 
         // return the value for a Double object
         double getDouble () const {
-          assertType(JasonType::Double);
+          assertType(ValueType::Double);
           union {
             uint64_t dv;
             double d;
@@ -234,22 +235,22 @@ namespace arangodb {
         // - 0x07      : array with 2-byte index table entries
         // - 0x08      : array with 4-byte index table entries
         // - 0x09      : array with 8-byte index table entries
-        JasonSlice at (JasonLength index) const {
-          if (! isType(JasonType::Array)) {
-            throw JasonException(JasonException::InvalidValueType, "Expecting Array");
+        Slice at (ValueLength index) const {
+          if (! isType(ValueType::Array)) {
+            throw Exception(Exception::InvalidValueType, "Expecting Array");
           }
 
           return getNth(index);
         }
 
-        JasonSlice operator[] (JasonLength index) const {
+        Slice operator[] (ValueLength index) const {
           return at(index);
         }
 
         // return the number of members for an Array or Object object
-        JasonLength length () const {
-          if (type() != JasonType::Array && type() != JasonType::Object) {
-            throw JasonException(JasonException::InvalidValueType, "Expecting Array or Object");
+        ValueLength length () const {
+          if (type() != ValueType::Array && type() != ValueType::Object) {
+            throw Exception(Exception::InvalidValueType, "Expecting Array or Object");
           }
 
           auto const h = head();
@@ -258,20 +259,20 @@ namespace arangodb {
             return 0;
           }
 
-          JasonLength const offsetSize = indexEntrySize(h);
-          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
+          ValueLength const offsetSize = indexEntrySize(h);
+          ValueLength end = readInteger<ValueLength>(_start + 1, offsetSize);
 
           // find number of items
           if (h <= 0x05) {    // No offset table or length, need to compute:
-            JasonLength firstSubOffset = findDataOffset(h);
-            JasonSlice first(_start + firstSubOffset);
+            ValueLength firstSubOffset = findDataOffset(h);
+            Slice first(_start + firstSubOffset);
             return (end - firstSubOffset) / first.byteSize();
           } 
           else if (offsetSize < 8) {
-            return readInteger<JasonLength>(_start + offsetSize + 1, offsetSize);
+            return readInteger<ValueLength>(_start + offsetSize + 1, offsetSize);
           }
 
-          return readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
+          return readInteger<ValueLength>(_start + end - offsetSize, offsetSize);
         }
 
         // extract a key from an Object at the specified index
@@ -284,36 +285,36 @@ namespace arangodb {
         // - 0x10      : object with 2-byte index table entries, not sorted by attribute name
         // - 0x11      : object with 4-byte index table entries, not sorted by attribute name
         // - 0x12      : object with 8-byte index table entries, not sorted by attribute name
-        JasonSlice keyAt (JasonLength index) const {
-          if (! isType(JasonType::Object)) {
-            throw JasonException(JasonException::InvalidValueType, "Expecting Object");
+        Slice keyAt (ValueLength index) const {
+          if (! isType(ValueType::Object)) {
+            throw Exception(Exception::InvalidValueType, "Expecting Object");
           }
           
           return getNth(index);
         }
 
-        JasonSlice valueAt (JasonLength index) const {
-          JasonSlice key = keyAt(index);
-          return JasonSlice(key.start() + key.byteSize());
+        Slice valueAt (ValueLength index) const {
+          Slice key = keyAt(index);
+          return Slice(key.start() + key.byteSize());
         }
 
         // look for the specified attribute path inside an Object
-        // returns a JasonSlice(Jason::None) if not found
-        JasonSlice get (std::vector<std::string> const& attributes) const { 
+        // returns a Slice(ValueType::None) if not found
+        Slice get (std::vector<std::string> const& attributes) const { 
           size_t const n = attributes.size();
           if (n == 0) {
-            throw JasonException(JasonException::InvalidAttributePath);
+            throw Exception(Exception::InvalidAttributePath);
           }
 
           // use ourselves as the starting point
-          JasonSlice last = JasonSlice(start());
+          Slice last = Slice(start());
           for (size_t i = 0; i < attributes.size(); ++i) {
             // fetch subattribute
             last = last.get(attributes[i]);
 
             // abort as early as possible
             if (last.isNone() || (i + 1 < n && ! last.isObject())) {
-              return JasonSlice();
+              return Slice();
             }
           }
 
@@ -321,34 +322,34 @@ namespace arangodb {
         }
 
         // look for the specified attribute inside an Object
-        // returns a JasonSlice(Jason::None) if not found
-        JasonSlice get (std::string const& attribute) const {
-          if (! isType(JasonType::Object)) {
-            throw JasonException(JasonException::InvalidValueType, "Expecting Object");
+        // returns a Slice(ValueType::None) if not found
+        Slice get (std::string const& attribute) const {
+          if (! isType(ValueType::Object)) {
+            throw Exception(Exception::InvalidValueType, "Expecting Object");
           }
 
           auto const h = head();
           if (h == 0xa) {
             // special case, empty object
-            return JasonSlice();
+            return Slice();
           }
           
-          JasonLength const offsetSize = indexEntrySize(h);
-          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
-          JasonLength dataOffset = 0;
+          ValueLength const offsetSize = indexEntrySize(h);
+          ValueLength end = readInteger<ValueLength>(_start + 1, offsetSize);
+          ValueLength dataOffset = 0;
 
           // read number of items
-          JasonLength n;
+          ValueLength n;
           if (h <= 0x05) {    // No offset table or length, need to compute:
             dataOffset = findDataOffset(h);
-            JasonSlice first(_start + dataOffset);
+            Slice first(_start + dataOffset);
             n = (end - dataOffset) / first.byteSize();
           } 
           else if (offsetSize < 8) {
-            n = readInteger<JasonLength>(_start + 1 + offsetSize, offsetSize);
+            n = readInteger<ValueLength>(_start + 1 + offsetSize, offsetSize);
           }
           else {
-            n = readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
+            n = readInteger<ValueLength>(_start + end - offsetSize, offsetSize);
           }
           
           if (n == 1) {
@@ -356,28 +357,28 @@ namespace arangodb {
             if (dataOffset == 0) {
               dataOffset = findDataOffset(h);
             }
-            JasonSlice attrName = JasonSlice(_start + dataOffset);
+            Slice attrName = Slice(_start + dataOffset);
             if (! attrName.isString()) {
-              return JasonSlice();
+              return Slice();
             }
-            JasonLength attrLength;
+            ValueLength attrLength;
             char const* k = attrName.getString(attrLength); 
-            if (attrLength != static_cast<JasonLength>(attribute.size())) {
+            if (attrLength != static_cast<ValueLength>(attribute.size())) {
               // key must have the exact same length as the attribute we search for
-              return JasonSlice();
+              return Slice();
             }
             if (memcmp(k, attribute.c_str(), attribute.size()) != 0) {
-              return JasonSlice();
+              return Slice();
             }
-            return JasonSlice(attrName.start() + attrName.byteSize());
+            return Slice(attrName.start() + attrName.byteSize());
           }
 
-          JasonLength const ieBase = end - n * offsetSize 
+          ValueLength const ieBase = end - n * offsetSize 
                                      - (offsetSize == 8 ? offsetSize : 0);
 
           // only use binary search for attributes if we have at least this many entries
           // otherwise we'll always use the linear search
-          static JasonLength const SortedSearchEntriesThreshold = 4;
+          static ValueLength const SortedSearchEntriesThreshold = 4;
 
           if (isSorted() && n >= SortedSearchEntriesThreshold) {
             // This means, we have to handle the special case n == 1 only
@@ -388,22 +389,22 @@ namespace arangodb {
           return searchObjectKeyLinear(attribute, ieBase, offsetSize, n);
         }
 
-        JasonSlice operator[] (std::string const& attribute) const {
+        Slice operator[] (std::string const& attribute) const {
           return get(attribute);
         }
 
-        void iterateArray (std::function<bool(JasonSlice const&)> const& callback) const {
-          JasonLength const n = length(); 
-          for (JasonLength i = 0; i < n; ++i) {
+        void iterateArray (std::function<bool(Slice const&)> const& callback) const {
+          ValueLength const n = length(); 
+          for (ValueLength i = 0; i < n; ++i) {
             if (! callback(at(i))) {
               return;
             }
           }
         }
 
-        void iterateObject (std::function<bool(JasonSlice const&, JasonSlice const&)> const& callback) const {
-          JasonLength const n = length(); 
-          for (JasonLength i = 0; i < n; ++i) {
+        void iterateObject (std::function<bool(Slice const&, Slice const&)> const& callback) const {
+          ValueLength const n = length(); 
+          for (ValueLength i = 0; i < n; ++i) {
             if (! callback(keyAt(i), valueAt(i))) {
               return;
             }
@@ -412,21 +413,21 @@ namespace arangodb {
         
         std::vector<std::string> keys () const {
           std::vector<std::string> keys;
-          JasonLength const n = length(); 
+          ValueLength const n = length(); 
           keys.reserve(n);
-          for (JasonLength i = 0; i < n; ++i) {
+          for (ValueLength i = 0; i < n; ++i) {
             keys.emplace_back(keyAt(i).copyString());
           }
           return keys;
         }
 
         void keys (std::vector<std::string>& keys) const {
-          JasonLength const n = length(); 
+          ValueLength const n = length(); 
           if (! keys.empty()) {
             keys.clear();
           }
           keys.reserve(n);
-          for (JasonLength i = 0; i < n; ++i) {
+          for (ValueLength i = 0; i < n; ++i) {
             keys.emplace_back(keyAt(i).copyString());
           }
         }
@@ -443,7 +444,7 @@ namespace arangodb {
             // Int  T
             uint64_t v = readInteger<uint64_t>(_start + 1, h - 0x1f);
             if (h == 0x27) {
-              return toInt64(v);
+              return ToInt64(v);
             }
             else {
               int64_t vv = static_cast<int64_t>(v);
@@ -456,7 +457,7 @@ namespace arangodb {
             // UInt
             uint64_t v = getUInt();
             if (v > static_cast<uint64_t>(INT64_MAX)) {
-              throw JasonException(JasonException::NumberOutOfRange);
+              throw Exception(Exception::NumberOutOfRange);
             }
             return static_cast<int64_t>(v);
           }
@@ -466,7 +467,7 @@ namespace arangodb {
             return getSmallInt();
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type Int");
+          throw Exception(Exception::InvalidValueType, "Expecting type Int");
         }
 
         // return the value for a UInt object
@@ -481,7 +482,7 @@ namespace arangodb {
             // Int 
             int64_t v = getInt();
             if (v < 0) {
-              throw JasonException(JasonException::NumberOutOfRange);
+              throw Exception(Exception::NumberOutOfRange);
             }
             return static_cast<int64_t>(v);
           }
@@ -491,7 +492,7 @@ namespace arangodb {
             return static_cast<uint64_t>(h - 0x30);
           }
           
-          throw JasonException(JasonException::InvalidValueType, "Expecting type UInt");
+          throw Exception(Exception::InvalidValueType, "Expecting type UInt");
         }
 
         // return the value for a SmallInt object
@@ -515,18 +516,18 @@ namespace arangodb {
             return getInt();
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type Smallint");
+          throw Exception(Exception::InvalidValueType, "Expecting type Smallint");
         }
 
         // return the value for a UTCDate object
         int64_t getUTCDate () const {
-          assertType(JasonType::UTCDate);
+          assertType(ValueType::UTCDate);
           uint64_t v = readInteger<uint64_t>(_start + 1, sizeof(uint64_t));
-          return toInt64(v);
+          return ToInt64(v);
         }
 
         // return the value for a String object
-        char const* getString (JasonLength& length) const {
+        char const* getString (ValueLength& length) const {
           uint8_t const h = head();
           if (h >= 0x40 && h <= 0xbe) {
             // short UTF-8 String
@@ -536,12 +537,12 @@ namespace arangodb {
 
           if (h == 0xbf) {
             // long UTF-8 String
-            length = readInteger<JasonLength>(_start + 1, 8);
-            JasonCheckSize(length);
+            length = readInteger<ValueLength>(_start + 1, 8);
+            CheckValueLength(length);
             return reinterpret_cast<char const*>(_start + 1 + 8);
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type String");
+          throw Exception(Exception::InvalidValueType, "Expecting type String");
         }
 
         // return a copy of the value for a String object
@@ -549,126 +550,126 @@ namespace arangodb {
           uint8_t h = head();
           if (h >= 0x40 && h <= 0xbe) {
             // short UTF-8 String
-            JasonLength length = h - 0x40;
+            ValueLength length = h - 0x40;
             return std::string(reinterpret_cast<char const*>(_start + 1), static_cast<size_t>(length));
           }
 
           if (h == 0xbf) {
-            JasonLength length = readInteger<JasonLength>(_start + 1, 8);
-            JasonCheckSize(length);
+            ValueLength length = readInteger<ValueLength>(_start + 1, 8);
+            CheckValueLength(length);
             return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type String");
+          throw Exception(Exception::InvalidValueType, "Expecting type String");
         }
 
         // return the value for a Binary object
-        uint8_t const* getBinary (JasonLength& length) const {
-          assertType(JasonType::Binary);
+        uint8_t const* getBinary (ValueLength& length) const {
+          assertType(ValueType::Binary);
           uint8_t const h = head();
 
           if (h >= 0xc0 && h <= 0xc7) {
-            length = readInteger<JasonLength>(_start + 1, h - 0xbf); 
-            JasonCheckSize(length);
+            length = readInteger<ValueLength>(_start + 1, h - 0xbf); 
+            CheckValueLength(length);
             return _start + 1 + h - 0xbf;
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type Binary");
+          throw Exception(Exception::InvalidValueType, "Expecting type Binary");
         }
 
         // return a copy of the value for a Binary object
         std::vector<uint8_t> copyBinary () const {
-          assertType(JasonType::Binary);
+          assertType(ValueType::Binary);
           uint8_t const h = head();
 
           if (h >= 0xc0 && h <= 0xc7) {
             std::vector<uint8_t> out;
-            JasonLength length = readInteger<JasonLength>(_start + 1, h - 0xbf); 
-            JasonCheckSize(length);
+            ValueLength length = readInteger<ValueLength>(_start + 1, h - 0xbf); 
+            CheckValueLength(length);
             out.reserve(static_cast<size_t>(length));
             out.insert(out.end(), _start + 1 + h - 0xbf, _start + 1 + h - 0xbf + length);
             return out; 
           }
 
-          throw JasonException(JasonException::InvalidValueType, "Expecting type Binary");
+          throw Exception(Exception::InvalidValueType, "Expecting type Binary");
         }
 
         // get the total byte size for the slice, including the head byte
-        JasonLength byteSize () const {
+        ValueLength byteSize () const {
           switch (type()) {
-            case JasonType::None:
-            case JasonType::Null:
-            case JasonType::Bool: 
-            case JasonType::MinKey: 
-            case JasonType::MaxKey: 
-            case JasonType::SmallInt: {
+            case ValueType::None:
+            case ValueType::Null:
+            case ValueType::Bool: 
+            case ValueType::MinKey: 
+            case ValueType::MaxKey: 
+            case ValueType::SmallInt: {
               return 1; 
             }
 
-            case JasonType::Double: {
+            case ValueType::Double: {
               return 1 + sizeof(double);
             }
 
-            case JasonType::Array:
-            case JasonType::Object: {
+            case ValueType::Array:
+            case ValueType::Object: {
               auto const h = head();
               if (h == 0x01 || h == 0x0a) {
                 // empty array or object
                 return 1;
               }
 
-              return readInteger<JasonLength>(_start + 1, WidthMap[h]);
+              return readInteger<ValueLength>(_start + 1, WidthMap[h]);
             }
 
-            case JasonType::External: {
+            case ValueType::External: {
               return 1 + sizeof(char*);
             }
 
-            case JasonType::UTCDate: {
+            case ValueType::UTCDate: {
               return 1 + sizeof(int64_t);
             }
 
-            case JasonType::Int: {
-              return static_cast<JasonLength>(1 + (head() - 0x1f));
+            case ValueType::Int: {
+              return static_cast<ValueLength>(1 + (head() - 0x1f));
             }
 
-            case JasonType::UInt: {
-              return static_cast<JasonLength>(1 + (head() - 0x27));
+            case ValueType::UInt: {
+              return static_cast<ValueLength>(1 + (head() - 0x27));
             }
 
-            case JasonType::String: {
+            case ValueType::String: {
               auto const h = head();
               if (h == 0xbf) {
                 // long UTF-8 String
-                return static_cast<JasonLength>(1 + 8 + readInteger<JasonLength>(_start + 1, 8));
+                return static_cast<ValueLength>(1 + 8 + readInteger<ValueLength>(_start + 1, 8));
               }
 
               // short UTF-8 String
-              return static_cast<JasonLength>(1 + h - 0x40);
+              return static_cast<ValueLength>(1 + h - 0x40);
             }
 
-            case JasonType::Binary: {
+            case ValueType::Binary: {
               auto const h = head();
-              return static_cast<JasonLength>(1 + h - 0xbf + readInteger<JasonLength>(_start + 1, h - 0xbf));
+              return static_cast<ValueLength>(1 + h - 0xbf + readInteger<ValueLength>(_start + 1, h - 0xbf));
             }
 
-            case JasonType::BCD: {
+            case ValueType::BCD: {
               auto const h = head();
               if (h <= 0xcf) {
                 // positive BCD
-                return static_cast<JasonLength>(1 + h - 0xc7 + readInteger<JasonLength>(_start + 1, h - 0xc7));
+                return static_cast<ValueLength>(1 + h - 0xc7 + readInteger<ValueLength>(_start + 1, h - 0xc7));
               } 
 
               // negative BCD
-              return static_cast<JasonLength>(1 + h - 0xcf + readInteger<JasonLength>(_start + 1, h - 0xcf));
+              return static_cast<ValueLength>(1 + h - 0xcf + readInteger<ValueLength>(_start + 1, h - 0xcf));
             }
 
-            case JasonType::Custom: {
+            case ValueType::Custom: {
               return 0; // TODO 
             }
           }
 
-          JASON_ASSERT(false);
+          VELOCYPACK_ASSERT(false);
           return 0;
         }
 
@@ -677,7 +678,7 @@ namespace arangodb {
 
       private:
         
-        JasonLength findDataOffset (uint8_t const head) const {
+        ValueLength findDataOffset (uint8_t const head) const {
           // Must be called for a nonempty array or object at start():
           unsigned int fsm = FirstSubMap[head];
           if (fsm <= 2 && _start[2] != 0) {
@@ -693,39 +694,39 @@ namespace arangodb {
         }
           
         // extract the nth member from an Array or Object type
-        JasonSlice getNth (JasonLength index) const {
-          JASON_ASSERT(type() == JasonType::Array || type() == JasonType::Object);
+        Slice getNth (ValueLength index) const {
+          VELOCYPACK_ASSERT(type() == ValueType::Array || type() == ValueType::Object);
 
           auto const h = head();
           if (h == 0x01 || h == 0x0a) {
             // special case. empty array or object
-            throw JasonException(JasonException::IndexOutOfBounds);
+            throw Exception(Exception::IndexOutOfBounds);
           }
 
-          JasonLength const offsetSize = indexEntrySize(h);
-          JasonLength end = readInteger<JasonLength>(_start + 1, offsetSize);
+          ValueLength const offsetSize = indexEntrySize(h);
+          ValueLength end = readInteger<ValueLength>(_start + 1, offsetSize);
 
-          JasonLength dataOffset = findDataOffset(h);
+          ValueLength dataOffset = findDataOffset(h);
           
           // find the number of items
-          JasonLength n;
+          ValueLength n;
           if (h <= 0x05) {    // No offset table or length, need to compute:
-            JasonSlice first(_start + dataOffset);
+            Slice first(_start + dataOffset);
             n = (end - dataOffset) / first.byteSize();
           }
           else if (offsetSize < 8) {
-            n = readInteger<JasonLength>(_start + 1 + offsetSize, offsetSize);
+            n = readInteger<ValueLength>(_start + 1 + offsetSize, offsetSize);
           }
           else {
-            n = readInteger<JasonLength>(_start + end - offsetSize, offsetSize);
+            n = readInteger<ValueLength>(_start + end - offsetSize, offsetSize);
           }
 
           if (index >= n) {
-            throw JasonException(JasonException::IndexOutOfBounds);
+            throw Exception(Exception::IndexOutOfBounds);
           }
 
           // empty array case was already covered
-          JASON_ASSERT(n > 0);
+          VELOCYPACK_ASSERT(n > 0);
 
           if (h <= 0x05 || n == 1) {
             // no index table, but all array items have the same length
@@ -733,35 +734,35 @@ namespace arangodb {
             if (dataOffset == 0) {
               dataOffset = findDataOffset(h);
             }
-            JasonSlice firstItem(_start + dataOffset);
-            return JasonSlice(_start + dataOffset + index * firstItem.byteSize());
+            Slice firstItem(_start + dataOffset);
+            return Slice(_start + dataOffset + index * firstItem.byteSize());
           }
           
-          JasonLength const ieBase = end - n * offsetSize + index * offsetSize
+          ValueLength const ieBase = end - n * offsetSize + index * offsetSize
                                      - (offsetSize == 8 ? 8 : 0);
-          return JasonSlice(_start + readInteger<JasonLength>(_start + ieBase, offsetSize));
+          return Slice(_start + readInteger<ValueLength>(_start + ieBase, offsetSize));
         }
 
-        JasonLength indexEntrySize (uint8_t head) const {
-          return static_cast<JasonLength>(WidthMap[head]);
+        ValueLength indexEntrySize (uint8_t head) const {
+          return static_cast<ValueLength>(WidthMap[head]);
         }
 
         // perform a linear search for the specified attribute inside an Object
-        JasonSlice searchObjectKeyLinear (std::string const& attribute, 
-                                          JasonLength ieBase, 
-                                          JasonLength offsetSize, 
-                                          JasonLength n) const {
-          for (JasonLength index = 0; index < n; ++index) {
-            JasonLength offset = ieBase + index * offsetSize;
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
+        Slice searchObjectKeyLinear (std::string const& attribute, 
+                                          ValueLength ieBase, 
+                                          ValueLength offsetSize, 
+                                          ValueLength n) const {
+          for (ValueLength index = 0; index < n; ++index) {
+            ValueLength offset = ieBase + index * offsetSize;
+            Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object
-              return JasonSlice();
+              return Slice();
             }
 
-            JasonLength keyLength;
+            ValueLength keyLength;
             char const* k = key.getString(keyLength); 
-            if (keyLength != static_cast<JasonLength>(attribute.size())) {
+            if (keyLength != static_cast<ValueLength>(attribute.size())) {
               // key must have the exact same length as the attribute we search for
               continue;
             }
@@ -770,49 +771,49 @@ namespace arangodb {
               continue;
             }
             // key is identical. now return value
-            return JasonSlice(key.start() + key.byteSize());
+            return Slice(key.start() + key.byteSize());
           }
 
           // nothing found
-          return JasonSlice();
+          return Slice();
         }
 
         // perform a binary search for the specified attribute inside an Object
-        JasonSlice searchObjectKeyBinary (std::string const& attribute, 
-                                          JasonLength ieBase,
-                                          JasonLength offsetSize, 
-                                          JasonLength n) const {
-          JASON_ASSERT(n > 0);
+        Slice searchObjectKeyBinary (std::string const& attribute, 
+                                          ValueLength ieBase,
+                                          ValueLength offsetSize, 
+                                          ValueLength n) const {
+          VELOCYPACK_ASSERT(n > 0);
             
-          JasonLength const attributeLength = static_cast<JasonLength>(attribute.size());
+          ValueLength const attributeLength = static_cast<ValueLength>(attribute.size());
 
-          JasonLength l = 0;
-          JasonLength r = n - 1;
+          ValueLength l = 0;
+          ValueLength r = n - 1;
 
           while (true) {
             // midpoint
-            JasonLength index = l + ((r - l) / 2);
+            ValueLength index = l + ((r - l) / 2);
 
-            JasonLength offset = ieBase + index * offsetSize;
-            JasonSlice key(_start + readInteger<JasonLength>(_start + offset, offsetSize));
+            ValueLength offset = ieBase + index * offsetSize;
+            Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize));
             if (! key.isString()) {
               // invalid object
-              return JasonSlice();
+              return Slice();
             }
 
-            JasonLength keyLength;
+            ValueLength keyLength;
             char const* k = key.getString(keyLength); 
             size_t const compareLength = static_cast<size_t>((std::min)(keyLength, attributeLength));
             int res = memcmp(k, attribute.c_str(), compareLength);
 
             if (res == 0 && keyLength == attributeLength) {
               // key is identical. now return value
-              return JasonSlice(key.start() + key.byteSize());
+              return Slice(key.start() + key.byteSize());
             }
 
             if (res > 0 || (res == 0 && keyLength > attributeLength)) {
               if (index == 0) {
-                return JasonSlice();
+                return Slice();
               }
               r = index - 1;
             }
@@ -820,26 +821,26 @@ namespace arangodb {
               l = index + 1;
             }
             if (r < l) {
-              return JasonSlice();
+              return Slice();
             }
           }
         }
          
         // assert that the slice is of a specific type
         // can be used for debugging and removed in production
-#ifdef JASON_ASSERT
-        inline void assertType (JasonType) const {
+#ifdef VELOCYPACK_ASSERT
+        inline void assertType (ValueType) const {
         }
 #else
-        inline void assertType (JasonType type) const {
-          JASON_ASSERT(this->type() == type);
+        inline void assertType (ValueType type) const {
+          VELOCYPACK_ASSERT(this->type() == type);
         }
 #endif
           
         // read an unsigned little endian integer value of the
         // specified length, starting at the specified byte offset
         template <typename T>
-        T readInteger (uint8_t const* start, JasonLength numBytes) const {
+        T readInteger (uint8_t const* start, ValueLength numBytes) const {
           T value = 0;
           uint8_t const* p = start;
           uint8_t const* e = p + numBytes;
@@ -867,18 +868,18 @@ namespace arangodb {
 
       private:
 
-        static JasonType const TypeMap[256];
+        static ValueType const TypeMap[256];
         static unsigned int const WidthMap[256];
         static unsigned int const FirstSubMap[256];
     };
 
-    static_assert(sizeof(JasonSlice) == sizeof(void*), "JasonSlice has an unexpected size");
+    static_assert(sizeof(Slice) == sizeof(void*), "Slice has an unexpected size");
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
         
-std::ostream& operator<< (std::ostream&, arangodb::jason::JasonSlice const*);
+std::ostream& operator<< (std::ostream&, arangodb::velocypack::Slice const*);
 
-std::ostream& operator<< (std::ostream&, arangodb::jason::JasonSlice const&);
+std::ostream& operator<< (std::ostream&, arangodb::velocypack::Slice const&);
 
 #endif

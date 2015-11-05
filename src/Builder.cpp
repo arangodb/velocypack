@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -26,12 +26,13 @@
 
 #include <unordered_set>
 
-#include "JasonBuilder.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
-void JasonBuilder::doActualSort (std::vector<SortEntry>& entries) {
-  JASON_ASSERT(entries.size() > 1);
+void Builder::doActualSort (std::vector<SortEntry>& entries) {
+  VELOCYPACK_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(), 
     [] (SortEntry const& a, SortEntry const& b) {
       // return true iff a < b:
@@ -47,7 +48,7 @@ void JasonBuilder::doActualSort (std::vector<SortEntry>& entries) {
     });
 };
 
-uint8_t const* JasonBuilder::findAttrName (uint8_t const* base, uint64_t& len) {
+uint8_t const* Builder::findAttrName (uint8_t const* base, uint64_t& len) {
   uint8_t const b = *base;
   if (b >= 0x40 && b <= 0xbe) {
     // short UTF-8 string
@@ -63,12 +64,12 @@ uint8_t const* JasonBuilder::findAttrName (uint8_t const* base, uint64_t& len) {
     }
     return base + 1 + 8; // string starts here
   }
-  throw JasonException(JasonException::NotImplemented, "Invalid Object key type");
+  throw Exception(Exception::NotImplemented, "Invalid Object key type");
 }
 
-void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
-                                         std::vector<JasonLength>& offsets) {
-  auto cmp = [&] (JasonLength a, JasonLength b) -> bool {
+void Builder::sortObjectIndexShort (uint8_t* objBase,
+                                         std::vector<ValueLength>& offsets) {
+  auto cmp = [&] (ValueLength a, ValueLength b) -> bool {
     uint8_t const* aa = objBase + a;
     uint8_t const* bb = objBase + b;
     if (*aa >= 0x40 && *aa <= 0xbe &&
@@ -91,39 +92,39 @@ void JasonBuilder::sortObjectIndexShort (uint8_t* objBase,
   std::sort(offsets.begin(), offsets.end(), cmp);
 }
 
-void JasonBuilder::sortObjectIndexLong (uint8_t* objBase,
-                                        std::vector<JasonLength>& offsets) {
+void Builder::sortObjectIndexLong (uint8_t* objBase,
+                                        std::vector<ValueLength>& offsets) {
 
   // on some platforms we can use a thread-local vector
 #if __llvm__ == 1
   // nono thread local
-  std::vector<JasonBuilder::SortEntry> entries;
+  std::vector<Builder::SortEntry> entries;
 #elif defined(_WIN32) && defined(_MSC_VER)
-  std::vector<JasonBuilder::SortEntry> entries;
+  std::vector<Builder::SortEntry> entries;
 #else
   // thread local vector for sorting large object attributes
-  thread_local std::vector<JasonBuilder::SortEntry> entries;
+  thread_local std::vector<Builder::SortEntry> entries;
   entries.clear();
 #endif
   
   entries.reserve(offsets.size());
-  for (JasonLength i = 0; i < offsets.size(); i++) {
+  for (ValueLength i = 0; i < offsets.size(); i++) {
     SortEntry e;
     e.offset = offsets[i];
     e.nameStart = findAttrName(objBase + e.offset, e.nameSize);
     entries.push_back(e);
   }
-  JASON_ASSERT(entries.size() == offsets.size());
+  VELOCYPACK_ASSERT(entries.size() == offsets.size());
   doActualSort(entries);
 
   // copy back the sorted offsets 
-  for (JasonLength i = 0; i < offsets.size(); i++) {
+  for (ValueLength i = 0; i < offsets.size(); i++) {
     offsets[i] = entries[i].offset;
   }
 }
 
-void JasonBuilder::sortObjectIndex (uint8_t* objBase,
-                                    std::vector<JasonLength>& offsets) {
+void Builder::sortObjectIndex (uint8_t* objBase,
+                                    std::vector<ValueLength>& offsets) {
   if (offsets.size() > 32) {
     sortObjectIndexLong(objBase, offsets);
   }
@@ -132,18 +133,18 @@ void JasonBuilder::sortObjectIndex (uint8_t* objBase,
   }
 }
 
-void JasonBuilder::close () {
+void Builder::close () {
   if (_stack.empty()) {
-    throw JasonException(JasonException::BuilderNeedOpenObject);
+    throw Exception(Exception::BuilderNeedOpenObject);
   }
-  JasonLength& tos = _stack.back();
+  ValueLength& tos = _stack.back();
   if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
-    throw JasonException(JasonException::BuilderNeedOpenObject);
+    throw Exception(Exception::BuilderNeedOpenObject);
   }
-  std::vector<JasonLength>& index = _index[_stack.size() - 1];
+  std::vector<ValueLength>& index = _index[_stack.size() - 1];
   if (index.empty()) {
     _start[tos] = (_start[tos] == 0x06) ? 0x01 : 0x0a;
-    JASON_ASSERT(_pos == tos + 9);
+    VELOCYPACK_ASSERT(_pos == tos + 9);
     _pos -= 8;  // no bytelength and number subvalues needed
     _stack.pop_back();
     // Intentionally leave _index[depth] intact to avoid future allocs!
@@ -165,7 +166,7 @@ void JasonBuilder::close () {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
     bool noTable = true;
-    JasonLength subLen = index[1] - index[0];
+    ValueLength subLen = index[1] - index[0];
     for (size_t i = 1; i < index.size() - 1; i++) {
       if (index[i + 1] - index[i] != subLen) {
         noTable = false;
@@ -224,7 +225,7 @@ void JasonBuilder::close () {
 
   // Now build the table:
   if (needIndexTable) {
-    JasonLength tableBase;
+    ValueLength tableBase;
     reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
     tableBase = _pos;
     _pos += offsetSize * index.size();
@@ -267,7 +268,7 @@ void JasonBuilder::close () {
   }
 
   // Fix the byte length in the beginning:
-  JasonLength x = _pos - tos;
+  ValueLength x = _pos - tos;
   for (unsigned int i = 1; i <= offsetSize; i++) {
     _start[tos + i] = x & 0xff;
     x >>= 8;
@@ -285,33 +286,33 @@ void JasonBuilder::close () {
   if (options.checkAttributeUniqueness && index.size() > 1 &&
       _start[tos] >= 0x0b) {
     // check uniqueness of attribute names
-    checkAttributeUniqueness(JasonSlice(_start + tos));
+    checkAttributeUniqueness(Slice(_start + tos));
   }
 
-  // Now the array or object is complete, we pop a JasonLength 
+  // Now the array or object is complete, we pop a ValueLength 
   // off the _stack:
   _stack.pop_back();
   // Intentionally leave _index[depth] intact to avoid future allocs!
 }
 
-void JasonBuilder::set (Jason const& item) {
+void Builder::set (Value const& item) {
   auto ctype = item.cType();
 
-  // This method builds a single further Jason item at the current
+  // This method builds a single further VPack item at the current
   // append position. If this is an array or object, then an index
-  // table is created and a new JasonLength is pushed onto the stack.
-  switch (item.jasonType()) {
-    case JasonType::None: {
-      throw JasonException(JasonException::BuilderUnexpectedType, "Cannot set a JasonType::None");
+  // table is created and a new ValueLength is pushed onto the stack.
+  switch (item.valueType()) {
+    case ValueType::None: {
+      throw Exception(Exception::BuilderUnexpectedType, "Cannot set a ValueType::None");
     }
-    case JasonType::Null: {
+    case ValueType::Null: {
       reserveSpace(1);
       _start[_pos++] = 0x18;
       break;
     }
-    case JasonType::Bool: {
-      if (ctype != Jason::CType::Bool) {
-        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give bool for JasonType::Bool");
+    case ValueType::Bool: {
+      if (ctype != Value::CType::Bool) {
+        throw Exception(Exception::BuilderUnexpectedValue, "Must give bool for ValueType::Bool");
       }
       reserveSpace(1);
       if (item.getBool()) {
@@ -322,23 +323,23 @@ void JasonBuilder::set (Jason const& item) {
       }
       break;
     }
-    case JasonType::Double: {
+    case ValueType::Double: {
       static_assert(sizeof(double) == sizeof(uint64_t),
                     "size of double is not 8 bytes");
       double v = 0.0;
       uint64_t x;
       switch (ctype) {
-        case Jason::CType::Double:
+        case Value::CType::Double:
           v = item.getDouble();
           break;
-        case Jason::CType::Int64:
+        case Value::CType::Int64:
           v = static_cast<double>(item.getInt64());
           break;
-        case Jason::CType::UInt64:
+        case Value::CType::UInt64:
           v = static_cast<double>(item.getUInt64());
           break;
         default:
-          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::Double");
+          throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::Double");
       }
       reserveSpace(1 + sizeof(double));
       _start[_pos++] = 0x1b;
@@ -346,9 +347,9 @@ void JasonBuilder::set (Jason const& item) {
       appendLength(x, 8);
       break;
     }
-    case JasonType::External: {
-      if (ctype != Jason::CType::VoidPtr) {
-        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give void pointer for JasonType::External");
+    case ValueType::External: {
+      if (ctype != Value::CType::VoidPtr) {
+        throw Exception(Exception::BuilderUnexpectedValue, "Must give void pointer for ValueType::External");
       }
       reserveSpace(1 + sizeof(void*));
       // store pointer. this doesn't need to be portable
@@ -358,22 +359,22 @@ void JasonBuilder::set (Jason const& item) {
       _pos += sizeof(void*);
       break;
     }
-    case JasonType::SmallInt: {
+    case ValueType::SmallInt: {
       int64_t vv = 0;
       switch (ctype) {
-        case Jason::CType::Double:
+        case Value::CType::Double:
           vv = static_cast<int64_t>(item.getDouble());
           break;
-        case Jason::CType::Int64:
+        case Value::CType::Int64:
           vv = item.getInt64();
           break;
-        case Jason::CType::UInt64:
+        case Value::CType::UInt64:
           vv = static_cast<int64_t>(item.getUInt64());
         default:
-          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::SmallInt");
+          throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::SmallInt");
       }
       if (vv < -6 || vv > 9) {
-        throw JasonException(JasonException::NumberOutOfRange, "Number out of range of JasonType::SmallInt");
+        throw Exception(Exception::NumberOutOfRange, "Number out of range of ValueType::SmallInt");
       } 
       reserveSpace(1);
       if (vv >= 0) {
@@ -384,74 +385,74 @@ void JasonBuilder::set (Jason const& item) {
       }
       break;
     }
-    case JasonType::Int: {
+    case ValueType::Int: {
       int64_t v;
       switch (ctype) {
-        case Jason::CType::Double:
+        case Value::CType::Double:
           v = static_cast<int64_t>(item.getDouble());
           break;
-        case Jason::CType::Int64:
+        case Value::CType::Int64:
           v = item.getInt64();
           break;
-        case Jason::CType::UInt64:
-          v = toInt64(item.getUInt64());
+        case Value::CType::UInt64:
+          v = ToInt64(item.getUInt64());
           break;
         default:
-          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::Int");
+          throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::Int");
       }
       addInt(v);
       break;
     }
-    case JasonType::UInt: {
+    case ValueType::UInt: {
       uint64_t v = 0;
       switch (ctype) {
-        case Jason::CType::Double:
+        case Value::CType::Double:
           if (item.getDouble() < 0.0) {
-            throw JasonException(JasonException::BuilderUnexpectedValue, "Must give non-negative number for JasonType::UInt");
+            throw Exception(Exception::BuilderUnexpectedValue, "Must give non-negative number for ValueType::UInt");
           }
           v = static_cast<uint64_t>(item.getDouble());
           break;
-        case Jason::CType::Int64:
+        case Value::CType::Int64:
           if (item.getInt64() < 0) {
-            throw JasonException(JasonException::BuilderUnexpectedValue, "Must give non-negative number for JasonType::UInt");
+            throw Exception(Exception::BuilderUnexpectedValue, "Must give non-negative number for ValueType::UInt");
           }
           v = static_cast<uint64_t>(item.getInt64());
           break;
-        case Jason::CType::UInt64:
+        case Value::CType::UInt64:
           v = item.getUInt64();
           break;
         default:
-          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::UInt");
+          throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::UInt");
       }
       addUInt(v); 
       break;
     }
-    case JasonType::UTCDate: {
+    case ValueType::UTCDate: {
       int64_t v;
       switch (ctype) {
-        case Jason::CType::Double:
+        case Value::CType::Double:
           v = static_cast<int64_t>(item.getDouble());
           break;
-        case Jason::CType::Int64:
+        case Value::CType::Int64:
           v = item.getInt64();
           break;
-        case Jason::CType::UInt64:
-          v = toInt64(item.getUInt64());
+        case Value::CType::UInt64:
+          v = ToInt64(item.getUInt64());
           break;
         default:
-          throw JasonException(JasonException::BuilderUnexpectedValue, "Must give number for JasonType::UTCDate");
+          throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::UTCDate");
       }
       addUTCDate(v);
       break;
     }
-    case JasonType::String: {
-      if (ctype != Jason::CType::String &&
-          ctype != Jason::CType::CharPtr) {
-        throw JasonException(JasonException::BuilderUnexpectedValue, "Must give a string or char const* for JasonType::String");
+    case ValueType::String: {
+      if (ctype != Value::CType::String &&
+          ctype != Value::CType::CharPtr) {
+        throw Exception(Exception::BuilderUnexpectedValue, "Must give a string or char const* for ValueType::String");
       }
       std::string const* s;
       std::string value;
-      if (ctype == Jason::CType::String) {
+      if (ctype == Value::CType::String) {
         s = item.getString();
       }
       else {
@@ -475,66 +476,66 @@ void JasonBuilder::set (Jason const& item) {
       _pos += size;
       break;
     }
-    case JasonType::Array: {
+    case ValueType::Array: {
       addArray();
       break;
     }
-    case JasonType::Object: {
+    case ValueType::Object: {
       addObject();
       break;
     }
-    case JasonType::Binary: {
-      if (ctype != Jason::CType::String &&
-          ctype != Jason::CType::CharPtr) {
-        throw JasonException(JasonException::BuilderUnexpectedValue, "Must provide std::string or char const* for JasonType::Binary");
+    case ValueType::Binary: {
+      if (ctype != Value::CType::String &&
+          ctype != Value::CType::CharPtr) {
+        throw Exception(Exception::BuilderUnexpectedValue, "Must provide std::string or char const* for ValueType::Binary");
       }
       std::string const* s;
       std::string value;
-      if (ctype == Jason::CType::String) {
+      if (ctype == Value::CType::String) {
         s = item.getString();
       }
       else {
         value = item.getCharPtr();
         s = &value;
       }
-      JasonLength v = s->size();
+      ValueLength v = s->size();
       appendUInt(v, 0xbf);
       memcpy(_start + _pos, s->c_str(), v);
       _pos += v;
       break;
     }
-    case JasonType::MinKey: {
+    case ValueType::MinKey: {
       reserveSpace(1);
       _start[_pos++] = 0x1e;
       break;
     }
-    case JasonType::MaxKey: {
+    case ValueType::MaxKey: {
       reserveSpace(1);
       _start[_pos++] = 0x1f;
       break;
     }
-    case JasonType::BCD: {
-      throw JasonException(JasonException::NotImplemented);
+    case ValueType::BCD: {
+      throw Exception(Exception::NotImplemented);
     }
-    case JasonType::Custom: {
-      throw JasonException(JasonException::BuilderUnexpectedType, "Cannot set a JasonType::Custom with this method");
+    case ValueType::Custom: {
+      throw Exception(Exception::BuilderUnexpectedType, "Cannot set a ValueType::Custom with this method");
     }
   }
 }
 
-uint8_t* JasonBuilder::set (JasonPair const& pair) {
-  // This method builds a single further Jason item at the current
-  // append position. This is the case for JasonType::ID or
-  // JasonType::Binary, which both need two pieces of information
+uint8_t* Builder::set (ValuePair const& pair) {
+  // This method builds a single further VPack item at the current
+  // append position. This is the case for ValueType::ID or
+  // ValueType::Binary, which both need two pieces of information
   // to build.
-  if (pair.jasonType() == JasonType::Binary) {
+  if (pair.valueType() == ValueType::Binary) {
     uint64_t v = pair.getSize();
     appendUInt(v, 0xbf);
     memcpy(_start + _pos, pair.getStart(), v);
     _pos += v;
     return nullptr;  // unused here
   }
-  else if (pair.jasonType() == JasonType::String) {
+  else if (pair.valueType() == ValueType::String) {
     uint64_t size = pair.getSize();
     if (size > 126) { 
       // long string
@@ -555,7 +556,7 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     // with valid UTF-8!
     return _start + _pos - size;
   }
-  else if (pair.jasonType() == JasonType::Custom) {
+  else if (pair.valueType() == ValueType::Custom) {
     // We only reserve space here, the caller has to fill in the custom type
     uint64_t size = pair.getSize();
     reserveSpace(size);
@@ -566,32 +567,32 @@ uint8_t* JasonBuilder::set (JasonPair const& pair) {
     _pos += size;
     return _start + _pos - size;
   }
-  throw JasonException(JasonException::BuilderUnexpectedType, "Only JasonType::Binary, JasonType::String and JasonType::Custom are valid for JasonPair argument");
+  throw Exception(Exception::BuilderUnexpectedType, "Only ValueType::Binary, ValueType::String and ValueType::Custom are valid for ValuePair argument");
 }
 
-void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
-  JASON_ASSERT(options.checkAttributeUniqueness == true);
-  JasonLength const n = obj.length();
+void Builder::checkAttributeUniqueness (Slice const obj) const {
+  VELOCYPACK_ASSERT(options.checkAttributeUniqueness == true);
+  ValueLength const n = obj.length();
 
   if (obj.isSorted()) {
     // object attributes are sorted
-    JasonSlice previous = obj.keyAt(0);
-    JasonLength len;
+    Slice previous = obj.keyAt(0);
+    ValueLength len;
     char const* p = previous.getString(len);
 
     // compare each two adjacent attribute names
-    for (JasonLength i = 1; i < n; ++i) {
-      JasonSlice current = obj.keyAt(i);
+    for (ValueLength i = 1; i < n; ++i) {
+      Slice current = obj.keyAt(i);
       if (! current.isString()) {
-        throw JasonException(JasonException::InternalError, "Expecting String key");
+        throw Exception(Exception::InternalError, "Expecting String key");
       }
       
-      JasonLength len2;
+      ValueLength len2;
       char const* q = current.getString(len2);
 
       if (len == len2 && memcmp(p, q, len2) == 0) {
         // identical key
-        throw JasonException(JasonException::DuplicateAttributeName);
+        throw Exception(Exception::DuplicateAttributeName);
       }
       // re-use already calculated values for next round
       len = len2;
@@ -602,60 +603,60 @@ void JasonBuilder::checkAttributeUniqueness (JasonSlice const obj) const {
     std::unordered_set<std::string> keys;
 
     for (size_t i = 0; i < n; ++i) {
-      JasonSlice key = obj.keyAt(i);
+      Slice key = obj.keyAt(i);
       if (! key.isString()) {
-        throw JasonException(JasonException::InternalError, "Expecting String key");
+        throw Exception(Exception::InternalError, "Expecting String key");
       }
       
       if (! keys.emplace(key.copyString()).second) {
-        throw JasonException(JasonException::DuplicateAttributeName);
+        throw Exception(Exception::DuplicateAttributeName);
       }
     }
   }
 }
 
-void JasonBuilder::add (std::string const& attrName, Jason const& sub) {
+void Builder::add (std::string const& attrName, Value const& sub) {
   if (_attrWritten) {
-    throw JasonException(JasonException::InternalError, "Attribute name already written");
+    throw Exception(Exception::InternalError, "Attribute name already written");
   }
   if (! _stack.empty()) {
-    JasonLength& tos = _stack.back();
+    ValueLength& tos = _stack.back();
     if (_start[tos] != 0x06 &&
         _start[tos] != 0x0b) {
-      throw JasonException(JasonException::BuilderNeedOpenObject);
+      throw Exception(Exception::BuilderNeedOpenObject);
     }
     reportAdd(tos);
   }
-  set(Jason(attrName, JasonType::String));
+  set(Value(attrName, ValueType::String));
   set(sub);
 }
 
-uint8_t* JasonBuilder::add (std::string const& attrName, JasonPair const& sub) {
+uint8_t* Builder::add (std::string const& attrName, ValuePair const& sub) {
   if (_attrWritten) {
-    throw JasonException(JasonException::InternalError, "Attribute name already written");
+    throw Exception(Exception::InternalError, "Attribute name already written");
   }
   if (! _stack.empty()) {
-    JasonLength& tos = _stack.back();
+    ValueLength& tos = _stack.back();
     if (_start[tos] != 0x06 &&
         _start[tos] != 0x0b) {
-      throw JasonException(JasonException::BuilderNeedOpenObject);
+      throw Exception(Exception::BuilderNeedOpenObject);
     }
     reportAdd(tos);
   }
-  set(Jason(attrName, JasonType::String));
+  set(Value(attrName, ValueType::String));
   return set(sub);
 }
 
-void JasonBuilder::add (Jason const& sub) {
+void Builder::add (Value const& sub) {
   if (! _stack.empty()) {
-    JasonLength& tos = _stack.back();
+    ValueLength& tos = _stack.back();
     if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
       // no array or object
-      throw JasonException(JasonException::BuilderNeedOpenObject);
+      throw Exception(Exception::BuilderNeedOpenObject);
     }
     if (_start[tos] == 0x0b) {   // object
       if (! _attrWritten && ! sub.isString()) {
-        throw JasonException(JasonException::BuilderNeedOpenObject);
+        throw Exception(Exception::BuilderNeedOpenObject);
       }
       if (! _attrWritten) {
         reportAdd(tos);
@@ -669,15 +670,15 @@ void JasonBuilder::add (Jason const& sub) {
   set(sub);
 }
 
-uint8_t* JasonBuilder::add (JasonPair const& sub) {
+uint8_t* Builder::add (ValuePair const& sub) {
   if (! _stack.empty()) {
-    JasonLength& tos = _stack.back();
+    ValueLength& tos = _stack.back();
     if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
-      throw JasonException(JasonException::BuilderNeedOpenObject);
+      throw Exception(Exception::BuilderNeedOpenObject);
     }
     if (_start[tos] == 0x06) {   // object
       if (! _attrWritten && ! sub.isString()) {
-        throw JasonException(JasonException::BuilderNeedOpenObject);
+        throw Exception(Exception::BuilderNeedOpenObject);
       }
       if (! _attrWritten) {
         reportAdd(tos);

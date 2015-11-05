@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,23 +24,24 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_DUMP_H
-#define JASON_DUMP_H 1
+#ifndef VELOCYPACK_DUMP_H
+#define VELOCYPACK_DUMP_H 1
 
 #include <string>
 
-#include "JasonBuffer.h"
-#include "JasonDumper.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Buffer.h"
+#include "velocypack/Dumper.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
     // some alias types for easier usage
-    typedef JasonDumper<JasonCharBuffer, false> JasonBufferDumper;
-    typedef JasonDumper<std::string, false>     JasonStringDumper;
-    typedef JasonDumper<std::string, true>      JasonStringPrettyDumper;
+    typedef Dumper<CharBuffer, false> BufferDumper;
+    typedef Dumper<std::string, false> StringDumper;
+    typedef Dumper<std::string, true>  StringPrettyDumper;
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 #endif

@@ -1,12 +1,12 @@
-Jason
-=====
+VelocyPack (VPack)
+==================
 
-Jason - Just Another SerializatiON
+VelocyPack (VPack) is a fast and compact serialization format
 
 
 ## Generalities
 
-Jason is (unsigned) byte oriented, so Jason values are simply sequences
+VPack is (unsigned) byte oriented, so VPack values are simply sequences
 of bytes and are platform independent. Values are not necessarily
 aligned, so all access to larger subvalues must be properly organised to
 avoid alignment assumptions of the CPU.
@@ -14,16 +14,16 @@ avoid alignment assumptions of the CPU.
 
 ## Value types
 
-We describe a single Jason value, which is recursive in nature, but
+We describe a single VPack value, which is recursive in nature, but
 resides (with two exceptions, see below) in a single contiguous block of
 memory. Assume that the value starts at address A, the first byte V 
-indicates the type (and often the length) of the Jason value at hand:
+indicates the type (and often the length) of the VPack value at hand:
 
 We first give an overview with a brief but accurate description for
 reference, for arrays and objects see below for details:
 
   - 0x00      : none - this indicates absence of any type and value,
-                this is not allowed in Jason values
+                this is not allowed in VPack values
   - 0x01      : empty array
   - 0x02      : array without index table (all subitems have the same 
                 byte length), 1-byte byte length
@@ -63,8 +63,8 @@ reference, for arrays and objects see below for details:
   - 0x1c      : UTC-date in milliseconds since the epoch, stored as 8 byte
                 signed int, little endian, two's complement
   - 0x1d      : external (only in memory): a char* pointing to the actual
-                place in memory, where another Jason item resides, not
-                allowed in Jason values on disk or on the network
+                place in memory, where another VPack item resides, not
+                allowed in VPack values on disk or on the network
   - 0x1e      : minKey, nonsensical value that compares < than all other values
   - 0x1f      : maxKey, nonsensical value that compares > than all other values
   - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f, 
@@ -111,7 +111,7 @@ Nonempty arrays look like this:
   one of 0x02 to 0x09
   BYTELENGTH
   optional NRITEMS 
-  sub Jason values
+  sub VPack values
   optional INDEXTABLE
   optional NRITEMS if numbers are 8 bytes
 
@@ -128,7 +128,7 @@ The INDEXTABLE consists of:
     taken for arrays with 1 element.
   - for types 0x06-0x09 an array of offsets (unaligned, in the number
     format described above) earlier offsets reside at lower addresses.
-    Offsets are measured from the start of the Jason value.
+    Offsets are measured from the start of the VPack value.
 
 
 Nonempty arrays have a small header including their byte length, the
@@ -144,7 +144,7 @@ the following special rule: The actual position of the first subvalue
 is allowed to be further back, provided there are zero bytes at the
 earlier possible positions. For example, if 4 bytes are used for the
 byte length, then the first item may be at A+9, provided A[5], is a
-zero byte. This is to give a program that builds a Jason value the
+zero byte. This is to give a program that builds a VPack value the
 opportunity to reserve 8 bytes in the beginning and only later find out
 that fewer bytes suffice to write the byte length. One can determine the
 number of subvalues by finding the first subvalue, its byte length, and
@@ -214,7 +214,7 @@ Nonempty objects look like this:
   one of 0x0b - 0x12
   BYTELENGTH
   optional NRITEMS
-  sub Jason values as pairs of attribute and value
+  sub VPack values as pairs of attribute and value
   optional INDEXTABLE
   NRITEMS for the 8-byte case
 
@@ -228,7 +228,7 @@ NRITEMS is a single number as described above.
 The INDEXTABLE consists of: 
   - an array of offsets (unaligned, in the number format described
     above) earlier offsets reside at lower addresses.
-    Offsets are measured from the beginning of the Jason value.
+    Offsets are measured from the beginning of the VPack value.
 
 Nonempty objects have a small header including their byte length, the
 number of subvalues, then all the subvalues and finally an index table
@@ -255,16 +255,16 @@ that all 8 bytes are needed for the byte length.
 All offsets are measured from base A.
 
 Each entry consists of two parts, the key and the value, they are
-encoded as normal Jason values as above, the first is always a short or
+encoded as normal VPack values as above, the first is always a short or
 long UTF-8 string starting with a byte 0x40-0xbf as described below. The
-second is any other Jason value.
+second is any other VPack value.
 
 There is one extension: For the key it is possible to use the values
 0x00-0x27 as indexes into an outside-given table of attribute names, or
 the values 0x28-0x2f to store the index in a uint as above. These are
 convenient when only very few attribute names occur or some are repeated
 very often. The standard way to encode such an attribute name table is
-as a Jason array of strings as specified here.
+as a VPack array of strings as specified here.
 
 Objects can be stored sorted or unsorted. The sorted object variants
 need to store key/value pairs in order, sorted by bytewise comparions
@@ -274,7 +274,7 @@ variants, keys can be stored in arbitrary order, so key lookup later
 will require a linear search. Note that only the index table needs to
 be sorted, it is not required that the offsets in these tables are
 increasing. Since the index table resides after the actual subvalues,
-one can build up a complex Jason value by writing linearly.
+one can build up a complex VPack value by writing linearly.
 
 Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
@@ -317,7 +317,7 @@ Type 0x1b indicates a double IEEE-754 value using the 8 bytes following
 the type byte. To guarantee platform-independentness the details of the
 byte order are as follows. Encoding is done by using memcpy to copy the
 internal double value to an uint64\_t. This 64-bit unsigned integer is
-then stored as little endian 8 byte integer in the Jason value. Decoding
+then stored as little endian 8 byte integer in the VPack value. Decoding
 works in the opposite direction. This should sort out the undetermined
 byte order in IEEE-754 in practice.
 
@@ -330,19 +330,19 @@ a universal UTC-time measured in milliseconds since the epoch, which is
 00:00 on 1 January 1970 UTC.
 
 
-## External Jason values
+## External VPack values
 
 This type is only for use within memory, not for data exchange over disk
 or network. Therefore, we only need to specify that the following k
 bytes are the memcpy of a char* on the current architecture. That char*
-points to the actual Jason value elsewhere in memory.
+points to the actual VPack value elsewhere in memory.
 
 
 ## Artifical minimal and maximal keys
 
 These values of types 0x1e and 0x1f have no meaning other than comparing
-smaller or greater respectively than any other Jason value. The idea is
-that these can be used in systems that define a total order on all Jason
+smaller or greater respectively than any other VPack value. The idea is
+that these can be used in systems that define a total order on all VPack
 values to specify left or right ends of infinite intervals.
 
 
@@ -378,7 +378,7 @@ either case and the string may contain zero bytes.
 ## Binary data
 
 The type bytes 0xc0 to 0xc7 allow to store arbitrary binary byte
-sequences as a Jason value. The format is as follows: If V is the type
+sequences as a VPack value. The format is as follows: If V is the type
 byte, then V - 0xbf bytes follow it to make a little endian unsigned
 integer representing the length of the binary data, which directly
 follows these length bytes. No alignment is guaranteed. The content is

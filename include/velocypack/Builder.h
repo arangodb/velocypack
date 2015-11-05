@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,8 +24,8 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_BUILDER_H
-#define JASON_BUILDER_H
+#ifndef VELOCYPACK_BUILDER_H
+#define VELOCYPACK_BUILDER_H
 
 #include <ostream>
 #include <vector>
@@ -33,19 +33,20 @@
 #include <cstdint>
 #include <algorithm>
 
-#include "Jason.h"
-#include "JasonBuffer.h"
-#include "JasonException.h"
-#include "JasonOptions.h"
-#include "JasonSlice.h"
-#include "JasonType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Buffer.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Options.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
-    class JasonBuilder {
+    class Builder {
 
-        friend class JasonParser;   // The parser needs access to internals.
+        friend class Parser;   // The parser needs access to internals.
 
       public:
         // A struct for sorting index tables for objects:
@@ -55,29 +56,29 @@ namespace arangodb {
           uint64_t offset;
         };
 
-        void reserve (JasonLength len) {
+        void reserve (ValueLength len) {
           reserveSpace(len);
         }
 
       private:
 
-        JasonBuffer<uint8_t> _buffer;  // Here we collect the result
+        Buffer<uint8_t> _buffer;  // Here we collect the result
         uint8_t*             _start;   // Always points to the start of _buffer
-        JasonLength          _size;    // Always contains the size of _buffer
-        JasonLength          _pos;     // the append position, always <= _size
+        ValueLength          _size;    // Always contains the size of _buffer
+        ValueLength          _pos;     // the append position, always <= _size
         bool                 _attrWritten;  // indicates that an attribute name
                                             // in an object has been written
-        std::vector<JasonLength>              _stack;  // Start positions of
+        std::vector<ValueLength>              _stack;  // Start positions of
                                                        // open objects/arrays
-        std::vector<std::vector<JasonLength>> _index;  // Indices for starts
+        std::vector<std::vector<ValueLength>> _index;  // Indices for starts
                                                        // of subindex
 
         // Here are the mechanics of how this building process works:
-        // The whole Jason being built starts at where _start points to
+        // The whole VPack being built starts at where _start points to
         // and uses at most _size bytes. The variable _pos keeps the
         // current write position. The method "set" simply writes a new
-        // Jason subobject at the current write position and advances
-        // it. Whenever one makes an array or object, a JasonLength for
+        // VPack subobject at the current write position and advances
+        // it. Whenever one makes an array or object, a ValueLength for
         // the beginning of the value is pushed onto the _stack, which
         // remembers that we are in the process of building an array or
         // object. The _index vectors are used to collect information
@@ -86,21 +87,21 @@ namespace arangodb {
         // of the new subvalue in _index followed by a set, and are
         // what the user from the outside calls. The close method seals
         // the innermost array or object that is currently being built
-        // and pops a JasonLength off the _stack. The vectors in _index
+        // and pops a ValueLength off the _stack. The vectors in _index
         // stay until the next clearTemporary() is called to minimize
         // allocations. In the beginning, the _stack is empty, which
-        // allows to build a sequence of unrelated Jason objects in the
+        // allows to build a sequence of unrelated VPack objects in the
         // buffer. Whenever the stack is empty, one can use the start,
-        // size and stealTo methods to get out the ready built Jason
+        // size and stealTo methods to get out the ready built VPack
         // object(s).
 
-        void reserveSpace (JasonLength len) {
+        void reserveSpace (ValueLength len) {
           // Reserves len bytes at pos of the current state (top of stack)
           // or throws an exception
           if (_pos + len <= _size) {
             return;  // All OK, we can just increase tos->pos by len
           }
-          JasonCheckSize(_pos + len);
+          CheckValueLength(_pos + len);
 
           _buffer.prealloc(len);
           _start = _buffer.data();
@@ -110,28 +111,28 @@ namespace arangodb {
         // Sort the indices by attribute name:
         static void doActualSort (std::vector<SortEntry>& entries);
 
-        // Find the actual bytes of the attribute name of the Jason value
+        // Find the actual bytes of the attribute name of the VPack value
         // at position base, also determine the length len of the attribute.
         // This takes into account the different possibilities for the format
         // of attribute names:
         static uint8_t const* findAttrName (uint8_t const* base, uint64_t& len);
 
         static void sortObjectIndexShort (uint8_t* objBase,
-                                          std::vector<JasonLength>& offsets);
+                                          std::vector<ValueLength>& offsets);
 
         static void sortObjectIndexLong (uint8_t* objBase,
-                                         std::vector<JasonLength>& offsets);
+                                         std::vector<ValueLength>& offsets);
 
         static void sortObjectIndex (uint8_t* objBase,
-                                     std::vector<JasonLength>& offsets);
+                                     std::vector<ValueLength>& offsets);
 
       public:
         
-        JasonOptions options;
+        Options options;
 
         // Constructor and destructor:
 
-        JasonBuilder ()
+        Builder ()
           : _buffer({ 0 }),
             _pos(0), 
             _attrWritten(false) {
@@ -141,10 +142,10 @@ namespace arangodb {
 
         // The rule of five:
 
-        ~JasonBuilder () {
+        ~Builder () {
         }
 
-        JasonBuilder (JasonBuilder const& that) {
+        Builder (Builder const& that) {
           _buffer = that._buffer;
           _start = _buffer.data();
           _size = _buffer.size();
@@ -155,7 +156,7 @@ namespace arangodb {
           options = that.options;
         }
 
-        JasonBuilder& operator= (JasonBuilder const& that) {
+        Builder& operator= (Builder const& that) {
           _buffer = that._buffer;
           _start = _buffer.data();
           _size = _buffer.size();
@@ -167,7 +168,7 @@ namespace arangodb {
           return *this;
         }
 
-        JasonBuilder (JasonBuilder&& that) {
+        Builder (Builder&& that) {
           _buffer.reset();
           _buffer = that._buffer;
           that._buffer.reset();
@@ -186,7 +187,7 @@ namespace arangodb {
           that._attrWritten = false;
         }
 
-        JasonBuilder& operator= (JasonBuilder&& that) {
+        Builder& operator= (Builder&& that) {
           _buffer.reset();
           _buffer = that._buffer;
           that._buffer.reset();
@@ -218,60 +219,60 @@ namespace arangodb {
           return _start;
         }
 
-        // Return a JasonSlice of the result:
-        JasonSlice slice () const {
-          return JasonSlice(_start);
+        // Return a Slice of the result:
+        Slice slice () const {
+          return Slice(_start);
         }
 
         // Compute the actual size here, but only when sealed
-        JasonLength size () const {
+        ValueLength size () const {
           if (! _stack.empty()) {
-            throw JasonException(JasonException::BuilderObjectNotSealed);
+            throw Exception(Exception::BuilderObjectNotSealed);
           }
           return _pos;
         }
 
-        // Add a subvalue into an object from a Jason:
-        void add (std::string const& attrName, Jason const& sub);
+        // Add a subvalue into an object from a Value:
+        void add (std::string const& attrName, Value const& sub);
 
-        // Add a subvalue into an object from a JasonPair:
-        uint8_t* add (std::string const& attrName, JasonPair const& sub);
+        // Add a subvalue into an object from a ValuePair:
+        uint8_t* add (std::string const& attrName, ValuePair const& sub);
 
-        // Add a subvalue into an array from a Jason:
-        void add (Jason const& sub);
+        // Add a subvalue into an array from a Value:
+        void add (Value const& sub);
 
-        // Add a subvalue into an array from a JasonPair:
-        uint8_t* add (JasonPair const& sub);
+        // Add a subvalue into an array from a ValuePair:
+        uint8_t* add (ValuePair const& sub);
 
         // Seal the innermost array or object:
         void close ();
 
         // Syntactic sugar for add:
-        JasonBuilder& operator() (std::string const& attrName, Jason sub) {
+        Builder& operator() (std::string const& attrName, Value sub) {
           add(attrName, sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        JasonBuilder& operator() (std::string const& attrName, JasonPair sub) {
+        Builder& operator() (std::string const& attrName, ValuePair sub) {
           add(attrName, sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        JasonBuilder& operator() (Jason sub) {
+        Builder& operator() (Value sub) {
           add(sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        JasonBuilder& operator() (JasonPair sub) {
+        Builder& operator() (ValuePair sub) {
           add(sub);
           return *this;
         }
 
         // Syntactic sugar for close:
-        JasonBuilder& operator() () {
+        Builder& operator() () {
           close();
           return *this;
         }
@@ -296,7 +297,7 @@ namespace arangodb {
 
           uint64_t dv;
           memcpy(&dv, &v, sizeof(double));
-          JasonLength vSize = sizeof(double);
+          ValueLength vSize = sizeof(double);
           reserveSpace(1 + vSize);
           _start[_pos++] = 0x1b;
           for (uint64_t x = dv; vSize > 0; vSize--) {
@@ -331,7 +332,7 @@ namespace arangodb {
 
         void addUTCDate (int64_t v) {
           uint8_t vSize = sizeof(int64_t);   // is always 8
-          uint64_t x = toUInt64(v);
+          uint64_t x = ToUInt64(v);
           reserveSpace(1 + vSize);
           _start[_pos++] = 0x1c;
           appendLength(x, 8);
@@ -377,16 +378,16 @@ namespace arangodb {
           _pos += 8;    // Will be filled later with bytelength and nr subs
         }
 
-        void set (Jason const& item);
+        void set (Value const& item);
 
-        uint8_t* set (JasonPair const& pair);
+        uint8_t* set (ValuePair const& pair);
         
-        void reportAdd (JasonLength base) {
+        void reportAdd (ValueLength base) {
           size_t depth = _stack.size() - 1;
           _index[depth].push_back(_pos - base);
         }
 
-        void appendLength (JasonLength v, uint64_t n) {
+        void appendLength (ValueLength v, uint64_t n) {
           reserveSpace(n);
           for (uint64_t i = 0; i < n; ++i) {
             _start[_pos++] = v & 0xff;
@@ -396,7 +397,7 @@ namespace arangodb {
 
         void appendUInt (uint64_t v, uint8_t base) {
           reserveSpace(9);
-          JasonLength save = _pos++;
+          ValueLength save = _pos++;
           uint8_t vSize = 0;
           do {
             vSize++;
@@ -427,7 +428,7 @@ namespace arangodb {
           uint8_t vSize = intLength(v);
           uint64_t x;
           if (vSize == 8) {
-            x = toUInt64(v);
+            x = ToUInt64(v);
           }
           else {
             int64_t shift = 1LL << (vSize * 8 - 1);  // will never overflow!
@@ -442,10 +443,10 @@ namespace arangodb {
           }
         }
  
-        void checkAttributeUniqueness (JasonSlice const obj) const;
+        void checkAttributeUniqueness (Slice const obj) const;
     };
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 #endif

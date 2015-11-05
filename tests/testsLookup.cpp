@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -33,12 +33,12 @@
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
-  JasonSlice v;
+  Slice v;
   v = s.get("foo"); 
   ASSERT_TRUE(v.isNull());
  
@@ -52,12 +52,12 @@ TEST(LookupTest, LookupShortObject) {
 
   v = s.get("qux");  
   ASSERT_TRUE(v.isArray());
-  ASSERT_TRUE(v.isType(JasonType::Array));
+  ASSERT_TRUE(v.isType(ValueType::Array));
   ASSERT_EQ(1ULL, v.length());
 
   v = s.get("quz");  
   ASSERT_TRUE(v.isObject());
-  ASSERT_TRUE(v.isType(JasonType::Object));
+  ASSERT_TRUE(v.isType(ValueType::Object));
   ASSERT_EQ(0ULL, v.length());
 
   // non-present attributes
@@ -80,12 +80,12 @@ TEST(LookupTest, LookupShortObject) {
 TEST(LookupTest, LookupSubattributes) {
   std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
-  JasonSlice v;
+  Slice v;
   v = s.get(std::vector<std::string>({ "foo" })); 
   ASSERT_TRUE(v.isObject());
  
@@ -134,12 +134,12 @@ TEST(LookupTest, LookupLongObject) {
   }
   value.append("}"); 
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
-  JasonSlice v;
+  Slice v;
   v = s.get("test4"); 
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(4ULL, v.getUInt());
@@ -192,12 +192,12 @@ TEST(LookupTest, LookupLinear) {
   }
   value.append("}"); 
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
-  JasonSlice v;
+  Slice v;
   v = s.get("test0"); 
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(0ULL, v.getUInt());
@@ -228,15 +228,15 @@ TEST(LookupTest, LookupBinary) {
   }
   value.append("}"); 
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
   for (size_t i = 0; i < 128; ++i) {
     std::string key = "test";
     key.append(std::to_string(i));
-    JasonSlice v = s.get(key);
+    Slice v = s.get(key);
   
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
@@ -258,17 +258,17 @@ TEST(LookupTest, LookupBinarySamePrefix) {
   }
   value.append("}"); 
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
   for (size_t i = 0; i < 128; ++i) {
     std::string key = "test";
     for (size_t j = 0; j < i; ++j) {
       key.append("x");
     }
-    JasonSlice v = s.get(key);
+    Slice v = s.get(key);
   
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
@@ -288,15 +288,15 @@ TEST(LookupTest, LookupBinaryLongObject) {
   }
   value.append("}"); 
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
   for (size_t i = 0; i < 1127; ++i) {
     std::string key = "test";
     key.append(std::to_string(i));
-    JasonSlice v = s.get(key);
+    Slice v = s.get(key);
   
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());

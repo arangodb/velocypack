@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,20 +24,22 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_EXCEPTION_H
-#define JASON_EXCEPTION_H 1
+#ifndef VELOCYPACK_EXCEPTION_H
+#define VELOCYPACK_EXCEPTION_H 1
 
 #include <exception>
 #include <string>
 #include <ostream>
 
+#include "velocypack/velocypack-common.h"
+
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
     // base exception class
-    struct JasonException : std::exception {
+    struct Exception : std::exception {
       public:
-        enum JasonExceptionType {
+        enum ExceptionType {
           InternalError            = 1,
           NotImplemented,
           NoJsonEquivalent,
@@ -58,29 +60,29 @@ namespace arangodb {
         };
 
       private:
-        JasonExceptionType _type;
+        ExceptionType _type;
         std::string _msg;
 
       public:
 
-        JasonException (JasonExceptionType type, std::string const& msg) : _type(type), _msg(msg) {
+        Exception (ExceptionType type, std::string const& msg) : _type(type), _msg(msg) {
         }
         
-        JasonException (JasonExceptionType type, char const* msg) : _type(type), _msg(msg) {
+        Exception (ExceptionType type, char const* msg) : _type(type), _msg(msg) {
         }
         
-        explicit JasonException (JasonExceptionType type) : JasonException(type, message(type)) {
+        explicit Exception (ExceptionType type) : Exception(type, message(type)) {
         }
       
         char const* what() const throw() {
           return _msg.c_str();
         }
 
-        JasonExceptionType errorCode () const throw() {
+        ExceptionType errorCode () const throw() {
           return _type;
         }
 
-        static char const* message (JasonExceptionType type) throw() {
+        static char const* message (ExceptionType type) throw() {
           switch (type) {
             case InternalError:
               return "Internal error";
@@ -121,11 +123,11 @@ namespace arangodb {
 
     };
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
         
-std::ostream& operator<< (std::ostream&, arangodb::jason::JasonException const*);
+std::ostream& operator<< (std::ostream&, arangodb::velocypack::Exception const*);
 
-std::ostream& operator<< (std::ostream&, arangodb::jason::JasonException const&);
+std::ostream& operator<< (std::ostream&, arangodb::velocypack::Exception const&);
 
 #endif

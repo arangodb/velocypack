@@ -1,7 +1,9 @@
-#ifndef JASON_POWERS_H
-#define JASON_POWERS_H 1
+#ifndef VELOCYPACK_POWERS_H
+#define VELOCYPACK_POWERS_H 1
 
 #include <cstdint>
+
+#include "velocypack/velocypack-common.h"
 
 #define npowers     87
 #define steppowers  8

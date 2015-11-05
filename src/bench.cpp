@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -31,26 +31,27 @@
 #include <chrono>
 #include <thread>
 
-#include "Jason.h"
-#include "JasonBuilder.h"
-#include "JasonParser.h"
-#include "JasonSlice.h"
-#include "JasonType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Parser.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
   
 static void usage (char* argv[]) {
   std::cout << "Usage: " << argv[0] << " FILENAME.json RUNTIME_IN_SECONDS COPIES TYPE" << std::endl;
   std::cout << "This program reads the file into a string, makes COPIES copies" << std::endl;
-  std::cout << "and then parses the copies in a round-robin fashion to Jason." << std::endl;
+  std::cout << "and then parses the copies in a round-robin fashion to VPack." << std::endl;
   std::cout << "1 copy means its running in cache, more copies make it run" << std::endl;
   std::cout << "out of cache. The target areas are also in a different memory" << std::endl;
   std::cout << "area for each copy." << std::endl;
-  std::cout << "TYPE must be either 'jason' or 'rapidjson'." << std::endl;
+  std::cout << "TYPE must be either 'vpack' or 'rapidjson'." << std::endl;
 }
 
 static std::string readFile (std::string const& filename) {
@@ -72,11 +73,11 @@ static std::string readFile (std::string const& filename) {
   return s;
 }
 
-static void run (std::string& data, int runTime, size_t copies, bool useJason, bool fullOutput) {
+static void run (std::string& data, int runTime, size_t copies, bool useVPack, bool fullOutput) {
   std::vector<std::string> inputs;
-  std::vector<JasonParser*> outputs;
+  std::vector<Parser*> outputs;
   inputs.push_back(data);
-  outputs.push_back(new JasonParser());
+  outputs.push_back(new Parser());
   outputs.back()->options.sortAttributeNames = false;
 
   for (size_t i = 1; i < copies; i++) {
@@ -84,7 +85,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useJason, b
     data.clear();
     data.insert(data.begin(), inputs[0].begin(), inputs[0].end());
     inputs.push_back(data);
-    outputs.push_back(new JasonParser());
+    outputs.push_back(new Parser());
     outputs.back()->options.sortAttributeNames = false;
   }
 
@@ -96,7 +97,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useJason, b
   try {
     do {
       for (int i = 0; i < 2; i++) {
-        if (useJason) {
+        if (useVPack) {
           outputs[count]->clear();
           outputs[count]->parse(inputs[count]);
         }
@@ -118,7 +119,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useJason, b
 
     if (fullOutput) {
       std::cout << "Total runtime: " << totalTime.count() << " s" << std::endl;
-      std::cout << "Have parsed " << total << " times with " << (useJason ? "jason" : "rapidjson") << " using " << copies
+      std::cout << "Have parsed " << total << " times with " << (useVPack ? "vpack" : "rapidjson") << " using " << copies
                 << " copies of JSON data, each of size " << inputs[0].size() << "." << std::endl;
       std::cout << "Parsed " << inputs[0].size() * total << " bytes in total." << std::endl;
     }
@@ -126,7 +127,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useJason, b
               << " or " << total / totalTime.count() 
               << " JSON docs per second." << std::endl;
   }
-  catch (JasonException const& ex) {
+  catch (Exception const& ex) {
     std::cerr << "An exception occurred while running bench: " << ex.what() << std::endl;
     ::exit(EXIT_FAILURE);
   }
@@ -157,7 +158,7 @@ static void runDefaultBench () {
     }
     std::cout << std::endl;
 
-    std::cout << "jason:        ";
+    std::cout << "vpack:        ";
     run(data, 10, 1, true, false);
 
     std::cout << "rapidjson:    ";
@@ -181,12 +182,12 @@ int main (int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  bool useJason;
-  if (::strcmp(argv[4], "jason") == 0) {
-    useJason = true;
+  bool useVPack;
+  if (::strcmp(argv[4], "vpack") == 0) {
+    useVPack = true;
   }
   else if (::strcmp(argv[4], "rapidjson") == 0) {
-    useJason = false;
+    useVPack = false;
   }
   else {
     usage(argv);
@@ -200,7 +201,7 @@ int main (int argc, char* argv[]) {
   // read input file
   std::string s = std::move(readFile(argv[1]));
 
-  run(s, runTime, copies, useJason, true);
+  run(s, runTime, copies, useVPack, true);
 
   return EXIT_SUCCESS;
 }

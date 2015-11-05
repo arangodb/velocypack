@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,10 +24,22 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <chrono>
+#ifndef VELOCYPACK_ALIASES_H
+#define VELOCYPACK_ALIASES_H 1
 
-#include "Jason.h"
+#include "velocitypack/vpack.h"
 
-int64_t arangodb::jason::CurrentUTCDateValue () {
-  return static_cast<int64_t>(std::chrono::system_clock::now().time_since_epoch().count() / std::chrono::milliseconds(1).count());
-}
+using VPackBufferDumper       = arangodb::velocitypack::BufferDumper;
+using VPackBuilder            = arangodb::velocitypack::Builder;
+using VPackCharBuffer         = arangodb::velocitypack::CharBuffer;
+using VPackException          = arangodb::velocitypack::Exception;
+using VPackDumper             = arangodb::velocitypack::Dumper;
+using VPackOptions            = arangodb::velocitypack::Options;
+using VPackParser             = arangodb::velocitypack::Parser;
+using VPackStringDumper       = arangodb::velocitypack::StringDumper;
+using VPackStringPrettyDumper = arangodb::velocitypack::StringPrettyDumper;
+using VPackSlice              = arangodb::velocitypack::Slice;
+using VPackValue              = arangodb::velocitypack::Value;
+using VPackValueType          = arangodb::velocitypack::ValueType;
+
+#endif

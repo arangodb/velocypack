@@ -26,6 +26,7 @@
 
 #include <cstring>
 
+#include "velocypack/velocypack-common.h"
 #include "powers.h"
 
 #define fracmask  0x000FFFFFFFFFFFFFU
@@ -38,7 +39,7 @@
 #define minv(a, b) ((a) < (b) ? (a) : (b))
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
     // forward for fpconv function 
     int fpconv_dtoa (double fp, char dest[24]);
   }
@@ -335,7 +336,7 @@ static int filter_special(double fp, char* dest)
     return 3;
 }
 
-int arangodb::jason::fpconv_dtoa (double d, char dest[24])
+int arangodb::velocypack::fpconv_dtoa (double d, char dest[24])
 {
     char digits[18];
 

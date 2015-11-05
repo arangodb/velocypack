@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,26 +24,27 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_PARSER_H
-#define JASON_PARSER_H 1
+#ifndef VELOCYPACK_PARSER_H
+#define VELOCYPACK_PARSER_H 1
 
 #include <string>
 #include <cmath>
 
-#include "Jason.h"
-#include "JasonAsm.h"
-#include "JasonBuilder.h"
-#include "JasonException.h"
-#include "JasonOptions.h"
-#include "JasonType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Options.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
+#include "asm-functions.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
-    class JasonParser {
+    class Parser {
 
       // This class can parse JSON very rapidly, but only from contiguous
-      // blocks of memory. It builds the result using the JasonBuilder.
+      // blocks of memory. It builds the result using the Builder.
 
         struct ParsedNumber {
           ParsedNumber ()
@@ -68,7 +69,7 @@ namespace arangodb {
 
             doubleValue = doubleValue * 10.0 + (i - '0');
             if (std::isnan(doubleValue) || ! std::isfinite(doubleValue)) {
-              throw JasonException(JasonException::NumberOutOfRange);
+              throw Exception(Exception::NumberOutOfRange);
             }
           }
 
@@ -84,22 +85,22 @@ namespace arangodb {
           bool isInteger;
         };
 
-        JasonBuilder   _b;
+        Builder   _b;
         uint8_t const* _start;
         size_t         _size;
         size_t         _pos;
 
       public:
 
-        JasonOptions options;        
+        Options options;        
 
-        JasonParser (JasonParser const&) = delete;
-        JasonParser& operator= (JasonParser const&) = delete;
+        Parser (Parser const&) = delete;
+        Parser& operator= (Parser const&) = delete;
 
-        JasonParser () : _start(nullptr), _size(0), _pos(0) {
+        Parser () : _start(nullptr), _size(0), _pos(0) {
         }
 
-        JasonLength parse (std::string const& json, bool multi = false) {
+        ValueLength parse (std::string const& json, bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(json.c_str());
           _size  = json.size();
           _pos   = 0;
@@ -108,7 +109,7 @@ namespace arangodb {
           return parseInternal(multi);
         }
 
-        JasonLength parse (uint8_t const* start, size_t size,
+        ValueLength parse (uint8_t const* start, size_t size,
                            bool multi = false) {
           _start = start;
           _size = size;
@@ -118,7 +119,7 @@ namespace arangodb {
           return parseInternal(multi);
         }
 
-        JasonLength parse (char const* start, size_t size,
+        ValueLength parse (char const* start, size_t size,
                            bool multi = false) {
           _start = reinterpret_cast<uint8_t const*>(start);
           _size = size;
@@ -131,13 +132,13 @@ namespace arangodb {
         // We probably want a parse from stream at some stage...
         // Not with this high-performance two-pass approach. :-(
         
-        JasonBuilder&& steal () {
+        Builder&& steal () {
           return std::move(_b);
         }
 
         // Beware, only valid as long as you do not parse more, use steal
         // to move the data out!
-        uint8_t const* jason () {
+        uint8_t const* start () {
           return _b.start();
         }
 
@@ -175,7 +176,7 @@ namespace arangodb {
           _pos = 0;
         }
 
-        JasonLength parseInternal (bool multi);
+        ValueLength parseInternal (bool multi);
 
         inline bool isWhiteSpace (uint8_t i) const throw() {
           return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
@@ -185,7 +186,7 @@ namespace arangodb {
         // byte following the whitespace
         int skipWhiteSpace (char const* err) {
           if (_pos >= _size) {
-            throw JasonException(JasonException::ParseError, err);
+            throw Exception(Exception::ParseError, err);
           }
           uint8_t c = _start[_pos];
           if (! isWhiteSpace(c)) {
@@ -194,7 +195,7 @@ namespace arangodb {
           if (c == ' ') {
             if (_pos+1 >= _size) {
               _pos++;
-              throw JasonException(JasonException::ParseError, err);
+              throw Exception(Exception::ParseError, err);
             }
             c = _start[_pos+1];
             if (! isWhiteSpace(c)) {
@@ -208,13 +209,13 @@ namespace arangodb {
           if (count < remaining) {
             return static_cast<int>(_start[_pos]);
           }
-          throw JasonException(JasonException::ParseError, err);
+          throw Exception(Exception::ParseError, err);
         }
 
         void parseTrue () {
           // Called, when main mode has just seen a 't', need to see "rue" next
           if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
-            throw JasonException(JasonException::ParseError, "Expecting 'true'");
+            throw Exception(Exception::ParseError, "Expecting 'true'");
           }
           _b.addTrue();
         }
@@ -223,7 +224,7 @@ namespace arangodb {
           // Called, when main mode has just seen a 'f', need to see "alse" next
           if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
               consume() != 'e') {
-            throw JasonException(JasonException::ParseError, "Expecting 'false'");
+            throw Exception(Exception::ParseError, "Expecting 'false'");
           }
           _b.addFalse();
         }
@@ -231,7 +232,7 @@ namespace arangodb {
         void parseNull () {
           // Called, when main mode has just seen a 'n', need to see "ull" next
           if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
-            throw JasonException(JasonException::ParseError, "Expecting 'null'");
+            throw Exception(Exception::ParseError, "Expecting 'null'");
           }
           _b.addNull();
         }
@@ -270,7 +271,7 @@ namespace arangodb {
         inline int getOneOrThrow (char const* msg) {
           int i = consume();
           if (i < 0) {
-            throw JasonException(JasonException::ParseError, msg);
+            throw Exception(Exception::ParseError, msg);
           }
           return i;
         }
@@ -287,7 +288,7 @@ namespace arangodb {
 
     };
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 #endif

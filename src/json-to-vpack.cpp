@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -28,18 +28,19 @@
 #include <string>
 #include <fstream>
 
-#include "Jason.h"
-#include "JasonBuilder.h"
-#include "JasonException.h"
-#include "JasonParser.h"
-#include "JasonSlice.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Parser.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 static void usage (char* argv[]) {
   std::cout << "Usage: " << argv[0] << " INFILE OUTFILE" << std::endl;
   std::cout << "This program reads the JSON INFILE into a string and saves its" << std::endl;
-  std::cout << "Jason representation in file OUTFILE. Will work only for input" << std::endl;
+  std::cout << "VPack representation in file OUTFILE. Will work only for input" << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
 }
 
@@ -72,11 +73,11 @@ int main (int argc, char* argv[]) {
   }
   ifs.close();
 
-  JasonParser parser;
+  Parser parser;
   try {
     parser.parse(s);
   }
-  catch (JasonException const& ex) {
+  catch (Exception const& ex) {
     std::cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << std::endl;
     std::cerr << "Error position: " << parser.errorPos() << std::endl;
     return EXIT_FAILURE;
@@ -97,7 +98,7 @@ int main (int argc, char* argv[]) {
   ofs.seekp(0);
 
   // write into stream
-  JasonBuilder builder = parser.steal();
+  Builder builder = parser.steal();
   uint8_t const* start = builder.start();
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
@@ -111,7 +112,7 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Successfully converted JSON infile '" << argv[1] << "'" << std::endl;
   std::cout << "JSON Infile size:   " << s.size() << std::endl;
-  std::cout << "Jason Outfile size: " << builder.size() << std::endl;
+  std::cout << "VPack Outfile size: " << builder.size() << std::endl;
   
   return EXIT_SUCCESS;
 }

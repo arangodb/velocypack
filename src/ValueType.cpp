@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,29 +24,29 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "JasonType.h"
+#include "velocypack/ValueType.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
-char const* arangodb::jason::JasonTypeName (JasonType type) {
+char const* arangodb::velocypack::ValueTypeName (ValueType type) {
   switch (type) {
-    case JasonType::None:        return "none";
-    case JasonType::Null:        return "null";
-    case JasonType::Bool:        return "bool";
-    case JasonType::Array:       return "array";
-    case JasonType::Object:      return "object";
-    case JasonType::Double:      return "double";
-    case JasonType::UTCDate:     return "utc-date";
-    case JasonType::External:    return "external";
-    case JasonType::MinKey:      return "min-key";
-    case JasonType::MaxKey:      return "max-key";
-    case JasonType::Int:         return "int";
-    case JasonType::UInt:        return "uint";
-    case JasonType::SmallInt:    return "smallint";
-    case JasonType::String:      return "string";
-    case JasonType::Binary:      return "binary";
-    case JasonType::BCD:         return "bcd";
-    case JasonType::Custom:      return "custom";
+    case ValueType::None:        return "none";
+    case ValueType::Null:        return "null";
+    case ValueType::Bool:        return "bool";
+    case ValueType::Array:       return "array";
+    case ValueType::Object:      return "object";
+    case ValueType::Double:      return "double";
+    case ValueType::UTCDate:     return "utc-date";
+    case ValueType::External:    return "external";
+    case ValueType::MinKey:      return "min-key";
+    case ValueType::MaxKey:      return "max-key";
+    case ValueType::Int:         return "int";
+    case ValueType::UInt:        return "uint";
+    case ValueType::SmallInt:    return "smallint";
+    case ValueType::String:      return "string";
+    case ValueType::Binary:      return "binary";
+    case ValueType::BCD:         return "bcd";
+    case ValueType::Custom:      return "custom";
   }
 
   return "unknown";

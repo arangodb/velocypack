@@ -1,31 +1,26 @@
 
-#include "Jason.h"
-#include "JasonBuffer.h"
-#include "JasonBuilder.h"
-#include "JasonDump.h"
-#include "JasonException.h"
-#include "JasonOptions.h"
-#include "JasonParser.h"
-#include "JasonSlice.h"
-#include "JasonType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Buffer.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Dump.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Options.h"
+#include "velocypack/Parser.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
 #include "gtest/gtest.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
-#ifdef __GNUC__
-#define JASON_UNUSED __attribute__ ((unused))
-#else
-#define JASON_UNUSED /* unused */
-#endif
-
-// helper for catching Jason-specific exceptions
-#define EXPECT_JASON_EXCEPTION(operation, code) \
+// helper for catching VPack-specific exceptions
+#define EXPECT_VELOCYPACK_EXCEPTION(operation, code) \
   try {                                         \
     operation;                                  \
     EXPECT_FALSE(true);                         \
   }                                             \
-  catch (JasonException const& ex) {            \
+  catch (Exception const& ex) {            \
     EXPECT_EQ(code, ex.errorCode());            \
   }                                             \
   catch (...) {                                 \
@@ -33,7 +28,7 @@ using namespace arangodb::jason;
   } 
 
 // don't complain if this function is not called
-static void dumpDouble (double, uint8_t*) JASON_UNUSED;
+static void dumpDouble (double, uint8_t*) VELOCYPACK_UNUSED;
   
 static void dumpDouble (double x, uint8_t* p) {
   uint64_t u;
@@ -45,33 +40,33 @@ static void dumpDouble (double x, uint8_t* p) {
 }
 
 // don't complain if this function is not called
-static void checkDump (JasonSlice, std::string const&) JASON_UNUSED;
+static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
 
-static void checkDump (JasonSlice s, std::string const& knownGood) {
-  JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+static void checkDump (Slice s, std::string const& knownGood) {
+  CharBuffer buffer;
+  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
   dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(knownGood, output);
 }
 
 // don't complain if this function is not called
-static void checkBuild (JasonSlice, JasonType, JasonLength) JASON_UNUSED;
+static void checkBuild (Slice, ValueType, ValueLength) VELOCYPACK_UNUSED;
 
 // With the following function we check type determination and size
-// of the produced Jason value:
-static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
+// of the produced VPack value:
+static void checkBuild (Slice s, ValueType t, ValueLength byteSize) {
   ASSERT_EQ(t, s.type());
   ASSERT_TRUE(s.isType(t));
-  JasonType other = (t == JasonType::String) ? JasonType::Int
-                                             : JasonType::String;
+  ValueType other = (t == ValueType::String) ? ValueType::Int
+                                             : ValueType::String;
   ASSERT_FALSE(s.isType(other));
   ASSERT_FALSE(other == s.type());
 
   ASSERT_EQ(byteSize, s.byteSize());
 
   switch (t) {
-    case JasonType::None:
+    case ValueType::None:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -89,7 +84,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       break;
-    case JasonType::Null:
+    case ValueType::Null:
       ASSERT_TRUE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -108,7 +103,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Bool:
+    case ValueType::Bool:
       ASSERT_FALSE(s.isNull());
       ASSERT_TRUE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -127,7 +122,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Double:
+    case ValueType::Double:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_TRUE(s.isDouble());
@@ -146,7 +141,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Array:
+    case ValueType::Array:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -165,7 +160,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Object:
+    case ValueType::Object:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -184,7 +179,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::External:
+    case ValueType::External:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -203,7 +198,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::UTCDate:
+    case ValueType::UTCDate:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -222,7 +217,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Int:
+    case ValueType::Int:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -241,7 +236,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::UInt:
+    case ValueType::UInt:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -260,7 +255,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::SmallInt:
+    case ValueType::SmallInt:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -279,7 +274,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::String:
+    case ValueType::String:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -298,7 +293,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Binary:
+    case ValueType::Binary:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -317,7 +312,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::BCD:
+    case ValueType::BCD:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -336,7 +331,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::MinKey:
+    case ValueType::MinKey:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -355,7 +350,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::MaxKey:
+    case ValueType::MaxKey:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());
@@ -374,7 +369,7 @@ static void checkBuild (JasonSlice s, JasonType t, JasonLength byteSize) {
       ASSERT_TRUE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
       break;
-    case JasonType::Custom:
+    case ValueType::Custom:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isDouble());

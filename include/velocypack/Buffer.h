@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,37 +24,38 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_BUFFER_H
-#define JASON_BUFFER_H 1
+#ifndef VELOCYPACK_BUFFER_H
+#define VELOCYPACK_BUFFER_H 1
 
 #include <cstring>
 
-#include "Jason.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Value.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
     template<typename T>
-    class JasonBuffer {
+    class Buffer {
 
       public:
 
-        JasonBuffer () 
+        Buffer () 
           : _buffer(_local), 
             _alloc(sizeof(_local)), 
             _pos(0) {
-#ifdef JASON_DEBUG
+#ifdef VELOCYPACK_DEBUG
           memset(_buffer, 0x0a, _alloc);
 #endif
         } 
 
-        explicit JasonBuffer (JasonLength expectedLength) 
-          : JasonBuffer() {
+        explicit Buffer (ValueLength expectedLength) 
+          : Buffer() {
           reserve(expectedLength);
         }
 
-        JasonBuffer (JasonBuffer const& that)
-          : JasonBuffer() {
+        Buffer (Buffer const& that)
+          : Buffer() {
           
           if (that._pos > 0) {
             if (that._pos > sizeof(_local)) {
@@ -66,7 +67,7 @@ namespace arangodb {
           }
         }
         
-        JasonBuffer& operator= (JasonBuffer const& that) {
+        Buffer& operator= (Buffer const& that) {
           if (this != &that) {
             reset();
 
@@ -82,8 +83,8 @@ namespace arangodb {
           return *this;
         }
 
-        JasonBuffer (JasonBuffer&& that)
-          : JasonBuffer() {
+        Buffer (Buffer&& that)
+          : Buffer() {
           
           if (that._buffer == that._local) {
             memcpy(_buffer, that._buffer, that._pos);
@@ -100,7 +101,7 @@ namespace arangodb {
           }
         }
 
-        ~JasonBuffer () {
+        ~Buffer () {
           reset();
         }
 
@@ -112,7 +113,7 @@ namespace arangodb {
           return _buffer;
         }
 
-        JasonLength size () const {
+        ValueLength size () const {
           return _pos;
         }
 
@@ -125,7 +126,7 @@ namespace arangodb {
             delete[] _buffer;
             _buffer = _local;
             _alloc = sizeof(_local);
-#ifdef JASON_DEBUG
+#ifdef VELOCYPACK_DEBUG
             memset(_buffer, 0x0a, _alloc);
 #endif
           }
@@ -142,29 +143,29 @@ namespace arangodb {
           _buffer[_pos++] = c;
         }
 
-        void append (char const* p, JasonLength len) {
+        void append (char const* p, ValueLength len) {
           reserve(len);
           memcpy(_buffer + _pos, p, len);
           _pos += len;
         }
 
-        void append (uint8_t const* p, JasonLength len) {
+        void append (uint8_t const* p, ValueLength len) {
           reserve(len);
           memcpy(_buffer + _pos, p, len);
           _pos += len;
         }
 
-        void reserve (JasonLength len) {
+        void reserve (ValueLength len) {
           if (_pos + len < _alloc) {
             return;
           }
 
-          JASON_ASSERT(_pos + len >= sizeof(_local));
+          VELOCYPACK_ASSERT(_pos + len >= sizeof(_local));
 
-          static JasonLength const MinLength = sizeof(_local);
+          static ValueLength const MinLength = sizeof(_local);
 
           // need reallocation
-          JasonLength newLen = _pos + len;
+          ValueLength newLen = _pos + len;
           if (newLen < MinLength) {
             // ensure we don't alloc too small blocks
             newLen = MinLength;
@@ -172,12 +173,12 @@ namespace arangodb {
           static double const GrowthFactor = 1.25;
           if (_pos > 0 && newLen < GrowthFactor * _pos) {
             // ensure the buffer grows sensibly and not by 1 byte only
-            newLen = static_cast<JasonLength>(GrowthFactor * _pos);
+            newLen = static_cast<ValueLength>(GrowthFactor * _pos);
           }
-          JASON_ASSERT(newLen > _pos);
+          VELOCYPACK_ASSERT(newLen > _pos);
 
           T* p = new T[newLen];
-#ifdef JASON_DEBUG
+#ifdef VELOCYPACK_DEBUG
           memset(p, 0x0a, newLen);
 #endif
           // copy old data
@@ -190,7 +191,7 @@ namespace arangodb {
         }
 
         // reserve and zero fill
-        void prealloc (JasonLength len) {
+        void prealloc (ValueLength len) {
           reserve(len);
           // memset(_buffer + _pos, 0, len);
           _pos += len;
@@ -198,23 +199,23 @@ namespace arangodb {
        
       private:
 
-        JasonLength capacity () const {
+        ValueLength capacity () const {
           return _alloc;
         }
 
  
         T*          _buffer;
-        JasonLength _alloc;
-        JasonLength _pos;
+        ValueLength _alloc;
+        ValueLength _pos;
 
         // an already initialized space for small values
         T           _local[192];
 
     };
 
-    typedef JasonBuffer<char> JasonCharBuffer;
+    typedef Buffer<char> CharBuffer;
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 #endif

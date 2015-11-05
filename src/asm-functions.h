@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,8 +24,8 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_ASM_H
-#define JASON_ASM_H 1
+#ifndef VELOCYPACK_ASM_H
+#define VELOCYPACK_ASM_H 1
 
 #include <cstdint>
 #include <cstring>

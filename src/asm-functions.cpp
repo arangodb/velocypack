@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -27,7 +27,8 @@
 #include <iostream>
 #include <chrono>
 
-#include "JasonAsm.h"
+#include "velocypack/velocypack-common.h"
+#include "asm-functions.h"
 
 size_t JSONStringCopyC (uint8_t* dst, uint8_t const* src, size_t limit) {
   return JSONStringCopyInline(dst, src, limit);
@@ -242,7 +243,7 @@ size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*, size_t)
     = DoInitCopyCheckUtf8;
 size_t (*JSONSkipWhiteSpace)(uint8_t const*, size_t) = DoInitSkip;
 
-#if defined(COMPILE_JASONASM_UNITTESTS)
+#if defined(COMPILE_VELOCYPACK_ASM_UNITTESTS)
 
 int testPositions[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                         16, 23, 31, 32, 67, 103, 178, 210, 234, 247, 254, 255,
@@ -630,7 +631,7 @@ void RaceSkipWhiteSpace (uint8_t* src, size_t size, int repeat, int& akku) {
 
 int main (int argc, char* argv[]) { 
   if (argc < 4) {
-    std::cout << "Usage: JasonAsm SIZE REPEAT CORRECTNESS" << std::endl;
+    std::cout << "Usage: " << argv[0] << " SIZE REPEAT CORRECTNESS" << std::endl;
     return 0;
   }
 

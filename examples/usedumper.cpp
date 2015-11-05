@@ -1,26 +1,29 @@
 #include <iostream>
-#include <JasonBuilder.h>
-#include <JasonSlice.h>
-#include <JasonDump.h>
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Dump.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 int main (int argc, char* argv[]) {
-  JasonBuilder b;
+  Builder b;
   b.options.sortAttributeNames = false;
-  b(Jason(JasonType::Object))
-   ("b", Jason(12))
-   ("a", Jason(true))
-   ("l", Jason(JasonType::Array))
-     (Jason(1)) (Jason(2)) (Jason(3)) ()
-   ("name", Jason("Gustav")) ();
+  b(Value(ValueType::Object))
+   ("b", Value(12))
+   ("a", Value(true))
+   ("l", Value(ValueType::Array))
+     (Value(1)) (Value(2)) (Value(3)) ()
+   ("name", Value("Gustav")) ();
 
-  JasonSlice s(b.start());
+  Slice s(b.start());
 
-  JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+  CharBuffer buffer;
+  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
   dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
 
-  std::cout << "Resulting Jason:\n" << output << std::endl;
+  std::cout << "Resulting VPack:\n" << output << std::endl;
 }

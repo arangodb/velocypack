@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -50,7 +50,7 @@ static std::string readFile (std::string const& filename) {
 static bool parseFile (std::string const& filename) {
   std::string const data = readFile(filename);
  
-  JasonParser parser;
+  Parser parser;
   try {
     parser.parse(data);
     return true;

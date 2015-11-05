@@ -1,10 +1,13 @@
 #include <iostream>
-#include <JasonParser.h>
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Parser.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 int main (int argc, char* argv[]) {
-  JasonParser p;
+  Parser p;
   std::string json = "{\"a\":12}";
   try {
     size_t nr = p.parse(json);
@@ -13,15 +16,15 @@ int main (int argc, char* argv[]) {
   catch (std::bad_alloc const& e) {
     std::cout << "Out of memory!" << std::endl;
   }
-  catch (JasonException const& e) {
+  catch (Exception const& e) {
     std::cout << "Parse error: " << e.what() << std::endl;
     std::cout << "Position of error: " << p.errorPos() << std::endl;
   }
-  JasonBuilder b = p.steal();
+  Builder b = p.steal();
 
-  std::cout << "Resulting Jason:\n";
+  std::cout << "Resulting VPack:\n";
   uint8_t* pp = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
   std::cout << std::hex;
   for (size_t i = 0; i < len; i++) {
     std::cout << (int) pp[i] << " ";

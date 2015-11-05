@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -29,78 +29,78 @@
 
 #include "tests-common.h"
 
-static unsigned char Buffer[4096];
+static unsigned char LocalBuffer[4096];
 
 TEST(OutStreamTest, StringifyComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
-  JasonParser parser;
+  Parser parser;
   parser.options.sortAttributeNames = false;
   parser.parse(value);
 
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[JasonSlice object (0x0f), byteSize: 107]", result.str());
+  ASSERT_EQ("[Slice object (0x0f), byteSize: 107]", result.str());
   
-  std::string prettyResult = JasonStringPrettyDumper::Dump(s);
+  std::string prettyResult = StringPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, SimpleObject) {
   std::string const value("{\"foo\":\"bar\"}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
 
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
   
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[JasonSlice object (0x0b), byteSize: 11]", result.str());
+  ASSERT_EQ("[Slice object (0x0b), byteSize: 11]", result.str());
 
-  std::string prettyResult = JasonStringPrettyDumper::Dump(s);
+  std::string prettyResult = StringPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, ComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
-  JasonParser parser;
+  Parser parser;
   parser.options.sortAttributeNames = false;
   parser.parse(value);
 
-  JasonBuilder builder = parser.steal();
-  JasonSlice s(builder.start());
+  Builder builder = parser.steal();
+  Slice s(builder.start());
 
-  std::string result = JasonStringPrettyDumper::Dump(s);
+  std::string result = StringPrettyDumper::Dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
 }
 
 TEST(BufferDumperTest, Null) {
-  Buffer[0] = 0x18;
+  LocalBuffer[0] = 0x18;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+  CharBuffer buffer;
+  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("null"), output);
 }
 
 TEST(StringDumperTest, Null) {
-  Buffer[0] = 0x18;
+  LocalBuffer[0] = 0x18;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -111,11 +111,11 @@ TEST(StringDumperTest, Numbers) {
     int64_t i;
 
     auto check = [&] () -> void {
-      JasonBuilder b;
-      b.add(Jason(i));
-      JasonSlice s(b.start());
-      JasonCharBuffer buffer;
-      JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+      Builder b;
+      b.add(Value(i));
+      Slice s(b.start());
+      CharBuffer buffer;
+      BufferDumper dumper(buffer, BufferDumper::StrategyFail);
       dumper.dump(s);
       std::string output(buffer.data(), buffer.size());
       ASSERT_EQ(std::to_string(i), output);
@@ -133,73 +133,73 @@ TEST(StringDumperTest, Numbers) {
 }
 
 TEST(BufferDumperTest, False) {
-  Buffer[0] = 0x19;
+  LocalBuffer[0] = 0x19;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+  CharBuffer buffer;
+  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("false"), output);
 }
 
 TEST(StringDumperTest, False) {
-  Buffer[0] = 0x19;
+  LocalBuffer[0] = 0x19;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("false"), buffer);
 }
 
 TEST(BufferDumperTest, True) {
-  Buffer[0] = 0x1a;
+  LocalBuffer[0] = 0x1a;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  JasonCharBuffer buffer;
-  JasonBufferDumper dumper(buffer, JasonBufferDumper::StrategyFail);
+  CharBuffer buffer;
+  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("true"), output);
 }
 
 TEST(StringDumperTest, True) {
-  Buffer[0] = 0x1a;
+  LocalBuffer[0] = 0x1a;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
 }
 
 TEST(StringDumperTest, CustomWithoutHandler) {
-  Buffer[0] = 0xf0;
+  LocalBuffer[0] = 0xf0;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
-  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
+  Builder b;
+  b.add(Value(ValueType::Object));
+  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
   *p = 0xf0;
   b.close();
 
   bool sawCustom = false;
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  dumper.setCallback([&] (std::string*, JasonSlice const* slice, JasonSlice const*) -> bool {
-    if (slice->type() == JasonType::Custom) {
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  dumper.setCallback([&] (std::string*, Slice const* slice, Slice const*) -> bool {
+    if (slice->type() == ValueType::Custom) {
       sawCustom = true;
       return true;
     }
@@ -210,21 +210,21 @@ TEST(StringDumperTest, CustomWithCallback) {
 }
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
-  uint8_t* p = b.add("_id", JasonPair(1ULL, JasonType::Custom));
+  Builder b;
+  b.add(Value(ValueType::Object));
+  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
   *p = 0xf0;
-  b.add("_key", Jason("this is a key"));
+  b.add("_key", Value("this is a key"));
   b.close();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
 
-  dumper.setCallback([] (std::string* buffer, JasonSlice const* slice, JasonSlice const* parent) -> bool {
-    if (slice->type() == JasonType::Custom) {
+  dumper.setCallback([] (std::string* buffer, Slice const* slice, Slice const* parent) -> bool {
+    if (slice->type() == ValueType::Custom) {
       EXPECT_TRUE(parent->isObject());
       auto key = parent->get("_key");
-      EXPECT_EQ(JasonType::String, key.type());
+      EXPECT_EQ(ValueType::String, key.type());
       buffer->append("\"foobar/");
       buffer->append(key.copyString());
       buffer->push_back('"');
@@ -239,7 +239,7 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
 
 TEST(StringDumperTest, AppendCharTest) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.appendString(std::string("this is a simple string"));
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -247,7 +247,7 @@ TEST(StringDumperTest, AppendCharTest) {
 
 TEST(StringDumperTest, AppendStringTest) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.appendString("this is a simple string");
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -255,7 +255,7 @@ TEST(StringDumperTest, AppendStringTest) {
 
 TEST(StringDumperTest, AppendCharTestSpecialChars) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
@@ -270,7 +270,7 @@ TEST(StringDumperTest, AppendCharTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringTestSpecialChars) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
@@ -285,12 +285,12 @@ TEST(StringDumperTest, AppendStringTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringSlice) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
-  JasonBuilder b;
-  b.add(Jason(s));
-  JasonSlice slice(b.start());
+  Builder b;
+  b.add(Value(s));
+  Slice slice(b.start());
   dumper.options.escapeForwardSlashes = true;
   dumper.append(slice);
 
@@ -304,12 +304,12 @@ TEST(StringDumperTest, AppendStringSlice) {
 
 TEST(StringDumperTest, AppendStringSliceRef) {
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
-  JasonBuilder b;
-  b.add(Jason(s));
-  JasonSlice slice(b.start());
+  Builder b;
+  b.add(Value(s));
+  Slice slice(b.start());
   dumper.options.escapeForwardSlashes = true;
   dumper.append(&slice);
 
@@ -324,15 +324,15 @@ TEST(StringDumperTest, AppendStringSliceRef) {
 TEST(StringDumperTest, AppendToOstream) {
   std::string const value("{\"foo\":\"the quick brown fox\"}");
 
-  JasonParser parser;
+  Parser parser;
   parser.options.sortAttributeNames = false;
   parser.parse(value);
 
-  JasonBuilder builder = parser.steal();
-  JasonSlice slice(builder.start());
+  Builder builder = parser.steal();
+  Slice slice(builder.start());
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
   dumper.dump(slice);
 
   std::ostringstream out;
@@ -344,26 +344,26 @@ TEST(StringDumperTest, AppendToOstream) {
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;
   v *= -v;
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   double v = -3.33e307;
   v *= -v;
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -371,26 +371,26 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
 TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
   double v = 3.33e307;
   v *= v;
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   double v = 3.33e307;
   v *= v;
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -398,74 +398,74 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
 TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   double v = std::nan("1");
   EXPECT_TRUE(std::isnan(v));
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
   double v = std::nan("1");
   EXPECT_TRUE(std::isnan(v));
-  JasonBuilder b;
-  b.add(Jason(v));
+  Builder b;
+  b.add(Value(v));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeBinary) {
-  JasonBuilder b;
-  b.add(Jason(std::string("der fuchs"), JasonType::Binary));
+  Builder b;
+  b.add(Value(std::string("der fuchs"), ValueType::Binary));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeBinary) {
-  JasonBuilder b;
-  b.add(Jason(std::string("der fuchs"), JasonType::Binary));
+  Builder b;
+  b.add(Value(std::string("der fuchs"), ValueType::Binary));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeUTCDate) {
   int64_t v = 0;
-  JasonBuilder b;
-  b.add(Jason(v, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(v, ValueType::UTCDate));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyFail);
-  EXPECT_JASON_EXCEPTION(dumper.dump(slice), JasonException::NoJsonEquivalent);
+  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeUTCDate) {
   int64_t v = 0;
-  JasonBuilder b;
-  b.add(Jason(v, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(v, ValueType::UTCDate));
 
-  JasonSlice slice = b.slice();
+  Slice slice = b.slice();
 
   std::string buffer;
-  JasonStringDumper dumper(buffer, JasonStringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullify);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }

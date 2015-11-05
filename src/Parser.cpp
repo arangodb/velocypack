@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,18 +24,19 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "JasonParser.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Parser.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 // The following function does the actual parse. It gets bytes
-// via peek, consume and reset appends the result to the JasonBuilder
+// via peek, consume and reset appends the result to the Builder
 // in _b. Errors are reported via an exception.
 // Behind the scenes it runs two parses, one to collect sizes and
 // check for parse errors (scan phase) and then one to actually
 // build the result (build phase).
 
-JasonLength JasonParser::parseInternal (bool multi) {
+ValueLength Parser::parseInternal (bool multi) {
   _b.options = options; // copy over options
 
   // skip over optional BOM
@@ -47,7 +48,7 @@ JasonLength JasonParser::parseInternal (bool multi) {
     _pos += 3;
   }
 
-  JasonLength nr = 0;
+  ValueLength nr = 0;
   do {
     parseJson();
     nr++;
@@ -57,14 +58,14 @@ JasonLength JasonParser::parseInternal (bool multi) {
     }
     if (! multi && _pos != _size) {
       consume();  // to get error reporting right
-      throw JasonException(JasonException::ParseError, "Expecting EOF");
+      throw Exception(Exception::ParseError, "Expecting EOF");
     }
   } 
   while (multi && _pos < _size);
   return nr;
 }
 
-void JasonParser::parseNumber () {
+void Parser::parseNumber () {
   ParsedNumber numberValue;
   bool negative = false;
   int i = consume();
@@ -75,7 +76,7 @@ void JasonParser::parseNumber () {
     negative = true;
   }
   if (i < '0' || i > '9') {
-    throw JasonException(JasonException::ParseError, "Expecting digit");
+    throw Exception(Exception::ParseError, "Expecting digit");
   }
   
   if (i != '0') {
@@ -99,7 +100,7 @@ void JasonParser::parseNumber () {
       if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
         _b.addInt(-static_cast<int64_t>(numberValue.intValue));
       }
-      else if (numberValue.intValue == toUInt64(INT64_MIN)) {
+      else if (numberValue.intValue == ToUInt64(INT64_MIN)) {
         _b.addInt(INT64_MIN);
       }
       else {
@@ -113,7 +114,7 @@ void JasonParser::parseNumber () {
   }
   i = getOneOrThrow("Incomplete number");
   if (i < '0' || i > '9') {
-    throw JasonException(JasonException::ParseError, "Incomplete number");
+    throw Exception(Exception::ParseError, "Incomplete number");
   }
   unconsume();
   double fractionalPart = scanDigitsFractional();
@@ -140,7 +141,7 @@ void JasonParser::parseNumber () {
     i = getOneOrThrow("Incomplete number");
   }
   if (i < '0' || i > '9') {
-    throw JasonException(JasonException::ParseError, "Incomplete number");
+    throw Exception(Exception::ParseError, "Incomplete number");
   }
   unconsume();
   ParsedNumber exponent;
@@ -152,19 +153,19 @@ void JasonParser::parseNumber () {
     fractionalPart *= pow(10, exponent.asDouble());
   }
   if (std::isnan(fractionalPart) || ! std::isfinite(fractionalPart)) {
-    throw JasonException(JasonException::NumberOutOfRange);
+    throw Exception(Exception::NumberOutOfRange);
   }
   _b.addDouble(fractionalPart);
 }
 
-void JasonParser::parseString () {
+void Parser::parseString () {
   // When we get here, we have seen a " character and now want to
   // find the end of the string and parse the string value to its
-  // Jason representation. We assume that the string is short and
+  // VPack representation. We assume that the string is short and
   // insert 8 bytes for the length as soon as we reach 127 bytes
-  // in the Jason representation.
+  // in the VPack representation.
 
-  JasonLength const base = _b._pos;
+  ValueLength const base = _b._pos;
   _b.reserveSpace(1);
   _b._start[_b._pos++] = 0x40;   // correct this later
 
@@ -196,7 +197,7 @@ void JasonParser::parseString () {
     }
     switch (i) {
       case '"':
-        JasonLength len;
+        ValueLength len;
         if (! large) {
           len = _b._pos - (base + 1);
           _b._start[base] = 0x40 + static_cast<uint8_t>(len);
@@ -205,7 +206,7 @@ void JasonParser::parseString () {
         else {
           len = _b._pos - (base + 9);
           _b._start[base] = 0xbf;
-          for (JasonLength i = 1; i <= 8; i++) {
+          for (ValueLength i = 1; i <= 8; i++) {
             _b._start[base + i] = len & 0xff;
             len >>= 8;
           }
@@ -215,7 +216,7 @@ void JasonParser::parseString () {
         // Handle cases or throw error
         i = consume();
         if (i < 0) {
-          throw JasonException(JasonException::ParseError, "Invalid escape sequence");
+          throw Exception(Exception::ParseError, "Invalid escape sequence");
         }
         switch (i) {
           case '"':
@@ -255,7 +256,7 @@ void JasonParser::parseString () {
             for (int j = 0; j < 4; j++) {
               i = consume();
               if (i < 0) {
-                throw JasonException(JasonException::ParseError, "Unfinished \\uXXXX escape sequence");
+                throw Exception(Exception::ParseError, "Unfinished \\uXXXX escape sequence");
               }
               if (i >= '0' && i <= '9') {
                 v = (v << 4) + i - '0';
@@ -267,7 +268,7 @@ void JasonParser::parseString () {
                 v = (v << 4) + i - 'A' + 10;
               }
               else {
-                throw JasonException(JasonException::ParseError, "Illegal \\uXXXX escape sequence");
+                throw Exception(Exception::ParseError, "Illegal \\uXXXX escape sequence");
               }
             }
             if (v < 0x80) {
@@ -310,7 +311,7 @@ void JasonParser::parseString () {
             break;
           }
           default:
-            throw JasonException(JasonException::ParseError, "Invalid escape sequence");
+            throw Exception(Exception::ParseError, "Invalid escape sequence");
         }
         break;
       default:
@@ -318,7 +319,7 @@ void JasonParser::parseString () {
           // non-UTF-8 sequence
           if (i < 0x20) {
             // control character
-            throw JasonException(JasonException::UnexpectedControlCharacter);
+            throw Exception(Exception::UnexpectedControlCharacter);
           }
           highSurrogate = 0;
           _b.reserveSpace(1);
@@ -334,7 +335,7 @@ void JasonParser::parseString () {
             // multi-byte UTF-8 sequence!
             int follow = 0;
             if ((i & 0xe0) == 0x80) {
-              throw JasonException(JasonException::InvalidUtf8Sequence);
+              throw Exception(Exception::InvalidUtf8Sequence);
             }
             else if ((i & 0xe0) == 0xc0) {
               // two-byte sequence
@@ -349,7 +350,7 @@ void JasonParser::parseString () {
               follow = 3;
             }
             else {
-              throw JasonException(JasonException::InvalidUtf8Sequence);
+              throw Exception(Exception::InvalidUtf8Sequence);
             }
 
             // validate follow up characters
@@ -358,7 +359,7 @@ void JasonParser::parseString () {
             for (int j = 0; j < follow; ++j) {
               i = getOneOrThrow("scanString: truncated UTF-8 sequence");
               if ((i & 0xc0) != 0x80) {
-                throw JasonException(JasonException::InvalidUtf8Sequence);
+                throw Exception(Exception::InvalidUtf8Sequence);
               }
               _b._start[_b._pos++] = static_cast<uint8_t>(i);
             }
@@ -370,8 +371,8 @@ void JasonParser::parseString () {
   }
 }
 
-void JasonParser::parseArray () {
-  JasonLength base = _b._pos;
+void Parser::parseArray () {
+  ValueLength base = _b._pos;
   _b.addArray();
 
   int i = skipWhiteSpace("Expecting item or ']'");
@@ -395,14 +396,14 @@ void JasonParser::parseArray () {
     }
     // skip over ','
     if (i != ',') {
-      throw JasonException(JasonException::ParseError, "Expecting ',' or ']'");
+      throw Exception(Exception::ParseError, "Expecting ',' or ']'");
     }
     ++_pos;  // the ','
   }
 }
                        
-void JasonParser::parseObject () {
-  JasonLength base = _b._pos;
+void Parser::parseObject () {
+  ValueLength base = _b._pos;
   _b.addObject();
 
   int i = skipWhiteSpace("Expecting item or '}'");
@@ -416,7 +417,7 @@ void JasonParser::parseObject () {
   while (true) {
     // always expecting a string attribute name here
     if (i != '"') {
-      throw JasonException(JasonException::ParseError, "Expecting '\"' or '}'");
+      throw Exception(Exception::ParseError, "Expecting '\"' or '}'");
     }
     // get past the initial '"'
     ++_pos;
@@ -426,7 +427,7 @@ void JasonParser::parseObject () {
     i = skipWhiteSpace("Expecting ':'");
     // always expecting the ':' here
     if (i != ':') {
-      throw JasonException(JasonException::ParseError, "Expecting ':'");
+      throw Exception(Exception::ParseError, "Expecting ':'");
     }
     ++_pos; // skip over the colon
 
@@ -439,7 +440,7 @@ void JasonParser::parseObject () {
       return;
     }
     if (i != ',') {
-      throw JasonException(JasonException::ParseError, "Expecting ',' or '}'");
+      throw Exception(Exception::ParseError, "Expecting ',' or '}'");
     } 
     // skip over ','
     ++_pos;  // the ','
@@ -447,7 +448,7 @@ void JasonParser::parseObject () {
   }
 }
                        
-void JasonParser::parseJson () {
+void Parser::parseJson () {
   skipWhiteSpace("Expecting item");
 
   int i = consume();

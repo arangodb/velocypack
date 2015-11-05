@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-project(jason)
+project(velocypack)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 set(CMAKE_BINARY_DIR "${CMAKE_SOURCE_DIR}/build")
@@ -13,13 +13,13 @@ endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 
-set(JASON_VERSION "0.0.1" CACHE path "Jason version")
+set(VELOCYPACK_VERSION "0.0.1" CACHE path "VelocyPack version")
 
-set(JASON_DISPLAY_NAME "Jason")
-set(JASON_URL_INFO_ABOUT "http://www.arangodb.org")
-set(JASON_CONTACT "hackers@arangodb.org")
+set(VELOCYPACK_DISPLAY_NAME "Velocypack")
+set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/Jason")
+set(VELOCYPACK_CONTACT "hackers@arangodb.org")
 
-set(JASON_FRIENDLY_STRING "Jason - Just Another SerializatiON")
+set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization format")
 
 # test for SSE4.2 support
 include(TargetArch)
@@ -31,7 +31,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   message(STATUS "Compiler type GNU: ${CMAKE_CXX_COMPILER}")
   set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
   set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_OPTIONS}")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DJASON_DEBUG=1")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DVELOCYPACK_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
   set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3 -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${BASE_COMPILER_OPTIONS} -O3 -g")
@@ -42,7 +42,7 @@ elseif(CMAKE_COMPILER_IS_CLANGCXX)
   message(STATUS "Compiler type CLANG: ${CMAKE_CXX_COMPILER}")
   set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
   set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_COMPTIONS}")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DJASON_DEBUG=1")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DVELOCYPACK_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
   set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3 -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${BASE_COMPILER_OPTIONS} -O3 -g")
@@ -86,7 +86,7 @@ else()
   message(STATUS "Compiler type UNKNOWN: ${CMAKE_CXX_COMPILER}")
   set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
   set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_COMPTIONS}")
-  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DJASON_DEBUG=1")
+  set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DVELOCYPACK_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
   set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} ${BASE_COMPILER_OPTIONS} -O3 -fomit-frame-pointer")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${BASE_COMPILER_OPTIONS} -O3 -g")
@@ -119,52 +119,54 @@ include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 
 find_package(Threads)
 
-# build libjason
+# build libvelocypack
 add_library(
-  jason
+  velocypack
   STATIC
-  src/Jason.cpp
-  src/JasonAsm.cpp
-  src/JasonBuilder.cpp
-  src/JasonException.cpp
-  src/JasonParser.cpp
-  src/JasonSlice.cpp
-  src/JasonType.cpp
+  src/velocypack-common.cpp
+  src/Builder.cpp
+  src/Exception.cpp
+  src/Parser.cpp
+  src/Slice.cpp
+  src/ValueType.cpp
+  src/asm-functions.cpp
   src/fpconv.cpp
 )
 
-install(TARGETS jason DESTINATION lib)
-install(FILES include/Jason.h DESTINATION include)
-install(FILES include/JasonBuffer.h DESTINATION include)
-install(FILES include/JasonBuilder.h DESTINATION include)
-install(FILES include/JasonDump.h DESTINATION include)
-install(FILES include/JasonDumper.h DESTINATION include)
-install(FILES include/JasonException.h DESTINATION include)
-install(FILES include/JasonOptions.h DESTINATION include)
-install(FILES include/JasonParser.h DESTINATION include)
-install(FILES include/JasonSlice.h DESTINATION include)
-install(FILES include/JasonType.h DESTINATION include)
+install(TARGETS velocypack DESTINATION lib)
+install(FILES include/velocypack/velocypack-aliases.h DESTINATION include)
+install(FILES include/velocypack/velocypack-common.h DESTINATION include)
+install(FILES include/velocypack/Buffer.h DESTINATION include)
+install(FILES include/velocypack/Builder.h DESTINATION include)
+install(FILES include/velocypack/Dump.h DESTINATION include)
+install(FILES include/velocypack/Dumper.h DESTINATION include)
+install(FILES include/velocypack/Exception.h DESTINATION include)
+install(FILES include/velocypack/Options.h DESTINATION include)
+install(FILES include/velocypack/Parser.h DESTINATION include)
+install(FILES include/velocypack/Slice.h DESTINATION include)
+install(FILES include/velocypack/Value.h DESTINATION include)
+install(FILES include/velocypack/ValueType.h DESTINATION include)
 
-# build jasonize.cpp
+# build json-to-vpack.cpp
 add_executable(
-  jasonize
-  src/jasonize.cpp
+  "json-to-vpack"
+  src/json-to-vpack.cpp
 )
 
 target_link_libraries(
-  jasonize
-  jason
+  "json-to-vpack"
+  velocypack
 )
 
-# build jsonize.cpp
+# build vpack-to-json.cpp
 add_executable(
-  jsonize
-  src/jsonize.cpp
+  "vpack-to-json"
+  src/vpack-to-json.cpp
 )
 
 target_link_libraries(
-  jsonize
-  jason
+  "vpack-to-json"
+  velocypack
 )
 
 
@@ -183,7 +185,7 @@ if(BuildBench)
 
   target_link_libraries(
     bench
-    jason
+    velocypack
   )
 
   if(EnableSSE)
@@ -215,26 +217,26 @@ if(BuildTests)
     target_link_libraries(
       ${testName}
       gtest
-      jason
+      velocypack
       ${CMAKE_THREAD_LIBS_INIT}
     )
 
   endforeach()
 endif()
 
-# build JasonAsm
+# build AsmTest
 if (BuildAsmTest)
   add_executable(
-    JasonAsm
-    src/JasonAsm.cpp
+    AsmTest
+    src/asm-functions.cpp
   )
 
   target_link_libraries(
-    JasonAsm
+    AsmTest
     ${CMAKE_THREAD_LIBS_INIT}
   )
 
-  set_target_properties(JasonAsm PROPERTIES COMPILE_FLAGS "-DCOMPILE_JASONASM_UNITTESTS")
+  set_target_properties(AsmTest PROPERTIES COMPILE_FLAGS "-DCOMPILE_VELOCYPACK_ASM_UNITTESTS")
 
 endif()
 

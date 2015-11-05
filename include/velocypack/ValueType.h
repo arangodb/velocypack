@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,13 +24,15 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_TYPE_H
-#define JASON_TYPE_H
+#ifndef VELOCYPACK_VALUETYPE_H
+#define VELOCYPACK_VALUETYPE_H
+
+#include "velocypack-common.h"
 
 namespace arangodb {
-  namespace jason {
+  namespace velocypack {
 
-    enum JasonType {
+    enum ValueType {
       None,           // not yet initialized
       Null,           // JSON null
       Bool,
@@ -50,9 +52,9 @@ namespace arangodb {
       Custom
     };
 
-    char const* JasonTypeName (JasonType);
+    char const* ValueTypeName (ValueType);
 
-  }  // namespace arangodb::jason
+  }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 #endif

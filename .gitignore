@@ -1,8 +1,8 @@
 bench
-jasonize
-jsonize
+vpack-to-json
+json-to-vpack
 core 
-JasonAsm
+AsmTest
 testsBuilder
 testsDumper
 testsFiles
@@ -21,7 +21,7 @@ autom4te.cache
 config.h
 config.log
 config.status
-libjason.a
+libvelocypack.a
 stamp-h1
 config.h.in~
 examples/usebuilder

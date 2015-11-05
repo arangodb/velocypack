@@ -1,24 +1,27 @@
 #include <iostream>
-#include <JasonBuilder.h>
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 int main (int argc, char* argv[]) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
-  b.add("b", Jason(12));
-  b.add("a", Jason(true));
-  b.add("l", Jason(JasonType::Array));
-  b.add(Jason(1));
-  b.add(Jason(2));
-  b.add(Jason(3));
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("b", Value(12));
+  b.add("a", Value(true));
+  b.add("l", Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(2));
+  b.add(Value(3));
   b.close();
-  b.add("name", Jason("Gustav"));
+  b.add("name", Value("Gustav"));
   b.close();
 
-  std::cout << "Resulting Jason:\n";
+  std::cout << "Resulting VPack:\n";
   uint8_t* p = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
   std::cout << std::hex;
   for (size_t i = 0; i < len; i++) {
     std::cout << (int) p[i] << " ";

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -29,83 +29,83 @@
 
 #include "tests-common.h"
   
-static unsigned char Buffer[4096];
+static unsigned char LocalBuffer[4096];
 
 TEST(SliceTest, Null) {
-  Buffer[0] = 0x18;
+  LocalBuffer[0] = 0x18;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Null, slice.type());
+  ASSERT_EQ(ValueType::Null, slice.type());
   ASSERT_TRUE(slice.isNull());
   ASSERT_EQ(1ULL, slice.byteSize());
 }
 
 TEST(SliceTest, False) {
-  Buffer[0] = 0x19;
+  LocalBuffer[0] = 0x19;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Bool, slice.type());
+  ASSERT_EQ(ValueType::Bool, slice.type());
   ASSERT_TRUE(slice.isBool());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_FALSE(slice.getBool());
 }
 
 TEST(SliceTest, True) {
-  Buffer[0] = 0x1a;
+  LocalBuffer[0] = 0x1a;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Bool, slice.type());
+  ASSERT_EQ(ValueType::Bool, slice.type());
   ASSERT_TRUE(slice.isBool());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_TRUE(slice.getBool());
 }
 
 TEST(SliceTest, MinKey) {
-  Buffer[0] = 0x1e;
+  LocalBuffer[0] = 0x1e;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::MinKey, slice.type());
+  ASSERT_EQ(ValueType::MinKey, slice.type());
   ASSERT_TRUE(slice.isMinKey());
   ASSERT_EQ(1ULL, slice.byteSize());
 }
 
 TEST(SliceTest, MaxKey) {
-  Buffer[0] = 0x1f;
+  LocalBuffer[0] = 0x1f;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::MaxKey, slice.type());
+  ASSERT_EQ(ValueType::MaxKey, slice.type());
   ASSERT_TRUE(slice.isMaxKey());
   ASSERT_EQ(1ULL, slice.byteSize());
 }
 
 TEST(SliceTest, Double) {
-  Buffer[0] = 0x1b;
+  LocalBuffer[0] = 0x1b;
 
   double value = 23.5;
-  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
+  dumpDouble(value, reinterpret_cast<uint8_t*>(LocalBuffer) + 1);
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Double, slice.type());
+  ASSERT_EQ(ValueType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_DOUBLE_EQ(value, slice.getDouble());
 }
 
 TEST(SliceTest, DoubleNegative) {
-  Buffer[0] = 0x1b;
+  LocalBuffer[0] = 0x1b;
 
   double value = -999.91355;
-  dumpDouble(value, reinterpret_cast<uint8_t*>(Buffer) + 1);
+  dumpDouble(value, reinterpret_cast<uint8_t*>(LocalBuffer) + 1);
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Double, slice.type());
+  ASSERT_EQ(ValueType::Double, slice.type());
   ASSERT_TRUE(slice.isDouble());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_DOUBLE_EQ(value, slice.getDouble());
@@ -115,10 +115,10 @@ TEST(SliceTest, SmallInt) {
   int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -6, -5, -4, -3, -2, -1 };
 
   for (int i = 0; i < 16; ++i) {
-    Buffer[0] = 0x30 + i;
+    LocalBuffer[0] = 0x30 + i;
 
-    JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
-    ASSERT_EQ(JasonType::SmallInt, slice.type());
+    Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+    ASSERT_EQ(ValueType::SmallInt, slice.type());
     ASSERT_TRUE(slice.isSmallInt());
     ASSERT_EQ(1ULL, slice.byteSize());
 
@@ -127,13 +127,13 @@ TEST(SliceTest, SmallInt) {
 }
 
 TEST(SliceTest, Int1) {
-  Buffer[0] = 0x20;
+  LocalBuffer[0] = 0x20;
   uint8_t value = 0x33;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(2ULL, slice.byteSize());
 
@@ -141,70 +141,70 @@ TEST(SliceTest, Int1) {
 }
 
 TEST(SliceTest, Int2) {
-  Buffer[0] = 0x21;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x21;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(3ULL, slice.byteSize());
   ASSERT_EQ(0x4223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int3) {
-  Buffer[0] = 0x22;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x22;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(4ULL, slice.byteSize());
   ASSERT_EQ(0x664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int4) {
-  Buffer[0] = 0x23;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x23;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0x7c;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
   ASSERT_EQ(0x7c664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int5) {
-  Buffer[0] = 0x24;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x24;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
   *p++ = 0x6f;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
   ASSERT_EQ(0x6fac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int6) {
-  Buffer[0] = 0x25;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x25;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -212,17 +212,17 @@ TEST(SliceTest, Int6) {
   *p++ = 0xff;
   *p++ = 0x3f;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(7ULL, slice.byteSize());
   ASSERT_EQ(0x3fffac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int7) {
-  Buffer[0] = 0x26;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x26;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -231,17 +231,17 @@ TEST(SliceTest, Int7) {
   *p++ = 0x3f;
   *p++ = 0x5a;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
   ASSERT_EQ(0x5a3fffac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, Int8) {
-  Buffer[0] = 0x27;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x27;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -251,22 +251,22 @@ TEST(SliceTest, Int8) {
   *p++ = 0xfa;
   *p++ = 0x6f;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_EQ(0x6ffa3fffac664223LL, slice.getInt());
 }
 
 TEST(SliceTest, NegInt1) {
-  Buffer[0] = 0x20;
+  LocalBuffer[0] = 0x20;
   uint8_t value = 0xa3;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(2ULL, slice.byteSize());
 
@@ -274,70 +274,70 @@ TEST(SliceTest, NegInt1) {
 }
 
 TEST(SliceTest, NegInt2) {
-  Buffer[0] = 0x21;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x21;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0xe2;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(3ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xffffffffffffe223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt3) {
-  Buffer[0] = 0x22;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x22;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0xd6;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(4ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xffffffffffd64223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt4) {
-  Buffer[0] = 0x23;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x23;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt5) {
-  Buffer[0] = 0x24;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x24;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
   *p++ = 0xff;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xffffffffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt6) {
-  Buffer[0] = 0x25;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x25;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -345,17 +345,17 @@ TEST(SliceTest, NegInt6) {
   *p++ = 0xff;
   *p++ = 0xef;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(7ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xffffefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt7) {
-  Buffer[0] = 0x26;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x26;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -364,17 +364,17 @@ TEST(SliceTest, NegInt7) {
   *p++ = 0xef;
   *p++ = 0xfa;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0xfffaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, NegInt8) {
-  Buffer[0] = 0x27;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x27;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -384,92 +384,92 @@ TEST(SliceTest, NegInt8) {
   *p++ = 0xfa;
   *p++ = 0x8e;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Int, slice.type());
+  ASSERT_EQ(ValueType::Int, slice.type());
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_EQ(static_cast<int64_t>(0x8efaefffac664223ULL), slice.getInt());
 }
 
 TEST(SliceTest, UInt1) {
-  Buffer[0] = 0x28;
+  LocalBuffer[0] = 0x28;
   uint8_t value = 0x33;
-  memcpy(&Buffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(2ULL, slice.byteSize());
   ASSERT_EQ(value, slice.getUInt());
 }
 
 TEST(SliceTest, UInt2) {
-  Buffer[0] = 0x29;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x29;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(3ULL, slice.byteSize());
   ASSERT_EQ(0x4223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt3) {
-  Buffer[0] = 0x2a;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2a;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(4ULL, slice.byteSize());
   ASSERT_EQ(0x664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt4) {
-  Buffer[0] = 0x2b;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2b;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(5ULL, slice.byteSize());
   ASSERT_EQ(0xac664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt5) {
-  Buffer[0] = 0x2c;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2c;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
   *p++ = 0xac;
   *p++ = 0xff;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(6ULL, slice.byteSize());
   ASSERT_EQ(0xffac664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt6) {
-  Buffer[0] = 0x2d;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2d;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -477,17 +477,17 @@ TEST(SliceTest, UInt6) {
   *p++ = 0xff;
   *p++ = 0xee;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(7ULL, slice.byteSize());
   ASSERT_EQ(0xeeffac664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt7) {
-  Buffer[0] = 0x2e;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2e;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -496,17 +496,17 @@ TEST(SliceTest, UInt7) {
   *p++ = 0xee;
   *p++ = 0x59;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(8ULL, slice.byteSize());
   ASSERT_EQ(0x59eeffac664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, UInt8) {
-  Buffer[0] = 0x2f;
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  LocalBuffer[0] = 0x2f;
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -516,34 +516,34 @@ TEST(SliceTest, UInt8) {
   *p++ = 0x59;
   *p++ = 0xab;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::UInt, slice.type());
+  ASSERT_EQ(ValueType::UInt, slice.type());
   ASSERT_TRUE(slice.isUInt());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_EQ(0xab59eeffac664223ULL, slice.getUInt());
 }
 
 TEST(SliceTest, ArrayEmpty) {
-  Buffer[0] = 0x01;
+  LocalBuffer[0] = 0x01;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::Array, slice.type());
+  ASSERT_EQ(ValueType::Array, slice.type());
   ASSERT_TRUE(slice.isArray());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_EQ(0ULL, slice.length());
 }
 
 TEST(SliceTest, StringEmpty) {
-  Buffer[0] = 0x40;
+  LocalBuffer[0] = 0x40;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  ASSERT_EQ(JasonType::String, slice.type());
+  ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
   ASSERT_EQ(1ULL, slice.byteSize());
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(0ULL, len);
   ASSERT_EQ(0, strncmp(s, "", len));
@@ -552,10 +552,10 @@ TEST(SliceTest, StringEmpty) {
 }
 
 TEST(SliceTest, String1) {
-  Buffer[0] = 0x40 + static_cast<char>(strlen("foobar"));
+  LocalBuffer[0] = 0x40 + static_cast<char>(strlen("foobar"));
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = (uint8_t) 'f';
   *p++ = (uint8_t) 'o';
   *p++ = (uint8_t) 'o';
@@ -563,10 +563,10 @@ TEST(SliceTest, String1) {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  ASSERT_EQ(JasonType::String, slice.type());
+  ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
   ASSERT_EQ(7ULL, slice.byteSize());
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
@@ -575,10 +575,10 @@ TEST(SliceTest, String1) {
 }
 
 TEST(SliceTest, String2) {
-  Buffer[0] = 0x48;
+  LocalBuffer[0] = 0x48;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = (uint8_t) '1';
   *p++ = (uint8_t) '2';
   *p++ = (uint8_t) '3';
@@ -588,10 +588,10 @@ TEST(SliceTest, String2) {
   *p++ = (uint8_t) '\n';
   *p++ = (uint8_t) 'x';
 
-  ASSERT_EQ(JasonType::String, slice.type());
+  ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
   ASSERT_EQ(9ULL, slice.byteSize());
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(8ULL, len);
   ASSERT_EQ(0, strncmp(s, "123f\r\t\nx", len));
@@ -600,10 +600,10 @@ TEST(SliceTest, String2) {
 }
 
 TEST(SliceTest, StringNullBytes) {
-  Buffer[0] = 0x48;
+  LocalBuffer[0] = 0x48;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   *p++ = (uint8_t) '\0';
   *p++ = (uint8_t) '1';
   *p++ = (uint8_t) '2';
@@ -613,10 +613,10 @@ TEST(SliceTest, StringNullBytes) {
   *p++ = (uint8_t) '\0';
   *p++ = (uint8_t) 'x';
 
-  ASSERT_EQ(JasonType::String, slice.type());
+  ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
   ASSERT_EQ(9ULL, slice.byteSize());
-  JasonLength len;
+  ValueLength len;
   slice.getString(len);
   ASSERT_EQ(8ULL, len);
 
@@ -633,10 +633,10 @@ TEST(SliceTest, StringNullBytes) {
 }
 
 TEST(SliceTest, StringLong1) {
-  Buffer[0] = 0xbf;
+  LocalBuffer[0] = 0xbf;
 
-  JasonSlice slice(reinterpret_cast<uint8_t const*>(&Buffer[0]));
-  uint8_t* p = (uint8_t*) &Buffer[1];
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+  uint8_t* p = (uint8_t*) &LocalBuffer[1];
   // length
   *p++ = (uint8_t) 6;
   *p++ = (uint8_t) 0;
@@ -654,10 +654,10 @@ TEST(SliceTest, StringLong1) {
   *p++ = (uint8_t) 'a';
   *p++ = (uint8_t) 'r';
 
-  ASSERT_EQ(JasonType::String, slice.type());
+  ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
   ASSERT_EQ(15ULL, slice.byteSize());
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
@@ -668,12 +668,12 @@ TEST(SliceTest, StringLong1) {
 TEST(SliceTest, IterateArrayValues) {
   std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonSlice s(parser.jason());
+  Slice s(parser.start());
 
   size_t state = 0;
-  s.iterateArray([&state] (JasonSlice const& value) -> bool {
+  s.iterateArray([&state] (Slice const& value) -> bool {
     switch (state++) {
       case 0:
         EXPECT_TRUE(value.isNumber());
@@ -715,12 +715,12 @@ TEST(SliceTest, IterateArrayValues) {
 TEST(SliceTest, IterateObjectKeys) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonSlice s(parser.jason());
+  Slice s(parser.start());
 
   size_t state = 0;
-  s.iterateObject([&state] (JasonSlice const& key, JasonSlice const& value) -> bool {
+  s.iterateObject([&state] (Slice const& key, Slice const& value) -> bool {
     switch (state++) {
       case 0:
         EXPECT_EQ("1foo", key.copyString());
@@ -755,12 +755,12 @@ TEST(SliceTest, IterateObjectKeys) {
 TEST(SliceTest, IterateObjectValues) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonSlice s(parser.jason());
+  Slice s(parser.start());
 
   std::vector<std::string> seenKeys;
-  s.iterateObject([&] (JasonSlice const& key, JasonSlice const&) -> bool {
+  s.iterateObject([&] (Slice const& key, Slice const&) -> bool {
     seenKeys.emplace_back(key.copyString());
     return true;
   });
@@ -776,9 +776,9 @@ TEST(SliceTest, IterateObjectValues) {
 TEST(SliceTest, ObjectKeys) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonSlice s(parser.jason());
+  Slice s(parser.start());
 
   std::vector<std::string> keys = s.keys();
   ASSERT_EQ(5U, keys.size());
@@ -792,9 +792,9 @@ TEST(SliceTest, ObjectKeys) {
 TEST(SliceTest, ObjectKeysRef) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
-  JasonParser parser;
+  Parser parser;
   parser.parse(value);
-  JasonSlice s(parser.jason());
+  Slice s(parser.start());
 
   std::vector<std::string> keys;
   s.keys(keys);
@@ -808,33 +808,33 @@ TEST(SliceTest, ObjectKeysRef) {
 
 TEST(SliceTest, ArrayCases1) {
   uint8_t buf[] = { 0x02, 0x05, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases2) {
   uint8_t buf[] = { 0x02, 0x06, 0x00, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases3) {
   uint8_t buf[] = { 0x02, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -842,33 +842,33 @@ TEST(SliceTest, ArrayCases3) {
 TEST(SliceTest, ArrayCases4) {
   uint8_t buf[] = { 0x02, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
                     0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases5) {
   uint8_t buf[] = { 0x03, 0x06, 0x00, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases6) {
   uint8_t buf[] = { 0x03, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -876,22 +876,22 @@ TEST(SliceTest, ArrayCases6) {
 TEST(SliceTest, ArrayCases7) {
   uint8_t buf[] = { 0x03, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases8) {
   uint8_t buf[] = { 0x04, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -899,11 +899,11 @@ TEST(SliceTest, ArrayCases8) {
 TEST(SliceTest, ArrayCases9) {
   uint8_t buf[] = { 0x04, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -911,33 +911,33 @@ TEST(SliceTest, ArrayCases9) {
 TEST(SliceTest, ArrayCases10) {
   uint8_t buf[] = { 0x05, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x31, 0x32, 0x33};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases11) {
   uint8_t buf[] = { 0x06, 0x09, 0x03, 0x31, 0x32, 0x33, 0x03, 0x04, 0x05};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
 
 TEST(SliceTest, ArrayCases12) {
   uint8_t buf[] = { 0x06, 0x0b, 0x03, 0x00, 0x00, 0x31, 0x32, 0x33, 0x05, 0x06, 0x07};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -945,11 +945,11 @@ TEST(SliceTest, ArrayCases12) {
 TEST(SliceTest, ArrayCases13) {
   uint8_t buf[] = { 0x06, 0x0f, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
                     0x31, 0x32, 0x33, 0x09, 0x0a, 0x0b};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -957,11 +957,11 @@ TEST(SliceTest, ArrayCases13) {
 TEST(SliceTest, ArrayCases14) {
   uint8_t buf[] = { 0x07, 0x0e, 0x00, 0x03, 0x00, 0x31, 0x32, 0x33, 
                     0x05, 0x00, 0x06, 0x00, 0x07, 0x00};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -969,11 +969,11 @@ TEST(SliceTest, ArrayCases14) {
 TEST(SliceTest, ArrayCases15) {
   uint8_t buf[] = { 0x07, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 
                     0x31, 0x32, 0x33, 0x09, 0x00, 0x0a, 0x00, 0x0b, 0x00};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -982,11 +982,11 @@ TEST(SliceTest, ArrayCases16) {
   uint8_t buf[] = { 0x08, 0x18, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 
                     0x31, 0x32, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0a, 0x00, 
                     0x00, 0x00, 0x0b, 0x00, 0x00, 0x00};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -998,11 +998,11 @@ TEST(SliceTest, ArrayCases17) {
                     0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00};
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s[0];
+  Slice ss = s[0];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1011,11 +1011,11 @@ TEST(SliceTest, ObjectCases1) {
   uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
                     0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1025,11 +1025,11 @@ TEST(SliceTest, ObjectCases2) {
                     0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
                     0x0b };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1039,11 +1039,11 @@ TEST(SliceTest, ObjectCases3) {
                     0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
                     0x63, 0x33, 0x09, 0x0c, 0x0f };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1052,11 +1052,11 @@ TEST(SliceTest, ObjectCases4) {
   uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
                     0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1066,11 +1066,11 @@ TEST(SliceTest, ObjectCases5) {
                     0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
                     0x0b };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1080,11 +1080,11 @@ TEST(SliceTest, ObjectCases6) {
                     0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
                     0x63, 0x33, 0x09, 0x0c, 0x0f };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1094,11 +1094,11 @@ TEST(SliceTest, ObjectCases7) {
                     0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
                     0x08, 0x00, 0x0b, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1108,11 +1108,11 @@ TEST(SliceTest, ObjectCases8) {
                     0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
                     0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1122,11 +1122,11 @@ TEST(SliceTest, ObjectCases9) {
                     0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
                     0x08, 0x00, 0x0b, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1136,11 +1136,11 @@ TEST(SliceTest, ObjectCases10) {
                     0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
                     0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1151,11 +1151,11 @@ TEST(SliceTest, ObjectCases11) {
                     0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
                     0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1166,11 +1166,11 @@ TEST(SliceTest, ObjectCases12) {
                     0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
                     0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1184,11 +1184,11 @@ TEST(SliceTest, ObjectCases13) {
                     0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }
@@ -1202,11 +1202,11 @@ TEST(SliceTest, ObjectCases14) {
                     0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
-  JasonSlice s(buf);
+  Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
-  JasonSlice ss = s["a"];
+  Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
 }

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -30,48 +30,48 @@
 #include "tests-common.h"
 
 TEST(TypesTest, TestNames) {
-  ASSERT_EQ(0, strcmp("none", JasonTypeName(JasonType::None)));
-  ASSERT_EQ(0, strcmp("null", JasonTypeName(JasonType::Null)));
-  ASSERT_EQ(0, strcmp("bool", JasonTypeName(JasonType::Bool)));
-  ASSERT_EQ(0, strcmp("double", JasonTypeName(JasonType::Double)));
-  ASSERT_EQ(0, strcmp("string", JasonTypeName(JasonType::String)));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonType::Array)));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonType::Object)));
-  ASSERT_EQ(0, strcmp("external", JasonTypeName(JasonType::External)));
-  ASSERT_EQ(0, strcmp("utc-date", JasonTypeName(JasonType::UTCDate)));
-  ASSERT_EQ(0, strcmp("int", JasonTypeName(JasonType::Int)));
-  ASSERT_EQ(0, strcmp("uint", JasonTypeName(JasonType::UInt)));
-  ASSERT_EQ(0, strcmp("smallint", JasonTypeName(JasonType::SmallInt)));
-  ASSERT_EQ(0, strcmp("binary", JasonTypeName(JasonType::Binary)));
-  ASSERT_EQ(0, strcmp("bcd", JasonTypeName(JasonType::BCD)));
-  ASSERT_EQ(0, strcmp("min-key", JasonTypeName(JasonType::MinKey)));
-  ASSERT_EQ(0, strcmp("max-key", JasonTypeName(JasonType::MaxKey)));
-  ASSERT_EQ(0, strcmp("custom", JasonTypeName(JasonType::Custom)));
+  ASSERT_EQ(0, strcmp("none", ValueTypeName(ValueType::None)));
+  ASSERT_EQ(0, strcmp("null", ValueTypeName(ValueType::Null)));
+  ASSERT_EQ(0, strcmp("bool", ValueTypeName(ValueType::Bool)));
+  ASSERT_EQ(0, strcmp("double", ValueTypeName(ValueType::Double)));
+  ASSERT_EQ(0, strcmp("string", ValueTypeName(ValueType::String)));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(ValueType::Array)));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(ValueType::Object)));
+  ASSERT_EQ(0, strcmp("external", ValueTypeName(ValueType::External)));
+  ASSERT_EQ(0, strcmp("utc-date", ValueTypeName(ValueType::UTCDate)));
+  ASSERT_EQ(0, strcmp("int", ValueTypeName(ValueType::Int)));
+  ASSERT_EQ(0, strcmp("uint", ValueTypeName(ValueType::UInt)));
+  ASSERT_EQ(0, strcmp("smallint", ValueTypeName(ValueType::SmallInt)));
+  ASSERT_EQ(0, strcmp("binary", ValueTypeName(ValueType::Binary)));
+  ASSERT_EQ(0, strcmp("bcd", ValueTypeName(ValueType::BCD)));
+  ASSERT_EQ(0, strcmp("min-key", ValueTypeName(ValueType::MinKey)));
+  ASSERT_EQ(0, strcmp("max-key", ValueTypeName(ValueType::MaxKey)));
+  ASSERT_EQ(0, strcmp("custom", ValueTypeName(ValueType::Custom)));
 }
 
 TEST(TypesTest, TestNamesArrays) {
   uint8_t const arrays[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x9 };
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[0]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[1]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[2]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[3]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[4]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[5]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[6]).type())));
-  ASSERT_EQ(0, strcmp("array", JasonTypeName(JasonSlice(&arrays[7]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[0]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[1]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[2]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[3]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[4]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[5]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[6]).type())));
+  ASSERT_EQ(0, strcmp("array", ValueTypeName(Slice(&arrays[7]).type())));
 }
 
 TEST(TypesTest, TestNamesObjects) {
   uint8_t const objects[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12 };
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[0]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[1]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[2]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[3]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[4]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[5]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[6]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[7]).type())));
-  ASSERT_EQ(0, strcmp("object", JasonTypeName(JasonSlice(&objects[8]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[0]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[1]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[2]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[3]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[4]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[5]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[6]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[7]).type())));
+  ASSERT_EQ(0, strcmp("object", ValueTypeName(Slice(&objects[8]).type())));
 }
 
 int main (int argc, char* argv[]) {

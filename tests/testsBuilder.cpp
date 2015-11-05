@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -31,10 +31,10 @@
 #include "tests-common.h"
 
 TEST(BuilderTest, Null) {
-  JasonBuilder b;
-  b.add(Jason());
+  Builder b;
+  b.add(Value());
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t const correctResult[] = { 0x18 };
 
@@ -43,10 +43,10 @@ TEST(BuilderTest, Null) {
 }
 
 TEST(BuilderTest, False) {
-  JasonBuilder b;
-  b.add(Jason(false));
+  Builder b;
+  b.add(Value(false));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t const correctResult[] = { 0x19 };
 
@@ -55,10 +55,10 @@ TEST(BuilderTest, False) {
 }
 
 TEST(BuilderTest, True) {
-  JasonBuilder b;
-  b.add(Jason(true));
+  Builder b;
+  b.add(Value(true));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t const correctResult[] = { 0x1a };
 
@@ -68,10 +68,10 @@ TEST(BuilderTest, True) {
 
 TEST(BuilderTest, Double) {
   static double value = 123.456;
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[9] = { 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   ASSERT_EQ(8ULL, sizeof(double));
@@ -82,10 +82,10 @@ TEST(BuilderTest, Double) {
 }
 
 TEST(BuilderTest, String) {
-  JasonBuilder b;
-  b.add(Jason("abcdefghijklmnopqrstuvwxyz"));
+  Builder b;
+  b.add(Value("abcdefghijklmnopqrstuvwxyz"));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] 
     = { 0x5a, 
@@ -98,11 +98,11 @@ TEST(BuilderTest, String) {
 }
 
 TEST(BuilderTest, ArrayEmpty) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Array));
+  Builder b;
+  b.add(Value(ValueType::Array));
   b.close();
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = { 0x01 };
 
@@ -111,13 +111,13 @@ TEST(BuilderTest, ArrayEmpty) {
 }
 
 TEST(BuilderTest, ArraySingleEntry) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Array));
-  b.add(Jason(uint64_t(1)));
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(uint64_t(1)));
   b.close();
   uint8_t* result = b.start();
   ASSERT_EQ(0x02U, *result);
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = { 0x02, 0x03, 0x31 };
 
@@ -127,13 +127,13 @@ TEST(BuilderTest, ArraySingleEntry) {
 
 TEST(BuilderTest, ArraySingleEntryLong) {
   std::string const value("ngdddddljjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjsdddffffffffffffmmmmmmmmmmmmmmmsfdlllllllllllllllllllllllllllllllllllllllllllllllllrjjjjjjsddddddddddddddddddhhhhhhkkkkkkkksssssssssssssssssssssssssssssssssdddddddddddddddddkkkkkkkkkkkkksddddddddddddssssssssssfvvvvvvvvvvvvvvvvvvvvvvvvvvvfvgfff");
-  JasonBuilder b;
-  b.add(Jason(JasonType::Array));
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(value));
   b.close();
   uint8_t* result = b.start();
   ASSERT_EQ(0x03U, *result);
-  JasonLength len = b.size(); 
+  ValueLength len = b.size(); 
 
   static uint8_t correctResult[] = {
     0x03, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x1a, 0x01, 0x00, 0x00, 0x00, 0x00, 
@@ -162,14 +162,14 @@ TEST(BuilderTest, ArraySingleEntryLong) {
 }
 
 TEST(BuilderTest, ArraySameSizeEntries) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Array));
-  b.add(Jason(uint64_t(1)));
-  b.add(Jason(uint64_t(2)));
-  b.add(Jason(uint64_t(3)));
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(uint64_t(1)));
+  b.add(Value(uint64_t(2)));
+  b.add(Value(uint64_t(3)));
   b.close();
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = { 0x02, 0x05, 0x31, 0x32, 0x33 };
 
@@ -179,16 +179,16 @@ TEST(BuilderTest, ArraySameSizeEntries) {
 
 TEST(BuilderTest, Array4) {
   double value = 2.3;
-  JasonBuilder b;
-  b.add(Jason(JasonType::Array));
-  b.add(Jason(uint64_t(1200)));
-  b.add(Jason(value));
-  b.add(Jason("abc"));
-  b.add(Jason(true));
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(uint64_t(1200)));
+  b.add(Value(value));
+  b.add(Value("abc"));
+  b.add(Value(true));
   b.close();
 
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] 
     = { 0x06, 0x18, 0x04,
@@ -204,11 +204,11 @@ TEST(BuilderTest, Array4) {
 }
 
 TEST(BuilderTest, ObjectEmpty) {
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
+  Builder b;
+  b.add(Value(ValueType::Object));
   b.close();
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = { 0x0a };
 
@@ -218,17 +218,17 @@ TEST(BuilderTest, ObjectEmpty) {
 
 TEST(BuilderTest, ObjectSorted) {
   double value = 2.3;
-  JasonBuilder b;
+  Builder b;
   b.options.sortAttributeNames = true;
-  b.add(Jason(JasonType::Object));
-  b.add("d", Jason(uint64_t(1200)));
-  b.add("c", Jason(value));
-  b.add("b", Jason("abc"));
-  b.add("a", Jason(true));
+  b.add(Value(ValueType::Object));
+  b.add("d", Value(uint64_t(1200)));
+  b.add("c", Value(value));
+  b.add("b", Value("abc"));
+  b.add("a", Value(true));
   b.close();
 
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] 
     = { 0x0b, 0x20, 0x04,
@@ -247,17 +247,17 @@ TEST(BuilderTest, ObjectSorted) {
 
 TEST(BuilderTest, ObjectUnsorted) {
   double value = 2.3;
-  JasonBuilder b;
+  Builder b;
   b.options.sortAttributeNames = false;
-  b.add(Jason(JasonType::Object));
-  b.add("d", Jason(uint64_t(1200)));
-  b.add("c", Jason(value));
-  b.add("b", Jason("abc"));
-  b.add("a", Jason(true));
+  b.add(Value(ValueType::Object));
+  b.add("d", Value(uint64_t(1200)));
+  b.add("c", Value(value));
+  b.add("b", Value("abc"));
+  b.add("a", Value(true));
   b.close();
 
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] 
     = { 0x0f, 0x20, 0x04,
@@ -276,16 +276,16 @@ TEST(BuilderTest, ObjectUnsorted) {
 
 TEST(BuilderTest, Object4) {
   double value = 2.3;
-  JasonBuilder b;
-  b.add(Jason(JasonType::Object));
-  b.add("a", Jason(uint64_t(1200)));
-  b.add("b", Jason(value));
-  b.add("c", Jason("abc"));
-  b.add("d", Jason(true));
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("a", Value(uint64_t(1200)));
+  b.add("b", Value(value));
+  b.add("c", Value("abc"));
+  b.add("d", Value(true));
   b.close();
 
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] 
     = { 0x0b, 0x20, 0x04,
@@ -304,11 +304,11 @@ TEST(BuilderTest, Object4) {
 
 TEST(BuilderTest, External) {
   uint8_t externalStuff[] = { 0x01 };
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(externalStuff)), 
-              JasonType::External));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)), 
+              ValueType::External));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[1 + sizeof(char*)] = { 0x00 };
   correctResult[0] = 0x1d;
@@ -321,67 +321,67 @@ TEST(BuilderTest, External) {
 
 TEST(BuilderTest, ExternalUTCDate) {
   int64_t const v = -24549959465;
-  JasonBuilder bExternal;
-  bExternal.add(Jason(v, JasonType::UTCDate));
+  Builder bExternal;
+  bExternal.add(Value(v, ValueType::UTCDate));
 
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
   
-  JasonSlice s(b.start());
-  ASSERT_EQ(JasonType::External, s.type());
-#ifdef JASON_64BIT
+  Slice s(b.start());
+  ASSERT_EQ(ValueType::External, s.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
-  JasonSlice sExternal(s.getExternal());
+  Slice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
-  ASSERT_EQ(JasonType::UTCDate, sExternal.type());
+  ASSERT_EQ(ValueType::UTCDate, sExternal.type());
   ASSERT_EQ(v, sExternal.getUTCDate());
 }
 
 TEST(BuilderTest, ExternalDouble) {
   double const v = -134.494401;
-  JasonBuilder bExternal;
-  bExternal.add(Jason(v));
+  Builder bExternal;
+  bExternal.add(Value(v));
 
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
   
-  JasonSlice s(b.start());
-  ASSERT_EQ(JasonType::External, s.type());
-#ifdef JASON_64BIT
+  Slice s(b.start());
+  ASSERT_EQ(ValueType::External, s.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif 
 
-  JasonSlice sExternal(s.getExternal());
+  Slice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
-  ASSERT_EQ(JasonType::Double, sExternal.type());
+  ASSERT_EQ(ValueType::Double, sExternal.type());
   ASSERT_DOUBLE_EQ(v, sExternal.getDouble());
 }
 
 TEST(BuilderTest, ExternalBinary) {
   char const* p = "the quick brown FOX jumped over the lazy dog";
-  JasonBuilder bExternal;
-  bExternal.add(Jason(std::string(p), JasonType::Binary));
+  Builder bExternal;
+  bExternal.add(Value(std::string(p), ValueType::Binary));
 
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
   
-  JasonSlice s(b.start());
-  ASSERT_EQ(JasonType::External, s.type());
-#ifdef JASON_64BIT
+  Slice s(b.start());
+  ASSERT_EQ(ValueType::External, s.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif 
  
-  JasonSlice sExternal(s.getExternal());
+  Slice sExternal(s.getExternal());
   ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
-  ASSERT_EQ(JasonType::Binary, sExternal.type());
-  JasonLength len;
+  ASSERT_EQ(ValueType::Binary, sExternal.type());
+  ValueLength len;
   uint8_t const* str = sExternal.getBinary(len);
   ASSERT_EQ(strlen(p), len);
   ASSERT_EQ(0, memcmp(str, p, len));
@@ -389,24 +389,24 @@ TEST(BuilderTest, ExternalBinary) {
 
 TEST(BuilderTest, ExternalString) {
   char const* p = "the quick brown FOX jumped over the lazy dog";
-  JasonBuilder bExternal;
-  bExternal.add(Jason(std::string(p)));
+  Builder bExternal;
+  bExternal.add(Value(std::string(p)));
 
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
   
-  JasonSlice s(b.start());
-  ASSERT_EQ(JasonType::External, s.type());
-#ifdef JASON_64BIT
+  Slice s(b.start());
+  ASSERT_EQ(ValueType::External, s.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif 
  
-  JasonSlice sExternal(s.getExternal());
+  Slice sExternal(s.getExternal());
   ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
-  ASSERT_EQ(JasonType::String, sExternal.type());
-  JasonLength len;
+  ASSERT_EQ(ValueType::String, sExternal.type());
+  ValueLength len;
   char const* str = sExternal.getString(len);
   ASSERT_EQ(strlen(p), len);
   ASSERT_EQ(0, strncmp(str, p, len));
@@ -414,36 +414,36 @@ TEST(BuilderTest, ExternalString) {
 
 TEST(BuilderTest, ExternalExternal) {
   char const* p = "the quick brown FOX jumped over the lazy dog";
-  JasonBuilder bExternal;
-  bExternal.add(Jason(std::string(p)));
+  Builder bExternal;
+  bExternal.add(Value(std::string(p)));
 
-  JasonBuilder bExExternal;
-  bExExternal.add(Jason(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
-  bExExternal.add(Jason(std::string(p)));
+  Builder bExExternal;
+  bExExternal.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  bExExternal.add(Value(std::string(p)));
 
-  JasonBuilder b;
-  b.add(Jason(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
+  Builder b;
+  b.add(Value(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
   
-  JasonSlice s(b.start());
-  ASSERT_EQ(JasonType::External, s.type());
-#ifdef JASON_64BIT
+  Slice s(b.start());
+  ASSERT_EQ(ValueType::External, s.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
 
-  JasonSlice sExternal(s.getExternal());
-  ASSERT_EQ(JasonType::External, sExternal.type());
-#ifdef JASON_64BIT
+  Slice sExternal(s.getExternal());
+  ASSERT_EQ(ValueType::External, sExternal.type());
+#ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, sExternal.byteSize());
 #else
   ASSERT_EQ(5ULL, sExternal.byteSize());
 #endif 
 
-  JasonSlice sExExternal(sExternal.getExternal());
+  Slice sExExternal(sExternal.getExternal());
   ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
-  ASSERT_EQ(JasonType::String, sExExternal.type());
-  JasonLength len;
+  ASSERT_EQ(ValueType::String, sExExternal.type());
+  ValueLength len;
   char const* str = sExExternal.getString(len);
   ASSERT_EQ(strlen(p), len);
   ASSERT_EQ(0, strncmp(str, p, len));
@@ -451,10 +451,10 @@ TEST(BuilderTest, ExternalExternal) {
 
 TEST(BuilderTest, UInt) {
   uint64_t value = 0x12345678abcdef;
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[]
     = { 0x2e, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
@@ -465,10 +465,10 @@ TEST(BuilderTest, UInt) {
 
 TEST(BuilderTest, IntPos) {
   int64_t value = 0x12345678abcdef;
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[]
     = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
@@ -479,10 +479,10 @@ TEST(BuilderTest, IntPos) {
 
 TEST(BuilderTest, IntNeg) {
   int64_t value = -0x12345678abcdef;
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[]
     = { 0x26, 0x11, 0x32, 0x54, 0x87, 0xa9, 0xcb, 0xed };
@@ -502,14 +502,14 @@ TEST(BuilderTest, Int1Limits) {
                       -0x800000000001LL, 0x800000000000LL,
                       -0x80000000000000LL, 0x7fffffffffffffLL, 
                       -0x80000000000001LL, 0x80000000000000LL,
-                      arangodb::jason::toInt64(0x8000000000000000ULL),
+                      arangodb::velocypack::ToInt64(0x8000000000000000ULL),
                       0x7fffffffffffffffLL};
   for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];
-    JasonBuilder b;
-    b.add(Jason(v));
+    Builder b;
+    b.add(Value(v));
     uint8_t* result = b.start();
-    JasonSlice s(result);
+    Slice s(result);
     ASSERT_TRUE(s.isInt());
     ASSERT_EQ(v, s.getInt());
   }
@@ -518,13 +518,13 @@ TEST(BuilderTest, Int1Limits) {
 TEST(BuilderTest, StringChar) {
   char const* value = "der fuxx ging in den wald und aß pilze";
   size_t const valueLen = strlen(value);
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
 
-  JasonSlice slice = JasonSlice(b.start());
+  Slice slice = Slice(b.start());
   ASSERT_TRUE(slice.isString());
  
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(valueLen, len);
   ASSERT_EQ(0, strncmp(s, value, valueLen));
@@ -536,13 +536,13 @@ TEST(BuilderTest, StringChar) {
 
 TEST(BuilderTest, StringString) {
   std::string const value("der fuxx ging in den wald und aß pilze");
-  JasonBuilder b;
-  b.add(Jason(value));
+  Builder b;
+  b.add(Value(value));
 
-  JasonSlice slice = JasonSlice(b.start());
+  Slice slice = Slice(b.start());
   ASSERT_TRUE(slice.isString());
  
-  JasonLength len;
+  ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(value.size(), len);
   ASSERT_EQ(0, strncmp(s, value.c_str(), value.size()));
@@ -555,10 +555,10 @@ TEST(BuilderTest, StringString) {
 TEST(BuilderTest, Binary) {
   uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
 
-  JasonBuilder b;
-  b.add(JasonPair(binaryStuff, sizeof(binaryStuff)));
+  Builder b;
+  b.add(ValuePair(binaryStuff, sizeof(binaryStuff)));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = { 0xc0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
@@ -568,10 +568,10 @@ TEST(BuilderTest, Binary) {
 
 TEST(BuilderTest, UTCDate) {
   int64_t const value = 12345678;
-  JasonBuilder b;
-  b.add(Jason(value, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(value, ValueType::UTCDate));
 
-  JasonSlice s(b.start());
+  Slice s(b.start());
   ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
@@ -580,10 +580,10 @@ TEST(BuilderTest, UTCDate) {
 
 TEST(BuilderTest, UTCDateZero) {
   int64_t const value = 0;
-  JasonBuilder b;
-  b.add(Jason(value, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(value, ValueType::UTCDate));
 
-  JasonSlice s(b.start());
+  Slice s(b.start());
   ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
@@ -592,10 +592,10 @@ TEST(BuilderTest, UTCDateZero) {
 
 TEST(BuilderTest, UTCDateMin) {
   int64_t const value = INT64_MIN;
-  JasonBuilder b;
-  b.add(Jason(value, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(value, ValueType::UTCDate));
 
-  JasonSlice s(b.start());
+  Slice s(b.start());
   ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
@@ -604,10 +604,10 @@ TEST(BuilderTest, UTCDateMin) {
 
 TEST(BuilderTest, UTCDateMax) {
   int64_t const value = INT64_MAX;
-  JasonBuilder b;
-  b.add(Jason(value, JasonType::UTCDate));
+  Builder b;
+  b.add(Value(value, ValueType::UTCDate));
 
-  JasonSlice s(b.start());
+  Slice s(b.start());
   ASSERT_EQ(0x1cU, s.head());
   ASSERT_TRUE(s.isUTCDate());
   ASSERT_EQ(9UL, s.byteSize());
@@ -620,11 +620,11 @@ TEST(BuilderTest, ID) {
     = { 0xf1, 0x2b, 0x78, 0x56, 0x34, 0x12,
         0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
 
-  JasonBuilder b;
-  uint8_t* p = b.add(JasonPair(sizeof(correctResult), JasonType::Custom));
+  Builder b;
+  uint8_t* p = b.add(ValuePair(sizeof(correctResult), ValueType::Custom));
   memcpy(p, correctResult, sizeof(correctResult));
   uint8_t* result = b.start();
-  JasonLength len = b.size();
+  ValueLength len = b.size();
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -28,16 +28,17 @@
 #include <string>
 #include <fstream>
 
-#include "Jason.h"
-#include "JasonDump.h"
-#include "JasonException.h"
-#include "JasonSlice.h"
+#include "velocypack/ValueType.h"
+#include "velocypack/Dump.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
 
-using namespace arangodb::jason;
+using namespace arangodb::velocypack;
 
 static void usage (char* argv[0]) {
   std::cout << "Usage: " << argv[0] << " INFILE OUTFILE" << std::endl;
-  std::cout << "This program reads the Jason INFILE into a string and saves its" << std::endl;
+  std::cout << "This program reads the VPack INFILE into a string and saves its" << std::endl;
   std::cout << "JSON representation in file OUTFILE. Will work only for input" << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
 }
@@ -71,14 +72,14 @@ int main (int argc, char* argv[]) {
   }
   ifs.close();
 
-  JasonSlice const slice(s.c_str());
-  JasonCharBuffer dumperBuffer(4096);
-  JasonBufferDumper dumper(dumperBuffer);
+  Slice const slice(s.c_str());
+  CharBuffer dumperBuffer(4096);
+  BufferDumper dumper(dumperBuffer);
 
   try {
     dumper.dump(slice);
   }
-  catch (JasonException const& ex) {
+  catch (Exception const& ex) {
     std::cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << std::endl;
     return EXIT_FAILURE;
   }
@@ -110,7 +111,7 @@ int main (int argc, char* argv[]) {
   ofs.close();
 
   std::cout << "Successfully converted JSON infile '" << argv[1] << "'" << std::endl;
-  std::cout << "Jason Infile size: " << s.size() << std::endl;
+  std::cout << "VPack Infile size: " << s.size() << std::endl;
   std::cout << "JSON Outfile size: " << dumper.buffer()->size() << std::endl;
   
   return EXIT_SUCCESS;

@@ -1,6 +1,4 @@
-* create table with JSON/Jason size comparisons (JS)
-
-* split tests into multiple files
+* create table with JSON/VPack size comparisons (JS)
 
 * properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
@@ -9,9 +7,9 @@
 
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 
-* support modification of Jason objects (removing, updating) (JS)
-  - JasonHelper class
-  - move JasonSlice::iterate into JasonHelper class
+* support modification of VPack objects (removing, updating) (JS)
+  - VPackHelper class
+  - move Slice::iterate into VPackHelper class
 
 * documentation of C++ classes (// ...) (MN)
 

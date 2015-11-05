@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief Library to build up Jason documents.
+/// @brief Library to build up VPack documents.
 ///
 /// DISCLAIMER
 ///
@@ -24,20 +24,20 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef JASON_OPTIONS_H
-#define JASON_OPTIONS_H 1
+#include <ostream>
 
-namespace arangodb {
-  namespace jason {
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Exception.h"
 
-    struct JasonOptions {
-      bool validateUtf8Strings      = false;
-      bool checkAttributeUniqueness = false;
-      bool sortAttributeNames       = true;
-      bool escapeForwardSlashes     = false;
-    };
-          
-  }  // namespace arangodb::jason
-}  // namespace arangodb
+using namespace arangodb::velocypack;
 
-#endif
+std::ostream& operator<< (std::ostream& stream, Exception const* ex) {
+  stream << "[Exception " << ex->what() << "]";
+  return stream;
+}
+
+std::ostream& operator<< (std::ostream& stream, Exception const& ex) { 
+  stream << "[Exception " << ex.what() << "]";
+  return stream;
+}
+
