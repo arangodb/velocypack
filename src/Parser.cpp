@@ -26,6 +26,7 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Parser.h"
+#include "asm-functions.h"
 
 using namespace arangodb::velocypack;
 
@@ -65,6 +66,37 @@ ValueLength Parser::parseInternal (bool multi) {
   return nr;
 }
 
+// skips over all following whitespace tokens but does not consume the
+// byte following the whitespace
+int Parser::skipWhiteSpace (char const* err) {
+  if (_pos >= _size) {
+    throw Exception(Exception::ParseError, err);
+  }
+  uint8_t c = _start[_pos];
+  if (! isWhiteSpace(c)) {
+    return c;
+  }
+  if (c == ' ') {
+    if (_pos+1 >= _size) {
+      _pos++;
+      throw Exception(Exception::ParseError, err);
+    }
+    c = _start[_pos+1];
+    if (! isWhiteSpace(c)) {
+      _pos++;
+      return c;
+    }
+  }
+  size_t remaining = _size - _pos;
+  size_t count = JSONSkipWhiteSpace(_start + _pos, remaining);
+  _pos += count;
+  if (count < remaining) {
+    return static_cast<int>(_start[_pos]);
+  }
+  throw Exception(Exception::ParseError, err);
+}
+
+// parses a number value
 void Parser::parseNumber () {
   ParsedNumber numberValue;
   bool negative = false;
