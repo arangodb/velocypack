@@ -197,30 +197,29 @@ if(BuildTests)
   add_subdirectory(googletest/googletest)
 
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+  foreach (testName
+           testsBuilder
+           testsDumper
+           testsFiles
+           testsLarge
+           testsLookup
+           testsParser
+           testsSlice
+           testsType)
 
-  add_executable(
-    tests
-    src/tests.cpp
-  )
+    add_executable(
+      ${testName}
+      tests/${testName}.cpp
+    )
+  
+    target_link_libraries(
+      ${testName}
+      gtest
+      jason
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
 
-  target_link_libraries(
-    tests
-    gtest
-    jason
-    ${CMAKE_THREAD_LIBS_INIT}
-  )
-
-  add_executable(
-    testsLarge
-    src/testsLarge.cpp
-  )
-
-  target_link_libraries(
-    testsLarge
-    gtest
-    jason
-    ${CMAKE_THREAD_LIBS_INIT}
-  )
+  endforeach()
 endif()
 
 # build JasonAsm

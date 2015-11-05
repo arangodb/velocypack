@@ -1,9 +1,16 @@
-tests
 bench
 jasonize
 jsonize
 core 
 JasonAsm
+testsBuilder
+testsDumper
+testsFiles
+testsLarge
+testsLookup
+testsParser
+testsSlice
+testsType
 *.o
 *.orig
 *.rej
