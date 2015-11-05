@@ -16,7 +16,7 @@ message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 set(VELOCYPACK_VERSION "0.0.1" CACHE path "VelocyPack version")
 
 set(VELOCYPACK_DISPLAY_NAME "Velocypack")
-set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/Jason")
+set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/velocypack")
 set(VELOCYPACK_CONTACT "hackers@arangodb.org")
 
 set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization format")
