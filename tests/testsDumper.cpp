@@ -88,7 +88,7 @@ TEST(BufferDumperTest, Null) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   CharBuffer buffer;
-  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+  BufferDumper dumper(buffer);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("null"), output);
@@ -100,7 +100,7 @@ TEST(StringDumperTest, Null) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -115,7 +115,7 @@ TEST(StringDumperTest, Numbers) {
       b.add(Value(i));
       Slice s(b.start());
       CharBuffer buffer;
-      BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+      BufferDumper dumper(buffer);
       dumper.dump(s);
       std::string output(buffer.data(), buffer.size());
       ASSERT_EQ(std::to_string(i), output);
@@ -138,7 +138,7 @@ TEST(BufferDumperTest, False) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   CharBuffer buffer;
-  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+  BufferDumper dumper(buffer);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("false"), output);
@@ -150,7 +150,7 @@ TEST(StringDumperTest, False) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.dump(slice);
   ASSERT_EQ(std::string("false"), buffer);
 }
@@ -161,7 +161,7 @@ TEST(BufferDumperTest, True) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   CharBuffer buffer;
-  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+  BufferDumper dumper(buffer);
   dumper.dump(slice);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(std::string("true"), output);
@@ -173,7 +173,7 @@ TEST(StringDumperTest, True) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.dump(slice);
   ASSERT_EQ(std::string("true"), buffer);
 }
@@ -184,7 +184,7 @@ TEST(StringDumperTest, CustomWithoutHandler) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -197,7 +197,7 @@ TEST(StringDumperTest, CustomWithCallback) {
 
   bool sawCustom = false;
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.setCallback([&] (std::string*, Slice const* slice, Slice const*) -> bool {
     if (slice->type() == ValueType::Custom) {
       sawCustom = true;
@@ -218,7 +218,7 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   b.close();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
 
   dumper.setCallback([] (std::string* buffer, Slice const* slice, Slice const* parent) -> bool {
     if (slice->type() == ValueType::Custom) {
@@ -239,7 +239,7 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
 
 TEST(StringDumperTest, AppendCharTest) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.appendString(std::string("this is a simple string"));
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -247,7 +247,7 @@ TEST(StringDumperTest, AppendCharTest) {
 
 TEST(StringDumperTest, AppendStringTest) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.appendString("this is a simple string");
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
@@ -255,7 +255,7 @@ TEST(StringDumperTest, AppendStringTest) {
 
 TEST(StringDumperTest, AppendCharTestSpecialChars) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
@@ -270,7 +270,7 @@ TEST(StringDumperTest, AppendCharTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringTestSpecialChars) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
@@ -285,7 +285,7 @@ TEST(StringDumperTest, AppendStringTestSpecialChars) {
 
 TEST(StringDumperTest, AppendStringSlice) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
@@ -304,7 +304,7 @@ TEST(StringDumperTest, AppendStringSlice) {
 
 TEST(StringDumperTest, AppendStringSliceRef) {
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
@@ -332,7 +332,7 @@ TEST(StringDumperTest, AppendToOstream) {
   Slice slice(builder.start());
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   dumper.dump(slice);
 
   std::ostringstream out;
@@ -350,7 +350,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -363,7 +363,7 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -377,7 +377,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -390,7 +390,7 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -404,7 +404,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -417,7 +417,7 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -429,7 +429,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -440,7 +440,7 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -453,7 +453,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyFail);
+  StringDumper dumper(buffer);
   EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -465,7 +465,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullify);
+  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }

@@ -45,7 +45,7 @@ static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
 
 static void checkDump (Slice s, std::string const& knownGood) {
   CharBuffer buffer;
-  BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+  BufferDumper dumper(buffer);
   dumper.dump(s);
   std::string output(buffer.data(), buffer.size());
   ASSERT_EQ(knownGood, output);
