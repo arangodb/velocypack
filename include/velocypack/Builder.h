@@ -243,6 +243,9 @@ namespace arangodb {
 
         // Add a subvalue into an array from a ValuePair:
         uint8_t* add (ValuePair const& sub);
+        
+        // Add a slice to an array
+        void add (Slice const& sub);
 
         // Seal the innermost array or object:
         void close ();
@@ -381,6 +384,8 @@ namespace arangodb {
         void set (Value const& item);
 
         uint8_t* set (ValuePair const& pair);
+        
+        void set (Slice const& item);
         
         void reportAdd (ValueLength base) {
           size_t depth = _stack.size() - 1;

@@ -411,26 +411,9 @@ namespace arangodb {
           }
         }
         
-        std::vector<std::string> keys () const {
-          std::vector<std::string> keys;
-          ValueLength const n = length(); 
-          keys.reserve(n);
-          for (ValueLength i = 0; i < n; ++i) {
-            keys.emplace_back(keyAt(i).copyString());
-          }
-          return keys;
-        }
+        std::vector<std::string> keys () const;
 
-        void keys (std::vector<std::string>& keys) const {
-          ValueLength const n = length(); 
-          if (! keys.empty()) {
-            keys.clear();
-          }
-          keys.reserve(n);
-          for (ValueLength i = 0; i < n; ++i) {
-            keys.emplace_back(keyAt(i).copyString());
-          }
-        }
+        void keys (std::vector<std::string>& keys) const;
 
         // return the pointer to the data for an External object
         char const* getExternal () const {

@@ -523,6 +523,13 @@ void Builder::set (Value const& item) {
   }
 }
 
+void Builder::set (Slice const& item) {
+  ValueLength const l = item.byteSize();
+  reserveSpace(l);
+  memcpy(_start, item.start(), l);
+  _pos += l;
+}
+
 uint8_t* Builder::set (ValuePair const& pair) {
   // This method builds a single further VPack item at the current
   // append position. This is the case for ValueType::ID or
@@ -648,6 +655,29 @@ uint8_t* Builder::add (std::string const& attrName, ValuePair const& sub) {
 }
 
 void Builder::add (Value const& sub) {
+  if (! _stack.empty()) {
+    ValueLength& tos = _stack.back();
+    if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
+      // no array or object
+      throw Exception(Exception::BuilderNeedOpenObject);
+    }
+    if (_start[tos] == 0x0b) {   // object
+      if (! _attrWritten && ! sub.isString()) {
+        throw Exception(Exception::BuilderNeedOpenObject);
+      }
+      if (! _attrWritten) {
+        reportAdd(tos);
+      }
+      _attrWritten = ! _attrWritten;
+    }
+    else {
+      reportAdd(tos);
+    }
+  }
+  set(sub);
+}
+
+void Builder::add (Slice const& sub) {
   if (! _stack.empty()) {
     ValueLength& tos = _stack.back();
     if (_start[tos] != 0x06 && _start[tos] != 0x0b) {

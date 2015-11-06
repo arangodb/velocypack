@@ -128,6 +128,7 @@ add_library(
   STATIC
   src/velocypack-common.cpp
   src/Builder.cpp
+  src/Collection.cpp
   src/Exception.cpp
   src/Parser.cpp
   src/Slice.cpp
@@ -141,6 +142,7 @@ install(FILES include/velocypack/velocypack-aliases.h DESTINATION include)
 install(FILES include/velocypack/velocypack-common.h DESTINATION include)
 install(FILES include/velocypack/Buffer.h DESTINATION include)
 install(FILES include/velocypack/Builder.h DESTINATION include)
+install(FILES include/velocypack/Collection.h DESTINATION include)
 install(FILES include/velocypack/Dump.h DESTINATION include)
 install(FILES include/velocypack/Dumper.h DESTINATION include)
 install(FILES include/velocypack/Exception.h DESTINATION include)
