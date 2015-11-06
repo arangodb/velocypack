@@ -66,8 +66,8 @@ sizes and parsing and conversion performance.
 Building the VPack library
 --------------------------
 
-Building the VPack library is straightforward. Simply execute the 
-following commands:
+Building the VPack library is straightforward with `cmake`. Simply execute the 
+following commands to create an out-of-source build:
 
 ```bash
 mkdir -p build
@@ -77,6 +77,14 @@ mkdir -p build
 This will build a static library `libvelocypack.a` in the `build` directory 
 in *Release* mode.
 
+By default, it will also build a few example programs and tools, which can
+also be found in the `build` directory.
+
+To install the library and tools, run the following command:
+
+```bash
+(cd build && cmake .. && make install)
+```
 
 Running the tests and the benchmark suite
 -----------------------------------------
@@ -92,7 +100,7 @@ mkdir -p build
 Afterwards, you can run the tests via:
 
 ```bash
-(cd build && ./tests)
+(cd build/tests && $(find . -maxdepth 1 -type f -name "tests*" | xargs))
 ```
 
 The benchmark suite compares VPack against [RapidJson](https://github.com/miloyip/rapidjson).

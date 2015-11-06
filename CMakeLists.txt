@@ -94,9 +94,6 @@ else()
 endif()
 
 # options
-option(BuildBench "Build bench performance test suite" OFF)
-message(STATUS "Building bench performance test suite: ${BuildBench}")
-
 if(CAN_USE_SSE4_2)
   option(EnableSSE "Build using SSE4.2 optimizations" ON)
 else()
@@ -113,83 +110,15 @@ include_directories(${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 
 find_package(Threads)
 
-# build libvelocypack
-add_library(
-  velocypack
-  STATIC
-  src/velocypack-common.cpp
-  src/Builder.cpp
-  src/Collection.cpp
-  src/Exception.cpp
-  src/Parser.cpp
-  src/Slice.cpp
-  src/ValueType.cpp
-  src/asm-functions.cpp
-  src/fpconv.cpp
-)
+# build library
+add_subdirectory(src)
+add_subdirectory(include)
 
-install(TARGETS velocypack DESTINATION lib)
-install(FILES include/velocypack/velocypack-aliases.h DESTINATION include)
-install(FILES include/velocypack/velocypack-common.h DESTINATION include)
-install(FILES include/velocypack/Buffer.h DESTINATION include)
-install(FILES include/velocypack/Builder.h DESTINATION include)
-install(FILES include/velocypack/Collection.h DESTINATION include)
-install(FILES include/velocypack/Dump.h DESTINATION include)
-install(FILES include/velocypack/Dumper.h DESTINATION include)
-install(FILES include/velocypack/Exception.h DESTINATION include)
-install(FILES include/velocypack/Iterator.h DESTINATION include)
-install(FILES include/velocypack/Options.h DESTINATION include)
-install(FILES include/velocypack/Parser.h DESTINATION include)
-install(FILES include/velocypack/Slice.h DESTINATION include)
-install(FILES include/velocypack/Value.h DESTINATION include)
-install(FILES include/velocypack/ValueType.h DESTINATION include)
+# build tools
+add_subdirectory(tools)
 
-# build json-to-vpack.cpp
-add_executable(
-  "json-to-vpack"
-  src/json-to-vpack.cpp
-)
-
-target_link_libraries(
-  "json-to-vpack"
-  velocypack
-)
-
-# build vpack-to-json.cpp
-add_executable(
-  "vpack-to-json"
-  src/vpack-to-json.cpp
-)
-
-target_link_libraries(
-  "vpack-to-json"
-  velocypack
-)
-
+# build examples
 add_subdirectory(examples)
-
-# build bench.cpp
-if(BuildBench)
-  if(NOT IS_DIRECTORY "${PROJECT_SOURCE_DIR}/rapidjson")
-    message(FATAL_ERROR "rapidjson library not found in subdirectory 'rapidjson'. Please run ./download-rapidjson.sh")
-  endif()
-
-  include_directories(${PROJECT_SOURCE_DIR}/rapidjson/include)
-
-  add_executable(
-    bench
-    src/bench.cpp
-  )
-
-  target_link_libraries(
-    bench
-    velocypack
-  )
-
-  if(EnableSSE)
-    set_target_properties(bench PROPERTIES COMPILE_DEFINITIONS RAPIDJSON_SSE42)
-  endif()
-endif()
 
 # build tests
 add_subdirectory(tests)
