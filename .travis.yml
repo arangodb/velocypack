@@ -20,5 +20,5 @@ addons:
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 
-script: "which $CXX; mkdir -p build; (cd build && cmake -DBuildTests=ON -DBuildExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX .. && make && (cd build/tests && $(find . -maxdepth 1 -type f -name 'tests*' | xargs))"
+script: "which $CXX; mkdir -p build; (cd build && cmake -DBuildTests=ON -DBuildExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX .. && make && (cd tests && $(find . -maxdepth 1 -type f -name 'tests*' | xargs)))"
 
