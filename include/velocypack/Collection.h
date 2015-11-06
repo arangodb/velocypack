@@ -104,6 +104,12 @@ namespace arangodb {
         static void keys (Slice const* slice, std::unordered_set<std::string>& result) {
           return keys(*slice, result);
         }
+        
+        static Builder values (Slice const& slice);
+        
+        static Builder values (Slice const* slice) {
+          return values(*slice);
+        }
     };
 
   }  // namespace arangodb::velocypack

@@ -630,6 +630,34 @@ TEST(BuilderTest, ID) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, AddOnNonArray) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  EXPECT_VELOCYPACK_EXCEPTION(b.add(Value(true)), Exception::BuilderNeedOpenArray);
+}
+
+TEST(BuilderTest, AddOnNonObject) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  EXPECT_VELOCYPACK_EXCEPTION(b.add("foo", Value(true)), Exception::BuilderNeedOpenObject);
+}
+
+TEST(BuilderTest, StartCalledOnOpenObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  EXPECT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+}
+
+TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(2));
+  b.close();
+  EXPECT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

@@ -21,8 +21,6 @@
 
 * test on MacOS, ARM and Windows
 
-* run tests on ARM again
-
 * implement type BCD in Builder, Slice, Parser and Dumper
 
 * SWIG support (MN)

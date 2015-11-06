@@ -51,8 +51,9 @@ namespace arangodb {
           InvalidAttributePath,
           InvalidValueType,
           DuplicateAttributeName,
-          BuilderObjectNotSealed,
+          BuilderNotSealed,
           BuilderNeedOpenObject,
+          BuilderNeedOpenArray,
           BuilderUnexpectedType,
           BuilderUnexpectedValue,
 
@@ -106,10 +107,12 @@ namespace arangodb {
               return "Invalid attribute path";
             case InvalidValueType:
               return "Invalid value type for operation";
-            case BuilderObjectNotSealed:
-              return "Object not sealed";
+            case BuilderNotSealed:
+              return "Builder object not yet sealed";
             case BuilderNeedOpenObject:
-              return "Need open Array or Object for close() call";
+              return "Need open Object";
+            case BuilderNeedOpenArray:
+              return "Need open Array";
             case BuilderUnexpectedType:
               return "Unexpected type";
             case BuilderUnexpectedValue:

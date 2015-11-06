@@ -177,3 +177,18 @@ void Collection::keys (Slice const& slice, std::unordered_set<std::string>& resu
   }
 }
 
+Builder Collection::values (Slice const& slice) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+
+  ObjectIterator it(slice);
+
+  while (it.valid()) {
+    b.add(it.value());
+    it.next();
+  }
+
+  b.close();
+  return b;
+}
+

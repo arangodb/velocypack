@@ -210,6 +210,9 @@ namespace arangodb {
 
         // Return a pointer to the start of the result:
         uint8_t* start () const {
+          if (! _stack.empty()) {
+            throw Exception(Exception::BuilderNotSealed);
+          }
           return _start;
         }
 
@@ -221,7 +224,7 @@ namespace arangodb {
         // Compute the actual size here, but only when sealed
         ValueLength size () const {
           if (! _stack.empty()) {
-            throw Exception(Exception::BuilderObjectNotSealed);
+            throw Exception(Exception::BuilderNotSealed);
           }
           return _pos;
         }
@@ -369,21 +372,10 @@ namespace arangodb {
         uint8_t* addInternal (T const& sub) {
           if (! _stack.empty()) {
             ValueLength& tos = _stack.back();
-            if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
-              throw Exception(Exception::BuilderNeedOpenObject);
+            if (_start[tos] != 0x06) {
+              throw Exception(Exception::BuilderNeedOpenArray);
             }
-            if (_start[tos] == 0x0b) {  // Object
-              if (! _attrWritten && ! sub.isString()) {
-                throw Exception(Exception::BuilderNeedOpenObject);
-              }
-              if (! _attrWritten) {
-                reportAdd(tos);
-              }
-              _attrWritten = ! _attrWritten;
-            }
-            else {  // Array
-              reportAdd(tos);
-            }
+            reportAdd(tos);
           }
           return set(sub);
         }
@@ -395,8 +387,7 @@ namespace arangodb {
           }
           if (! _stack.empty()) {
             ValueLength& tos = _stack.back();
-            if (_start[tos] != 0x06 &&
-                _start[tos] != 0x0b) {
+            if (_start[tos] != 0x0b) {
               throw Exception(Exception::BuilderNeedOpenObject);
             }
             reportAdd(tos);
