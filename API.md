@@ -59,7 +59,22 @@ with the following 4 keys:
 - `l`: is an Array with the 3 numeric sub-values `1`, `2` and `3`
 - `name`: is the String value `"Gustav"`
 
-Afterwards, a hex dump of the VPack Object value is printed.
+This resembles the following JSON object:
+```json
+{
+  "b" : 12,
+  "a" : true,
+  "l" : [
+    1,
+    2,
+    3
+  ],
+  "name" : "Gustav"
+}
+```
+
+After the VPack value is created, a hex dump its underlying memory 
+will be printed.
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -380,7 +395,8 @@ dumper.dump(s);
 The `Dumper` also has an `options` attribute that can be used to control
 whether forward slashes inside strings should be escaped with a backslash
 when producing JSON. The default is to not escape them. This can be changed
-as follows:
+by setting the `escapeForwardSlashes` attribute of the Dumper's `option`
+attribute as follows:
 
 ```
 Parser parser;
