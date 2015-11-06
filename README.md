@@ -1,6 +1,8 @@
 VelocyPack (VPack) - a fast and compact serialization format
 ============================================================
 
+Master: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?branch=master)](http://travis-ci.org/arangodb/velocypack)
+
 Motivation
 ----------
 
