@@ -48,257 +48,39 @@ This data format must be backed by good C++ classes to allow
 
 The VPack format is an attempt to achieve all this.
 
+This repository contains a C++ library for building, manipulating and
+serializing VPack data. It is the reference implementation of the VPack 
+format.
+
 
 Specification
 -------------
 
-See [the file VelocyPack.md](VelocyPack.md) for a detailed description.
+See the file [VelocyPack.md](VelocyPack.md) for a detailed description of
+the VPack format.
 
 
 Performance
 -----------
 
-See [the file Performance.md](Performance.md) for a thorough comparison
+See the file [Performance.md](Performance.md) for a thorough comparison
 to other formats like JSON itself, MessagePack and BSON. We look at file
-sizes and parsing and conversion performance.
+sizes as well as parsing and conversion performance.
 
 
 Building the VPack library
 --------------------------
 
-Building the VPack library is straightforward with `cmake`. Simply execute the 
-following commands to create an out-of-source build:
+The VPack library can be built on Linux, MacOS and Windows. It will likely
+work and build on other platforms for which a recent version of `cmake` and
+a working C++11-enabled compiler is available.
 
-```bash
-mkdir -p build
-(cd build && cmake .. && make)
-```
-
-This will build a static library `libvelocypack.a` in the `build` directory 
-in *Release* mode.
-
-By default, it will also build a few example programs and tools, which can
-also be found in the `build` directory.
-
-To install the library and tools, run the following command:
-
-```bash
-(cd build && cmake .. && make install)
-```
-
-Running the tests and the benchmark suite
------------------------------------------
-
-Building VPack's own test suite requires the [googletest framework](https://github.com/google/googletest)
-to be built. To build the tests, run cmake with the option `-DBuildTests=ON`:
-
-```bash
-mkdir -p build
-(cd build && cmake -DBuildTests=ON .. && make)
-```
-
-Afterwards, you can run the tests via:
-
-```bash
-(cd build/tests && $(find . -maxdepth 1 -type f -name "tests*" | xargs))
-```
-
-The benchmark suite compares VPack against [RapidJson](https://github.com/miloyip/rapidjson).
-RapidJson is not shipped with VPack, but it can be downloaded into the
-local subdirectory `rapidjson` with the following command:
-
-```bash
-./download-rapidjson.sh
-```
-
-Afterwards, you are ready to build the benchmark suite:
-
-```bash
-(cd build && cmake -DBuildBench=ON -DBuildTests=ON .. && make)
-```
-
-and then run the benchmark suite via
-
-```bash
-./bench
-
-```
-
-Build Options
--------------
-
-The following options can be set for building the VPack library:
-
-* `-DCMAKE_BUILD_TYPE=Release`: builds the VPack library in release mode. This
-  does not build debug symbols and turns on all optimizations. Use this mode for 
-  production.
-* `-DCMAKE_BUILD_TYPE=Debug`: builds the VPack library in debug mode. This
-  adds debug symbols and turns off optimizations. Use this mode for development,
-  but not for production or performance testing.
-* `-DBuildBench`: controls whether the benchmark suite should be built. The 
-  default is `OFF`, meaning the suite will not be built. Set the option to `ON` to
-  build it. Building the benchmark suite requires the subdirectory *rapidjson* to 
-  be present (see below). 
-* `-DBuildExamples`: controls whether VPack's examples should be built. The 
-  examples are not needed when VPack is used as a library only.
-* `-DBuildTests`: controls whether VPack's own test suite should be built. The
-  default is `OFF`. Set the option to `ON` for building the tests. This requires 
-  the subdirectory *googletest* to be present (see below). 
-* `-DEnableSSE`: controls whether SSE4.2 optimizations are compiled into the
-  library. The default is either `ON` or `OFF`, depending on the detected SSE4.2
-  support of the host platform.
+See the file [Install.md](Install.md) for compilation and installation
+instructions.
 
 
 Using the VPack library
 -----------------------
 
-Here are some examples of how the VPack library is used in C++ code.
-For a detailed documentation of the C++ classes see [the API
-documentation](API.md).
-
-### Building up VPack objects from scratch
-
-If you want to build up a VPack object corresponding to this JSON
-object:
-
-```json
-{
-  "b": 12,
-  "a": true,
-  "l": [1, 2, 3],
-  "name": "Gustav"
-}
-```
-
-then you would use the `Builder` class as follows:
-
-```cpp
-#include <velocyPack/vpack.h>
-
-using namespace arangodb::velocypack;
-
-Builder b;
-
-b.add(Value(ValueType::Object));
-b.add("b", Value(12));
-b.add("a", Value(true));
-
-b.add("l", Value(ValueType::Array));
-b.add(Value(1));
-b.add(Value(2));
-b.add(Value(3));
-b.close();
-
-b.add("name", Value("Gustav"));
-b.close();
-```
-
-The resulting VPack object can now be found at the memory location that
-the `uint8_t*` 
-
-```cpp
-b.start()
-```
-
-points to, and its byte length can be determined via
-
-```cpp
-b.size()
-```
-
-One can see that adding objects and arrays essentially "opens" them such
-that further additions go into the subvalue until one calls the
-`close()` method. The `Value` class is a slim wrapper class to use the
-C++ type system for compact notation.
-
-If you fancy syntactic sugar using C++ callable objects, you could also
-write:
-
-```cpp
-#include <velocyPack/vpack.h>
-
-using namespace arangodb::velocypack;
-
-Builder b;
-
-b(Value(ValueType::Object))
- ("b", Value(12))
- ("a", Value(true))
- ("l", Value(ValueType::Array))
-   (Value(1)) (Value(2)) (Value(3)) ()
- ("name", Value("Gustav")) ();
-```
-
-### Parsing JSON into VPack in memory
-
-To create a VPack object from a JSON string, use the JSON parser shipped
-with VPack as follows:
-
-```cpp
-#include <velocypack/vpack.h>
-
-using namespace arangodb::velocypack;
-
-Parser p;
-std::string const json = "{\"a\":12}";
-try {
-  size_t nr = p.parse(json);
-}
-catch (std::bad_alloc const& e) {
-  std::cout << "Out of memory!" << std::endl;
-}
-catch (Exception const& e) {
-  std::cout << "Parse error: " << e.what() << std::endl;
-  std::cout << "Position of error: " << p.errorPos() << std::endl;
-}
-Builder b = p.steal();
-```
-
-The final `steal()` method is very efficient and does not copy the result.
-You can access the resulting VPack object as above via `b`.
-
-
-### Accessing subvalues of a VPack object
-
-The class `Slice` is used for this. It only needs (and stores) the 
-starting position of the VPack value in memory and can derive the type
-and length from that. Therefore it is very cheap to create and destroy
-`Slice`s.
-
-```cpp
-#include <velocypack/vpack.h>
-
-using namespace arangodb::velocypack;
-
-Slice s(p);
-ValueType t = s.type();    // should be ValueType::Object
-
-if (s.isObject()) {
-  Slice ss = s.get("l");   // Now ss points to the subvalue under "l"
-  ValueLength l = ss.length();
-  Slice ss3 = ss.at(1);
-  int i = ss3.getInt();
-}
-
-Slice sss = s.get("name");
-if (sss.isString()) {
-  ValueLength len;
-  std::string name = sss.getString(len);
-}
-```
-
-### Dumping a VPack value to JSON
-
-The template class `Dumper` can be used for this. It in turn uses the 
-`Slice` class. Use as follows, if `Slice` object `s` points to
-a valid VPack value:
-
-```cpp
-#include <velocypack/vpack.h>
-
-CharBuffer buffer;
-BufferDumper dumper(buffer);
-dumper.dump(s);
-std::string output(buffer.data(), buffer.size());
-```
-
+Please consult the file [API.md](API.md) for usage examples and the file
+[Embedding.md](Embedding.md) for embedding the library into client applications.

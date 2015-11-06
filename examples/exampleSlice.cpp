@@ -19,8 +19,10 @@ int main (int, char*[]) {
   Slice s(b.start());
  
   // inspect the outermost value (should be an Object...) 
-  ValueType t = s.type();
-  std::cout << "Type: " << t << std::endl;
+  std::cout << "Slice: " << s << std::endl;
+  std::cout << "Type: " << s.type() << std::endl;
+  std::cout << "Bytesize: " << s.byteSize() << std::endl;
+  std::cout << "Members: " << s.length() << std::endl;
 
   if (s.isObject()) {
     Slice ss = s.get("l");   // Now ss points to the subvalue under "l"

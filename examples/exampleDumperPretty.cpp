@@ -30,5 +30,5 @@ int main (int, char*[]) {
   dumper.dump(s);
 
   // and print it
-  std::cout << "Resulting VPack:" << std::endl << output << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << output << std::endl;
 }

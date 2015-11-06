@@ -8,9 +8,9 @@ int main (int, char*[]) {
   // this is the JSON string we are going to parse
   std::string const json = "{\"a\":12}";
   
-  Parser p;
+  Parser parser;
   try {
-    size_t nr = p.parse(json);
+    size_t nr = parser.parse(json);
     std::cout << "Number of values: " << nr << std::endl;
   }
   catch (std::bad_alloc const& e) {
@@ -18,11 +18,11 @@ int main (int, char*[]) {
   }
   catch (Exception const& e) {
     std::cout << "Parse error: " << e.what() << std::endl;
-    std::cout << "Position of error: " << p.errorPos() << std::endl;
+    std::cout << "Position of error: " << parser.errorPos() << std::endl;
   }
 
   // get a pointer to the start of the data
-  Builder b = p.steal();
+  Builder b = parser.steal();
   uint8_t* pp = b.start();
   ValueLength len = b.size();
  
