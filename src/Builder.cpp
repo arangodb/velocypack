@@ -371,6 +371,7 @@ uint8_t* Builder::set (Value const& item) {
           break;
         case Value::CType::UInt64:
           vv = static_cast<int64_t>(item.getUInt64());
+          break;
         default:
           throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::SmallInt");
       }
