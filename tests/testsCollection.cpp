@@ -106,6 +106,39 @@ TEST(CollectionTest, ObjectKeys3) {
   EXPECT_TRUE(keys.find("baz") != keys.end());
 }
 
+TEST(CollectionTest, ObjectKeys) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> keys = Collection::keys(s);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
+}
+
+TEST(SliceTest, ObjectKeysRef) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> keys;
+  Collection::keys(s, keys);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
+}
+
 TEST(CollectionTest, ForEachNonArray) {
   std::string const value("null");
   Parser parser;
@@ -326,6 +359,273 @@ TEST(CollectionTest, MapArray) {
   
   EXPECT_TRUE(s.at(5).isString());
   EXPECT_EQ("", s.at(5).copyString());
+}
+
+TEST(CollectionTest, FindNonArray) {
+  std::string const value("null");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+  
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::find(s, DoNothingCallback), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, FindEmptyArray) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  Slice found = Collection::find(s, FailCallback);
+  EXPECT_TRUE(found.isNone());
+}
+
+TEST(CollectionTest, FindArrayFalse) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  Slice found = Collection::find(s, DoNothingCallback);
+  EXPECT_TRUE(found.isNone());
+}
+
+TEST(CollectionTest, FindArrayFirst) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  Slice found = Collection::find(s, [&seen] (Slice const&, ValueLength) {
+    ++seen;
+    return true;
+  });
+  EXPECT_EQ(1UL, seen);
+  EXPECT_TRUE(found.isNumber());
+  EXPECT_EQ(1UL, found.getUInt());
+}
+
+TEST(CollectionTest, FindArrayLast) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  Slice found = Collection::find(s, [&seen] (Slice const&, ValueLength index) {
+    ++seen;
+    if (index == 2) {
+      return true;
+    }
+    return false;
+  });
+  EXPECT_EQ(3UL, seen);
+  EXPECT_TRUE(found.isNumber());
+  EXPECT_EQ(3UL, found.getUInt());
+}
+
+TEST(CollectionTest, ContainsNonArray) {
+  std::string const value("null");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+  
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::contains(s, DoNothingCallback), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, ContainsEmptyArray) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_FALSE(Collection::contains(s, FailCallback));
+}
+
+TEST(CollectionTest, ContainsArrayFalse) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_FALSE(Collection::contains(s, DoNothingCallback));
+}
+
+TEST(CollectionTest, ContainsArrayFirst) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength) {
+    ++seen;
+    return true;
+  }));
+  EXPECT_EQ(1UL, seen);
+}
+
+TEST(CollectionTest, ContainsArrayLast) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength index) {
+    ++seen;
+    if (index == 2) {
+      return true;
+    }
+    return false;
+  }));
+  EXPECT_EQ(3UL, seen);
+}
+
+TEST(CollectionTest, AllNonArray) {
+  std::string const value("null");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+  
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::all(s, DoNothingCallback), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, AllEmptyArray) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_TRUE(Collection::all(s, FailCallback));
+}
+
+TEST(CollectionTest, AllArrayFalse) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_FALSE(Collection::all(s, DoNothingCallback));
+}
+
+TEST(CollectionTest, AllArrayFirstFalse) {
+  std::string const value("[1,2,3,4]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+    EXPECT_EQ(seen, index);
+
+    ++seen;
+    return false;
+  }));
+
+  EXPECT_EQ(1UL, seen);
+}
+
+TEST(CollectionTest, AllArrayLastFalse) {
+  std::string const value("[1,2,3,4]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+    EXPECT_EQ(seen, index);
+
+    ++seen;
+    if (index == 2) {
+      return false;
+    }
+    return true;
+  }));
+
+  EXPECT_EQ(3UL, seen);
+}
+
+TEST(CollectionTest, AllArrayTrue) {
+  std::string const value("[1,2,3,4]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_TRUE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+    EXPECT_EQ(seen, index);
+
+    ++seen;
+    return true;
+  }));
+
+  EXPECT_EQ(4UL, seen);
+}
+
+TEST(CollectionTest, AnyNonArray) {
+  std::string const value("null");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+  
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::any(s, DoNothingCallback), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, AnyEmptyArray) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_FALSE(Collection::any(s, FailCallback));
+}
+
+TEST(CollectionTest, AnyArrayFalse) {
+  std::string const value("[1,2,3]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  EXPECT_FALSE(Collection::all(s, DoNothingCallback));
+}
+
+TEST(CollectionTest, AnyArrayLastTrue) {
+  std::string const value("[1,2,3,4]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
+    EXPECT_EQ(seen, index);
+
+    ++seen;
+    if (index == 3) {
+      return true;
+    }
+    return false;
+  }));
+
+  EXPECT_EQ(4UL, seen);
+}
+
+TEST(CollectionTest, AnyArrayFirstTrue) {
+  std::string const value("[1,2,3,4]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+ 
+  size_t seen = 0;
+  EXPECT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
+    EXPECT_EQ(seen, index);
+
+    ++seen;
+    return true;
+  }));
+
+  EXPECT_EQ(1UL, seen);
 }
 
 int main (int argc, char* argv[]) {

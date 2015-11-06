@@ -773,39 +773,6 @@ TEST(SliceTest, IterateObjectValues) {
   ASSERT_EQ("5empty", seenKeys[4]);
 }
 
-TEST(SliceTest, ObjectKeys) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
-
-  Parser parser;
-  parser.parse(value);
-  Slice s(parser.start());
-
-  std::vector<std::string> keys = s.keys();
-  ASSERT_EQ(5U, keys.size());
-  ASSERT_EQ("1foo", keys[0]);
-  ASSERT_EQ("2baz", keys[1]);
-  ASSERT_EQ("3number", keys[2]);
-  ASSERT_EQ("4boolean", keys[3]);
-  ASSERT_EQ("5empty", keys[4]);
-}
-
-TEST(SliceTest, ObjectKeysRef) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
-
-  Parser parser;
-  parser.parse(value);
-  Slice s(parser.start());
-
-  std::vector<std::string> keys;
-  s.keys(keys);
-  ASSERT_EQ(5U, keys.size());
-  ASSERT_EQ("1foo", keys[0]);
-  ASSERT_EQ("2baz", keys[1]);
-  ASSERT_EQ("3number", keys[2]);
-  ASSERT_EQ("4boolean", keys[3]);
-  ASSERT_EQ("5empty", keys[4]);
-}
-
 TEST(SliceTest, ArrayCases1) {
   uint8_t buf[] = { 0x02, 0x05, 0x31, 0x32, 0x33};
   Slice s(buf);

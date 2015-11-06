@@ -62,6 +62,30 @@ namespace arangodb {
         static Builder map (Slice const* slice, std::function<Value(Slice const&, ValueLength)> const& cb) {
           return map(*slice, cb);
         }
+        
+        static Slice find (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb);
+        
+        static Slice find (Slice const* slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+          return find(*slice, cb);
+        }
+        
+        static bool contains (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb);
+        
+        static bool contains (Slice const* slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+          return contains(*slice, cb);
+        }
+        
+        static bool all (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb);
+        
+        static bool all (Slice const* slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+          return all(*slice, cb);
+        }
+        
+        static bool any (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb);
+        
+        static bool any (Slice const* slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+          return any(*slice, cb);
+        }
 
         static std::vector<std::string> keys (Slice const& slice);
         

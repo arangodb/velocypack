@@ -84,6 +84,70 @@ Builder Collection::map (Slice const& slice, std::function<Value(Slice const&, V
   return b;
 }
 
+Slice Collection::find (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+  ArrayIterator it(slice);
+  ValueLength index = 0;
+
+  while (it.valid()) {
+    Slice s = it.value();
+    if (cb(s, index)) {
+      return s;
+    }
+    it.next();
+    ++index;
+  }
+
+  return Slice();
+}
+        
+bool Collection::contains (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+  ArrayIterator it(slice);
+  ValueLength index = 0;
+
+  while (it.valid()) {
+    Slice s = it.value();
+    if (cb(s, index)) {
+      return true;
+    }
+    it.next();
+    ++index;
+  }
+
+  return false;
+}
+        
+bool Collection::all (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+  ArrayIterator it(slice);
+  ValueLength index = 0;
+
+  while (it.valid()) {
+    Slice s = it.value();
+    if (! cb(s, index)) {
+      return false;
+    }
+    it.next();
+    ++index;
+  }
+
+  return true;
+}
+        
+bool Collection::any (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
+  ArrayIterator it(slice);
+  ValueLength index = 0;
+
+  while (it.valid()) {
+    Slice s = it.value();
+    if (cb(s, index)) {
+      return true;
+    }
+    it.next();
+    ++index;
+  }
+
+  return false;
+}
+        
 std::vector<std::string> Collection::keys (Slice const& slice) {
   std::vector<std::string> result;
 
