@@ -61,6 +61,35 @@ TEST(CollectionTest, KeysNonObject3) {
   std::unordered_set<std::string> result;
   EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
 }
+
+TEST(CollectionTest, KeysNonObject4) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, KeysNonObject5) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> result;
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, KeysNonObject6) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::unordered_set<std::string> result;
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+}
   
 TEST(CollectionTest, ObjectKeys1) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
@@ -114,12 +143,12 @@ TEST(CollectionTest, ObjectKeys) {
   Slice s(parser.start());
 
   std::vector<std::string> keys = Collection::keys(s);
-  ASSERT_EQ(5U, keys.size());
-  ASSERT_EQ("1foo", keys[0]);
-  ASSERT_EQ("2baz", keys[1]);
-  ASSERT_EQ("3number", keys[2]);
-  ASSERT_EQ("4boolean", keys[3]);
-  ASSERT_EQ("5empty", keys[4]);
+  EXPECT_EQ(5U, keys.size());
+  EXPECT_EQ("1foo", keys[0]);
+  EXPECT_EQ("2baz", keys[1]);
+  EXPECT_EQ("3number", keys[2]);
+  EXPECT_EQ("4boolean", keys[3]);
+  EXPECT_EQ("5empty", keys[4]);
 }
 
 TEST(SliceTest, ObjectKeysRef) {
@@ -131,12 +160,62 @@ TEST(SliceTest, ObjectKeysRef) {
 
   std::vector<std::string> keys;
   Collection::keys(s, keys);
-  ASSERT_EQ(5U, keys.size());
-  ASSERT_EQ("1foo", keys[0]);
-  ASSERT_EQ("2baz", keys[1]);
-  ASSERT_EQ("3number", keys[2]);
-  ASSERT_EQ("4boolean", keys[3]);
-  ASSERT_EQ("5empty", keys[4]);
+  EXPECT_EQ(5U, keys.size());
+  EXPECT_EQ("1foo", keys[0]);
+  EXPECT_EQ("2baz", keys[1]);
+  EXPECT_EQ("3number", keys[2]);
+  EXPECT_EQ("4boolean", keys[3]);
+  EXPECT_EQ("5empty", keys[4]);
+}
+
+TEST(CollectionTest, ValuesNonObject1) {
+  std::string const value("null");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, ValuesNonObject2) {
+  std::string const value("\"foobar\"");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, ValuesNonObject3) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, ObjectValues) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  Builder b = Collection::values(s);
+  s = b.slice();
+  EXPECT_TRUE(s.isArray());
+  EXPECT_EQ(5U, s.length());
+
+  EXPECT_TRUE(s.at(0).isString());
+  EXPECT_EQ("bar", s.at(0).copyString());
+  EXPECT_TRUE(s.at(1).isString());
+  EXPECT_EQ("quux", s.at(1).copyString());
+  EXPECT_TRUE(s.at(2).isNumber());
+  EXPECT_EQ(1UL, s.at(2).getUInt());
+  EXPECT_TRUE(s.at(3).isBoolean());
+  EXPECT_TRUE(s.at(3).getBoolean());
+  EXPECT_TRUE(s.at(4).isNull());
 }
 
 TEST(CollectionTest, ForEachNonArray) {
