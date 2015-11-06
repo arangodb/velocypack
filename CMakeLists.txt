@@ -94,9 +94,6 @@ else()
 endif()
 
 # options
-option(BuildExamples "Build examples" ON)
-message(STATUS "Building examples: ${BuildExamples}")
-
 option(BuildBench "Build bench performance test suite" OFF)
 message(STATUS "Building bench performance test suite: ${BuildBench}")
 
@@ -175,27 +172,7 @@ target_link_libraries(
   velocypack
 )
 
-# build examples
-if(BuildExamples)
-  foreach (exampleName
-           useBuilder
-           useBuilder2
-           useDumper
-           useParser
-           useSlice)
-
-    add_executable(
-      ${exampleName}
-      examples/${exampleName}.cpp
-    )
-  
-    target_link_libraries(
-      ${exampleName}
-      velocypack
-    )
-
-  endforeach()
-endif()
+add_subdirectory(examples)
 
 # build bench.cpp
 if(BuildBench)

@@ -70,12 +70,12 @@ Building the VPack library is straightforward. Simply execute the
 following commands:
 
 ```bash
-cmake . 
-make
+mkdir -p build
+(cd build && cmake .. && make)
 ```
 
-This will build a static library `libvelocypack.a` in the current directory in
-release mode.
+This will build a static library `libvelocypack.a` in the `build` directory 
+in *Release* mode.
 
 
 Running the tests and the benchmark suite
@@ -85,14 +85,14 @@ Building VPack's own test suite requires the [googletest framework](https://gith
 to be built. To build the tests, run cmake with the option `-DBuildTests=ON`:
 
 ```bash
-cmake -DBuildTests=ON . 
-make
+mkdir -p build
+(cd build && cmake -DBuildTests=ON .. && make)
 ```
 
 Afterwards, you can run the tests via:
 
 ```bash
-./tests
+(cd build && ./tests)
 ```
 
 The benchmark suite compares VPack against [RapidJson](https://github.com/miloyip/rapidjson).
@@ -106,14 +106,13 @@ local subdirectory `rapidjson` with the following command:
 Afterwards, you are ready to build the benchmark suite:
 
 ```bash
-cmake . -DBuildBench=ON -DBuildTests=ON
-make
+(cd build && cmake -DBuildBench=ON -DBuildTests=ON .. && make)
 ```
 
 and then run the benchmark suite via
 
 ```bash
-./runBench.sh
+./bench
 
 ```
 
@@ -132,6 +131,8 @@ The following options can be set for building the VPack library:
   default is `OFF`, meaning the suite will not be built. Set the option to `ON` to
   build it. Building the benchmark suite requires the subdirectory *rapidjson* to 
   be present (see below). 
+* `-DBuildExamples`: controls whether VPack's examples should be built. The 
+  examples are not needed when VPack is used as a library only.
 * `-DBuildTests`: controls whether VPack's own test suite should be built. The
   default is `OFF`. Set the option to `ON` for building the tests. This requires 
   the subdirectory *googletest* to be present (see below). 

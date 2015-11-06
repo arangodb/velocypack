@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include "velocypack/vpack.h"
 
 using namespace arangodb::velocypack;
@@ -28,7 +29,7 @@ int main (int, char*[]) {
 
   std::cout << std::hex;
   for (size_t i = 0; i < len; i++) {
-    std::cout << (int) p[i] << " ";
+    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int) p[i] << " ";
   }
   std::cout << std::endl;
 }
