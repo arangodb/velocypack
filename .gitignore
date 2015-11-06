@@ -6,6 +6,7 @@ AsmTest
 testsBuilder
 testsDumper
 testsFiles
+testsIterator
 testsLarge
 testsLookup
 testsParser

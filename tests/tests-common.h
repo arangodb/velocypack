@@ -4,6 +4,7 @@
 #include "velocypack/Builder.h"
 #include "velocypack/Dump.h"
 #include "velocypack/Exception.h"
+#include "velocypack/Iterator.h"
 #include "velocypack/Options.h"
 #include "velocypack/Parser.h"
 #include "velocypack/Slice.h"
@@ -17,10 +18,10 @@ using namespace arangodb::velocypack;
 // helper for catching VPack-specific exceptions
 #define EXPECT_VELOCYPACK_EXCEPTION(operation, code) \
   try {                                         \
-    operation;                                  \
+    (operation);                                \
     EXPECT_FALSE(true);                         \
   }                                             \
-  catch (Exception const& ex) {            \
+  catch (Exception const& ex) {                 \
     EXPECT_EQ(code, ex.errorCode());            \
   }                                             \
   catch (...) {                                 \

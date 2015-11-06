@@ -144,6 +144,7 @@ install(FILES include/velocypack/Builder.h DESTINATION include)
 install(FILES include/velocypack/Dump.h DESTINATION include)
 install(FILES include/velocypack/Dumper.h DESTINATION include)
 install(FILES include/velocypack/Exception.h DESTINATION include)
+install(FILES include/velocypack/Iterator.h DESTINATION include)
 install(FILES include/velocypack/Options.h DESTINATION include)
 install(FILES include/velocypack/Parser.h DESTINATION include)
 install(FILES include/velocypack/Slice.h DESTINATION include)
@@ -227,6 +228,7 @@ if(BuildTests)
            testsBuilder
            testsDumper
            testsFiles
+           testsIterator
            testsLarge
            testsLookup
            testsParser
