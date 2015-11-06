@@ -228,6 +228,7 @@ if(BuildTests)
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
   foreach (testName
            testsBuilder
+           testsCollection
            testsDumper
            testsFiles
            testsIterator

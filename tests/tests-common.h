@@ -2,6 +2,7 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Buffer.h"
 #include "velocypack/Builder.h"
+#include "velocypack/Collection.h"
 #include "velocypack/Dump.h"
 #include "velocypack/Exception.h"
 #include "velocypack/Iterator.h"

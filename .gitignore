@@ -4,6 +4,7 @@ json-to-vpack
 core 
 AsmTest
 testsBuilder
+testsCollection
 testsDumper
 testsFiles
 testsIterator

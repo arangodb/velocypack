@@ -46,7 +46,7 @@ void Collection::forEach (Slice const& slice, std::function<bool(Slice const&, V
     ++index;
   }
 }
-        
+    
 Builder Collection::filter (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
   // construct a new Array
   Builder b;
@@ -56,8 +56,9 @@ Builder Collection::filter (Slice const& slice, std::function<bool(Slice const&,
   ValueLength index = 0;
 
   while (it.valid()) {
-    if (cb(it.value(), index)) {
-      b.add(it.value());
+    Slice s = it.value();
+    if (cb(s, index)) {
+      b.add(s);
     }
     it.next();
     ++index;
@@ -75,8 +76,7 @@ Builder Collection::map (Slice const& slice, std::function<Value(Slice const&, V
   ValueLength index = 0;
 
   while (it.valid()) {
-    Value v = cb(it.value(), index);
-    b.add(v);
+    b.add(cb(it.value(), index));
     it.next();
     ++index;
   }
