@@ -16,7 +16,7 @@ avoid alignment assumptions of the CPU.
 
 We describe a single VPack value, which is recursive in nature, but
 resides (with two exceptions, see below) in a single contiguous block of
-memory. Assume that the value starts at address A, the first byte V 
+memory. Assume that the value starts at address A, the first byte V
 indicates the type (and often the length) of the VPack value at hand:
 
 We first give an overview with a brief but accurate description for
@@ -25,40 +25,40 @@ reference, for arrays and objects see below for details:
   - 0x00      : none - this indicates absence of any type and value,
                 this is not allowed in VPack values
   - 0x01      : empty array
-  - 0x02      : array without index table (all subitems have the same 
+  - 0x02      : array without index table (all subitems have the same
                 byte length), 1-byte byte length
-  - 0x03      : array without index table (all subitems have the same 
+  - 0x03      : array without index table (all subitems have the same
                 byte length), 2-byte byte length
-  - 0x04      : array without index table (all subitems have the same 
+  - 0x04      : array without index table (all subitems have the same
                 byte length), 4-byte byte length
-  - 0x05      : array without index table (all subitems have the same 
+  - 0x05      : array without index table (all subitems have the same
                 byte length), 8-byte byte length
   - 0x06      : array with 1-byte index table offsets, bytelen and # subvals
   - 0x07      : array with 2-byte index table offsets, bytelen and # subvals
   - 0x08      : array with 4-byte index table offsets, bytelen and # subvals
   - 0x09      : array with 8-byte index table offsets, bytelen and # subvals
   - 0x0a      : empty object
-  - 0x0b      : object with 1-byte index table offsets, sorted by 
+  - 0x0b      : object with 1-byte index table offsets, sorted by
                 attribute name, 1-byte bytelen and # subvals
-  - 0x0c      : object with 2-byte index table offsets, sorted by 
+  - 0x0c      : object with 2-byte index table offsets, sorted by
                 attribute name, 2-byte bytelen and # subvals
-  - 0x0d      : object with 4-byte index table offsets, sorted by 
+  - 0x0d      : object with 4-byte index table offsets, sorted by
                 attribute name, 4-byte bytelen and # subvals
-  - 0x0e      : object with 8-byte index table offsets, sorted by 
+  - 0x0e      : object with 8-byte index table offsets, sorted by
                 attribute name, 8-byte bytelen and # subvals
-  - 0x0f      : object with 1-byte index table offsets, not sorted by 
+  - 0x0f      : object with 1-byte index table offsets, not sorted by
                 attribute name, 1-byte bytelen and # subvals
-  - 0x10      : object with 2-byte index table offsets, not sorted by 
+  - 0x10      : object with 2-byte index table offsets, not sorted by
                 attribute name, 2-byte bytelen and # subvals
-  - 0x11      : object with 4-byte index table offsets, not sorted by 
+  - 0x11      : object with 4-byte index table offsets, not sorted by
                 attribute name, 4-byte bytelen and # subvals
-  - 0x12      : object with 8-byte index table offsets, not sorted by 
+  - 0x12      : object with 8-byte index table offsets, not sorted by
                 attribute name, 8-byte bytelen and # subvals
   - 0x13-0x17 : reserved
   - 0x18      : null
   - 0x19      : false
   - 0x1a      : true
-  - 0x1b      : double IEEE-754, 8 bytes follow, stored as little 
+  - 0x1b      : double IEEE-754, 8 bytes follow, stored as little
                 endian uint64 equivalent
   - 0x1c      : UTC-date in milliseconds since the epoch, stored as 8 byte
                 signed int, little endian, two's complement
@@ -67,12 +67,12 @@ reference, for arrays and objects see below for details:
                 allowed in VPack values on disk or on the network
   - 0x1e      : minKey, nonsensical value that compares < than all other values
   - 0x1f      : maxKey, nonsensical value that compares > than all other values
-  - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f, 
+  - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f,
                 two's complement
   - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
   - 0x30-0x39 : small integers 0, 1, ... 9
   - 0x3a-0x3f : small negative integers -6, -5, ..., -1
-  - 0x40-0xbe : UTF-8-string, using V - 0x40 bytes (not Unicode characters!), 
+  - 0x40-0xbe : UTF-8-string, using V - 0x40 bytes (not Unicode characters!),
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 126, note that strings here are not
                 zero-terminated
@@ -80,14 +80,14 @@ reference, for arrays and objects see below for details:
                 bytes (not Unicode characters) as little endian unsigned
                 integer, note that long strings are not zero-terminated
                 and may contain zero bytes
-  - 0xc0-0xc7 : binary blob, next V - 0xbf bytes are the length of blob in 
+  - 0xc0-0xc7 : binary blob, next V - 0xbf bytes are the length of blob in
                 bytes, note that binary blobs are not zero-terminated
   - 0xc8-0xcf : positive long packed BCD-encoded float, V - 0xc7 bytes follow
                 that encode in a little endian way the length of the
                 mantissa in bytes. Directly after that follow 4 bytes
                 encoding the (power of 10) exponent, by which the mantissa
                 is to be multiplied, stored as little endian two's
-                complement signed 32-bit integer. After that, as many 
+                complement signed 32-bit integer. After that, as many
                 bytes follow as the length information at the beginning
                 has specified, each byte encodes two digits in
                 big-endian packed BCD
@@ -110,7 +110,7 @@ Nonempty arrays look like this:
 
   one of 0x02 to 0x09
   BYTELENGTH
-  optional NRITEMS 
+  optional NRITEMS
   sub VPack values
   optional INDEXTABLE
   optional NRITEMS if numbers are 8 bytes
@@ -122,9 +122,9 @@ types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
 
 NRITEMS is a single number as described above.
 
-The INDEXTABLE consists of: 
-  - not existent for types 0x02-0x05, then it is guaranteed that all 
-    items have the same byte length, one of these types is always 
+The INDEXTABLE consists of:
+  - not existent for types 0x02-0x05, then it is guaranteed that all
+    items have the same byte length, one of these types is always
     taken for arrays with 1 element.
   - for types 0x06-0x09 an array of offsets (unaligned, in the number
     format described above) earlier offsets reside at lower addresses.
@@ -172,7 +172,7 @@ All offsets are measured from base A.
 
 *Example*:
 
-`[1,2,3]` has the hex dump 
+`[1,2,3]` has the hex dump
 
     02 05 31 32 33
 
@@ -193,12 +193,12 @@ possible, though not necessarily advised to use:
 
     08 18 00 00 00 03 00 00 00 31 32 33 05 00 00 00 06 00 00 00 07 00 00 00
 
-    09 
+    09
     2c 00 00 00 00 00 00 00 00
     31 32 33
     09 00 00 00 00 00 00 00 00
     0a 00 00 00 00 00 00 00 00
-    0b 00 00 00 00 00 00 00 00 
+    0b 00 00 00 00 00 00 00 00
     03 00 00 00 00 00 00 00 00
 
 Note that it is not recommended to encode short arrays in too long a
@@ -225,7 +225,7 @@ types 0x0b and 0x0f, 2 bytes for types 0x0c and 0x10, 4 bytes for types
 
 NRITEMS is a single number as described above.
 
-The INDEXTABLE consists of: 
+The INDEXTABLE consists of:
   - an array of offsets (unaligned, in the number format described
     above) earlier offsets reside at lower addresses.
     Offsets are measured from the beginning of the VPack value.
@@ -278,21 +278,21 @@ one can build up a complex VPack value by writing linearly.
 
 Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
-    0b 
+    0b
     13 03
-    41 62 1a 
-    41 61 28 0c 
+    41 62 1a
+    41 61 28 0c
     41 63 43 78 79 7a
     06 03 0a
 
 The same object could have been done with an index table with longer
 entries, as in this example:
 
-    0d 
+    0d
     22 00 00 00
     03 00 00 00
-    41 62 03 
-    41 61 28 0c 
+    41 62 03
+    41 61 28 0c
     41 63 43 78 79 7a
     0c 00 00 00 09 00 00 00 10 00 00 00
 
@@ -300,10 +300,10 @@ Similarly with type 0x0c and 2-byte offsets, byte length and number of
 subvalues, or with type 0x09 and 8-byte numbers. Furthermore, it could
 be stored unsorted like in:
 
-    0f 
+    0f
     13 03
-    41 62 03 
-    41 61 28 0c 
+    41 62 03
+    41 61 28 0c
     41 63 43 78 79 7a
     03 06 0a
 
@@ -401,7 +401,7 @@ bytes used to specify the byte length of the mantissa. As usual, if V is
 the type byte, then V - 0xc7 (in the positive case) or V - 0xcf (in the
 negative case) bytes are used for the length of the mantissa, stored as
 little endian unsigned integer directly after the byte length. After
-this follow exactly 4 bytes (little endian signed two's complement 
+this follow exactly 4 bytes (little endian signed two's complement
 integer) to specify the exponent. After the exponent, the actual
 mantissa bytes follow.
 

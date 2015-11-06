@@ -5,7 +5,7 @@ Minimal example
 ---------------
 
 Let's start with a small example program *test.cpp* that uses the VPack library.
-It does nothing yet, but the first goal is to have this minimal example compile 
+It does nothing yet, but the first goal is to have this minimal example compile
 and link:
 
 ```cpp
@@ -37,7 +37,7 @@ g++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o t
 ```
 
 The test program can afterwards be run with
- 
+
 ```bash
 ./test
 ```
@@ -47,7 +47,7 @@ Building VPack objects programmatically
 ---------------------------------------
 
 VPack objects can be assembled easily with a `Builder` object.
-This `Builder` class organizes the buildup of one or many VPack objects. 
+This `Builder` class organizes the buildup of one or many VPack objects.
 It manages the memory allocation and allows convenience methods to build
 compound objects recursively.
 
@@ -73,7 +73,7 @@ This resembles the following JSON object:
 }
 ```
 
-After the VPack value is created, a hex dump its underlying memory 
+After the VPack value is created, a hex dump its underlying memory
 will be printed.
 
 ```cpp
@@ -114,7 +114,7 @@ int main () {
 }
 ```
 
-If you like fancy syntactic sugar, the same object can also be 
+If you like fancy syntactic sugar, the same object can also be
 build as follows:
 
 ```cpp
@@ -156,10 +156,10 @@ int main () {
 Inspecting the contents of a VPack object
 -----------------------------------------
 
-The `Slice` class can be used for accessing existing VPack objects and 
-inspecting them. A `Slice` can be considered an *overlay* over a memory 
+The `Slice` class can be used for accessing existing VPack objects and
+inspecting them. A `Slice` can be considered an *overlay* over a memory
 region that contains a VPack value, but it provides higher-level access
-methods. `Slice` objects themselves are very lightweight and do not need 
+methods. `Slice` objects themselves are very lightweight and do not need
 more memory than a regular pointer.
 
 ```cpp
@@ -183,7 +183,7 @@ int main () {
   // a Slice is a lightweight accessor for a VPack value
   Slice s(b.start());
 
-  // inspect the outermost value (should be an Object...) 
+  // inspect the outermost value (should be an Object...)
   std::cout << "Slice: " << s << std::endl;
   std::cout << "Type: " << s.type() << std::endl;
   std::cout << "Bytesize: " << s.byteSize() << std::endl;
@@ -204,22 +204,22 @@ int main () {
 }
 ```
 
-The `Builder` behavior can be adjusted using the builder's `options` 
+The `Builder` behavior can be adjusted using the builder's `options`
 attribute as follows:
 - `sortAttributeNames`: when creating a VPack Object value, the Builder
-  object will sort the Object's attribute names alphabetically in the 
-  assembled VPack object. 
+  object will sort the Object's attribute names alphabetically in the
+  assembled VPack object.
   Sorting the names allows accessing individual attributes by name quickly
   later. However, sorting takes CPU time so client applications may
   want to turn it off, especially when constructing *temporary*
-  objects. Additionally, sorting may lead to the VPack Object having 
-  a different order of attributes than the source JSON value. 
+  objects. Additionally, sorting may lead to the VPack Object having
+  a different order of attributes than the source JSON value.
   By default, attribute names are sorted.
 - `checkAttributeUniqueness`: when building a VPack Object value,
   the same attribute name may be used multiple times due to a programming
   error in the client application.
-  Client applications can set this flag to make the `Builder` validate 
-  that attribute names are actually unique on each nesting level of Object 
+  Client applications can set this flag to make the `Builder` validate
+  that attribute names are actually unique on each nesting level of Object
   values. This option is turned off by default to save CPU time.
 
 The options can be adjusted as follows:
@@ -238,7 +238,7 @@ Parsing JSON into a VPack value
 
 Often there is already existing data in JSON format. To convert that
 data into a VPack value, use the `Parser` class. `Parser` provides an
-efficient JSON parser. 
+efficient JSON parser.
 
 A `Parser` object contains a `Builder` object, and after parsing, this
 `Builder` object will contain the VPack value constructed from the JSON
@@ -291,28 +291,28 @@ object will throw an exception. The exception message can be retrieved
 by querying the Exception's `what` method. The error position in the
 input JSON can be retrieved by using the Parser's `errorPos` method.
 
-The parser behavior can be adjusted using the parser's `options` 
+The parser behavior can be adjusted using the parser's `options`
 attribute as follows:
-- `validateUt8Strings`: when set to `true`, string values will be 
+- `validateUt8Strings`: when set to `true`, string values will be
   validated for UTF-8 compliance. UTF-8 checking can slow down the parser
   performance so client applications are given the choice about this.
   By default, UTF-8 checking is turned off.
-- `sortAttributeNames`: when creating a VPack Object value 
-  programmatically or via a (JSON) Parser, the Builder object will 
-  sort the Object's attribute names alphabetically in the assembled 
-  VPack object. 
+- `sortAttributeNames`: when creating a VPack Object value
+  programmatically or via a (JSON) Parser, the Builder object will
+  sort the Object's attribute names alphabetically in the assembled
+  VPack object.
   Sorting the names allows accessing individual attributes by name quickly
   later. However, sorting takes CPU time so client applications may
   want to turn it off, especially when constructing *temporary*
-  objects. Additionally, sorting may lead to the VPack Object having 
-  a different order of attributes than the source JSON value. 
+  objects. Additionally, sorting may lead to the VPack Object having
+  a different order of attributes than the source JSON value.
   By default, attribute names are sorted.
 - `checkAttributeUniqueness`: when building a VPack Object value,
   the same attribute name may be used multiple times due to a programming
   error in the client application or when parsing JSON input data with
   duplicate attribute names.
   For untrusted inputs, client applications can set this flag to make the
-  `Builder` validate that attribute names are actually unique on each 
+  `Builder` validate that attribute names are actually unique on each
   nesting level of Object values. This option is turned off by default to
   save CPU time.
 
@@ -329,18 +329,18 @@ parser.options.sortAttributeNames = false;
 // now do something with the parser
 ```
 
- 
+
 Serializing a VPack value into JSON
 -----------------------------------
 
 When the task is to create a JSON representation of a VPack value, the
-`Dumper` class can be used. `Dumper` is a template class and can write 
+`Dumper` class can be used. `Dumper` is a template class and can write
 JSON output into a char[] buffer or into a string.
 
 For more convenience, `Dumper` provides the following ready-to-use typedefs:
 - BufferDumper: will dump the JSON into a `Buffer` object
 - StringDumper: will dump the JSON into an `std::string`
-- StringPrettyDumper: will dump the JSON into an `std::string`, 
+- StringPrettyDumper: will dump the JSON into an `std::string`,
   using pretty printing
 
 Here we'll be using the `StringPrettyDumper` class.
@@ -358,7 +358,7 @@ int main () {
   // be quickly accessed by name. however, sorting adds overhead when
   // constructing VPack objects so it's optional. there may also be
   // cases when the original attribute order needs to be preserved. in
-  // this case, turning off sorting will help, too 
+  // this case, turning off sorting will help, too
   b.options.sortAttributeNames = false;
 
   // build an object with attribute names "b", "a", "l", "name"
@@ -370,8 +370,8 @@ int main () {
     ("name", Value("Gustav")) ();
 
   Slice s(b.start());
- 
-  // now dump the Slice into an std::string 
+
+  // now dump the Slice into an std::string
   std::string output;
   StringPrettyDumper dumper(output);
   dumper.dump(s);
@@ -385,7 +385,7 @@ Note that VPack values may contain data types that cannot be represented in
 JSON. If a value is dumped that has no equivalent in JSON, a `Dumper` object
 will by default throw an exception. To change the default behavior, set the
 Dumper's `strategy` attribute to `StrategyNullifyUnsupportedType`:
- 
+
 ```cpp
 StringPrettyDumper dumper(output);
 dumper.strategy = StrategyNullifyUnsupportedType;

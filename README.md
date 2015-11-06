@@ -21,12 +21,12 @@ shaped JSON.
 
 When looking into this, we were surprised to find that none of these
 formats manages to combine compactness, platform independence, fast
-access to subobjects and rapid conversion from and to JSON. 
+access to subobjects and rapid conversion from and to JSON.
 
 We have invented VPack because we need a binary format that
 
   - is compact
-  - covers all of JSON plus dates, integers, binary data and arbitrary 
+  - covers all of JSON plus dates, integers, binary data and arbitrary
     precision numbers
   - can be used in a database kernel to access subdocuments for
     example for indexes, so it must be possible to access subdocuments
@@ -49,7 +49,7 @@ This data format must be backed by good C++ classes to allow
 The VPack format is an attempt to achieve all this.
 
 This repository contains a C++ library for building, manipulating and
-serializing VPack data. It is the reference implementation of the VPack 
+serializing VPack data. It is the reference implementation of the VPack
 format.
 
 
