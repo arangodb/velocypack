@@ -1,5 +1,11 @@
 * create table with JSON/VPack size comparisons (JS)
 
+* add performance tests and results
+
+* comparison with other formats
+
+* create more examples for documentation purposes
+
 * properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
   - Dumper & Slicer need support
@@ -16,12 +22,6 @@
 * test on MacOS, ARM and Windows
 
 * run tests on ARM again
-
-* comparison with other formats
-
-* add performance tests and results
-
-* create code examples for documentation purposes
 
 * implement type BCD in Builder, Slice, Parser and Dumper
 

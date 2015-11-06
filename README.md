@@ -162,9 +162,8 @@ object:
 then you would use the `Builder` class as follows:
 
 ```cpp
-#include <velocyPack/Builder.h>
-#include <velocyPack/Value.h>
-#include <velocyPack/ValueType.h>
+#include <velocyPack/vpack.h>
+
 using namespace arangodb::velocypack;
 
 Builder b;
@@ -205,6 +204,10 @@ If you fancy syntactic sugar using C++ callable objects, you could also
 write:
 
 ```cpp
+#include <velocyPack/vpack.h>
+
+using namespace arangodb::velocypack;
+
 Builder b;
 
 b(Value(ValueType::Object))
@@ -221,9 +224,8 @@ To create a VPack object from a JSON string, use the JSON parser shipped
 with VPack as follows:
 
 ```cpp
-#include <velocypack/Builder.h>
-#include <velocypack/Exception.h>
-#include <velocypack/Parser.h>
+#include <velocypack/vpack.h>
+
 using namespace arangodb::velocypack;
 
 Parser p;
@@ -253,18 +255,20 @@ and length from that. Therefore it is very cheap to create and destroy
 `Slice`s.
 
 ```cpp
-#include <velocypack/Slice.h>
-#include <velocypack/ValueType.h>
+#include <velocypack/vpack.h>
+
 using namespace arangodb::velocypack;
 
 Slice s(p);
-ValueType t = s.type();      // could be ValueType::Object, say
+ValueType t = s.type();    // should be ValueType::Object
+
 if (s.isObject()) {
   Slice ss = s.get("l");   // Now ss points to the subvalue under "l"
   ValueLength l = ss.length();
   Slice ss3 = ss.at(1);
   int i = ss3.getInt();
 }
+
 Slice sss = s.get("name");
 if (sss.isString()) {
   ValueLength len;
@@ -275,15 +279,14 @@ if (sss.isString()) {
 ### Dumping a VPack value to JSON
 
 The template class `Dumper` can be used for this. It in turn uses the 
-`Slice` class. Use as follows, if `Slice` `slice` points to
+`Slice` class. Use as follows, if `Slice` object `s` points to
 a valid VPack value:
 
 ```cpp
-#include <velocypack/Dump.h>
-#include <velocypack/Slice.h>
+#include <velocypack/vpack.h>
 
 CharBuffer buffer;
-BufferDumper dumper(buffer, BufferDumper::StrategyFail);
+BufferDumper dumper(buffer);
 dumper.dump(s);
 std::string output(buffer.data(), buffer.size());
 ```

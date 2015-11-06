@@ -1,14 +1,13 @@
 #include <iostream>
-#include "velocypack/velocypack-common.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
+#include "velocypack/vpack.h"
 
 using namespace arangodb::velocypack;
 
-int main (int argc, char* argv[]) {
+int main (int, char*[]) {
+  // create an object with attributes "b", "a", "l" and "name"
+  // note that the attribute names will be sorted in the target VPack object!
   Builder b;
+
   b(Value(ValueType::Object))
    ("b", Value(12))
    ("a", Value(true))
@@ -16,15 +15,19 @@ int main (int argc, char* argv[]) {
      (Value(1)) (Value(2)) (Value(3)) ()
    ("name", Value("Gustav")) ();
 
+  // a Slice is a lightweight accessor for a VPack value
   Slice s(b.start());
-  
+ 
+  // inspect the outermost value (should be an Object...) 
   ValueType t = s.type();
   std::cout << "Type: " << t << std::endl;
+
   if (s.isObject()) {
     Slice ss = s.get("l");   // Now ss points to the subvalue under "l"
     std::cout << "Length of .l: " << ss.length() << std::endl;
     std::cout << "Second entry of .l:" << ss.at(1).getInt() << std::endl;
   }
+
   Slice sss = s.get("name");
   if (sss.isString()) {
     ValueLength len;

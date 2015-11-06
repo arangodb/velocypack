@@ -1,14 +1,13 @@
 #include <iostream>
-#include "velocypack/velocypack-common.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Exception.h"
-#include "velocypack/Parser.h"
+#include "velocypack/vpack.h"
 
 using namespace arangodb::velocypack;
 
-int main (int argc, char* argv[]) {
+int main (int, char*[]) {
+  // this is the JSON string we are going to parse
+  std::string const json = "{\"a\":12}";
+  
   Parser p;
-  std::string json = "{\"a\":12}";
   try {
     size_t nr = p.parse(json);
     std::cout << "Number of values: " << nr << std::endl;
@@ -20,11 +19,14 @@ int main (int argc, char* argv[]) {
     std::cout << "Parse error: " << e.what() << std::endl;
     std::cout << "Position of error: " << p.errorPos() << std::endl;
   }
-  Builder b = p.steal();
 
-  std::cout << "Resulting VPack:\n";
+  // get a pointer to the start of the data
+  Builder b = p.steal();
   uint8_t* pp = b.start();
   ValueLength len = b.size();
+ 
+  // now dump the resulting VPack value
+  std::cout << "Resulting VPack:" << std::endl;
   std::cout << std::hex;
   for (size_t i = 0; i < len; i++) {
     std::cout << (int) pp[i] << " ";

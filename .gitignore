@@ -11,6 +11,11 @@ testsLookup
 testsParser
 testsSlice
 testsType
+useBuilder
+useBuilder2
+useDumper
+useParser
+useSlice
 *.o
 *.orig
 *.rej
@@ -24,11 +29,6 @@ config.status
 libvelocypack.a
 stamp-h1
 config.h.in~
-examples/usebuilder
-examples/usebuilder2
-examples/useparser
-examples/useslicer
-examples/usedumper
 
 googletest/
 CMakeCache.txt
