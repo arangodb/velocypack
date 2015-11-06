@@ -50,7 +50,7 @@ The VPack format is an attempt to achieve all this.
 Specification
 -------------
 
-See [the file VelocityPack.md](VelocityPack.md) for a detailed description.
+See [the file VelocyPack.md](VelocyPack.md) for a detailed description.
 
 
 Performance
@@ -72,7 +72,7 @@ cmake .
 make
 ```
 
-This will build a static library `libvelocitypack.a` in the current directory in
+This will build a static library `libvelocypack.a` in the current directory in
 release mode.
 
 
@@ -162,10 +162,10 @@ object:
 then you would use the `Builder` class as follows:
 
 ```cpp
-#include <velocityPack/Builder.h>
-#include <velocityPack/Value.h>
-#include <velocityPack/ValueType.h>
-using namespace arangodb::velocitypack;
+#include <velocyPack/Builder.h>
+#include <velocyPack/Value.h>
+#include <velocyPack/ValueType.h>
+using namespace arangodb::velocypack;
 
 Builder b;
 
@@ -221,10 +221,10 @@ To create a VPack object from a JSON string, use the JSON parser shipped
 with VPack as follows:
 
 ```cpp
-#include <velocitypack/Builder.h>
-#include <velocitypack/Exception.h>
-#include <velocitypack/Parser.h>
-using namespace arangodb::velocitypack;
+#include <velocypack/Builder.h>
+#include <velocypack/Exception.h>
+#include <velocypack/Parser.h>
+using namespace arangodb::velocypack;
 
 Parser p;
 std::string const json = "{\"a\":12}";

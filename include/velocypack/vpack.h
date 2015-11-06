@@ -27,14 +27,14 @@
 #ifndef VELOCYPACK_VPACK_H
 #define VELOCYPACK_VPACK_H 1
 
-#include "velocitypack/velocitypack-common.h"
-#include "velocitypack/Builder.h"
-#include "velocitypack/Dump.h"
-#include "velocitypack/Exception.h"
-#include "velocitypack/Options.h"
-#include "velocitypack/Parser.h"
-#include "velocitypack/Slice.h"
-#include "velocitypack/Value.h"
-#include "velocitypack/ValueType.h"
+#include "velocypack/velocypack-common.h"
+#include "velocypack/Builder.h"
+#include "velocypack/Dump.h"
+#include "velocypack/Exception.h"
+#include "velocypack/Options.h"
+#include "velocypack/Parser.h"
+#include "velocypack/Slice.h"
+#include "velocypack/Value.h"
+#include "velocypack/ValueType.h"
 
 #endif

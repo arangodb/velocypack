@@ -27,19 +27,18 @@
 #ifndef VELOCYPACK_ALIASES_H
 #define VELOCYPACK_ALIASES_H 1
 
-#include "velocitypack/vpack.h"
+#include "velocypack/vpack.h"
 
-using VPackBufferDumper       = arangodb::velocitypack::BufferDumper;
-using VPackBuilder            = arangodb::velocitypack::Builder;
-using VPackCharBuffer         = arangodb::velocitypack::CharBuffer;
-using VPackException          = arangodb::velocitypack::Exception;
-using VPackDumper             = arangodb::velocitypack::Dumper;
-using VPackOptions            = arangodb::velocitypack::Options;
-using VPackParser             = arangodb::velocitypack::Parser;
-using VPackStringDumper       = arangodb::velocitypack::StringDumper;
-using VPackStringPrettyDumper = arangodb::velocitypack::StringPrettyDumper;
-using VPackSlice              = arangodb::velocitypack::Slice;
-using VPackValue              = arangodb::velocitypack::Value;
-using VPackValueType          = arangodb::velocitypack::ValueType;
+using VPackBufferDumper       = arangodb::velocypack::BufferDumper;
+using VPackBuilder            = arangodb::velocypack::Builder;
+using VPackCharBuffer         = arangodb::velocypack::CharBuffer;
+using VPackException          = arangodb::velocypack::Exception;
+using VPackOptions            = arangodb::velocypack::Options;
+using VPackParser             = arangodb::velocypack::Parser;
+using VPackStringDumper       = arangodb::velocypack::StringDumper;
+using VPackStringPrettyDumper = arangodb::velocypack::StringPrettyDumper;
+using VPackSlice              = arangodb::velocypack::Slice;
+using VPackValue              = arangodb::velocypack::Value;
+using VPackValueType          = arangodb::velocypack::ValueType;
 
 #endif
