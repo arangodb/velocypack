@@ -4,8 +4,6 @@
 
 * comparison with other formats
 
-* create more examples for documentation purposes
-
 * properly test custom types 0xf0 - 0xff (JS)
   - Builder already has support for them
   - Dumper & Slicer need support

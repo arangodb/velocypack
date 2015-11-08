@@ -30,7 +30,7 @@
 #include "velocypack/Builder.h"
 
 using namespace arangodb::velocypack;
-
+        
 void Builder::doActualSort (std::vector<SortEntry>& entries) {
   VELOCYPACK_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(), 

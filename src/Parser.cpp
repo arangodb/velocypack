@@ -30,9 +30,6 @@
 
 using namespace arangodb::velocypack;
        
-// default options for the parser 
-Options const Parser::DefaultOptions;
-
 // The following function does the actual parse. It gets bytes
 // via peek, consume and reset appends the result to the Builder
 // in _b. Errors are reported via an exception.

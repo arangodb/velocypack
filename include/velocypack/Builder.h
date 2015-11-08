@@ -201,6 +201,13 @@ namespace arangodb {
           return *this;
         }
 
+        static Builder clone (Slice const& slice, Options const& options = Options::Defaults) {
+          Builder b;
+          b.options = options;
+          b.add(slice);
+          return b; 
+        }
+
         // Clear and start from scratch:
         void clear () {
           _pos = 0;

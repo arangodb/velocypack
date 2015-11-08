@@ -92,7 +92,6 @@ namespace arangodb {
       public:
 
         Options options;        
-        static Options const DefaultOptions;
 
         Parser (Parser const&) = delete;
         Parser& operator= (Parser const&) = delete;
@@ -100,14 +99,14 @@ namespace arangodb {
         Parser () : _start(nullptr), _size(0), _pos(0) {
         }
 
-        static Builder fromJson (std::string const& json, Options const& options = DefaultOptions) {
+        static Builder fromJson (std::string const& json, Options const& options = Options::Defaults) {
           Parser parser;
           parser.options = options;
           parser.parse(json);
           return parser.steal();
         }
         
-        static Builder fromJson (uint8_t const* start, size_t size, Options const& options = DefaultOptions) {
+        static Builder fromJson (uint8_t const* start, size_t size, Options const& options = Options::Defaults) {
           Parser parser;
           parser.options = options;
           parser.parse(start, size);
