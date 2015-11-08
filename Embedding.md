@@ -7,13 +7,13 @@ Exceptions and error reporting
 The VPack library way of signaling errors is to throw exceptions. Thus VPack
 library users need to make sure they handle exceptions properly.
 
-The VPack library will mostly throw exceptions of type `Exception`. The library's
-`Exception` class is derived from `std::exception` and provides the `what` method
-to retrieve the error message from the exception.
+The VPack library will mostly throw exceptions of type `arangodb::vpack::Exception`. 
+The library's `Exception` class is derived from `std::exception` and provides the 
+`what` method to retrieve the error message from the exception.
 
 Additionally, `Exception` provides the `errorCode` method for retrieving a
 numeric error code from an exception. This error code can be used to check for
-specific errors programmatically.
+specific error types programmatically.
 
 ```cpp
 Builder b;
@@ -49,7 +49,7 @@ VPack. By default, all VPack objects manage their own memory. This will also
 avoid memory leaks.
 
 It is encouraged to construct VPack objects on the stack rather than using
-`new`/`delete`. This will greatly help avoiding memory leaks in the client
+`new`/`delete`. This will greatly help avoiding memory leaks in client
 code that uses the VPack library.
 
 Special care must be taken for `Slice` objects: a `Slice` object contains a
@@ -71,7 +71,8 @@ Here is a valid example for using a `Slice`:
 }
 ```
 
-Here is an invalid usage example:
+Here is an invalid usage example, returning a `Slice` object that will
+point to deallocated memory:
 
 ```cpp
 Slice getSlice () {
@@ -90,13 +91,13 @@ Slice getSlice () {
 }
 ```
 
-In the latter case, it would have been better to return the `Builder`
+In the latter case it would have been better to return the `Builder`
 object from the function and not the `Slice`.
 
 
 VPack `Buffer` objects also manage their own memory. When a `Buffer`
 object goes out of scope, it will deallocate any dynamic memory it has
-allocated. Client-code must not access the `Buffer` objects memory
+allocated. Client-code must not access the `Buffer` object's memory
 after that.
 
 
@@ -108,21 +109,23 @@ program is to include the header `velocypack/vpack.h`. This will load the
 classes definitions from namespace `arangodb::velocypack`.
 
 To avoid full name qualification in client programs, it may be convenient to
-make all classes from this namespace available without extra qualification:
+make all classes from this namespace available without extra qualification.
+The following line will do that:
 
 ```cpp
 using namespace arangodb::velocypack`
 ```
 
-This however can lead to name clashes in client application. For example,
+However, this can lead to name clashes in the client application. For example,
 the VPack library contains classes named `Buffer`, `Exception`, `Parser` -
 class names which are not uncommon in many projects.
 
-When importing the `arangodb::velocypack` namespace is not an option, an
-alternative to use the class name aliases for VPack classes as defined in
-header `velocypack/velocypack-aliases.h`. This header makes the most common
-VPack classes available under alternative (hopefully unambiguous) class
-names with prefix `VPack`:
+If for this reason importing the whole `arangodb::velocypack` namespace is 
+not an option, an alternative is to use the class name aliases that are
+defined in the header file `velocypack/velocypack-aliases.h`. 
+
+This header file makes the most common VPack classes available under alternative 
+(hopefully unambiguous) class names with the prefix *VPack*:
 
 ```cpp
 using VPackBufferDumper       = arangodb::velocypack::BufferDumper;

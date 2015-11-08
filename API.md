@@ -5,8 +5,8 @@ Minimal example
 ---------------
 
 Let's start with a small example program *test.cpp* that uses the VPack library.
-It does nothing yet, but the first goal is to have this minimal example compile
-and link:
+It does nothing yet, the only goal is to make this minimal example compile and
+link:
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -21,10 +21,11 @@ int main () {
 
 To make the VPack classes available in your project, add the VPack headers
 to the list of include directories. How exactly this works is compiler-specific.
-For example, when using g++, include directories can be added using the `-I` option.
+For example, when using g++ or clang, include directories can be added using 
+the `-I` compiler option.
 
 When compiling the program, please make sure the compiler can understand C++11
-syntax. In g++, this can be controlled via the `-std=c++11` option.
+syntax. In g++ and clang, this can be controlled via the `-std=c++11` option.
 
 Additionally, the velocitypack library must be linked to the example program.
 In g++ this works by specifying the libary path with the `-L` option and specifying
@@ -36,11 +37,24 @@ The full instruction to compile and link the test program with g++ is:
 g++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
 ```
 
+With clang, it is:
+
+```bash
+clang++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
+```
+
 The test program can afterwards be run with
 
 ```bash
 ./test
 ```
+
+With a working infrastructure for compiling and linking the VPack library,
+we can now adjust the example program so it does something useful. The 
+following sections cover a few common usage examples.
+
+Please also have a look at the *examples* subdirectory in this repository
+for example code.
 
 
 Building VPack objects programmatically
@@ -48,11 +62,11 @@ Building VPack objects programmatically
 
 VPack objects can be assembled easily with a `Builder` object.
 This `Builder` class organizes the buildup of one or many VPack objects.
-It manages the memory allocation and allows convenience methods to build
+It manages the memory allocation and provides convenience methods to build
 compound objects recursively.
 
-The following example builds a top-level object of VPack type `Object`,
-with the following 4 keys:
+The following example program will build a top-level object of VPack 
+type `Object`, with the following 4 keys:
 
 - `b`: is an integer with value `12`
 - `a`: is the Boolean value `true`
@@ -73,8 +87,8 @@ This resembles the following JSON object:
 }
 ```
 
-After the VPack value is created, a hex dump its underlying memory
-will be printed.
+After the VPack value is created, the example program will print a 
+hex dump of its underlying memory:
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -114,8 +128,12 @@ int main () {
 }
 ```
 
-If you like fancy syntactic sugar, the same object can also be
-build as follows:
+Values will automatically be added to the last created compound value, 
+i.e. the last created `Array` or `Object` value. To finish a compound
+object, the Builder's `close` method must be called.
+
+If you like fancy syntactic sugar, the same object can alternatively be
+built using operator syntax:
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -152,15 +170,46 @@ int main () {
 }
 ```
 
+Note that the behavior of `Builder` objects can be adjusted by setting the
+following attributes in the Builder's `options` attribute:
+
+- `sortAttributeNames`: when creating a VPack Object value, the Builder
+  object will sort the Object's attribute names alphabetically in the
+  assembled VPack object.
+  Sorting the names allows accessing individual attributes by name quickly
+  later. However, sorting takes CPU time so client applications may
+  want to turn it off, especially when constructing *temporary*
+  objects. Additionally, sorting may lead to the VPack Object having
+  a different order of attributes than the source JSON value.
+  By default, attribute names are sorted.
+- `checkAttributeUniqueness`: when building a VPack Object value,
+  the same attribute name may be used multiple times due to a programming
+  error in the client application.
+  Client applications can set this flag to make the `Builder` validate
+  that attribute names are actually unique on each nesting level of Object
+  values. This option is turned off by default to save CPU time.
+
+For example, to turn on attribute name uniqueness checks and turn off
+the attribute name sorting, a `Builder` could be configured as follows:
+
+```cpp
+Builder b;
+b.options.checkAttributeUniqueness = true;
+b.options.sortAttributeNames = false;
+
+// now do something with Builder b
+```
+
 
 Inspecting the contents of a VPack object
 -----------------------------------------
 
 The `Slice` class can be used for accessing existing VPack objects and
-inspecting them. A `Slice` can be considered an *overlay* over a memory
-region that contains a VPack value, but it provides higher-level access
-methods. `Slice` objects themselves are very lightweight and do not need
-more memory than a regular pointer.
+inspecting them. A `Slice` can be considered an *overlay over a memory
+region that contains a VPack value*, but it provides high-level access
+methods so users don't need to mess with raw memory. `Slice` objects 
+themselves are very lightweight and don't need more memory than a regular 
+pointer. 
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -204,45 +253,24 @@ int main () {
 }
 ```
 
-The `Builder` behavior can be adjusted using the builder's `options`
-attribute as follows:
-- `sortAttributeNames`: when creating a VPack Object value, the Builder
-  object will sort the Object's attribute names alphabetically in the
-  assembled VPack object.
-  Sorting the names allows accessing individual attributes by name quickly
-  later. However, sorting takes CPU time so client applications may
-  want to turn it off, especially when constructing *temporary*
-  objects. Additionally, sorting may lead to the VPack Object having
-  a different order of attributes than the source JSON value.
-  By default, attribute names are sorted.
-- `checkAttributeUniqueness`: when building a VPack Object value,
-  the same attribute name may be used multiple times due to a programming
-  error in the client application.
-  Client applications can set this flag to make the `Builder` validate
-  that attribute names are actually unique on each nesting level of Object
-  values. This option is turned off by default to save CPU time.
-
-The options can be adjusted as follows:
-
-```cpp
-Builder b;
-b.options.checkAttributeUniqueness = true;
-b.options.sortAttributeNames = false;
-
-// now do something with Builder b
-```
+It should be noted that `Slice` objects do not own the VPack value
+they are pointing to. The client must make sure that the memory a `Slice`
+refers to is actually valid. In the above case, the VPack value is
+owned by the Builder object b, which is still available and valid when
+Slice object s is created and used. 
 
 
 Parsing JSON into a VPack value
 -------------------------------
 
 Often there is already existing data in JSON format. To convert that
-data into a VPack value, use the `Parser` class. `Parser` provides an
-efficient JSON parser.
+data into VPack, use the `Parser` class. `Parser` provides an efficient 
+JSON parser.
 
-A `Parser` object contains a `Builder` object, and after parsing, this
+A `Parser` object contains its own `Builder` object. After parsing this
 `Builder` object will contain the VPack value constructed from the JSON
-input. Use `Parser::steal()` to get your hands on the `Builder object`:
+input. Use the Parser's `steal` method to get your hands on that 
+`Builder` object:
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -291,8 +319,9 @@ object will throw an exception. The exception message can be retrieved
 by querying the Exception's `what` method. The error position in the
 input JSON can be retrieved by using the Parser's `errorPos` method.
 
-The parser behavior can be adjusted using the parser's `options`
-attribute as follows:
+The parser behavior can be adjusted by setting the following attributes
+in the Parser's `options` attribute:
+
 - `validateUt8Strings`: when set to `true`, string values will be
   validated for UTF-8 compliance. UTF-8 checking can slow down the parser
   performance so client applications are given the choice about this.
@@ -316,9 +345,10 @@ attribute as follows:
   nesting level of Object values. This option is turned off by default to
   save CPU time.
 
-Note: the above options are options for `Builder` objects, but they can
-be set for a `Parser` object as well. The `Parser` will simply pass on its
-own options to its `Builder`:
+Here's an example that configures the Parser to validate UTF-8 strings
+in its JSON input. Additionally, the options for the Parser's `Builder`
+object are adjusted so attribute name uniqueness is checked and attribute
+name sorting is turned off:
 
 ```cpp
 Parser parser;
@@ -335,9 +365,10 @@ Serializing a VPack value into JSON
 
 When the task is to create a JSON representation of a VPack value, the
 `Dumper` class can be used. `Dumper` is a template class and can write
-JSON output into a char[] buffer or into a string.
+JSON output into a `char[]` buffer or into an `std::string`.
 
-For more convenience, `Dumper` provides the following ready-to-use typedefs:
+For convenience, `Dumper` provides the following ready-to-use typedefs:
+
 - BufferDumper: will dump the JSON into a `Buffer` object
 - StringDumper: will dump the JSON into an `std::string`
 - StringPrettyDumper: will dump the JSON into an `std::string`,
@@ -408,4 +439,10 @@ dumper.options.escapeForwardSlashes = true;
 dumper.dump(parser.steal().slice());
 std::cout << output << std::endl;
 ```
+
+Note that several JSON parser's in the wild provide extensions to the
+original JSON format. For example, some implementations allow comments 
+inside the JSON or support usage of the literals `inf` and `nan` (or `NaN`)
+for out-of-range or invalid numbers. The VPack JSON parser does not 
+support any of these extensions but sticks to the JSON specification.
 

@@ -5,12 +5,12 @@ Prerequisites
 -------------
 
 The VPack library can be built on Linux, MacOS and Windows. Other platforms may
-work, too, but are untested.
+work too, but are untested.
 
 The VPack library is implemented in C++. To build it, a C++11-enabled compiler
-is required. Recent versions of g++ and clang are known to work.
+is required. Recent versions of g++ and clang++ are known to work.
 
-VPack uses [CMake](https://cmake.org/download/) for building. Therefore, a recent
+VPack uses [CMake](https://cmake.org/download/) for building. Therefore a recent
 version of CMake is required, too.
 
 
@@ -36,8 +36,19 @@ be found in the `build` directory when the build is complete.
 To install the library and tools, run the following command:
 
 ```bash
-(cd build && cmake .. && make install)
+(cd build && cmake .. && sudo make install)
 ```
+
+This will install everything in a platform-dependent location. On Linux,
+the default base directory will be `/usr/local`, so the library will be
+installed in `/usr/local/lib` and the binaries in `/usr/local/bin`. 
+To adjust the target install directory, change the `DESTDIR` variable to
+the desired target directory when invoking `make install`, e.g.:
+
+```bash
+(cd build && cmake .. && sudo make DESTDIR=/usr install)
+```
+
 
 Running the tests
 -----------------
@@ -50,7 +61,7 @@ mkdir -p build
 (cd build && cmake -DBuildTests=ON .. && make)
 ```
 
-Afterwards, you can run the tests via:
+Afterwards you can run all tests via:
 
 ```bash
 (cd build/tests && $(find . -maxdepth 1 -type f -name "tests*" | xargs))
