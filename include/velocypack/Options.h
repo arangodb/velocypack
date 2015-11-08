@@ -33,9 +33,21 @@ namespace arangodb {
   namespace velocypack {
 
     struct Options {
+      // validate UTF-8 strings when JSON-parsing with Parser
       bool validateUtf8Strings      = false;
+
+      // validate that attribute names in Object values are actually
+      // unique when creating objects via Builder. This also includes
+      // creation of Object values via a Parser
       bool checkAttributeUniqueness = false;
+
+      // whether or not attribute names should be sorted in Object
+      // values created with a Builder. This also includes creation of
+      // Object values via a Parser
       bool sortAttributeNames       = true;
+
+      // escape forward slashes when serializing VPack values into
+      // JSON with a Dumper
       bool escapeForwardSlashes     = false;
     };
           
