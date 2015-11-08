@@ -64,7 +64,7 @@ mkdir -p build
 Afterwards you can run all tests via:
 
 ```bash
-(cd build/tests && $(find . -maxdepth 1 -type f -name "tests*" | xargs))
+(cd build/tests && ctest -V)
 ```
 
 Build Options

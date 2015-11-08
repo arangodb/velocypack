@@ -3,27 +3,31 @@
 # options
 option(BuildTests "Build test suite" OFF)
 message(STATUS "Building test suite: ${BuildTests}")
+
+option(BuildLargeTests "Build large tests" OFF)
+message(STATUS "Building large tests: ${BuildLargeTests}")
   
 option(BuildAsmTest "Build assembler test code" OFF)
 message(STATUS "Building assembler test suite: ${BuildAsmTest}")
 
 # build tests.cpp
 if(BuildTests)
+  include(CTest)
+
+  enable_testing()
   add_subdirectory(googletest/googletest)
 
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-  foreach (testName
-           testsBuilder
-           testsCollection
-           testsDumper
-           testsFiles
-           testsIterator
-           testsLarge
-           testsLookup
-           testsParser
-           testsSlice
-           testsType)
-
+  foreach(testName
+          testsBuilder
+          testsCollection
+          testsDumper
+          testsFiles
+          testsIterator
+          testsLookup
+          testsParser
+          testsSlice
+          testsType)
     add_executable(
       ${testName}
       ${testName}.cpp
@@ -36,7 +40,23 @@ if(BuildTests)
       ${CMAKE_THREAD_LIBS_INIT}
     )
 
+    add_test(${testName} ${testName})
   endforeach()
+
+  if (buildLargeTests)
+    add_executable(
+      testsLarge
+      testsLarge.cpp
+    )
+  
+    target_link_libraries(
+      testsLarge
+      gtest
+      velocypack
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
+    add_test(testsLarge testsLarge)
+  endif()
 endif()
 
 # build AsmTest
