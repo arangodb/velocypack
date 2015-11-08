@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
 
 set(VELOCYPACK_VERSION "0.0.1" CACHE path "VelocyPack version")
 
