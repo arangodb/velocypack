@@ -68,7 +68,7 @@ uint8_t const* Builder::findAttrName (uint8_t const* base, uint64_t& len) {
 }
 
 void Builder::sortObjectIndexShort (uint8_t* objBase,
-                                         std::vector<ValueLength>& offsets) {
+                                    std::vector<ValueLength>& offsets) {
   auto cmp = [&] (ValueLength a, ValueLength b) -> bool {
     uint8_t const* aa = objBase + a;
     uint8_t const* bb = objBase + b;
@@ -93,7 +93,7 @@ void Builder::sortObjectIndexShort (uint8_t* objBase,
 }
 
 void Builder::sortObjectIndexLong (uint8_t* objBase,
-                                        std::vector<ValueLength>& offsets) {
+                                   std::vector<ValueLength>& offsets) {
 
   // on some platforms we can use a thread-local vector
 #if __llvm__ == 1
@@ -124,7 +124,7 @@ void Builder::sortObjectIndexLong (uint8_t* objBase,
 }
 
 void Builder::sortObjectIndex (uint8_t* objBase,
-                                    std::vector<ValueLength>& offsets) {
+                               std::vector<ValueLength>& offsets) {
   if (offsets.size() > 32) {
     sortObjectIndexLong(objBase, offsets);
   }
@@ -293,6 +293,28 @@ void Builder::close () {
   // off the _stack:
   _stack.pop_back();
   // Intentionally leave _index[depth] intact to avoid future allocs!
+}
+
+// checks whether an Object value has a specific key attribute
+bool Builder::hasKey (std::string const& key) const {
+  if (_stack.empty()) {
+    throw Exception(Exception::BuilderNeedOpenObject);
+  }
+  ValueLength const& tos = _stack.back();
+  if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
+    throw Exception(Exception::BuilderNeedOpenObject);
+  }
+  std::vector<ValueLength> const& index = _index[_stack.size() - 1];
+  if (index.empty()) {
+    return false;
+  }
+  for (size_t i = 0; i < index.size(); ++i) {
+    Slice s(_start + tos + index[i]);
+    if (s.isString() && s.copyString() == key) {
+      return true;
+    }
+  }
+  return false; 
 }
 
 uint8_t* Builder::set (Value const& item) {

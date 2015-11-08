@@ -25,7 +25,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <ostream>
-#include <fstream>
 #include <string>
 
 #include "tests-common.h"
@@ -656,6 +655,45 @@ TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
   b.add(Value(2));
   b.close();
   EXPECT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+}
+
+TEST(BuilderTest, HasKeyEmptyObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  EXPECT_FALSE(b.hasKey("foo"));
+  EXPECT_FALSE(b.hasKey("bar"));
+  EXPECT_FALSE(b.hasKey("baz"));
+  EXPECT_FALSE(b.hasKey("quetzalcoatl"));
+  b.close();
+}
+
+TEST(BuilderTest, HasKeySubObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(1));
+  b.add("bar", Value(true));
+  EXPECT_TRUE(b.hasKey("foo"));
+  EXPECT_TRUE(b.hasKey("bar"));
+  EXPECT_FALSE(b.hasKey("baz"));
+
+  b.add("bark", Value(ValueType::Object));
+  EXPECT_FALSE(b.hasKey("bark"));
+  EXPECT_FALSE(b.hasKey("foo"));
+  EXPECT_FALSE(b.hasKey("bar"));
+  EXPECT_FALSE(b.hasKey("baz"));
+  b.close();
+
+  EXPECT_TRUE(b.hasKey("foo"));
+  EXPECT_TRUE(b.hasKey("bar"));
+  EXPECT_TRUE(b.hasKey("bark"));
+  EXPECT_FALSE(b.hasKey("baz"));
+
+  b.add("baz", Value(42));
+  EXPECT_TRUE(b.hasKey("foo"));
+  EXPECT_TRUE(b.hasKey("bar"));
+  EXPECT_TRUE(b.hasKey("bark"));
+  EXPECT_TRUE(b.hasKey("baz"));
+  b.close();
 }
 
 int main (int argc, char* argv[]) {

@@ -250,6 +250,9 @@ namespace arangodb {
         // Seal the innermost array or object:
         void close ();
 
+        // whether or not a specific key is present in an Object value
+        bool hasKey (std::string const& key) const;
+
         // Syntactic sugar for add:
         Builder& operator() (std::string const& attrName, Value sub) {
           add(attrName, sub);
