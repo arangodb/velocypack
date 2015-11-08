@@ -260,6 +260,57 @@ owned by the Builder object b, which is still available and valid when
 Slice object s is created and used. 
 
 
+Iterating over VPack Arrays and Objects
+---------------------------------------
+
+With the VPack compound value types *Array* and *Object* there comes the
+need to iterate over their individual members. This can be achieved easily
+with the helper classes `ArrayIterator` and `ObjectIterator`.
+
+An `ArrayIterator` object can be constructed from a `Slice` with an 
+underlying VPack Array value. Iterating over the Array members can then
+be achieved easily using a range-based for loop:
+
+```cpp
+Builder b;
+
+// create an Array value with 10 numeric members...
+b(Value(ValueType::Array));
+for (size_t i = 0; i < 10; ++i) {
+  b.add(Value(i));
+}
+b.close();
+
+Slice s(b.start());
+
+// ...and iterate over the array's members
+for (auto const& it : ArrayIterator(s)) {
+  std::cout << it << ", number value: " << it.getUInt() << std::endl;
+}
+```
+
+For VPack values of type *Object*, there is `ObjectIterator`. It provides
+the attributes `key` and `value` for the currently pointed-to member: 
+
+```cpp
+Builder b;
+
+// create an Object value...
+b(Value(ValueType::Object));
+b.add("foo", Value(42)); 
+b.add("bar", Value("some string value")); 
+b.add("qux", Value(true));
+b.close();
+
+Slice s(b.start());
+
+// ...and iterate over its members
+for (auto const& it : ObjectIterator(s)) {
+  std::cout << it.key.copyString() << ", value: " << it.value << std::endl;
+}
+```
+
+
 Parsing JSON into a VPack value
 -------------------------------
 
