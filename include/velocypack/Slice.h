@@ -402,6 +402,16 @@ namespace arangodb {
         Slice operator[] (std::string const& attribute) const {
           return get(attribute);
         }
+ 
+        // whether or not an Object has a specific key
+        bool hasKey (std::string const& attribute) const {
+          return ! get(attribute).isNone();
+        }
+
+        // whether or not an Object has a specific sub-key
+        bool hasKey (std::vector<std::string> const& attributes) const {
+          return ! get(attributes).isNone();
+        }
 
         // return the pointer to the data for an External object
         char const* getExternal () const {
