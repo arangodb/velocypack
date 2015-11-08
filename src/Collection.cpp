@@ -24,6 +24,8 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <unordered_map>
+
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Collection.h"
 #include "velocypack/Iterator.h"
@@ -172,7 +174,7 @@ void Collection::keys (Slice const& slice, std::vector<std::string>& result) {
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    result.emplace_back(it.key().copyString());
+    result.emplace_back(std::move(it.key().copyString()));
     it.next();
   }
 }
@@ -181,7 +183,7 @@ void Collection::keys (Slice const& slice, std::unordered_set<std::string>& resu
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    result.emplace(it.key().copyString());
+    result.emplace(std::move(it.key().copyString()));
     it.next();
   }
 }
@@ -214,7 +216,7 @@ Builder Collection::keep (Slice const& slice, std::vector<std::string> const& ke
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    auto key = it.key().copyString();
+    auto key = std::move(it.key().copyString());
     if (std::find(keys.begin(), keys.end(), key) != keys.end()) {
       b.add(key, it.value());
     }
@@ -232,7 +234,7 @@ Builder Collection::keep (Slice const& slice, std::unordered_set<std::string> co
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    auto key = it.key().copyString();
+    auto key = std::move(it.key().copyString());
     if (keys.find(key) != keys.end()) {
       b.add(key, it.value());
     }
@@ -256,7 +258,7 @@ Builder Collection::remove (Slice const& slice, std::vector<std::string> const& 
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    auto key = it.key().copyString();
+    auto key = std::move(it.key().copyString());
     if (std::find(keys.begin(), keys.end(), key) == keys.end()) {
       b.add(key, it.value());
     }
@@ -274,12 +276,67 @@ Builder Collection::remove (Slice const& slice, std::unordered_set<std::string> 
   ObjectIterator it(slice);
 
   while (it.valid()) {
-    auto key = it.key().copyString();
+    auto key = std::move(it.key().copyString());
     if (keys.find(key) == keys.end()) {
       b.add(key, it.value());
     }
     it.next();
   }
+
+  b.close();
+  return b;
+}
+
+Builder Collection::merge (Slice const& left, Slice const& right, bool mergeValues) {
+  if (! left.isObject() || ! right.isObject()) {
+    throw Exception(Exception::InvalidValueType, "Expecting type Object");
+  }
+
+  Builder b;
+  b.add(Value(ValueType::Object));
+ 
+  std::unordered_map<std::string, Slice> rightValues;
+  {
+    ObjectIterator it(right);
+    while (it.valid()) {
+      rightValues.emplace(std::move(it.key().copyString()), it.value());
+      it.next();
+    }
+  }
+  
+  {    
+    ObjectIterator it(left);
+    
+    while (it.valid()) {
+      auto key = std::move(it.key().copyString());
+      auto found = rightValues.find(key);
+
+      if (found == rightValues.end()) {
+        // use left value
+        b.add(key, it.value());
+      }
+      else if (mergeValues && it.value().isObject() && (*found).second.isObject()) {
+        // merge both values
+        Builder sub = Collection::merge(it.value(), (*found).second, true); 
+        b.add(key, sub.slice());
+      }
+      else {
+        // use right value
+        b.add(key, (*found).second);
+        // clear the value in the map so its not added again
+        (*found).second = Slice();  
+      }
+      it.next();
+    }
+  }
+
+  // add remaining values that were only in right
+  for (auto& it : rightValues) {
+    auto s = it.second;
+    if (! s.isNone()) {
+      b.add(std::move(it.first), it.second);
+    } 
+  } 
 
   b.close();
   return b;

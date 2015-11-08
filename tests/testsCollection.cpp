@@ -1037,6 +1037,182 @@ TEST(CollectionTest, RemoveNonExistingAttributesUsingSet) {
   EXPECT_FALSE(s.hasKey("empty"));
 }
 
+TEST(CollectionTest, MergeNonObject) {
+  Builder b1;
+  b1.add(Value(ValueType::Array));
+  b1.close();
+
+  Builder b2;
+  b2.add(Value(ValueType::Object));
+  b2.close();
+
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false), Exception::InvalidValueType);
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false), Exception::InvalidValueType);
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, MergeEmptyLeft) {
+  std::string const l("{}");
+  std::string const r("{\"bark\":1,\"qux\":2,\"bart\":3}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, true);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("bark"));
+  EXPECT_EQ(1UL, s.get("bark").getUInt());
+  EXPECT_TRUE(s.hasKey("qux"));
+  EXPECT_EQ(2UL, s.get("qux").getUInt());
+  EXPECT_TRUE(s.hasKey("bart"));
+  EXPECT_EQ(3UL, s.get("bart").getUInt());
+}
+
+TEST(CollectionTest, MergeEmptyRight) {
+  std::string const l("{\"bark\":1,\"qux\":2,\"bart\":3}");
+  std::string const r("{}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, true);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("bark"));
+  EXPECT_EQ(1UL, s.get("bark").getUInt());
+  EXPECT_TRUE(s.hasKey("qux"));
+  EXPECT_EQ(2UL, s.get("qux").getUInt());
+  EXPECT_TRUE(s.hasKey("bart"));
+  EXPECT_EQ(3UL, s.get("bart").getUInt());
+}
+
+TEST(CollectionTest, MergeDistinct) {
+  std::string const l("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  std::string const r("{\"bark\":1,\"qux\":2,\"bart\":3}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, true);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ(1UL, s.get("foo").getUInt());
+  EXPECT_TRUE(s.hasKey("bar"));
+  EXPECT_EQ(2UL, s.get("bar").getUInt());
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ(3UL, s.get("baz").getUInt());
+  EXPECT_TRUE(s.hasKey("bark"));
+  EXPECT_EQ(1UL, s.get("bark").getUInt());
+  EXPECT_TRUE(s.hasKey("qux"));
+  EXPECT_EQ(2UL, s.get("qux").getUInt());
+  EXPECT_TRUE(s.hasKey("bart"));
+  EXPECT_EQ(3UL, s.get("bart").getUInt());
+}
+
+TEST(CollectionTest, MergeOverlap) {
+  std::string const l("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  std::string const r("{\"baz\":19,\"bark\":1,\"qux\":2,\"bar\":42,\"test\":9,\"foo\":12}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, true);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ(12UL, s.get("foo").getUInt());
+  EXPECT_TRUE(s.hasKey("bar"));
+  EXPECT_EQ(42UL, s.get("bar").getUInt());
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ(19UL, s.get("baz").getUInt());
+  EXPECT_TRUE(s.hasKey("bark"));
+  EXPECT_EQ(1UL, s.get("bark").getUInt());
+  EXPECT_TRUE(s.hasKey("qux"));
+  EXPECT_EQ(2UL, s.get("qux").getUInt());
+  EXPECT_TRUE(s.hasKey("test"));
+  EXPECT_EQ(9UL, s.get("test").getUInt());
+}
+
+TEST(CollectionTest, MergeSubAttributes) {
+  std::string const l("{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{},\"test\":1}");
+  std::string const r("{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{\"test\":1,\"bart\":2}}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, true);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ(2UL, s.get("foo").getUInt());
+  EXPECT_TRUE(s.hasKey("bar"));
+  Slice sub = s.get("bar");
+  EXPECT_TRUE(sub.hasKey("one"));
+  EXPECT_EQ(23UL, sub.get("one").getUInt());
+  EXPECT_TRUE(sub.hasKey("two"));
+  EXPECT_EQ(42UL, sub.get("two").getUInt());
+  EXPECT_TRUE(sub.hasKey("three"));
+  EXPECT_EQ(3UL, sub.get("three").getUInt());
+  EXPECT_TRUE(sub.hasKey("four"));
+  EXPECT_EQ(99UL, sub.get("four").getUInt());
+  EXPECT_TRUE(s.hasKey("test"));
+  EXPECT_EQ(1UL, s.get("test").getUInt());
+  EXPECT_TRUE(s.hasKey("baz"));
+  sub = s.get("baz");
+  EXPECT_EQ(2UL, sub.length());
+  EXPECT_TRUE(sub.hasKey("test"));
+  EXPECT_EQ(1UL, sub.get("test").getUInt());
+  EXPECT_TRUE(sub.hasKey("bart"));
+  EXPECT_EQ(2UL, sub.get("bart").getUInt());
+}
+
+TEST(CollectionTest, MergeOverwriteSubAttributes) {
+  std::string const l("{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{\"bird\":9},\"test\":1}");
+  std::string const r("{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{\"test\":1,\"bart\":2}}");
+
+  Builder p1 = Parser::fromJson(l);
+  Slice s1(p1.start());
+
+  Builder p2 = Parser::fromJson(r);
+  Slice s2(p2.start());
+
+  Builder b = Collection::merge(s1, s2, false);
+  Slice s(b.start());
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ(2UL, s.get("foo").getUInt());
+  EXPECT_TRUE(s.hasKey("bar"));
+  Slice sub = s.get("bar");
+  EXPECT_TRUE(sub.hasKey("one"));
+  EXPECT_EQ(23UL, sub.get("one").getUInt());
+  EXPECT_TRUE(sub.hasKey("two"));
+  EXPECT_EQ(42UL, sub.get("two").getUInt());
+  EXPECT_FALSE(sub.hasKey("three"));
+  EXPECT_TRUE(sub.hasKey("four"));
+  EXPECT_EQ(99UL, sub.get("four").getUInt());
+  EXPECT_TRUE(s.hasKey("test"));
+  EXPECT_EQ(1UL, s.get("test").getUInt());
+  EXPECT_TRUE(s.hasKey("baz"));
+  sub = s.get("baz");
+  EXPECT_EQ(2UL, sub.length());
+  EXPECT_FALSE(sub.hasKey("bird"));
+  EXPECT_TRUE(sub.hasKey("test"));
+  EXPECT_EQ(1UL, sub.get("test").getUInt());
+  EXPECT_TRUE(sub.hasKey("bart"));
+  EXPECT_EQ(2UL, sub.get("bart").getUInt());
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

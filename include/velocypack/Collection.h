@@ -38,7 +38,7 @@
 
 namespace arangodb {
   namespace velocypack {
-
+      
     class Collection {
 
       public:
@@ -133,6 +133,12 @@ namespace arangodb {
 
         static Builder remove (Slice const* slice, std::unordered_set<std::string> const& keys) {
           return remove(*slice, keys);
+        }
+
+        static Builder merge (Slice const& left, Slice const& right, bool mergeValues);
+
+        static Builder merge (Slice const* left, Slice const* right, bool mergeValues) {
+          return merge(*left, *right, mergeValues);
         }
     };
 
