@@ -12,6 +12,7 @@ add_library(
   Slice.cpp
   ValueType.cpp
   asm-functions.cpp
+  fasthash.cpp
   fpconv.cpp
 )
 

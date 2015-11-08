@@ -30,11 +30,8 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
-#include <unordered_set>
 #include <vector>
 #include <ostream>
-#include <functional>
-#include <algorithm>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
@@ -43,6 +40,9 @@
 
 namespace arangodb {
   namespace velocypack {
+
+    // forward for fasthash64 function declared elsewhere
+    uint64_t fasthash64 (void const*, size_t, uint64_t);
 
     class Slice {
 
@@ -848,6 +848,32 @@ namespace arangodb {
 
   }  // namespace arangodb::velocypack
 }  // namespace arangodb
+
+namespace std {
+  template<> struct hash<arangodb::velocypack::Slice> {
+    size_t operator () (arangodb::velocypack::Slice const& slice) const {
+      return arangodb::velocypack::fasthash64(slice.start(), slice.byteSize(), 0xdeadbeef);
+    }
+  };
+
+  template<> struct equal_to<arangodb::velocypack::Slice> {
+    bool operator () (arangodb::velocypack::Slice const& a,
+                      arangodb::velocypack::Slice const& b) const {
+      if (*a.start() != *b.start()) {
+        return false;
+      }
+
+      auto const aSize = a.byteSize();
+      auto const bSize = b.byteSize();
+
+      if (aSize != bSize) {
+        return false;
+      }
+
+      return (memcmp(a.start(), b.start(), aSize) == 0);
+    }
+  };
+}
         
 std::ostream& operator<< (std::ostream&, arangodb::velocypack::Slice const*);
 

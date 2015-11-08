@@ -284,6 +284,53 @@ TEST(CollectionTest, ForEachArrayAbort) {
   EXPECT_EQ(3UL, seen);
 }
 
+TEST(CollectionTest, IterateArrayValues) {
+  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t state = 0;
+  Collection::forEach(s, [&state] (Slice const& value, ValueLength) -> bool {
+    switch (state++) {
+      case 0:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(1ULL, value.getUInt());
+        break;
+      case 1:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(2ULL, value.getUInt());
+        break;
+      case 2:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(3ULL, value.getUInt());
+        break;
+      case 3:
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(4ULL, value.getUInt());
+        break;
+      case 4:
+        EXPECT_TRUE(value.isNull());
+        break;
+      case 5:
+        EXPECT_TRUE(value.isBoolean());
+        EXPECT_TRUE(value.getBoolean());
+        break;
+      case 6:
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("foo", value.copyString());
+        break;
+      case 7:
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("bar", value.copyString());
+        break;
+    }
+    return true;
+  });
+  EXPECT_EQ(8U, state);
+}
+
 TEST(CollectionTest, FilterNonArray) {
   std::string const value("null");
   Parser parser;

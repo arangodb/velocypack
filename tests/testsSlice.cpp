@@ -665,53 +665,6 @@ TEST(SliceTest, StringLong1) {
   ASSERT_EQ("foobar", slice.copyString());
 }
 
-TEST(SliceTest, IterateArrayValues) {
-  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
-
-  Parser parser;
-  parser.parse(value);
-  Slice s(parser.start());
-
-  size_t state = 0;
-  Collection::forEach(s, [&state] (Slice const& value, ValueLength) -> bool {
-    switch (state++) {
-      case 0:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1ULL, value.getUInt());
-        break;
-      case 1:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(2ULL, value.getUInt());
-        break;
-      case 2:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(3ULL, value.getUInt());
-        break;
-      case 3:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(4ULL, value.getUInt());
-        break;
-      case 4:
-        EXPECT_TRUE(value.isNull());
-        break;
-      case 5:
-        EXPECT_TRUE(value.isBoolean());
-        EXPECT_TRUE(value.getBoolean());
-        break;
-      case 6:
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("foo", value.copyString());
-        break;
-      case 7:
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("bar", value.copyString());
-        break;
-    }
-    return true;
-  });
-  ASSERT_EQ(8U, state);
-}
-
 TEST(SliceTest, ArrayCases1) {
   uint8_t buf[] = { 0x02, 0x05, 0x31, 0x32, 0x33};
   Slice s(buf);
@@ -1115,6 +1068,48 @@ TEST(SliceTest, ObjectCases14) {
   Slice ss = s["a"];
   ASSERT_TRUE(ss.isSmallInt());
   ASSERT_EQ(1LL, ss.getInt());
+}
+
+TEST(SliceTest, EqualToUniqueValues) {
+  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::unordered_set<Slice> values;
+  for (auto it : ArrayIterator(Slice(parser.start()))) {
+    values.emplace(it);
+  }
+
+  EXPECT_EQ(8UL, values.size());
+}
+
+TEST(SliceTest, EqualToDuplicateValuesNumbers) {
+  std::string const value("[1,2,3,4,1,2,3,4,5,9,1]");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::unordered_set<Slice> values;
+  for (auto it : ArrayIterator(Slice(parser.start()))) {
+    values.emplace(it);
+  }
+
+  EXPECT_EQ(6UL, values.size()); // 1,2,3,4,5,9
+}
+
+TEST(SliceTest, EqualToDuplicateValuesStrings) {
+  std::string const value("[\"foo\",\"bar\",\"baz\",\"bart\",\"foo\",\"bark\",\"qux\",\"foo\"]");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::unordered_set<Slice> values;
+  for (auto it : ArrayIterator(Slice(parser.start()))) {
+    values.emplace(it);
+  }
+
+  EXPECT_EQ(6UL, values.size()); // "foo", "bar", "baz", "bart", "bark", "qux"
 }
 
 int main (int argc, char* argv[]) {
