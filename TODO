@@ -12,8 +12,6 @@
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 
 * support modification of VPack objects (removing, updating) (JS)
-  - VPackHelper class
-  - move Slice::iterate into VPackHelper class
 
 * documentation of C++ classes (// ...) (MN)
 
