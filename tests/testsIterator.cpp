@@ -369,6 +369,75 @@ TEST(IteratorTest, IterateObject) {
   EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
 
+TEST(IteratorTest, IterateObjectKeys) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t state = 0;
+  ObjectIterator it(s);
+
+  while (it.valid()) {
+    Slice key(it.key());
+    Slice value(it.value());
+
+    switch (state++) {
+      case 0:
+        EXPECT_EQ("1foo", key.copyString());
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("bar", value.copyString());
+        break;
+      case 1:
+        EXPECT_EQ("2baz", key.copyString());
+        EXPECT_TRUE(value.isString());
+        EXPECT_EQ("quux", value.copyString());
+        break;
+      case 2:
+        EXPECT_EQ("3number", key.copyString());
+        EXPECT_TRUE(value.isNumber());
+        EXPECT_EQ(1ULL, value.getUInt());
+        break;
+      case 3:
+        EXPECT_EQ("4boolean", key.copyString());
+        EXPECT_TRUE(value.isBoolean());
+        EXPECT_TRUE(value.getBoolean());
+        break;
+      case 4:
+        EXPECT_EQ("5empty", key.copyString());
+        EXPECT_TRUE(value.isNull());
+        break;
+    }
+    it.next();
+  }
+
+  ASSERT_EQ(5U, state);
+}
+
+TEST(IteratorTest, IterateObjectValues) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> seenKeys;
+  ObjectIterator it(s);
+
+  while (it.valid()) {
+    seenKeys.emplace_back(it.key().copyString());
+    it.next();
+  };
+
+  ASSERT_EQ(5U, seenKeys.size());
+  ASSERT_EQ("1foo", seenKeys[0]);
+  ASSERT_EQ("2baz", seenKeys[1]);
+  ASSERT_EQ("3number", seenKeys[2]);
+  ASSERT_EQ("4boolean", seenKeys[3]);
+  ASSERT_EQ("5empty", seenKeys[4]);
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

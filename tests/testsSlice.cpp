@@ -673,7 +673,7 @@ TEST(SliceTest, IterateArrayValues) {
   Slice s(parser.start());
 
   size_t state = 0;
-  s.iterateArray([&state] (Slice const& value) -> bool {
+  Collection::forEach(s, [&state] (Slice const& value, ValueLength) -> bool {
     switch (state++) {
       case 0:
         EXPECT_TRUE(value.isNumber());
@@ -710,67 +710,6 @@ TEST(SliceTest, IterateArrayValues) {
     return true;
   });
   ASSERT_EQ(8U, state);
-}
-
-TEST(SliceTest, IterateObjectKeys) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
-
-  Parser parser;
-  parser.parse(value);
-  Slice s(parser.start());
-
-  size_t state = 0;
-  s.iterateObject([&state] (Slice const& key, Slice const& value) -> bool {
-    switch (state++) {
-      case 0:
-        EXPECT_EQ("1foo", key.copyString());
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("bar", value.copyString());
-        break;
-      case 1:
-        EXPECT_EQ("2baz", key.copyString());
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("quux", value.copyString());
-        break;
-      case 2:
-        EXPECT_EQ("3number", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1ULL, value.getUInt());
-        break;
-      case 3:
-        EXPECT_EQ("4boolean", key.copyString());
-        EXPECT_TRUE(value.isBoolean());
-        EXPECT_TRUE(value.getBoolean());
-        break;
-      case 4:
-        EXPECT_EQ("5empty", key.copyString());
-        EXPECT_TRUE(value.isNull());
-        break;
-    }
-    return true;
-  });
-  ASSERT_EQ(5U, state);
-}
-
-TEST(SliceTest, IterateObjectValues) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
-
-  Parser parser;
-  parser.parse(value);
-  Slice s(parser.start());
-
-  std::vector<std::string> seenKeys;
-  s.iterateObject([&] (Slice const& key, Slice const&) -> bool {
-    seenKeys.emplace_back(key.copyString());
-    return true;
-  });
-
-  ASSERT_EQ(5U, seenKeys.size());
-  ASSERT_EQ("1foo", seenKeys[0]);
-  ASSERT_EQ("2baz", seenKeys[1]);
-  ASSERT_EQ("3number", seenKeys[2]);
-  ASSERT_EQ("4boolean", seenKeys[3]);
-  ASSERT_EQ("5empty", seenKeys[4]);
 }
 
 TEST(SliceTest, ArrayCases1) {

@@ -69,6 +69,15 @@ namespace arangodb {
           : _start(reinterpret_cast<uint8_t const*>(start)) {
         }
 
+        Slice (Slice const& other)
+          : _start(other._start) {
+        }
+
+        Slice& operator= (Slice const& other) {
+          _start = other._start;
+          return *this;
+        }
+
         // No destructor, does not take part in memory management,
         // standard copy, and move constructors, behaves like a pointer.
 
@@ -394,24 +403,6 @@ namespace arangodb {
           return get(attribute);
         }
 
-        void iterateArray (std::function<bool(Slice const&)> const& callback) const {
-          ValueLength const n = length(); 
-          for (ValueLength i = 0; i < n; ++i) {
-            if (! callback(at(i))) {
-              return;
-            }
-          }
-        }
-
-        void iterateObject (std::function<bool(Slice const&, Slice const&)> const& callback) const {
-          ValueLength const n = length(); 
-          for (ValueLength i = 0; i < n; ++i) {
-            if (! callback(keyAt(i), valueAt(i))) {
-              return;
-            }
-          }
-        }
-        
         // return the pointer to the data for an External object
         char const* getExternal () const {
           return extractValue<char const*>();
