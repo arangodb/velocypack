@@ -412,7 +412,7 @@ TEST(IteratorTest, IterateObjectKeys) {
     it.next();
   }
 
-  ASSERT_EQ(5U, state);
+  EXPECT_EQ(5U, state);
 }
 
 TEST(IteratorTest, IterateObjectValues) {
@@ -430,12 +430,168 @@ TEST(IteratorTest, IterateObjectValues) {
     it.next();
   };
 
-  ASSERT_EQ(5U, seenKeys.size());
-  ASSERT_EQ("1foo", seenKeys[0]);
-  ASSERT_EQ("2baz", seenKeys[1]);
-  ASSERT_EQ("3number", seenKeys[2]);
-  ASSERT_EQ("4boolean", seenKeys[3]);
-  ASSERT_EQ("5empty", seenKeys[4]);
+  EXPECT_EQ(5U, seenKeys.size());
+  EXPECT_EQ("1foo", seenKeys[0]);
+  EXPECT_EQ("2baz", seenKeys[1]);
+  EXPECT_EQ("3number", seenKeys[2]);
+  EXPECT_EQ("4boolean", seenKeys[3]);
+  EXPECT_EQ("5empty", seenKeys[4]);
+}
+
+TEST(IteratorTest, EmptyArrayIteratorRangeBasedFor) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto it : ArrayIterator(s)) {
+    EXPECT_TRUE(false);
+    EXPECT_FALSE(it.isNumber()); // only in here to please the compiler
+  }
+  EXPECT_EQ(0UL, seen);
+}
+
+TEST(IteratorTest, ArrayIteratorRangeBasedFor) {
+  std::string const value("[1,2,3,4,5]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto it : ArrayIterator(s)) {
+    EXPECT_TRUE(it.isNumber());
+    EXPECT_EQ(seen + 1, it.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(5UL, seen);
+}
+
+TEST(IteratorTest, ArrayIteratorRangeBasedForConst) {
+  std::string const value("[1,2,3,4,5]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto const it : ArrayIterator(s)) {
+    EXPECT_TRUE(it.isNumber());
+    EXPECT_EQ(seen + 1, it.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(5UL, seen);
+}
+
+TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
+  std::string const value("[1,2,3,4,5]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto const& it : ArrayIterator(s)) {
+    EXPECT_TRUE(it.isNumber());
+    EXPECT_EQ(seen + 1, it.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(5UL, seen);
+}
+
+TEST(IteratorTest, ObjectArrayIteratorRangeBasedFor) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto it : ObjectIterator(s)) {
+    EXPECT_TRUE(false);
+    EXPECT_FALSE(it.value.isNumber()); // only in here to please the compiler
+  }
+  EXPECT_EQ(0UL, seen);
+}
+
+TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
+  std::string const value("{\"1foo\":1,\"2bar\":2,\"3qux\":3}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto it : ObjectIterator(s)) {
+    EXPECT_TRUE(it.key.isString());
+    if (seen == 0) {
+      EXPECT_EQ("1foo", it.key.copyString());
+    }
+    else if (seen == 1) {
+      EXPECT_EQ("2bar", it.key.copyString());
+    }
+    else if (seen == 2) {
+      EXPECT_EQ("3qux", it.key.copyString());
+    }
+    EXPECT_TRUE(it.value.isNumber());
+    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(3UL, seen);
+}
+
+TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
+  std::string const value("{\"1foo\":1,\"2bar\":2,\"3qux\":3}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto const it : ObjectIterator(s)) {
+    EXPECT_TRUE(it.key.isString());
+    if (seen == 0) {
+      EXPECT_EQ("1foo", it.key.copyString());
+    }
+    else if (seen == 1) {
+      EXPECT_EQ("2bar", it.key.copyString());
+    }
+    else if (seen == 2) {
+      EXPECT_EQ("3qux", it.key.copyString());
+    }
+    EXPECT_TRUE(it.value.isNumber());
+    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(3UL, seen);
+}
+
+TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
+  std::string const value("{\"1foo\":1,\"2bar\":2,\"3qux\":3}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  size_t seen = 0;
+  for (auto const& it : ObjectIterator(s)) {
+    EXPECT_TRUE(it.key.isString());
+    if (seen == 0) {
+      EXPECT_EQ("1foo", it.key.copyString());
+    }
+    else if (seen == 1) {
+      EXPECT_EQ("2bar", it.key.copyString());
+    }
+    else if (seen == 2) {
+      EXPECT_EQ("3qux", it.key.copyString());
+    }
+    EXPECT_TRUE(it.value.isNumber());
+    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ++seen;
+  }
+  EXPECT_EQ(3UL, seen);
 }
 
 int main (int argc, char* argv[]) {
