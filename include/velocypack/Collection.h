@@ -110,6 +110,30 @@ namespace arangodb {
         static Builder values (Slice const* slice) {
           return values(*slice);
         }
+
+        static Builder keep (Slice const& slice, std::vector<std::string> const& keys);
+
+        static Builder keep (Slice const& slice, std::unordered_set<std::string> const& keys);
+        
+        static Builder keep (Slice const* slice, std::vector<std::string> const& keys) {
+          return keep(*slice, keys);
+        }
+
+        static Builder keep (Slice const* slice, std::unordered_set<std::string> const& keys) {
+          return keep(*slice, keys);
+        }
+
+        static Builder remove (Slice const& slice, std::vector<std::string> const& keys);
+
+        static Builder remove (Slice const& slice, std::unordered_set<std::string> const& keys);
+        
+        static Builder remove (Slice const* slice, std::vector<std::string> const& keys) {
+          return remove(*slice, keys);
+        }
+
+        static Builder remove (Slice const* slice, std::unordered_set<std::string> const& keys) {
+          return remove(*slice, keys);
+        }
     };
 
   }  // namespace arangodb::velocypack

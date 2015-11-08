@@ -151,7 +151,7 @@ TEST(CollectionTest, ObjectKeys) {
   EXPECT_EQ("5empty", keys[4]);
 }
 
-TEST(SliceTest, ObjectKeysRef) {
+TEST(CollectionsTest, ObjectKeysRef) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
   Parser parser;
@@ -752,6 +752,289 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
   }));
 
   EXPECT_EQ(1UL, seen);
+}
+
+TEST(CollectionTest, KeepNonObject) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toKeep = { "foo", "bar" };
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::keep(s, toKeep), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, KeepEmptyObject) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toKeep = { "foo", "bar" };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(0U, s.length());
+}
+
+TEST(CollectionTest, KeepNoAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toKeep = { };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(0U, s.length());
+}
+
+TEST(CollectionTest, KeepSomeAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toKeep = { "foo", "baz", "empty" };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(3U, s.length());
+
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ("bar", s.get("foo").copyString());
+
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ("quux", s.get("baz").copyString());
+
+  EXPECT_TRUE(s.hasKey("empty"));
+  EXPECT_TRUE(s.get("empty").isNull());
+
+  EXPECT_FALSE(s.hasKey("number"));
+  EXPECT_FALSE(s.hasKey("boolean"));
+  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+}
+
+TEST(CollectionTest, KeepSomeAttributesUsingSet) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::unordered_set<std::string> const toKeep = { "foo", "baz", "empty" };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(3U, s.length());
+
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ("bar", s.get("foo").copyString());
+
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ("quux", s.get("baz").copyString());
+
+  EXPECT_TRUE(s.hasKey("empty"));
+  EXPECT_TRUE(s.get("empty").isNull());
+
+  EXPECT_FALSE(s.hasKey("number"));
+  EXPECT_FALSE(s.hasKey("boolean"));
+  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+}
+
+TEST(CollectionTest, KeepNonExistingAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(1U, s.length());
+
+  EXPECT_TRUE(s.hasKey("empty"));
+  EXPECT_TRUE(s.get("empty").isNull());
+
+  EXPECT_FALSE(s.hasKey("foo"));
+  EXPECT_FALSE(s.hasKey("baz"));
+  EXPECT_FALSE(s.hasKey("number"));
+  EXPECT_FALSE(s.hasKey("boolean"));
+  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+}
+
+TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::unordered_set<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
+  Builder b = Collection::keep(s, toKeep);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(1U, s.length());
+
+  EXPECT_TRUE(s.hasKey("empty"));
+  EXPECT_TRUE(s.get("empty").isNull());
+
+  EXPECT_FALSE(s.hasKey("foo"));
+  EXPECT_FALSE(s.hasKey("baz"));
+  EXPECT_FALSE(s.hasKey("number"));
+  EXPECT_FALSE(s.hasKey("boolean"));
+  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+}
+
+TEST(CollectionTest, RemoveNonObject) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toRemove = { "foo", "bar" };
+  EXPECT_VELOCYPACK_EXCEPTION(Collection::remove(s, toRemove), Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, RemoveEmptyObject) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toRemove = { "foo", "bar" };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(0U, s.length());
+}
+
+TEST(CollectionTest, RemoveNoAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toRemove = { };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(5U, s.length());
+
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ("bar", s.get("foo").copyString());
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ("quux", s.get("baz").copyString());
+  EXPECT_TRUE(s.hasKey("number"));
+  EXPECT_EQ(1U, s.get("number").getUInt());
+  EXPECT_TRUE(s.hasKey("boolean"));
+  EXPECT_TRUE(s.get("boolean").getBoolean());
+  EXPECT_TRUE(s.hasKey("empty"));
+  EXPECT_TRUE(s.get("empty").isNull());
+}
+
+TEST(CollectionTest, RemoveSomeAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toRemove = { "foo", "baz", "empty" };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(2U, s.length());
+
+  EXPECT_FALSE(s.hasKey("foo"));
+  EXPECT_FALSE(s.hasKey("baz"));
+  EXPECT_FALSE(s.hasKey("empty"));
+
+  EXPECT_TRUE(s.hasKey("number"));
+  EXPECT_EQ(1U, s.get("number").getUInt());
+  EXPECT_TRUE(s.hasKey("boolean"));
+  EXPECT_TRUE(s.get("boolean").getBoolean());
+}
+
+TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::unordered_set<std::string> const toRemove = { "foo", "baz", "empty" };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(2U, s.length());
+
+  EXPECT_FALSE(s.hasKey("foo"));
+  EXPECT_FALSE(s.hasKey("baz"));
+  EXPECT_FALSE(s.hasKey("empty"));
+
+  EXPECT_TRUE(s.hasKey("number"));
+  EXPECT_EQ(1U, s.get("number").getUInt());
+  EXPECT_TRUE(s.hasKey("boolean"));
+  EXPECT_TRUE(s.get("boolean").getBoolean());
+}
+
+TEST(CollectionTest, RemoveNonExistingAttributes) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(4U, s.length());
+
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ("bar", s.get("foo").copyString());
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ("quux", s.get("baz").copyString());
+  EXPECT_TRUE(s.hasKey("number"));
+  EXPECT_EQ(1UL, s.get("number").getUInt());
+  EXPECT_TRUE(s.hasKey("boolean"));
+  EXPECT_TRUE(s.get("boolean").getBoolean());
+  EXPECT_FALSE(s.hasKey("empty"));
+}
+
+TEST(CollectionTest, RemoveNonExistingAttributesUsingSet) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::unordered_set<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
+  Builder b = Collection::remove(s, toRemove);
+  s = b.slice();
+  EXPECT_TRUE(s.isObject());
+  EXPECT_EQ(4U, s.length());
+
+  EXPECT_TRUE(s.hasKey("foo"));
+  EXPECT_EQ("bar", s.get("foo").copyString());
+  EXPECT_TRUE(s.hasKey("baz"));
+  EXPECT_EQ("quux", s.get("baz").copyString());
+  EXPECT_TRUE(s.hasKey("number"));
+  EXPECT_EQ(1UL, s.get("number").getUInt());
+  EXPECT_TRUE(s.hasKey("boolean"));
+  EXPECT_TRUE(s.get("boolean").getBoolean());
+  EXPECT_FALSE(s.hasKey("empty"));
 }
 
 int main (int argc, char* argv[]) {

@@ -33,6 +33,15 @@
 
 using namespace arangodb::velocypack;
 
+// convert a vector of strings into an unordered_set of strings
+static inline std::unordered_set<std::string> ToSet (std::vector<std::string> const& keys) {
+  std::unordered_set<std::string> s;
+  for (auto const& it : keys) {
+    s.emplace(it);
+  } 
+  return s;
+}
+
 void Collection::forEach (Slice const& slice, std::function<bool(Slice const&, ValueLength)> const& cb) {
   ArrayIterator it(slice);
   ValueLength index = 0;
@@ -185,6 +194,90 @@ Builder Collection::values (Slice const& slice) {
 
   while (it.valid()) {
     b.add(it.value());
+    it.next();
+  }
+
+  b.close();
+  return b;
+}
+
+Builder Collection::keep (Slice const& slice, std::vector<std::string> const& keys) {
+  // check if there are so many keys that we want to use the hash-based version
+  // cut-off values are arbitrary...
+  if (keys.size() >= 4 && slice.length() > 10) {
+    return keep(slice, ToSet(keys));
+  }
+
+  Builder b;
+  b.add(Value(ValueType::Object));
+
+  ObjectIterator it(slice);
+
+  while (it.valid()) {
+    auto key = it.key().copyString();
+    if (std::find(keys.begin(), keys.end(), key) != keys.end()) {
+      b.add(key, it.value());
+    }
+    it.next();
+  }
+
+  b.close();
+  return b;
+}
+
+Builder Collection::keep (Slice const& slice, std::unordered_set<std::string> const& keys) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+
+  ObjectIterator it(slice);
+
+  while (it.valid()) {
+    auto key = it.key().copyString();
+    if (keys.find(key) != keys.end()) {
+      b.add(key, it.value());
+    }
+    it.next();
+  }
+
+  b.close();
+  return b;
+}
+
+Builder Collection::remove (Slice const& slice, std::vector<std::string> const& keys) {
+  // check if there are so many keys that we want to use the hash-based version
+  // cut-off values are arbitrary...
+  if (keys.size() >= 4 && slice.length() > 10) {
+    return remove(slice, ToSet(keys));
+  }
+
+  Builder b;
+  b.add(Value(ValueType::Object));
+
+  ObjectIterator it(slice);
+
+  while (it.valid()) {
+    auto key = it.key().copyString();
+    if (std::find(keys.begin(), keys.end(), key) == keys.end()) {
+      b.add(key, it.value());
+    }
+    it.next();
+  }
+
+  b.close();
+  return b;
+}
+
+Builder Collection::remove (Slice const& slice, std::unordered_set<std::string> const& keys) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+
+  ObjectIterator it(slice);
+
+  while (it.valid()) {
+    auto key = it.key().copyString();
+    if (keys.find(key) == keys.end()) {
+      b.add(key, it.value());
+    }
     it.next();
   }
 
