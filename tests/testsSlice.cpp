@@ -1112,6 +1112,86 @@ TEST(SliceTest, EqualToDuplicateValuesStrings) {
   EXPECT_EQ(6UL, values.size()); // "foo", "bar", "baz", "bart", "bark", "qux"
 }
 
+TEST(SliceTest, EqualToNull) {
+  Builder b1 = Parser::fromJson("null");
+  Slice s1 = b1.slice();
+  Builder b2 = Parser::fromJson("null");
+  Slice s2 = b2.slice();
+
+  EXPECT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, EqualToInt) {
+  Builder b1 = Parser::fromJson("-128885355");
+  Slice s1 = b1.slice();
+  Builder b2 = Parser::fromJson("-128885355");
+  Slice s2 = b2.slice();
+
+  EXPECT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, EqualToUInt) {
+  Builder b1 = Parser::fromJson("128885355");
+  Slice s1 = b1.slice();
+  Builder b2 = Parser::fromJson("128885355");
+  Slice s2 = b2.slice();
+
+  EXPECT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, EqualToDouble) {
+  Builder b1 = Parser::fromJson("-128885355.353");
+  Slice s1 = b1.slice();
+  Builder b2 = Parser::fromJson("-128885355.353");
+  Slice s2 = b2.slice();
+
+  EXPECT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, EqualToString) {
+  Builder b1 = Parser::fromJson("\"this is a test string\"");
+  Slice s1 = b1.slice();
+  Builder b2 = Parser::fromJson("\"this is a test string\"");
+  Slice s2 = b2.slice();
+
+  EXPECT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, HashNull) {
+  Builder b = Parser::fromJson("null");
+  Slice s = b.slice();
+
+  EXPECT_EQ(15292542490648858194ULL, s.hash());
+}
+
+TEST(SliceTest, HashDouble) {
+  Builder b = Parser::fromJson("-345354.35532352");
+  Slice s = b.slice();
+
+  EXPECT_EQ(8711156443018077288ULL, s.hash());
+}
+
+TEST(SliceTest, HashString) {
+  Builder b = Parser::fromJson("\"this is a test string\"");
+  Slice s = b.slice();
+
+  EXPECT_EQ(16298643255475496611ULL, s.hash());
+}
+
+TEST(SliceTest, HashArray) {
+  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  Slice s = b.slice();
+
+  EXPECT_EQ(1515761289406454211ULL, s.hash());
+}
+
+TEST(SliceTest, HashObject) {
+  Builder b = Parser::fromJson("{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,\"seven\":7}");
+  Slice s = b.slice();
+
+  EXPECT_EQ(6865527808070733846ULL, s.hash());
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

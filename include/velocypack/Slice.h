@@ -100,6 +100,10 @@ namespace arangodb {
           return *_start;
         }
 
+        inline uint64_t hash () const {
+          return fasthash64(start(), byteSize(), 0xdeadbeef);
+        }
+
         // check if slice is of the specified type
         inline bool isType (ValueType t) const {
           return type() == t;
@@ -862,7 +866,7 @@ namespace arangodb {
 namespace std {
   template<> struct hash<arangodb::velocypack::Slice> {
     size_t operator () (arangodb::velocypack::Slice const& slice) const {
-      return arangodb::velocypack::fasthash64(slice.start(), slice.byteSize(), 0xdeadbeef);
+      return slice.hash();
     }
   };
 
