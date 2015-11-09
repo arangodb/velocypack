@@ -135,7 +135,7 @@ void Builder::sortObjectIndex (uint8_t* objBase,
 
 void Builder::removeLast () {
   if (_stack.empty()) {
-    throw Exception(Exception::BuilderNeedOpenObject);
+    throw Exception(Exception::BuilderNeedOpenCompound);
   }
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
   if (index.empty()) {
