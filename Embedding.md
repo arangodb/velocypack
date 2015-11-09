@@ -29,7 +29,21 @@ catch (Exception const& ex) {
 ```
 
 Additionally, the VPack library may throw standard exceptions such as
-`std::bad_alloc` when appropriate.
+`std::bad_alloc` when appropriate. 
+
+If no special treatment of VPack exceptions is needed by the client 
+application, it is sufficient to only catch exceptions of type `std::exception`,
+as the VPack `Exception` class is derived from it:
+
+Builder b;
+b.add(Value(ValueType::Object));
+try {
+  // will fail as we should rather add a key/value pair here
+  b.add(Value(ValueType::Null));
+}
+catch (std::exception const& ex) {
+ std::cout << "caught exception: " << ex.what() << std::endl;
+}
 
 
 Thread safety

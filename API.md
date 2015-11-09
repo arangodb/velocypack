@@ -93,7 +93,6 @@ hex dump of its underlying memory:
 ```cpp
 #include <velocypack/vpack.h>
 #include <iostream>
-#include <iomanip>
 
 using namespace arangodb::velocypack;
 
@@ -113,18 +112,9 @@ int main () {
   b.add("name", Value("Gustav"));
   b.close();
 
-  // get pointer to the start of the VPack data
-  uint8_t* p = b.start();
-  ValueLength len = b.size();
-
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-
-  std::cout << std::hex;
-  for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int) p[i] << " ";
-  }
-  std::cout << std::endl;
+  std::cout << HexDump(b.slice());
 }
 ```
 
@@ -138,7 +128,6 @@ built using operator syntax:
 ```cpp
 #include <velocypack/vpack.h>
 #include <iostream>
-#include <iomanip>
 
 using namespace arangodb::velocypack;
 
@@ -154,19 +143,9 @@ int main () {
       (Value(1)) (Value(2)) (Value(3)) ()
     ("name", Value("Gustav")) ();
 
-  // get pointer to the start of the VPack data
-  uint8_t* p = b.start();
-  ValueLength len = b.size();
-
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-
-  std::cout << std::hex;
-  // and dump it to stdout
-  for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int) p[i] << " ";
-  }
-  std::cout << std::endl;
+  std::cout << HexDump(b.slice());
 }
 ```
 
@@ -205,11 +184,11 @@ Inspecting the contents of a VPack object
 -----------------------------------------
 
 The `Slice` class can be used for accessing existing VPack objects and
-inspecting them. A `Slice` can be considered an *overlay over a memory
+inspecting them. A `Slice` can be considered a *view over a memory
 region that contains a VPack value*, but it provides high-level access
-methods so users don't need to mess with raw memory. `Slice` objects 
-themselves are very lightweight and don't need more memory than a regular 
-pointer. 
+methods so users don't need to mess with the raw memory. 
+`Slice` objects themselves are very lightweight and don't need more memory 
+than a regular pointer. 
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -258,6 +237,10 @@ they are pointing to. The client must make sure that the memory a `Slice`
 refers to is actually valid. In the above case, the VPack value is
 owned by the Builder object b, which is still available and valid when
 Slice object s is created and used. 
+
+`Slice` objects are immutable and cannot be used to modify the underlying 
+VPack value. In order to modify an existing `VPack` value, a new value
+needs to be assembled using a `Builder` or a `Parser` object.
 
 
 Iterating over VPack Arrays and Objects
@@ -326,7 +309,6 @@ input. Use the Parser's `steal` method to get your hands on that
 ```cpp
 #include <velocypack/vpack.h>
 #include <iostream>
-#include <iomanip>
 
 using namespace arangodb::velocypack;
 
@@ -350,18 +332,9 @@ int main () {
   // the parser is done. now get its Builder object
   Builder b = parser.steal();
 
-  // get a pointer to the start of the raw VPack data
-  // note: we could have also used a Slice object here...
-  uint8_t* pp = b.start();
-  ValueLength len = b.size();
-
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << std::hex;
-  for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int) pp[i] << " ";
-  }
-  std::cout << std::endl;
+  std::cout << HexDump(b.slice());
 }
 ```
 
