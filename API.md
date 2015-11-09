@@ -323,10 +323,12 @@ int main () {
   }
   catch (std::bad_alloc const& e) {
     std::cout << "Out of memory!" << std::endl;
+    throw;
   }
   catch (Exception const& e) {
     std::cout << "Parse error: " << e.what() << std::endl;
     std::cout << "Position of error: " << parser.errorPos() << std::endl;
+    throw;
   }
 
   // the parser is done. now get its Builder object
