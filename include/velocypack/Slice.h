@@ -69,15 +69,6 @@ namespace arangodb {
           : _start(reinterpret_cast<uint8_t const*>(start)) {
         }
 
-        Slice (Slice const& other)
-          : _start(other._start) {
-        }
-
-        Slice& operator= (Slice const& other) {
-          _start = other._start;
-          return *this;
-        }
-
         // No destructor, does not take part in memory management,
         // standard copy, and move constructors, behaves like a pointer.
 
