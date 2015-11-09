@@ -29,6 +29,32 @@
 
 #include "tests-common.h"
 
+TEST(ParserTest, GarbageCatchVelocyPackException) {
+  std::string const value("z");
+
+  Parser parser;
+  try {
+    parser.parse(value);
+    EXPECT_TRUE(false);
+  }
+  catch (Exception const& ex) {
+    EXPECT_STREQ("Expecting digit", ex.what());
+  }
+}
+
+TEST(ParserTest, GarbageCatchStdException) {
+  std::string const value("z");
+
+  Parser parser;
+  try {
+    parser.parse(value);
+    EXPECT_TRUE(false);
+  }
+  catch (std::exception const& ex) {
+    EXPECT_STREQ("Expecting digit", ex.what());
+  }
+}
+
 TEST(ParserTest, Garbage1) {
   std::string const value("z");
 
