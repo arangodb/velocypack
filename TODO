@@ -11,8 +11,6 @@
 
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 
-* support modification of VPack objects (removing, updating) (JS)
-
 * documentation of C++ classes (// ...) (MN)
 
 * test on MacOS, ARM and Windows
@@ -21,3 +19,4 @@
 
 * SWIG support (MN)
 
+* ideas: add ManagedSlice class, unique/distinct/sort for Arrays
