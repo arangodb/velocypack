@@ -43,6 +43,7 @@ using VPackStringDumper       = arangodb::velocypack::StringDumper;
 using VPackStringPrettyDumper = arangodb::velocypack::StringPrettyDumper;
 using VPackSlice              = arangodb::velocypack::Slice;
 using VPackValue              = arangodb::velocypack::Value;
+using VPackValueLength        = arangodb::velocypack::ValueLength;
 using VPackValueType          = arangodb::velocypack::ValueType;
 
 #endif
