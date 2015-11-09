@@ -5,6 +5,7 @@
 #include "velocypack/Collection.h"
 #include "velocypack/Dump.h"
 #include "velocypack/Exception.h"
+#include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Options.h"
 #include "velocypack/Parser.h"
@@ -17,16 +18,16 @@
 using namespace arangodb::velocypack;
 
 // helper for catching VPack-specific exceptions
-#define EXPECT_VELOCYPACK_EXCEPTION(operation, code) \
+#define ASSERT_VELOCYPACK_EXCEPTION(operation, code) \
   try {                                         \
     (operation);                                \
-    EXPECT_FALSE(true);                         \
+    ASSERT_FALSE(true);                         \
   }                                             \
   catch (Exception const& ex) {                 \
-    EXPECT_EQ(code, ex.errorCode());            \
+    ASSERT_EQ(code, ex.errorCode());            \
   }                                             \
   catch (...) {                                 \
-    EXPECT_FALSE(true);                         \
+    ASSERT_FALSE(true);                         \
   } 
 
 // don't complain if this function is not called

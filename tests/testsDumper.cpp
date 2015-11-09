@@ -185,7 +185,7 @@ TEST(StringDumperTest, CustomWithoutHandler) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {
@@ -351,7 +351,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
@@ -363,7 +363,9 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -378,7 +380,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
@@ -390,14 +392,16 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   double v = std::nan("1");
-  EXPECT_TRUE(std::isnan(v));
+  ASSERT_TRUE(std::isnan(v));
   Builder b;
   b.add(Value(v));
 
@@ -405,19 +409,21 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
   double v = std::nan("1");
-  EXPECT_TRUE(std::isnan(v));
+  ASSERT_TRUE(std::isnan(v));
   Builder b;
   b.add(Value(v));
 
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -430,7 +436,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeBinary) {
@@ -440,7 +446,9 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -454,7 +462,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeUTCDate) {
@@ -465,7 +473,9 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }

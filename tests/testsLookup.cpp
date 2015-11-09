@@ -38,17 +38,17 @@ TEST(LookupTest, HasKeyShortObject) {
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_TRUE(s.hasKey("bar"));
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_TRUE(s.hasKey("qux"));
-  EXPECT_TRUE(s.hasKey("quz"));
-  EXPECT_FALSE(s.hasKey("nada"));
-  EXPECT_FALSE(s.hasKey("Foo"));
-  EXPECT_FALSE(s.hasKey("food"));
-  EXPECT_FALSE(s.hasKey("quxx"));
-  EXPECT_FALSE(s.hasKey("q"));
-  EXPECT_FALSE(s.hasKey(""));
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_TRUE(s.hasKey("quz"));
+  ASSERT_FALSE(s.hasKey("nada"));
+  ASSERT_FALSE(s.hasKey("Foo"));
+  ASSERT_FALSE(s.hasKey("food"));
+  ASSERT_FALSE(s.hasKey("quxx"));
+  ASSERT_FALSE(s.hasKey("q"));
+  ASSERT_FALSE(s.hasKey(""));
 }
 
 TEST(LookupTest, HasKeyLongObject) {
@@ -69,18 +69,18 @@ TEST(LookupTest, HasKeyLongObject) {
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  EXPECT_TRUE(s.hasKey("test4")); 
-  EXPECT_TRUE(s.hasKey("test10")); 
-  EXPECT_TRUE(s.hasKey("test42")); 
-  EXPECT_TRUE(s.hasKey("test100")); 
-  EXPECT_TRUE(s.hasKey("test932")); 
-  EXPECT_TRUE(s.hasKey("test1000")); 
-  EXPECT_TRUE(s.hasKey("test1023")); 
-  EXPECT_FALSE(s.hasKey("test0")); 
-  EXPECT_FALSE(s.hasKey("test1")); 
-  EXPECT_FALSE(s.hasKey("test2")); 
-  EXPECT_FALSE(s.hasKey("test3")); 
-  EXPECT_FALSE(s.hasKey("test1024")); 
+  ASSERT_TRUE(s.hasKey("test4")); 
+  ASSERT_TRUE(s.hasKey("test10")); 
+  ASSERT_TRUE(s.hasKey("test42")); 
+  ASSERT_TRUE(s.hasKey("test100")); 
+  ASSERT_TRUE(s.hasKey("test932")); 
+  ASSERT_TRUE(s.hasKey("test1000")); 
+  ASSERT_TRUE(s.hasKey("test1023")); 
+  ASSERT_FALSE(s.hasKey("test0")); 
+  ASSERT_FALSE(s.hasKey("test1")); 
+  ASSERT_FALSE(s.hasKey("test2")); 
+  ASSERT_FALSE(s.hasKey("test3")); 
+  ASSERT_FALSE(s.hasKey("test1024")); 
 }
 
 TEST(LookupTest, HasKeySubattributes) {
@@ -91,17 +91,17 @@ TEST(LookupTest, HasKeySubattributes) {
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo" }))); 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bar" }))); 
-  EXPECT_FALSE(s.hasKey(std::vector<std::string>({ "boo" }))); 
-  EXPECT_FALSE(s.hasKey(std::vector<std::string>({ "boo", "far" }))); 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bark" }))); 
-  EXPECT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "bark", "baz" }))); 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz" }))); 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux" }))); 
-  EXPECT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz" }))); 
-  EXPECT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurk" }))); 
-  EXPECT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bar" }))); 
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo" }))); 
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo", "far" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bark" }))); 
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "bark", "baz" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux" }))); 
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz" }))); 
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurk" }))); 
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" }))); 
 }
   
 TEST(LookupTest, LookupShortObject) {
@@ -114,41 +114,41 @@ TEST(LookupTest, LookupShortObject) {
 
   Slice v;
   v = s.get("foo"); 
-  EXPECT_TRUE(v.isNull());
+  ASSERT_TRUE(v.isNull());
  
   v = s.get("bar");  
-  EXPECT_TRUE(v.isBool());
-  EXPECT_EQ(true, v.getBool());
+  ASSERT_TRUE(v.isBool());
+  ASSERT_EQ(true, v.getBool());
 
   v = s.get("baz");  
-  EXPECT_TRUE(v.isDouble());
-  EXPECT_DOUBLE_EQ(13.53, v.getDouble());
+  ASSERT_TRUE(v.isDouble());
+  ASSERT_DOUBLE_EQ(13.53, v.getDouble());
 
   v = s.get("qux");  
-  EXPECT_TRUE(v.isArray());
-  EXPECT_TRUE(v.isType(ValueType::Array));
-  EXPECT_EQ(1ULL, v.length());
+  ASSERT_TRUE(v.isArray());
+  ASSERT_TRUE(v.isType(ValueType::Array));
+  ASSERT_EQ(1ULL, v.length());
 
   v = s.get("quz");  
-  EXPECT_TRUE(v.isObject());
-  EXPECT_TRUE(v.isType(ValueType::Object));
-  EXPECT_EQ(0ULL, v.length());
+  ASSERT_TRUE(v.isObject());
+  ASSERT_TRUE(v.isType(ValueType::Object));
+  ASSERT_EQ(0ULL, v.length());
 
   // non-present attributes
   v = s.get("nada");  
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get(std::string("foo\0", 4));  
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("Foo");  
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("food");  
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("");  
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupSubattributes) {
@@ -161,38 +161,38 @@ TEST(LookupTest, LookupSubattributes) {
 
   Slice v;
   v = s.get(std::vector<std::string>({ "foo" })); 
-  EXPECT_TRUE(v.isObject());
+  ASSERT_TRUE(v.isObject());
  
   v = s.get(std::vector<std::string>({ "foo", "bar" })); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1ULL, v.getUInt());
 
   v = s.get(std::vector<std::string>({ "boo" })); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get(std::vector<std::string>({ "boo", "far" })); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get(std::vector<std::string>({ "foo", "bark" })); 
-  EXPECT_TRUE(v.isArray());
+  ASSERT_TRUE(v.isArray());
 
   v = s.get(std::vector<std::string>({ "foo", "bark", "baz" })); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get(std::vector<std::string>({ "foo", "baz" })); 
-  EXPECT_TRUE(v.isObject());
+  ASSERT_TRUE(v.isObject());
 
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux" })); 
-  EXPECT_TRUE(v.isObject());
+  ASSERT_TRUE(v.isObject());
 
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz" })); 
-  EXPECT_TRUE(v.isNull());
+  ASSERT_TRUE(v.isNull());
 
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurk" })); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupLongObject) {
@@ -215,42 +215,42 @@ TEST(LookupTest, LookupLongObject) {
 
   Slice v;
   v = s.get("test4"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(4ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(4ULL, v.getUInt());
 
   v = s.get("test10"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(10ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(10ULL, v.getUInt());
 
   v = s.get("test42"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(42ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(42ULL, v.getUInt());
 
   v = s.get("test100"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(100ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(100ULL, v.getUInt());
   
   v = s.get("test932"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(932ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(932ULL, v.getUInt());
 
   v = s.get("test1000"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1000ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1000ULL, v.getUInt());
 
   v = s.get("test1023"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1023ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1023ULL, v.getUInt());
 
   // none existing
   v = s.get("test0"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("test1"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("test1024"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupLongObjectUnsorted) {
@@ -274,42 +274,42 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
 
   Slice v;
   v = s.get("test4"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(4ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(4ULL, v.getUInt());
 
   v = s.get("test10"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(10ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(10ULL, v.getUInt());
 
   v = s.get("test42"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(42ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(42ULL, v.getUInt());
 
   v = s.get("test100"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(100ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(100ULL, v.getUInt());
   
   v = s.get("test932"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(932ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(932ULL, v.getUInt());
 
   v = s.get("test1000"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1000ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1000ULL, v.getUInt());
 
   v = s.get("test1023"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1023ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1023ULL, v.getUInt());
 
   // none existing
   v = s.get("test0"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("test1"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 
   v = s.get("test1024"); 
-  EXPECT_TRUE(v.isNone());
+  ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupLinear) {
@@ -332,20 +332,20 @@ TEST(LookupTest, LookupLinear) {
 
   Slice v;
   v = s.get("test0"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(0ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(0ULL, v.getUInt());
   
   v = s.get("test1"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(1ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(1ULL, v.getUInt());
 
   v = s.get("test2"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(2ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(2ULL, v.getUInt());
   
   v = s.get("test3"); 
-  EXPECT_TRUE(v.isNumber());
-  EXPECT_EQ(3ULL, v.getUInt());
+  ASSERT_TRUE(v.isNumber());
+  ASSERT_EQ(3ULL, v.getUInt());
 }
 
 TEST(LookupTest, LookupBinary) {
@@ -371,8 +371,8 @@ TEST(LookupTest, LookupBinary) {
     key.append(std::to_string(i));
     Slice v = s.get(key);
   
-    EXPECT_TRUE(v.isNumber());
-    EXPECT_EQ(i, v.getUInt());
+    ASSERT_TRUE(v.isNumber());
+    ASSERT_EQ(i, v.getUInt());
   } 
 }
 
@@ -403,8 +403,8 @@ TEST(LookupTest, LookupBinarySamePrefix) {
     }
     Slice v = s.get(key);
   
-    EXPECT_TRUE(v.isNumber());
-    EXPECT_EQ(i, v.getUInt());
+    ASSERT_TRUE(v.isNumber());
+    ASSERT_EQ(i, v.getUInt());
   } 
 }
 
@@ -431,8 +431,8 @@ TEST(LookupTest, LookupBinaryLongObject) {
     key.append(std::to_string(i));
     Slice v = s.get(key);
   
-    EXPECT_TRUE(v.isNumber());
-    EXPECT_EQ(i, v.getUInt());
+    ASSERT_TRUE(v.isNumber());
+    ASSERT_EQ(i, v.getUInt());
   } 
 }
 

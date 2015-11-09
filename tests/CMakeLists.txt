@@ -23,6 +23,7 @@ if(BuildTests)
           testsCollection
           testsDumper
           testsFiles
+          testsHexDump
           testsIterator
           testsLookup
           testsParser
@@ -43,7 +44,7 @@ if(BuildTests)
     add_test(${testName} ${testName})
   endforeach()
 
-  if (buildLargeTests)
+  if (BuildLargeTests)
     add_executable(
       testsLarge
       testsLarge.cpp

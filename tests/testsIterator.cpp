@@ -34,7 +34,7 @@ TEST(IteratorTest, IterateNonArray1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonArray2) {
@@ -43,7 +43,7 @@ TEST(IteratorTest, IterateNonArray2) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonArray3) {
@@ -52,7 +52,7 @@ TEST(IteratorTest, IterateNonArray3) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonArray4) {
@@ -61,7 +61,7 @@ TEST(IteratorTest, IterateNonArray4) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonArray5) {
@@ -70,7 +70,7 @@ TEST(IteratorTest, IterateNonArray5) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ArrayIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateArrayEmpty) {
@@ -81,11 +81,11 @@ TEST(IteratorTest, IterateArrayEmpty) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
-  EXPECT_FALSE(it.valid());
+  ASSERT_FALSE(it.valid());
   
-  EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
   
-  EXPECT_FALSE(it.next());
+  ASSERT_FALSE(it.next());
 }
 
 TEST(IteratorTest, IterateArray) {
@@ -97,63 +97,63 @@ TEST(IteratorTest, IterateArray) {
 
   ArrayIterator it(s);
 
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   Slice current = it.value();
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(1UL, current.getUInt());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(1UL, current.getUInt());
 
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(2UL, current.getUInt());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(2UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(3UL, current.getUInt());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(3UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(4UL, current.getUInt());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(4UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isNull());
+  ASSERT_TRUE(current.isNull());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isBool());
-  EXPECT_TRUE(current.getBool());
+  ASSERT_TRUE(current.isBool());
+  ASSERT_TRUE(current.getBool());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isString());
-  EXPECT_EQ("foo", current.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("foo", current.copyString());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isString());
-  EXPECT_EQ("bar", current.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("bar", current.copyString());
   
-  EXPECT_FALSE(it.next());
-  EXPECT_FALSE(it.valid());
+  ASSERT_FALSE(it.next());
+  ASSERT_FALSE(it.valid());
 
-  EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateSubArray) {
@@ -165,61 +165,61 @@ TEST(IteratorTest, IterateSubArray) {
 
   ArrayIterator it(s);
 
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   Slice current = it.value();
-  EXPECT_TRUE(current.isArray());  
+  ASSERT_TRUE(current.isArray());  
 
   ArrayIterator it2(current);
-  EXPECT_TRUE(it2.valid());
+  ASSERT_TRUE(it2.valid());
   Slice sub = it2.value();
-  EXPECT_TRUE(sub.isNumber());
-  EXPECT_EQ(1UL, sub.getUInt());
+  ASSERT_TRUE(sub.isNumber());
+  ASSERT_EQ(1UL, sub.getUInt());
 
-  EXPECT_TRUE(it2.next());
+  ASSERT_TRUE(it2.next());
   
-  EXPECT_TRUE(it2.valid());
+  ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  EXPECT_TRUE(sub.isNumber());  
-  EXPECT_EQ(2UL, sub.getUInt());
+  ASSERT_TRUE(sub.isNumber());  
+  ASSERT_EQ(2UL, sub.getUInt());
   
-  EXPECT_TRUE(it2.next());
+  ASSERT_TRUE(it2.next());
   
-  EXPECT_TRUE(it2.valid());
+  ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  EXPECT_TRUE(sub.isNumber());  
-  EXPECT_EQ(3UL, sub.getUInt());
+  ASSERT_TRUE(sub.isNumber());  
+  ASSERT_EQ(3UL, sub.getUInt());
   
-  EXPECT_FALSE(it2.next());
-  EXPECT_FALSE(it2.valid());
-  EXPECT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
+  ASSERT_FALSE(it2.next());
+  ASSERT_FALSE(it2.valid());
+  ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
 
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   current = it.value();
-  EXPECT_TRUE(current.isArray());  
+  ASSERT_TRUE(current.isArray());  
 
   it2 = ArrayIterator(current);
 
-  EXPECT_TRUE(it2.valid());
+  ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  EXPECT_TRUE(sub.isString());
-  EXPECT_EQ("foo", sub.copyString());
+  ASSERT_TRUE(sub.isString());
+  ASSERT_EQ("foo", sub.copyString());
 
-  EXPECT_TRUE(it2.next());
+  ASSERT_TRUE(it2.next());
   
-  EXPECT_TRUE(it2.valid());
+  ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  EXPECT_TRUE(sub.isString());
-  EXPECT_EQ("bar", sub.copyString());
+  ASSERT_TRUE(sub.isString());
+  ASSERT_EQ("bar", sub.copyString());
   
-  EXPECT_FALSE(it2.next());
-  EXPECT_FALSE(it2.valid());
-  EXPECT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
+  ASSERT_FALSE(it2.next());
+  ASSERT_FALSE(it2.valid());
+  ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
 
-  EXPECT_FALSE(it.next());
-  EXPECT_FALSE(it.valid());
-  EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_FALSE(it.next());
+  ASSERT_FALSE(it.valid());
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateNonObject1) {
@@ -228,7 +228,7 @@ TEST(IteratorTest, IterateNonObject1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject2) {
@@ -237,7 +237,7 @@ TEST(IteratorTest, IterateNonObject2) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject3) {
@@ -246,7 +246,7 @@ TEST(IteratorTest, IterateNonObject3) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject4) {
@@ -255,7 +255,7 @@ TEST(IteratorTest, IterateNonObject4) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject5) {
@@ -264,7 +264,7 @@ TEST(IteratorTest, IterateNonObject5) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateObjectEmpty) {
@@ -275,12 +275,12 @@ TEST(IteratorTest, IterateObjectEmpty) {
   Slice s(parser.start());
 
   ObjectIterator it(s);
-  EXPECT_FALSE(it.valid());
+  ASSERT_FALSE(it.valid());
   
-  EXPECT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
-  EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
   
-  EXPECT_FALSE(it.next());
+  ASSERT_FALSE(it.next());
 }
 
 TEST(IteratorTest, IterateObject) {
@@ -293,80 +293,80 @@ TEST(IteratorTest, IterateObject) {
 
   ObjectIterator it(s);
 
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   Slice key = it.key();
   Slice current = it.value();
-  EXPECT_EQ("a", key.copyString());
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(1UL, current.getUInt());
+  ASSERT_EQ("a", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(1UL, current.getUInt());
 
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("b", key.copyString());
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(2UL, current.getUInt());
+  ASSERT_EQ("b", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(2UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("c", key.copyString());
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(3UL, current.getUInt());
+  ASSERT_EQ("c", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(3UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("d", key.copyString());
-  EXPECT_TRUE(current.isNumber());  
-  EXPECT_EQ(4UL, current.getUInt());
+  ASSERT_EQ("d", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(4UL, current.getUInt());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("e", key.copyString());
-  EXPECT_TRUE(current.isNull());
+  ASSERT_EQ("e", key.copyString());
+  ASSERT_TRUE(current.isNull());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("f", key.copyString());
-  EXPECT_TRUE(current.isBool());
-  EXPECT_TRUE(current.getBool());
+  ASSERT_EQ("f", key.copyString());
+  ASSERT_TRUE(current.isBool());
+  ASSERT_TRUE(current.getBool());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("g", key.copyString());
-  EXPECT_TRUE(current.isString());
-  EXPECT_EQ("foo", current.copyString());
+  ASSERT_EQ("g", key.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("foo", current.copyString());
   
-  EXPECT_TRUE(it.next());
+  ASSERT_TRUE(it.next());
   
-  EXPECT_TRUE(it.valid());
+  ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
-  EXPECT_EQ("h", key.copyString());
-  EXPECT_TRUE(current.isString());
-  EXPECT_EQ("bar", current.copyString());
+  ASSERT_EQ("h", key.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("bar", current.copyString());
   
-  EXPECT_FALSE(it.next());
-  EXPECT_FALSE(it.valid());
+  ASSERT_FALSE(it.next());
+  ASSERT_FALSE(it.valid());
 
-  EXPECT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
-  EXPECT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateObjectKeys) {
@@ -385,34 +385,34 @@ TEST(IteratorTest, IterateObjectKeys) {
 
     switch (state++) {
       case 0:
-        EXPECT_EQ("1foo", key.copyString());
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("bar", value.copyString());
+        ASSERT_EQ("1foo", key.copyString());
+        ASSERT_TRUE(value.isString());
+        ASSERT_EQ("bar", value.copyString());
         break;
       case 1:
-        EXPECT_EQ("2baz", key.copyString());
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("quux", value.copyString());
+        ASSERT_EQ("2baz", key.copyString());
+        ASSERT_TRUE(value.isString());
+        ASSERT_EQ("quux", value.copyString());
         break;
       case 2:
-        EXPECT_EQ("3number", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1ULL, value.getUInt());
+        ASSERT_EQ("3number", key.copyString());
+        ASSERT_TRUE(value.isNumber());
+        ASSERT_EQ(1ULL, value.getUInt());
         break;
       case 3:
-        EXPECT_EQ("4boolean", key.copyString());
-        EXPECT_TRUE(value.isBoolean());
-        EXPECT_TRUE(value.getBoolean());
+        ASSERT_EQ("4boolean", key.copyString());
+        ASSERT_TRUE(value.isBoolean());
+        ASSERT_TRUE(value.getBoolean());
         break;
       case 4:
-        EXPECT_EQ("5empty", key.copyString());
-        EXPECT_TRUE(value.isNull());
+        ASSERT_EQ("5empty", key.copyString());
+        ASSERT_TRUE(value.isNull());
         break;
     }
     it.next();
   }
 
-  EXPECT_EQ(5U, state);
+  ASSERT_EQ(5U, state);
 }
 
 TEST(IteratorTest, IterateObjectValues) {
@@ -430,12 +430,12 @@ TEST(IteratorTest, IterateObjectValues) {
     it.next();
   };
 
-  EXPECT_EQ(5U, seenKeys.size());
-  EXPECT_EQ("1foo", seenKeys[0]);
-  EXPECT_EQ("2baz", seenKeys[1]);
-  EXPECT_EQ("3number", seenKeys[2]);
-  EXPECT_EQ("4boolean", seenKeys[3]);
-  EXPECT_EQ("5empty", seenKeys[4]);
+  ASSERT_EQ(5U, seenKeys.size());
+  ASSERT_EQ("1foo", seenKeys[0]);
+  ASSERT_EQ("2baz", seenKeys[1]);
+  ASSERT_EQ("3number", seenKeys[2]);
+  ASSERT_EQ("4boolean", seenKeys[3]);
+  ASSERT_EQ("5empty", seenKeys[4]);
 }
 
 TEST(IteratorTest, EmptyArrayIteratorRangeBasedFor) {
@@ -447,10 +447,10 @@ TEST(IteratorTest, EmptyArrayIteratorRangeBasedFor) {
 
   size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
-    EXPECT_TRUE(false);
-    EXPECT_FALSE(it.isNumber()); // only in here to please the compiler
+    ASSERT_TRUE(false);
+    ASSERT_FALSE(it.isNumber()); // only in here to please the compiler
   }
-  EXPECT_EQ(0UL, seen);
+  ASSERT_EQ(0UL, seen);
 }
 
 TEST(IteratorTest, ArrayIteratorRangeBasedFor) {
@@ -462,11 +462,11 @@ TEST(IteratorTest, ArrayIteratorRangeBasedFor) {
 
   size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
-    EXPECT_TRUE(it.isNumber());
-    EXPECT_EQ(seen + 1, it.getUInt());
+    ASSERT_TRUE(it.isNumber());
+    ASSERT_EQ(seen + 1, it.getUInt());
     ++seen;
   }
-  EXPECT_EQ(5UL, seen);
+  ASSERT_EQ(5UL, seen);
 }
 
 TEST(IteratorTest, ArrayIteratorRangeBasedForConst) {
@@ -478,11 +478,11 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConst) {
 
   size_t seen = 0;
   for (auto const it : ArrayIterator(s)) {
-    EXPECT_TRUE(it.isNumber());
-    EXPECT_EQ(seen + 1, it.getUInt());
+    ASSERT_TRUE(it.isNumber());
+    ASSERT_EQ(seen + 1, it.getUInt());
     ++seen;
   }
-  EXPECT_EQ(5UL, seen);
+  ASSERT_EQ(5UL, seen);
 }
 
 TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
@@ -494,11 +494,11 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
 
   size_t seen = 0;
   for (auto const& it : ArrayIterator(s)) {
-    EXPECT_TRUE(it.isNumber());
-    EXPECT_EQ(seen + 1, it.getUInt());
+    ASSERT_TRUE(it.isNumber());
+    ASSERT_EQ(seen + 1, it.getUInt());
     ++seen;
   }
-  EXPECT_EQ(5UL, seen);
+  ASSERT_EQ(5UL, seen);
 }
 
 TEST(IteratorTest, ObjectArrayIteratorRangeBasedFor) {
@@ -510,10 +510,10 @@ TEST(IteratorTest, ObjectArrayIteratorRangeBasedFor) {
 
   size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
-    EXPECT_TRUE(false);
-    EXPECT_FALSE(it.value.isNumber()); // only in here to please the compiler
+    ASSERT_TRUE(false);
+    ASSERT_FALSE(it.value.isNumber()); // only in here to please the compiler
   }
-  EXPECT_EQ(0UL, seen);
+  ASSERT_EQ(0UL, seen);
 }
 
 TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
@@ -525,21 +525,21 @@ TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
 
   size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
-    EXPECT_TRUE(it.key.isString());
+    ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
-      EXPECT_EQ("1foo", it.key.copyString());
+      ASSERT_EQ("1foo", it.key.copyString());
     }
     else if (seen == 1) {
-      EXPECT_EQ("2bar", it.key.copyString());
+      ASSERT_EQ("2bar", it.key.copyString());
     }
     else if (seen == 2) {
-      EXPECT_EQ("3qux", it.key.copyString());
+      ASSERT_EQ("3qux", it.key.copyString());
     }
-    EXPECT_TRUE(it.value.isNumber());
-    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ASSERT_TRUE(it.value.isNumber());
+    ASSERT_EQ(seen + 1, it.value.getUInt());
     ++seen;
   }
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
@@ -551,21 +551,21 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
 
   size_t seen = 0;
   for (auto const it : ObjectIterator(s)) {
-    EXPECT_TRUE(it.key.isString());
+    ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
-      EXPECT_EQ("1foo", it.key.copyString());
+      ASSERT_EQ("1foo", it.key.copyString());
     }
     else if (seen == 1) {
-      EXPECT_EQ("2bar", it.key.copyString());
+      ASSERT_EQ("2bar", it.key.copyString());
     }
     else if (seen == 2) {
-      EXPECT_EQ("3qux", it.key.copyString());
+      ASSERT_EQ("3qux", it.key.copyString());
     }
-    EXPECT_TRUE(it.value.isNumber());
-    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ASSERT_TRUE(it.value.isNumber());
+    ASSERT_EQ(seen + 1, it.value.getUInt());
     ++seen;
   }
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
@@ -577,21 +577,21 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
 
   size_t seen = 0;
   for (auto const& it : ObjectIterator(s)) {
-    EXPECT_TRUE(it.key.isString());
+    ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
-      EXPECT_EQ("1foo", it.key.copyString());
+      ASSERT_EQ("1foo", it.key.copyString());
     }
     else if (seen == 1) {
-      EXPECT_EQ("2bar", it.key.copyString());
+      ASSERT_EQ("2bar", it.key.copyString());
     }
     else if (seen == 2) {
-      EXPECT_EQ("3qux", it.key.copyString());
+      ASSERT_EQ("3qux", it.key.copyString());
     }
-    EXPECT_TRUE(it.value.isNumber());
-    EXPECT_EQ(seen + 1, it.value.getUInt());
+    ASSERT_TRUE(it.value.isNumber());
+    ASSERT_EQ(seen + 1, it.value.getUInt());
     ++seen;
   }
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 int main (int argc, char* argv[]) {

@@ -31,7 +31,7 @@
 
 TEST(BuilderTest, Null) {
   Builder b;
-  b.add(Value());
+  b.add(Value(ValueType::Null));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
@@ -632,19 +632,19 @@ TEST(BuilderTest, ID) {
 TEST(BuilderTest, AddOnNonArray) {
   Builder b;
   b.add(Value(ValueType::Object));
-  EXPECT_VELOCYPACK_EXCEPTION(b.add(Value(true)), Exception::BuilderNeedOpenArray);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true)), Exception::BuilderNeedOpenArray);
 }
 
 TEST(BuilderTest, AddOnNonObject) {
   Builder b;
   b.add(Value(ValueType::Array));
-  EXPECT_VELOCYPACK_EXCEPTION(b.add("foo", Value(true)), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add("foo", Value(true)), Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, StartCalledOnOpenObject) {
   Builder b;
   b.add(Value(ValueType::Object));
-  EXPECT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
 }
 
 TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
@@ -654,16 +654,16 @@ TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
   b.add(Value(1));
   b.add(Value(2));
   b.close();
-  EXPECT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
 }
 
 TEST(BuilderTest, HasKeyEmptyObject) {
   Builder b;
   b.add(Value(ValueType::Object));
-  EXPECT_FALSE(b.hasKey("foo"));
-  EXPECT_FALSE(b.hasKey("bar"));
-  EXPECT_FALSE(b.hasKey("baz"));
-  EXPECT_FALSE(b.hasKey("quetzalcoatl"));
+  ASSERT_FALSE(b.hasKey("foo"));
+  ASSERT_FALSE(b.hasKey("bar"));
+  ASSERT_FALSE(b.hasKey("baz"));
+  ASSERT_FALSE(b.hasKey("quetzalcoatl"));
   b.close();
 }
 
@@ -672,27 +672,27 @@ TEST(BuilderTest, HasKeySubObject) {
   b.add(Value(ValueType::Object));
   b.add("foo", Value(1));
   b.add("bar", Value(true));
-  EXPECT_TRUE(b.hasKey("foo"));
-  EXPECT_TRUE(b.hasKey("bar"));
-  EXPECT_FALSE(b.hasKey("baz"));
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_FALSE(b.hasKey("baz"));
 
   b.add("bark", Value(ValueType::Object));
-  EXPECT_FALSE(b.hasKey("bark"));
-  EXPECT_FALSE(b.hasKey("foo"));
-  EXPECT_FALSE(b.hasKey("bar"));
-  EXPECT_FALSE(b.hasKey("baz"));
+  ASSERT_FALSE(b.hasKey("bark"));
+  ASSERT_FALSE(b.hasKey("foo"));
+  ASSERT_FALSE(b.hasKey("bar"));
+  ASSERT_FALSE(b.hasKey("baz"));
   b.close();
 
-  EXPECT_TRUE(b.hasKey("foo"));
-  EXPECT_TRUE(b.hasKey("bar"));
-  EXPECT_TRUE(b.hasKey("bark"));
-  EXPECT_FALSE(b.hasKey("baz"));
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_TRUE(b.hasKey("bark"));
+  ASSERT_FALSE(b.hasKey("baz"));
 
   b.add("baz", Value(42));
-  EXPECT_TRUE(b.hasKey("foo"));
-  EXPECT_TRUE(b.hasKey("bar"));
-  EXPECT_TRUE(b.hasKey("bark"));
-  EXPECT_TRUE(b.hasKey("baz"));
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_TRUE(b.hasKey("bark"));
+  ASSERT_TRUE(b.hasKey("baz"));
   b.close();
 }
 

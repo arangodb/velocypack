@@ -31,6 +31,11 @@
 
 namespace arangodb {
   namespace velocypack {
+        
+    enum UnsupportedTypeBehavior {
+      NullifyUnsupportedType,
+      FailOnUnsupportedType
+    };
 
     struct Options {
       Options () {
@@ -53,8 +58,12 @@ namespace arangodb {
       // JSON with a Dumper
       bool escapeForwardSlashes     = false;
 
+      // Dumper behavior when a VPack value is serialized to JSON that
+      // has no JSON equivalent
+      UnsupportedTypeBehavior unsupportedTypeBehavior = FailOnUnsupportedType;
+
       // default options with the above settings
-      static Options const Defaults;
+      static Options Defaults;
     };
           
   }  // namespace arangodb::velocypack

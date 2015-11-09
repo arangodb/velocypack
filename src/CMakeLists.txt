@@ -8,6 +8,7 @@ add_library(
   Builder.cpp
   Collection.cpp
   Exception.cpp
+  HexDump.cpp
   Options.cpp
   Parser.cpp
   Slice.cpp

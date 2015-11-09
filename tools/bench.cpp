@@ -54,7 +54,7 @@ static void usage (char* argv[]) {
   std::cout << "TYPE must be either 'vpack' or 'rapidjson'." << std::endl;
 }
 
-static std::string readFile (std::string const& filename) {
+static std::string tryReadFile (std::string const& filename) {
   std::string s;
   std::ifstream ifs(filename.c_str(), std::ifstream::in);
 
@@ -71,6 +71,25 @@ static std::string readFile (std::string const& filename) {
   ifs.close();
 
   return s;
+}
+
+static std::string readFile (std::string filename) {
+#ifdef _WIN32
+  std::string const separator("\\");
+#else
+  std::string const separator("/");
+#endif
+  filename = "tests" + separator + "jsonSample" + separator + filename;
+
+  for (size_t i = 0; i < 3; ++i) {
+    try {
+      return tryReadFile(filename);
+    }
+    catch (...) {
+      filename = ".." + separator + filename;
+    }
+  }
+  throw "cannot open input file";
 }
 
 static void run (std::string& data, int runTime, size_t copies, bool useVPack, bool fullOutput) {
@@ -147,9 +166,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useVPack, b
 
 static void runDefaultBench () {
   auto runComparison = [] (std::string const& filename) {
-    std::string path("jsonSample/");
-    path += filename;
-    std::string data = std::move(readFile(path));
+    std::string data = std::move(readFile(filename));
 
     std::cout << std::endl;
     std::cout << "# " << filename << " ";

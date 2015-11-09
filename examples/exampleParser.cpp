@@ -23,13 +23,8 @@ int main (int, char*[]) {
 
   // get a pointer to the start of the data
   Builder b = parser.steal();
-  uint8_t* pp = b.start();
-  ValueLength len = b.size();
  
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  for (size_t i = 0; i < len; i++) {
-    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int) pp[i] << " ";
-  }
-  std::cout << std::endl;
+  std::cout << HexDump(b.slice());
 }
