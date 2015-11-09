@@ -208,7 +208,7 @@ namespace arangodb {
 
         // Return a pointer to the start of the result:
         uint8_t* start () const {
-          if (! _stack.empty()) {
+          if (! isClosed()) {
             throw Exception(Exception::BuilderNotSealed);
           }
           return _start;
@@ -216,15 +216,19 @@ namespace arangodb {
 
         // Return a Slice of the result:
         Slice slice () const {
-          return Slice(_start);
+          return Slice(start());
         }
 
         // Compute the actual size here, but only when sealed
         ValueLength size () const {
-          if (! _stack.empty()) {
+          if (! isClosed()) {
             throw Exception(Exception::BuilderNotSealed);
           }
           return _pos;
+        }
+
+        bool isClosed () const throw() {
+          return _stack.empty();
         }
 
         // Add a subvalue into an object from a Value:

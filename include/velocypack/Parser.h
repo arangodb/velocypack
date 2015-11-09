@@ -88,6 +88,7 @@ namespace arangodb {
         uint8_t const* _start;
         size_t         _size;
         size_t         _pos;
+        int            _nesting;
 
       public:
 
@@ -96,7 +97,7 @@ namespace arangodb {
         Parser (Parser const&) = delete;
         Parser& operator= (Parser const&) = delete;
 
-        Parser () : _start(nullptr), _size(0), _pos(0) {
+        Parser () : _start(nullptr), _size(0), _pos(0), _nesting(0) {
         }
 
         static Builder fromJson (std::string const& json, Options const& options = Options::Defaults) {
@@ -261,6 +262,14 @@ namespace arangodb {
             throw Exception(Exception::ParseError, msg);
           }
           return i;
+        }
+
+        inline void increaseNesting () {
+          ++_nesting;
+        }
+        
+        inline void decreaseNesting () {
+          --_nesting;
         }
 
         void parseNumber ();
