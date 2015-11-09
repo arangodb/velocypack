@@ -167,7 +167,6 @@ std::ostream& operator<< (std::ostream& stream, Slice const* slice) {
 }
 
 std::ostream& operator<< (std::ostream& stream, Slice const& slice) {
-  stream << "[Slice " << valueTypeName(slice.type()) << " (" << slice.hexType() << "), byteSize: " << slice.byteSize() << "]";
-  return stream;
+  return operator<<(stream, &slice);
 }
 

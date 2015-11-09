@@ -54,7 +54,7 @@ namespace arangodb {
       bool escapeForwardSlashes     = false;
 
       // default options with the above settings
-      static Options const Defaults;
+      static Options Defaults;
     };
           
   }  // namespace arangodb::velocypack

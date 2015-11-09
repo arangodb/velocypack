@@ -23,6 +23,7 @@ if(BuildTests)
           testsCollection
           testsDumper
           testsFiles
+          testsHexDump
           testsIterator
           testsLookup
           testsParser

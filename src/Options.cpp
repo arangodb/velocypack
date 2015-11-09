@@ -30,5 +30,5 @@
 using namespace arangodb::velocypack;
 
 // default options instance        
-Options const Options::Defaults;
+Options Options::Defaults;
 

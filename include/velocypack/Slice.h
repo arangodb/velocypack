@@ -68,6 +68,22 @@ namespace arangodb {
         explicit Slice (char const* start) 
           : _start(reinterpret_cast<uint8_t const*>(start)) {
         }
+        
+        uint8_t const* begin () {
+          return _start;
+        }
+        
+        uint8_t const* begin () const {
+          return _start;
+        }
+        
+        uint8_t const* end () {
+          return _start + byteSize();
+        }
+
+        uint8_t const* end () const {
+          return _start + byteSize();
+        }
 
         // No destructor, does not take part in memory management,
         // standard copy, and move constructors, behaves like a pointer.
