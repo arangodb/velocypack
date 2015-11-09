@@ -137,11 +137,12 @@ void Builder::removeLast () {
   if (_stack.empty()) {
     throw Exception(Exception::BuilderNeedOpenCompound);
   }
+  ValueLength& tos = _stack.back();
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
   if (index.empty()) {
     throw Exception(Exception::BuilderNeedSubvalue);
   }
-  _pos = index.back();
+  _pos = tos + index.back();
   index.pop_back();
 }
 
