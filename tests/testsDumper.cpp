@@ -363,7 +363,9 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -390,7 +392,9 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -417,7 +421,9 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -440,7 +446,9 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
@@ -465,7 +473,9 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Slice slice = b.slice();
 
   std::string buffer;
-  StringDumper dumper(buffer, StringDumper::StrategyNullifyUnsupportedType);
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringDumper dumper(buffer, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
 }
