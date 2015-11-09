@@ -491,9 +491,9 @@ dumper.dump(parser.steal().slice());
 std::cout << output << std::endl;
 ```
 
-Note that several JSON parser's in the wild provide extensions to the
+Note that several JSON parsers in the wild provide extensions to the
 original JSON format. For example, some implementations allow comments 
-inside the JSON or support usage of the literals `inf` and `nan` (or `NaN`)
-for out-of-range or invalid numbers. The VPack JSON parser does not 
+inside the JSON or support usage of the literals `inf` and `nan`/`NaN`
+for out-of-range and invalid numbers. The VPack JSON parser does not 
 support any of these extensions but sticks to the JSON specification.
 
