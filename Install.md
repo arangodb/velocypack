@@ -67,6 +67,23 @@ Afterwards you can run all tests via:
 (cd build/tests && ctest -V)
 ```
 
+Running coverage tests
+----------------------
+
+Running the test suite with coverage collection requires g++ and *lcov* to be
+installed. To run the coverage tests, a debug build needs to be created as
+follows:
+
+```bash
+(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF .. && make)
+(cd build && lcov --zerocounters --directory . && lcov --capture --initial --directory . --output-file app)
+(cd build/tests && ctest)
+(cd build && lcov --no-checksum --directory src  --capture --output-file app.info && genhtml app.info)
+```
+
+This will create coverage info and HTML coverage reports in the `build` subdirectory.
+
+
 Build Options
 -------------
 
@@ -92,4 +109,7 @@ The following options can be set when building VPack:
   support of the host platform. Note that this option should be turned off when
   running VPack under Valgrind, as Valgrind does not seem to support all SSE4
   operations used in VPack.
+* `-DCoverage`: needs to be set to `ON` for coverage tests. Setting this option
+  will automatically turn the build into a debug build. The option is currently
+  supported for g++ only.
 
