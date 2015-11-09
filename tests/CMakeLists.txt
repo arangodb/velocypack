@@ -43,7 +43,7 @@ if(BuildTests)
     add_test(${testName} ${testName})
   endforeach()
 
-  if (buildLargeTests)
+  if (BuildLargeTests)
     add_executable(
       testsLarge
       testsLarge.cpp
