@@ -64,7 +64,6 @@ elseif(CMAKE_COMPILER_IS_CLANGCXX)
 elseif(MSVC) 
   message(STATUS "Compiler type MSVC: ${CMAKE_CXX_COMPILER}")
 
-  set(DEBUG_MODE False)
   add_definitions("-D_CRT_SECURE_NO_WARNINGS=1")
 
   foreach (flag_var
@@ -79,14 +78,13 @@ elseif(MSVC)
 
     if (flag_var MATCHES "DEBUG")
       set(${flag_var} "${${flag_var}} /MTd")
-      set(DEBUG_MODE True)
     else ()
       set(${flag_var} "${${flag_var}} /MT")
     endif ()
   endforeach()
 
   # https://msdn.microsoft.com/en-us/library/aa267384%28VS.60%29.aspx
-  if(DEBUG_MODE)
+  if(CMAKE_BUILD_TYPE STREQUAL Debug)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE /LTCG /ignore:4099 /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:msvcrtd.lib")
   else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:CONSOLE /LTCG /ignore:4099 /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:msvcrtd.lib")
