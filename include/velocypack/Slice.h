@@ -32,6 +32,7 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <algorithm>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"

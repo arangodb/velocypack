@@ -36,7 +36,7 @@
 
 using namespace arangodb::velocypack;
 
-static void usage (char* argv[0]) {
+static void usage (char* argv[]) {
   std::cout << "Usage: " << argv[0] << " INFILE OUTFILE" << std::endl;
   std::cout << "This program reads the VPack INFILE into a string and saves its" << std::endl;
   std::cout << "JSON representation in file OUTFILE. Will work only for input" << std::endl;

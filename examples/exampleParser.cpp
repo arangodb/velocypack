@@ -13,7 +13,7 @@ int main (int, char*[]) {
     size_t nr = parser.parse(json);
     std::cout << "Number of values: " << nr << std::endl;
   }
-  catch (std::bad_alloc const& e) {
+  catch (std::bad_alloc const&) {
     std::cout << "Out of memory!" << std::endl;
     throw;
   }
