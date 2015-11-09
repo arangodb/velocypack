@@ -185,7 +185,7 @@ TEST(StringDumperTest, CustomWithoutHandler) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {
@@ -351,7 +351,7 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
@@ -378,7 +378,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
@@ -397,7 +397,7 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
 
 TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   double v = std::nan("1");
-  EXPECT_TRUE(std::isnan(v));
+  ASSERT_TRUE(std::isnan(v));
   Builder b;
   b.add(Value(v));
 
@@ -405,12 +405,12 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {
   double v = std::nan("1");
-  EXPECT_TRUE(std::isnan(v));
+  ASSERT_TRUE(std::isnan(v));
   Builder b;
   b.add(Value(v));
 
@@ -430,7 +430,7 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeBinary) {
@@ -454,7 +454,7 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
 
   std::string buffer;
   StringDumper dumper(buffer);
-  EXPECT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeUTCDate) {

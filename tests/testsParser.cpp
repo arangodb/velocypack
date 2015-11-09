@@ -35,10 +35,10 @@ TEST(ParserTest, GarbageCatchVelocyPackException) {
   Parser parser;
   try {
     parser.parse(value);
-    EXPECT_TRUE(false);
+    ASSERT_TRUE(false);
   }
   catch (Exception const& ex) {
-    EXPECT_STREQ("Expecting digit", ex.what());
+    ASSERT_STREQ("Expecting digit", ex.what());
   }
 }
 
@@ -48,10 +48,10 @@ TEST(ParserTest, GarbageCatchStdException) {
   Parser parser;
   try {
     parser.parse(value);
-    EXPECT_TRUE(false);
+    ASSERT_TRUE(false);
   }
   catch (std::exception const& ex) {
-    EXPECT_STREQ("Expecting digit", ex.what());
+    ASSERT_STREQ("Expecting digit", ex.what());
   }
 }
 
@@ -59,7 +59,7 @@ TEST(ParserTest, Garbage1) {
   std::string const value("z");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -67,7 +67,7 @@ TEST(ParserTest, Garbage2) {
   std::string const value("foo");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(1U, parser.errorPos());
 }
 
@@ -75,7 +75,7 @@ TEST(ParserTest, Garbage3) {
   std::string const value("truth");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(3U, parser.errorPos());
 }
 
@@ -83,7 +83,7 @@ TEST(ParserTest, Garbage4) {
   std::string const value("tru");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(2U, parser.errorPos());
 }
 
@@ -91,7 +91,7 @@ TEST(ParserTest, Garbage5) {
   std::string const value("truebar");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -99,7 +99,7 @@ TEST(ParserTest, Garbage6) {
   std::string const value("fals");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(3U, parser.errorPos());
 }
 
@@ -107,7 +107,7 @@ TEST(ParserTest, Garbage7) {
   std::string const value("falselaber");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(5U, parser.errorPos());
 }
 
@@ -115,7 +115,7 @@ TEST(ParserTest, Garbage8) {
   std::string const value("zauberzauber");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -123,7 +123,7 @@ TEST(ParserTest, Garbage9) {
   std::string const value("true,");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -131,7 +131,7 @@ TEST(ParserTest, Punctuation1) {
   std::string const value(",");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -139,7 +139,7 @@ TEST(ParserTest, Punctuation2) {
   std::string const value("/");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -147,7 +147,7 @@ TEST(ParserTest, Punctuation3) {
   std::string const value("@");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -155,7 +155,7 @@ TEST(ParserTest, Punctuation4) {
   std::string const value(":");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -163,7 +163,7 @@ TEST(ParserTest, Punctuation5) {
   std::string const value("!");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -230,7 +230,7 @@ TEST(ParserTest, ZeroInvalid) {
   std::string const value("00");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(1u, parser.errorPos());
 }
 
@@ -238,7 +238,7 @@ TEST(ParserTest, NumberIncomplete) {
   std::string const value("-");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0u, parser.errorPos());
 }
 
@@ -500,35 +500,35 @@ TEST(ParserTest, IntMinusInf) {
   std::string const value("-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, IntPlusInf) {
   std::string const value("999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, DoubleMinusInf) {
   std::string const value("-1.2345e999");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, DoublePlusInf) {
   std::string const value("1.2345e999");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, Empty) {
   std::string const value("");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -536,7 +536,7 @@ TEST(ParserTest, WhitespaceOnly) {
   std::string const value("  ");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(1U, parser.errorPos());
 }
 
@@ -544,7 +544,7 @@ TEST(ParserTest, UnterminatedStringLiteral) {
   std::string const value("\"der hund");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(8U, parser.errorPos());
 }
 
@@ -597,7 +597,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
 
   Parser parser;
   parser.options.validateUtf8Strings = true;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -612,7 +612,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
 
   Parser parser;
   parser.options.validateUtf8Strings = true;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
   parser.options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -626,7 +626,7 @@ TEST(ParserTest, StringLiteralControlCharacter) {
     value.push_back('"');
 
     Parser parser;
-    EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::UnexpectedControlCharacter);
+    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::UnexpectedControlCharacter);
     ASSERT_EQ(1U, parser.errorPos());
   }
 }
@@ -635,7 +635,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence1) {
   std::string const value("\"\\u\"");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(3U, parser.errorPos());
 }
 
@@ -643,7 +643,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence2) {
   std::string const value("\"\\u0\"");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -651,7 +651,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence3) {
   std::string const value("\"\\u01\"");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(5U, parser.errorPos());
 }
 
@@ -659,7 +659,7 @@ TEST(ParserTest, StringLiteralUnfinishedUtfSequence4) {
   std::string const value("\"\\u012\"");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(6U, parser.errorPos());
 }
 
@@ -1058,7 +1058,7 @@ TEST(ParserTest, NestedArrayInvalid1) {
   std::string const value("[ [ ]");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -1066,7 +1066,7 @@ TEST(ParserTest, NestedArrayInvalid2) {
   std::string const value("[ ] ]");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -1074,7 +1074,7 @@ TEST(ParserTest, NestedArrayInvalid3) {
   std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ] ]");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(34U, parser.errorPos());
 }
 
@@ -1082,7 +1082,7 @@ TEST(ParserTest, BrokenArray1) {
   std::string const value("[");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -1090,7 +1090,7 @@ TEST(ParserTest, BrokenArray2) {
   std::string const value("[,");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(1U, parser.errorPos());
 }
 
@@ -1098,7 +1098,7 @@ TEST(ParserTest, BrokenArray3) {
   std::string const value("[1,");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(2U, parser.errorPos());
 }
 
@@ -1225,7 +1225,7 @@ TEST(ParserTest, BrokenObject1) {
   std::string const value("{");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -1233,7 +1233,7 @@ TEST(ParserTest, BrokenObject2) {
   std::string const value("{,");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -1241,7 +1241,7 @@ TEST(ParserTest, BrokenObject3) {
   std::string const value("{1,");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(0U, parser.errorPos());
 }
 
@@ -1249,7 +1249,7 @@ TEST(ParserTest, BrokenObject4) {
   std::string const value("{\"foo");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(4U, parser.errorPos());
 }
 
@@ -1257,7 +1257,7 @@ TEST(ParserTest, BrokenObject5) {
   std::string const value("{\"foo\"");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(5U, parser.errorPos());
 }
 
@@ -1265,7 +1265,7 @@ TEST(ParserTest, BrokenObject6) {
   std::string const value("{\"foo\":");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(6U, parser.errorPos());
 }
 
@@ -1273,7 +1273,7 @@ TEST(ParserTest, BrokenObject7) {
   std::string const value("{\"foo\":\"foo");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(10U, parser.errorPos());
 }
 
@@ -1281,7 +1281,7 @@ TEST(ParserTest, BrokenObject8) {
   std::string const value("{\"foo\":\"foo\", ");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(13U, parser.errorPos());
 }
 
@@ -1289,7 +1289,7 @@ TEST(ParserTest, BrokenObject9) {
   std::string const value("{\"foo\":\"foo\", }");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(13U, parser.errorPos());
 }
 
@@ -1297,7 +1297,7 @@ TEST(ParserTest, BrokenObject10) {
   std::string const value("{\"foo\" }");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(6U, parser.errorPos());
 }
 
@@ -1497,14 +1497,14 @@ TEST(ParserTest, ObjectInvalidQuotes) {
   std::string const value("{'foo':'bar' }");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
 }
 
 TEST(ParserTest, ObjectMissingQuotes) {
   std::string const value("{foo:\"bar\" }");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
 }
 
 TEST(ParserTest, ShortObjectMembers) {
@@ -1705,7 +1705,7 @@ TEST(ParserTest, Utf8BomBroken) {
   std::string const value("\xef\xbb");
 
   Parser parser;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DuplicateAttributesAllowed) {
@@ -1726,7 +1726,7 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
 
   Parser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
@@ -1735,7 +1735,7 @@ TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
   Parser parser;
   parser.options.sortAttributeNames = false;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateSubAttributesAllowed) {
@@ -1756,7 +1756,7 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
 
   Parser parser;
   parser.options.checkAttributeUniqueness = true;
-  EXPECT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
 int main (int argc, char* argv[]) {

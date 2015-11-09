@@ -39,7 +39,7 @@ TEST(CollectionTest, KeysNonObject1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject2) {
@@ -49,7 +49,7 @@ TEST(CollectionTest, KeysNonObject2) {
   Slice s(parser.start());
 
   std::vector<std::string> result;
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject3) {
@@ -59,7 +59,7 @@ TEST(CollectionTest, KeysNonObject3) {
   Slice s(parser.start());
 
   std::unordered_set<std::string> result;
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject4) {
@@ -68,7 +68,7 @@ TEST(CollectionTest, KeysNonObject4) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject5) {
@@ -78,7 +78,7 @@ TEST(CollectionTest, KeysNonObject5) {
   Slice s(parser.start());
 
   std::vector<std::string> result;
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject6) {
@@ -88,7 +88,7 @@ TEST(CollectionTest, KeysNonObject6) {
   Slice s(parser.start());
 
   std::unordered_set<std::string> result;
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
 }
   
 TEST(CollectionTest, ObjectKeys1) {
@@ -99,10 +99,10 @@ TEST(CollectionTest, ObjectKeys1) {
   Slice s(parser.start());
  
   std::vector<std::string> keys = Collection::keys(s);
-  EXPECT_EQ(3UL, keys.size());
-  EXPECT_EQ("foo", keys[0]);
-  EXPECT_EQ("bar", keys[1]);
-  EXPECT_EQ("baz", keys[2]);
+  ASSERT_EQ(3UL, keys.size());
+  ASSERT_EQ("foo", keys[0]);
+  ASSERT_EQ("bar", keys[1]);
+  ASSERT_EQ("baz", keys[2]);
 }
 
 TEST(CollectionTest, ObjectKeys2) {
@@ -114,10 +114,10 @@ TEST(CollectionTest, ObjectKeys2) {
  
   std::vector<std::string> keys;
   Collection::keys(s, keys);
-  EXPECT_EQ(3UL, keys.size());
-  EXPECT_EQ("foo", keys[0]);
-  EXPECT_EQ("bar", keys[1]);
-  EXPECT_EQ("baz", keys[2]);
+  ASSERT_EQ(3UL, keys.size());
+  ASSERT_EQ("foo", keys[0]);
+  ASSERT_EQ("bar", keys[1]);
+  ASSERT_EQ("baz", keys[2]);
 }
 
 TEST(CollectionTest, ObjectKeys3) {
@@ -129,10 +129,10 @@ TEST(CollectionTest, ObjectKeys3) {
  
   std::unordered_set<std::string> keys;
   Collection::keys(s, keys);
-  EXPECT_EQ(3UL, keys.size());
-  EXPECT_TRUE(keys.find("foo") != keys.end());
-  EXPECT_TRUE(keys.find("bar") != keys.end());
-  EXPECT_TRUE(keys.find("baz") != keys.end());
+  ASSERT_EQ(3UL, keys.size());
+  ASSERT_TRUE(keys.find("foo") != keys.end());
+  ASSERT_TRUE(keys.find("bar") != keys.end());
+  ASSERT_TRUE(keys.find("baz") != keys.end());
 }
 
 TEST(CollectionTest, ObjectKeys) {
@@ -143,12 +143,12 @@ TEST(CollectionTest, ObjectKeys) {
   Slice s(parser.start());
 
   std::vector<std::string> keys = Collection::keys(s);
-  EXPECT_EQ(5U, keys.size());
-  EXPECT_EQ("1foo", keys[0]);
-  EXPECT_EQ("2baz", keys[1]);
-  EXPECT_EQ("3number", keys[2]);
-  EXPECT_EQ("4boolean", keys[3]);
-  EXPECT_EQ("5empty", keys[4]);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
 }
 
 TEST(CollectionsTest, ObjectKeysRef) {
@@ -160,12 +160,12 @@ TEST(CollectionsTest, ObjectKeysRef) {
 
   std::vector<std::string> keys;
   Collection::keys(s, keys);
-  EXPECT_EQ(5U, keys.size());
-  EXPECT_EQ("1foo", keys[0]);
-  EXPECT_EQ("2baz", keys[1]);
-  EXPECT_EQ("3number", keys[2]);
-  EXPECT_EQ("4boolean", keys[3]);
-  EXPECT_EQ("5empty", keys[4]);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
 }
 
 TEST(CollectionTest, ValuesNonObject1) {
@@ -174,7 +174,7 @@ TEST(CollectionTest, ValuesNonObject1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ValuesNonObject2) {
@@ -183,7 +183,7 @@ TEST(CollectionTest, ValuesNonObject2) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ValuesNonObject3) {
@@ -192,7 +192,7 @@ TEST(CollectionTest, ValuesNonObject3) {
   parser.parse(value);
   Slice s(parser.start());
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ObjectValues) {
@@ -204,18 +204,18 @@ TEST(CollectionTest, ObjectValues) {
 
   Builder b = Collection::values(s);
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(5U, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(5U, s.length());
 
-  EXPECT_TRUE(s.at(0).isString());
-  EXPECT_EQ("bar", s.at(0).copyString());
-  EXPECT_TRUE(s.at(1).isString());
-  EXPECT_EQ("quux", s.at(1).copyString());
-  EXPECT_TRUE(s.at(2).isNumber());
-  EXPECT_EQ(1UL, s.at(2).getUInt());
-  EXPECT_TRUE(s.at(3).isBoolean());
-  EXPECT_TRUE(s.at(3).getBoolean());
-  EXPECT_TRUE(s.at(4).isNull());
+  ASSERT_TRUE(s.at(0).isString());
+  ASSERT_EQ("bar", s.at(0).copyString());
+  ASSERT_TRUE(s.at(1).isString());
+  ASSERT_EQ("quux", s.at(1).copyString());
+  ASSERT_TRUE(s.at(2).isNumber());
+  ASSERT_EQ(1UL, s.at(2).getUInt());
+  ASSERT_TRUE(s.at(3).isBoolean());
+  ASSERT_TRUE(s.at(3).getBoolean());
+  ASSERT_TRUE(s.at(4).isNull());
 }
 
 TEST(CollectionTest, ForEachNonArray) {
@@ -224,7 +224,7 @@ TEST(CollectionTest, ForEachNonArray) {
   parser.parse(value);
   Slice s(parser.start());
   
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::forEach(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::forEach(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ForEachEmptyArray) {
@@ -261,7 +261,7 @@ TEST(CollectionTest, ForEachArray) {
     return true;
   });
 
-  EXPECT_EQ(5UL, seen);
+  ASSERT_EQ(5UL, seen);
 }
 
 TEST(CollectionTest, ForEachArrayAbort) {
@@ -281,7 +281,7 @@ TEST(CollectionTest, ForEachArrayAbort) {
     return true;
   });
 
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 TEST(CollectionTest, IterateArrayValues) {
@@ -328,7 +328,7 @@ TEST(CollectionTest, IterateArrayValues) {
     }
     return true;
   });
-  EXPECT_EQ(8U, state);
+  ASSERT_EQ(8U, state);
 }
 
 TEST(CollectionTest, FilterNonArray) {
@@ -337,7 +337,7 @@ TEST(CollectionTest, FilterNonArray) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::filter(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::filter(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, FilterEmptyArray) {
@@ -349,8 +349,8 @@ TEST(CollectionTest, FilterEmptyArray) {
   Builder b = Collection::filter(s, FailCallback);
 
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(0UL, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(0UL, s.length());
 }
 
 TEST(CollectionTest, FilterAll) {
@@ -362,8 +362,8 @@ TEST(CollectionTest, FilterAll) {
   Builder b = Collection::filter(s, DoNothingCallback);
 
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(0UL, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(0UL, s.length());
 }
 
 TEST(CollectionTest, FilterArray) {
@@ -400,26 +400,26 @@ TEST(CollectionTest, FilterArray) {
     ++seen;
     return (index != 4);
   });
-  EXPECT_EQ(6UL, seen);
+  ASSERT_EQ(6UL, seen);
 
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(5UL, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(5UL, s.length());
 
-  EXPECT_TRUE(s.at(0).isNumber());
-  EXPECT_EQ(1, s.at(0).getInt());
+  ASSERT_TRUE(s.at(0).isNumber());
+  ASSERT_EQ(1, s.at(0).getInt());
 
-  EXPECT_TRUE(s.at(1).isNumber());
-  EXPECT_EQ(2, s.at(1).getInt());
+  ASSERT_TRUE(s.at(1).isNumber());
+  ASSERT_EQ(2, s.at(1).getInt());
 
-  EXPECT_TRUE(s.at(2).isNumber());
-  EXPECT_EQ(3, s.at(2).getInt());
+  ASSERT_TRUE(s.at(2).isNumber());
+  ASSERT_EQ(3, s.at(2).getInt());
 
-  EXPECT_TRUE(s.at(3).isNumber());
-  EXPECT_EQ(4, s.at(3).getInt());
+  ASSERT_TRUE(s.at(3).isNumber());
+  ASSERT_EQ(4, s.at(3).getInt());
 
-  EXPECT_TRUE(s.at(4).isNumber());
-  EXPECT_EQ(19, s.at(4).getInt());
+  ASSERT_TRUE(s.at(4).isNumber());
+  ASSERT_EQ(19, s.at(4).getInt());
 }
 
 TEST(CollectionTest, MapNonArray) {
@@ -428,7 +428,7 @@ TEST(CollectionTest, MapNonArray) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::map(s, [] (Slice const&, ValueLength) -> Value { return Value(ValueType::None); }), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::map(s, [] (Slice const&, ValueLength) -> Value { return Value(ValueType::None); }), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, MapEmptyArray) {
@@ -443,8 +443,8 @@ TEST(CollectionTest, MapEmptyArray) {
   });
 
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(0UL, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(0UL, s.length());
 }
 
 TEST(CollectionTest, MapArray) {
@@ -462,29 +462,29 @@ TEST(CollectionTest, MapArray) {
     ++seen;
     return Value(mapped[index]);
   });
-  EXPECT_EQ(6UL, seen);
+  ASSERT_EQ(6UL, seen);
 
   s = b.slice();
-  EXPECT_TRUE(s.isArray());
-  EXPECT_EQ(6UL, s.length());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(6UL, s.length());
 
-  EXPECT_TRUE(s.at(0).isString());
-  EXPECT_EQ("foo", s.at(0).copyString());
+  ASSERT_TRUE(s.at(0).isString());
+  ASSERT_EQ("foo", s.at(0).copyString());
   
-  EXPECT_TRUE(s.at(1).isString());
-  EXPECT_EQ("bar", s.at(1).copyString());
+  ASSERT_TRUE(s.at(1).isString());
+  ASSERT_EQ("bar", s.at(1).copyString());
   
-  EXPECT_TRUE(s.at(2).isString());
-  EXPECT_EQ("baz", s.at(2).copyString());
+  ASSERT_TRUE(s.at(2).isString());
+  ASSERT_EQ("baz", s.at(2).copyString());
   
-  EXPECT_TRUE(s.at(3).isString());
-  EXPECT_EQ("qux", s.at(3).copyString());
+  ASSERT_TRUE(s.at(3).isString());
+  ASSERT_EQ("qux", s.at(3).copyString());
   
-  EXPECT_TRUE(s.at(4).isString());
-  EXPECT_EQ("quetzalcoatl", s.at(4).copyString());
+  ASSERT_TRUE(s.at(4).isString());
+  ASSERT_EQ("quetzalcoatl", s.at(4).copyString());
   
-  EXPECT_TRUE(s.at(5).isString());
-  EXPECT_EQ("", s.at(5).copyString());
+  ASSERT_TRUE(s.at(5).isString());
+  ASSERT_EQ("", s.at(5).copyString());
 }
 
 TEST(CollectionTest, FindNonArray) {
@@ -493,7 +493,7 @@ TEST(CollectionTest, FindNonArray) {
   parser.parse(value);
   Slice s(parser.start());
   
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::find(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::find(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, FindEmptyArray) {
@@ -503,7 +503,7 @@ TEST(CollectionTest, FindEmptyArray) {
   Slice s(parser.start());
  
   Slice found = Collection::find(s, FailCallback);
-  EXPECT_TRUE(found.isNone());
+  ASSERT_TRUE(found.isNone());
 }
 
 TEST(CollectionTest, FindArrayFalse) {
@@ -513,7 +513,7 @@ TEST(CollectionTest, FindArrayFalse) {
   Slice s(parser.start());
  
   Slice found = Collection::find(s, DoNothingCallback);
-  EXPECT_TRUE(found.isNone());
+  ASSERT_TRUE(found.isNone());
 }
 
 TEST(CollectionTest, FindArrayFirst) {
@@ -527,9 +527,9 @@ TEST(CollectionTest, FindArrayFirst) {
     ++seen;
     return true;
   });
-  EXPECT_EQ(1UL, seen);
-  EXPECT_TRUE(found.isNumber());
-  EXPECT_EQ(1UL, found.getUInt());
+  ASSERT_EQ(1UL, seen);
+  ASSERT_TRUE(found.isNumber());
+  ASSERT_EQ(1UL, found.getUInt());
 }
 
 TEST(CollectionTest, FindArrayLast) {
@@ -546,9 +546,9 @@ TEST(CollectionTest, FindArrayLast) {
     }
     return false;
   });
-  EXPECT_EQ(3UL, seen);
-  EXPECT_TRUE(found.isNumber());
-  EXPECT_EQ(3UL, found.getUInt());
+  ASSERT_EQ(3UL, seen);
+  ASSERT_TRUE(found.isNumber());
+  ASSERT_EQ(3UL, found.getUInt());
 }
 
 TEST(CollectionTest, ContainsNonArray) {
@@ -557,7 +557,7 @@ TEST(CollectionTest, ContainsNonArray) {
   parser.parse(value);
   Slice s(parser.start());
   
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::contains(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::contains(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ContainsEmptyArray) {
@@ -566,7 +566,7 @@ TEST(CollectionTest, ContainsEmptyArray) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_FALSE(Collection::contains(s, FailCallback));
+  ASSERT_FALSE(Collection::contains(s, FailCallback));
 }
 
 TEST(CollectionTest, ContainsArrayFalse) {
@@ -575,7 +575,7 @@ TEST(CollectionTest, ContainsArrayFalse) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_FALSE(Collection::contains(s, DoNothingCallback));
+  ASSERT_FALSE(Collection::contains(s, DoNothingCallback));
 }
 
 TEST(CollectionTest, ContainsArrayFirst) {
@@ -585,11 +585,11 @@ TEST(CollectionTest, ContainsArrayFirst) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength) {
+  ASSERT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength) {
     ++seen;
     return true;
   }));
-  EXPECT_EQ(1UL, seen);
+  ASSERT_EQ(1UL, seen);
 }
 
 TEST(CollectionTest, ContainsArrayLast) {
@@ -599,14 +599,14 @@ TEST(CollectionTest, ContainsArrayLast) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength index) {
+  ASSERT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength index) {
     ++seen;
     if (index == 2) {
       return true;
     }
     return false;
   }));
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 TEST(CollectionTest, AllNonArray) {
@@ -615,7 +615,7 @@ TEST(CollectionTest, AllNonArray) {
   parser.parse(value);
   Slice s(parser.start());
   
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::all(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::all(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, AllEmptyArray) {
@@ -624,7 +624,7 @@ TEST(CollectionTest, AllEmptyArray) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_TRUE(Collection::all(s, FailCallback));
+  ASSERT_TRUE(Collection::all(s, FailCallback));
 }
 
 TEST(CollectionTest, AllArrayFalse) {
@@ -633,7 +633,7 @@ TEST(CollectionTest, AllArrayFalse) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_FALSE(Collection::all(s, DoNothingCallback));
+  ASSERT_FALSE(Collection::all(s, DoNothingCallback));
 }
 
 TEST(CollectionTest, AllArrayFirstFalse) {
@@ -643,14 +643,14 @@ TEST(CollectionTest, AllArrayFirstFalse) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  ASSERT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     ++seen;
     return false;
   }));
 
-  EXPECT_EQ(1UL, seen);
+  ASSERT_EQ(1UL, seen);
 }
 
 TEST(CollectionTest, AllArrayLastFalse) {
@@ -660,7 +660,7 @@ TEST(CollectionTest, AllArrayLastFalse) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  ASSERT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     ++seen;
@@ -670,7 +670,7 @@ TEST(CollectionTest, AllArrayLastFalse) {
     return true;
   }));
 
-  EXPECT_EQ(3UL, seen);
+  ASSERT_EQ(3UL, seen);
 }
 
 TEST(CollectionTest, AllArrayTrue) {
@@ -680,14 +680,14 @@ TEST(CollectionTest, AllArrayTrue) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_TRUE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  ASSERT_TRUE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     ++seen;
     return true;
   }));
 
-  EXPECT_EQ(4UL, seen);
+  ASSERT_EQ(4UL, seen);
 }
 
 TEST(CollectionTest, AnyNonArray) {
@@ -696,7 +696,7 @@ TEST(CollectionTest, AnyNonArray) {
   parser.parse(value);
   Slice s(parser.start());
   
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::any(s, DoNothingCallback), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::any(s, DoNothingCallback), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, AnyEmptyArray) {
@@ -705,7 +705,7 @@ TEST(CollectionTest, AnyEmptyArray) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_FALSE(Collection::any(s, FailCallback));
+  ASSERT_FALSE(Collection::any(s, FailCallback));
 }
 
 TEST(CollectionTest, AnyArrayFalse) {
@@ -714,7 +714,7 @@ TEST(CollectionTest, AnyArrayFalse) {
   parser.parse(value);
   Slice s(parser.start());
  
-  EXPECT_FALSE(Collection::all(s, DoNothingCallback));
+  ASSERT_FALSE(Collection::all(s, DoNothingCallback));
 }
 
 TEST(CollectionTest, AnyArrayLastTrue) {
@@ -724,7 +724,7 @@ TEST(CollectionTest, AnyArrayLastTrue) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  ASSERT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     ++seen;
@@ -734,7 +734,7 @@ TEST(CollectionTest, AnyArrayLastTrue) {
     return false;
   }));
 
-  EXPECT_EQ(4UL, seen);
+  ASSERT_EQ(4UL, seen);
 }
 
 TEST(CollectionTest, AnyArrayFirstTrue) {
@@ -744,14 +744,14 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
   Slice s(parser.start());
  
   size_t seen = 0;
-  EXPECT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  ASSERT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     ++seen;
     return true;
   }));
 
-  EXPECT_EQ(1UL, seen);
+  ASSERT_EQ(1UL, seen);
 }
 
 TEST(CollectionTest, KeepNonObject) {
@@ -762,7 +762,7 @@ TEST(CollectionTest, KeepNonObject) {
   Slice s(parser.start());
 
   std::vector<std::string> const toKeep = { "foo", "bar" };
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::keep(s, toKeep), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keep(s, toKeep), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeepEmptyObject) {
@@ -775,8 +775,8 @@ TEST(CollectionTest, KeepEmptyObject) {
   std::vector<std::string> const toKeep = { "foo", "bar" };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(0U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(0U, s.length());
 }
 
 TEST(CollectionTest, KeepNoAttributes) {
@@ -789,8 +789,8 @@ TEST(CollectionTest, KeepNoAttributes) {
   std::vector<std::string> const toKeep = { };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(0U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(0U, s.length());
 }
 
 TEST(CollectionTest, KeepSomeAttributes) {
@@ -803,21 +803,21 @@ TEST(CollectionTest, KeepSomeAttributes) {
   std::vector<std::string> const toKeep = { "foo", "baz", "empty" };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(3U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3U, s.length());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ("bar", s.get("foo").copyString());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ("bar", s.get("foo").copyString());
 
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ("quux", s.get("baz").copyString());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("quux", s.get("baz").copyString());
 
-  EXPECT_TRUE(s.hasKey("empty"));
-  EXPECT_TRUE(s.get("empty").isNull());
+  ASSERT_TRUE(s.hasKey("empty"));
+  ASSERT_TRUE(s.get("empty").isNull());
 
-  EXPECT_FALSE(s.hasKey("number"));
-  EXPECT_FALSE(s.hasKey("boolean"));
-  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+  ASSERT_FALSE(s.hasKey("number"));
+  ASSERT_FALSE(s.hasKey("boolean"));
+  ASSERT_FALSE(s.hasKey("quetzalcoatl"));
 }
 
 TEST(CollectionTest, KeepSomeAttributesUsingSet) {
@@ -830,21 +830,21 @@ TEST(CollectionTest, KeepSomeAttributesUsingSet) {
   std::unordered_set<std::string> const toKeep = { "foo", "baz", "empty" };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(3U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3U, s.length());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ("bar", s.get("foo").copyString());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ("bar", s.get("foo").copyString());
 
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ("quux", s.get("baz").copyString());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("quux", s.get("baz").copyString());
 
-  EXPECT_TRUE(s.hasKey("empty"));
-  EXPECT_TRUE(s.get("empty").isNull());
+  ASSERT_TRUE(s.hasKey("empty"));
+  ASSERT_TRUE(s.get("empty").isNull());
 
-  EXPECT_FALSE(s.hasKey("number"));
-  EXPECT_FALSE(s.hasKey("boolean"));
-  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+  ASSERT_FALSE(s.hasKey("number"));
+  ASSERT_FALSE(s.hasKey("boolean"));
+  ASSERT_FALSE(s.hasKey("quetzalcoatl"));
 }
 
 TEST(CollectionTest, KeepNonExistingAttributes) {
@@ -857,17 +857,17 @@ TEST(CollectionTest, KeepNonExistingAttributes) {
   std::vector<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(1U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(1U, s.length());
 
-  EXPECT_TRUE(s.hasKey("empty"));
-  EXPECT_TRUE(s.get("empty").isNull());
+  ASSERT_TRUE(s.hasKey("empty"));
+  ASSERT_TRUE(s.get("empty").isNull());
 
-  EXPECT_FALSE(s.hasKey("foo"));
-  EXPECT_FALSE(s.hasKey("baz"));
-  EXPECT_FALSE(s.hasKey("number"));
-  EXPECT_FALSE(s.hasKey("boolean"));
-  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("number"));
+  ASSERT_FALSE(s.hasKey("boolean"));
+  ASSERT_FALSE(s.hasKey("quetzalcoatl"));
 }
 
 TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
@@ -880,17 +880,17 @@ TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
   std::unordered_set<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(1U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(1U, s.length());
 
-  EXPECT_TRUE(s.hasKey("empty"));
-  EXPECT_TRUE(s.get("empty").isNull());
+  ASSERT_TRUE(s.hasKey("empty"));
+  ASSERT_TRUE(s.get("empty").isNull());
 
-  EXPECT_FALSE(s.hasKey("foo"));
-  EXPECT_FALSE(s.hasKey("baz"));
-  EXPECT_FALSE(s.hasKey("number"));
-  EXPECT_FALSE(s.hasKey("boolean"));
-  EXPECT_FALSE(s.hasKey("quetzalcoatl"));
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("number"));
+  ASSERT_FALSE(s.hasKey("boolean"));
+  ASSERT_FALSE(s.hasKey("quetzalcoatl"));
 }
 
 TEST(CollectionTest, RemoveNonObject) {
@@ -901,7 +901,7 @@ TEST(CollectionTest, RemoveNonObject) {
   Slice s(parser.start());
 
   std::vector<std::string> const toRemove = { "foo", "bar" };
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::remove(s, toRemove), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::remove(s, toRemove), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, RemoveEmptyObject) {
@@ -914,8 +914,8 @@ TEST(CollectionTest, RemoveEmptyObject) {
   std::vector<std::string> const toRemove = { "foo", "bar" };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(0U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(0U, s.length());
 }
 
 TEST(CollectionTest, RemoveNoAttributes) {
@@ -928,19 +928,19 @@ TEST(CollectionTest, RemoveNoAttributes) {
   std::vector<std::string> const toRemove = { };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(5U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(5U, s.length());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ("bar", s.get("foo").copyString());
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ("quux", s.get("baz").copyString());
-  EXPECT_TRUE(s.hasKey("number"));
-  EXPECT_EQ(1U, s.get("number").getUInt());
-  EXPECT_TRUE(s.hasKey("boolean"));
-  EXPECT_TRUE(s.get("boolean").getBoolean());
-  EXPECT_TRUE(s.hasKey("empty"));
-  EXPECT_TRUE(s.get("empty").isNull());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ("bar", s.get("foo").copyString());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("quux", s.get("baz").copyString());
+  ASSERT_TRUE(s.hasKey("number"));
+  ASSERT_EQ(1U, s.get("number").getUInt());
+  ASSERT_TRUE(s.hasKey("boolean"));
+  ASSERT_TRUE(s.get("boolean").getBoolean());
+  ASSERT_TRUE(s.hasKey("empty"));
+  ASSERT_TRUE(s.get("empty").isNull());
 }
 
 TEST(CollectionTest, RemoveSomeAttributes) {
@@ -953,17 +953,17 @@ TEST(CollectionTest, RemoveSomeAttributes) {
   std::vector<std::string> const toRemove = { "foo", "baz", "empty" };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(2U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(2U, s.length());
 
-  EXPECT_FALSE(s.hasKey("foo"));
-  EXPECT_FALSE(s.hasKey("baz"));
-  EXPECT_FALSE(s.hasKey("empty"));
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("empty"));
 
-  EXPECT_TRUE(s.hasKey("number"));
-  EXPECT_EQ(1U, s.get("number").getUInt());
-  EXPECT_TRUE(s.hasKey("boolean"));
-  EXPECT_TRUE(s.get("boolean").getBoolean());
+  ASSERT_TRUE(s.hasKey("number"));
+  ASSERT_EQ(1U, s.get("number").getUInt());
+  ASSERT_TRUE(s.hasKey("boolean"));
+  ASSERT_TRUE(s.get("boolean").getBoolean());
 }
 
 TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
@@ -976,17 +976,17 @@ TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
   std::unordered_set<std::string> const toRemove = { "foo", "baz", "empty" };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(2U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(2U, s.length());
 
-  EXPECT_FALSE(s.hasKey("foo"));
-  EXPECT_FALSE(s.hasKey("baz"));
-  EXPECT_FALSE(s.hasKey("empty"));
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("empty"));
 
-  EXPECT_TRUE(s.hasKey("number"));
-  EXPECT_EQ(1U, s.get("number").getUInt());
-  EXPECT_TRUE(s.hasKey("boolean"));
-  EXPECT_TRUE(s.get("boolean").getBoolean());
+  ASSERT_TRUE(s.hasKey("number"));
+  ASSERT_EQ(1U, s.get("number").getUInt());
+  ASSERT_TRUE(s.hasKey("boolean"));
+  ASSERT_TRUE(s.get("boolean").getBoolean());
 }
 
 TEST(CollectionTest, RemoveNonExistingAttributes) {
@@ -999,18 +999,18 @@ TEST(CollectionTest, RemoveNonExistingAttributes) {
   std::vector<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(4U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(4U, s.length());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ("bar", s.get("foo").copyString());
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ("quux", s.get("baz").copyString());
-  EXPECT_TRUE(s.hasKey("number"));
-  EXPECT_EQ(1UL, s.get("number").getUInt());
-  EXPECT_TRUE(s.hasKey("boolean"));
-  EXPECT_TRUE(s.get("boolean").getBoolean());
-  EXPECT_FALSE(s.hasKey("empty"));
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ("bar", s.get("foo").copyString());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("quux", s.get("baz").copyString());
+  ASSERT_TRUE(s.hasKey("number"));
+  ASSERT_EQ(1UL, s.get("number").getUInt());
+  ASSERT_TRUE(s.hasKey("boolean"));
+  ASSERT_TRUE(s.get("boolean").getBoolean());
+  ASSERT_FALSE(s.hasKey("empty"));
 }
 
 TEST(CollectionTest, RemoveNonExistingAttributesUsingSet) {
@@ -1023,18 +1023,18 @@ TEST(CollectionTest, RemoveNonExistingAttributesUsingSet) {
   std::unordered_set<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
-  EXPECT_TRUE(s.isObject());
-  EXPECT_EQ(4U, s.length());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(4U, s.length());
 
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ("bar", s.get("foo").copyString());
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ("quux", s.get("baz").copyString());
-  EXPECT_TRUE(s.hasKey("number"));
-  EXPECT_EQ(1UL, s.get("number").getUInt());
-  EXPECT_TRUE(s.hasKey("boolean"));
-  EXPECT_TRUE(s.get("boolean").getBoolean());
-  EXPECT_FALSE(s.hasKey("empty"));
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ("bar", s.get("foo").copyString());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("quux", s.get("baz").copyString());
+  ASSERT_TRUE(s.hasKey("number"));
+  ASSERT_EQ(1UL, s.get("number").getUInt());
+  ASSERT_TRUE(s.hasKey("boolean"));
+  ASSERT_TRUE(s.get("boolean").getBoolean());
+  ASSERT_FALSE(s.hasKey("empty"));
 }
 
 TEST(CollectionTest, MergeNonObject) {
@@ -1046,9 +1046,9 @@ TEST(CollectionTest, MergeNonObject) {
   b2.add(Value(ValueType::Object));
   b2.close();
 
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false), Exception::InvalidValueType);
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false), Exception::InvalidValueType);
-  EXPECT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false), Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, MergeEmptyLeft) {
@@ -1063,12 +1063,12 @@ TEST(CollectionTest, MergeEmptyLeft) {
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("bark"));
-  EXPECT_EQ(1UL, s.get("bark").getUInt());
-  EXPECT_TRUE(s.hasKey("qux"));
-  EXPECT_EQ(2UL, s.get("qux").getUInt());
-  EXPECT_TRUE(s.hasKey("bart"));
-  EXPECT_EQ(3UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(1UL, s.get("bark").getUInt());
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_EQ(2UL, s.get("qux").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(3UL, s.get("bart").getUInt());
 }
 
 TEST(CollectionTest, MergeEmptyRight) {
@@ -1083,12 +1083,12 @@ TEST(CollectionTest, MergeEmptyRight) {
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("bark"));
-  EXPECT_EQ(1UL, s.get("bark").getUInt());
-  EXPECT_TRUE(s.hasKey("qux"));
-  EXPECT_EQ(2UL, s.get("qux").getUInt());
-  EXPECT_TRUE(s.hasKey("bart"));
-  EXPECT_EQ(3UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(1UL, s.get("bark").getUInt());
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_EQ(2UL, s.get("qux").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(3UL, s.get("bart").getUInt());
 }
 
 TEST(CollectionTest, MergeDistinct) {
@@ -1103,18 +1103,18 @@ TEST(CollectionTest, MergeDistinct) {
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ(1UL, s.get("foo").getUInt());
-  EXPECT_TRUE(s.hasKey("bar"));
-  EXPECT_EQ(2UL, s.get("bar").getUInt());
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ(3UL, s.get("baz").getUInt());
-  EXPECT_TRUE(s.hasKey("bark"));
-  EXPECT_EQ(1UL, s.get("bark").getUInt());
-  EXPECT_TRUE(s.hasKey("qux"));
-  EXPECT_EQ(2UL, s.get("qux").getUInt());
-  EXPECT_TRUE(s.hasKey("bart"));
-  EXPECT_EQ(3UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(1UL, s.get("foo").getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_EQ(2UL, s.get("bar").getUInt());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ(3UL, s.get("baz").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(1UL, s.get("bark").getUInt());
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_EQ(2UL, s.get("qux").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(3UL, s.get("bart").getUInt());
 }
 
 TEST(CollectionTest, MergeOverlap) {
@@ -1129,18 +1129,18 @@ TEST(CollectionTest, MergeOverlap) {
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ(12UL, s.get("foo").getUInt());
-  EXPECT_TRUE(s.hasKey("bar"));
-  EXPECT_EQ(42UL, s.get("bar").getUInt());
-  EXPECT_TRUE(s.hasKey("baz"));
-  EXPECT_EQ(19UL, s.get("baz").getUInt());
-  EXPECT_TRUE(s.hasKey("bark"));
-  EXPECT_EQ(1UL, s.get("bark").getUInt());
-  EXPECT_TRUE(s.hasKey("qux"));
-  EXPECT_EQ(2UL, s.get("qux").getUInt());
-  EXPECT_TRUE(s.hasKey("test"));
-  EXPECT_EQ(9UL, s.get("test").getUInt());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(12UL, s.get("foo").getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_EQ(42UL, s.get("bar").getUInt());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ(19UL, s.get("baz").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(1UL, s.get("bark").getUInt());
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_EQ(2UL, s.get("qux").getUInt());
+  ASSERT_TRUE(s.hasKey("test"));
+  ASSERT_EQ(9UL, s.get("test").getUInt());
 }
 
 TEST(CollectionTest, MergeSubAttributes) {
@@ -1155,27 +1155,27 @@ TEST(CollectionTest, MergeSubAttributes) {
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ(2UL, s.get("foo").getUInt());
-  EXPECT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(2UL, s.get("foo").getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
   Slice sub = s.get("bar");
-  EXPECT_TRUE(sub.hasKey("one"));
-  EXPECT_EQ(23UL, sub.get("one").getUInt());
-  EXPECT_TRUE(sub.hasKey("two"));
-  EXPECT_EQ(42UL, sub.get("two").getUInt());
-  EXPECT_TRUE(sub.hasKey("three"));
-  EXPECT_EQ(3UL, sub.get("three").getUInt());
-  EXPECT_TRUE(sub.hasKey("four"));
-  EXPECT_EQ(99UL, sub.get("four").getUInt());
-  EXPECT_TRUE(s.hasKey("test"));
-  EXPECT_EQ(1UL, s.get("test").getUInt());
-  EXPECT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(sub.hasKey("one"));
+  ASSERT_EQ(23UL, sub.get("one").getUInt());
+  ASSERT_TRUE(sub.hasKey("two"));
+  ASSERT_EQ(42UL, sub.get("two").getUInt());
+  ASSERT_TRUE(sub.hasKey("three"));
+  ASSERT_EQ(3UL, sub.get("three").getUInt());
+  ASSERT_TRUE(sub.hasKey("four"));
+  ASSERT_EQ(99UL, sub.get("four").getUInt());
+  ASSERT_TRUE(s.hasKey("test"));
+  ASSERT_EQ(1UL, s.get("test").getUInt());
+  ASSERT_TRUE(s.hasKey("baz"));
   sub = s.get("baz");
-  EXPECT_EQ(2UL, sub.length());
-  EXPECT_TRUE(sub.hasKey("test"));
-  EXPECT_EQ(1UL, sub.get("test").getUInt());
-  EXPECT_TRUE(sub.hasKey("bart"));
-  EXPECT_EQ(2UL, sub.get("bart").getUInt());
+  ASSERT_EQ(2UL, sub.length());
+  ASSERT_TRUE(sub.hasKey("test"));
+  ASSERT_EQ(1UL, sub.get("test").getUInt());
+  ASSERT_TRUE(sub.hasKey("bart"));
+  ASSERT_EQ(2UL, sub.get("bart").getUInt());
 }
 
 TEST(CollectionTest, MergeOverwriteSubAttributes) {
@@ -1190,27 +1190,27 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
 
   Builder b = Collection::merge(s1, s2, false);
   Slice s(b.start());
-  EXPECT_TRUE(s.hasKey("foo"));
-  EXPECT_EQ(2UL, s.get("foo").getUInt());
-  EXPECT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(2UL, s.get("foo").getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
   Slice sub = s.get("bar");
-  EXPECT_TRUE(sub.hasKey("one"));
-  EXPECT_EQ(23UL, sub.get("one").getUInt());
-  EXPECT_TRUE(sub.hasKey("two"));
-  EXPECT_EQ(42UL, sub.get("two").getUInt());
-  EXPECT_FALSE(sub.hasKey("three"));
-  EXPECT_TRUE(sub.hasKey("four"));
-  EXPECT_EQ(99UL, sub.get("four").getUInt());
-  EXPECT_TRUE(s.hasKey("test"));
-  EXPECT_EQ(1UL, s.get("test").getUInt());
-  EXPECT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(sub.hasKey("one"));
+  ASSERT_EQ(23UL, sub.get("one").getUInt());
+  ASSERT_TRUE(sub.hasKey("two"));
+  ASSERT_EQ(42UL, sub.get("two").getUInt());
+  ASSERT_FALSE(sub.hasKey("three"));
+  ASSERT_TRUE(sub.hasKey("four"));
+  ASSERT_EQ(99UL, sub.get("four").getUInt());
+  ASSERT_TRUE(s.hasKey("test"));
+  ASSERT_EQ(1UL, s.get("test").getUInt());
+  ASSERT_TRUE(s.hasKey("baz"));
   sub = s.get("baz");
-  EXPECT_EQ(2UL, sub.length());
-  EXPECT_FALSE(sub.hasKey("bird"));
-  EXPECT_TRUE(sub.hasKey("test"));
-  EXPECT_EQ(1UL, sub.get("test").getUInt());
-  EXPECT_TRUE(sub.hasKey("bart"));
-  EXPECT_EQ(2UL, sub.get("bart").getUInt());
+  ASSERT_EQ(2UL, sub.length());
+  ASSERT_FALSE(sub.hasKey("bird"));
+  ASSERT_TRUE(sub.hasKey("test"));
+  ASSERT_EQ(1UL, sub.get("test").getUInt());
+  ASSERT_TRUE(sub.hasKey("bart"));
+  ASSERT_EQ(2UL, sub.get("bart").getUInt());
 }
 
 int main (int argc, char* argv[]) {
