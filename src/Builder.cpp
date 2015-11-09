@@ -672,3 +672,5 @@ uint8_t* Builder::add (ValuePair const& sub) {
   return addInternal<ValuePair>(sub);
 }
 
+static_assert(sizeof(double) == 8, "double is not 8 bytes");
+

@@ -858,8 +858,6 @@ namespace arangodb {
         static unsigned int const FirstSubMap[256];
     };
 
-    static_assert(sizeof(Slice) == sizeof(void*), "Slice has an unexpected size");
-
   }  // namespace arangodb::velocypack
 }  // namespace arangodb
 

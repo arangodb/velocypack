@@ -171,3 +171,5 @@ std::ostream& operator<< (std::ostream& stream, Slice const& slice) {
   return stream;
 }
 
+static_assert(sizeof(arangodb::velocypack::Slice) == sizeof(void*),
+              "Slice has an unexpected size");

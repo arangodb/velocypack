@@ -306,8 +306,6 @@ namespace arangodb {
         }
 
         void addDouble (double v) {
-          static_assert(sizeof(double) == 8, "double is not 8 bytes");
-
           uint64_t dv;
           memcpy(&dv, &v, sizeof(double));
           ValueLength vSize = sizeof(double);
