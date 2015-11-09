@@ -30,48 +30,76 @@
 #include "tests-common.h"
 
 TEST(TypesTest, TestNames) {
-  ASSERT_EQ(0, strcmp("none", valueTypeName(ValueType::None)));
-  ASSERT_EQ(0, strcmp("null", valueTypeName(ValueType::Null)));
-  ASSERT_EQ(0, strcmp("bool", valueTypeName(ValueType::Bool)));
-  ASSERT_EQ(0, strcmp("double", valueTypeName(ValueType::Double)));
-  ASSERT_EQ(0, strcmp("string", valueTypeName(ValueType::String)));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(ValueType::Array)));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(ValueType::Object)));
-  ASSERT_EQ(0, strcmp("external", valueTypeName(ValueType::External)));
-  ASSERT_EQ(0, strcmp("utc-date", valueTypeName(ValueType::UTCDate)));
-  ASSERT_EQ(0, strcmp("int", valueTypeName(ValueType::Int)));
-  ASSERT_EQ(0, strcmp("uint", valueTypeName(ValueType::UInt)));
-  ASSERT_EQ(0, strcmp("smallint", valueTypeName(ValueType::SmallInt)));
-  ASSERT_EQ(0, strcmp("binary", valueTypeName(ValueType::Binary)));
-  ASSERT_EQ(0, strcmp("bcd", valueTypeName(ValueType::BCD)));
-  ASSERT_EQ(0, strcmp("min-key", valueTypeName(ValueType::MinKey)));
-  ASSERT_EQ(0, strcmp("max-key", valueTypeName(ValueType::MaxKey)));
-  ASSERT_EQ(0, strcmp("custom", valueTypeName(ValueType::Custom)));
+  ASSERT_STREQ("none", valueTypeName(ValueType::None));
+  ASSERT_STREQ("null", valueTypeName(ValueType::Null));
+  ASSERT_STREQ("bool", valueTypeName(ValueType::Bool));
+  ASSERT_STREQ("double", valueTypeName(ValueType::Double));
+  ASSERT_STREQ("string", valueTypeName(ValueType::String));
+  ASSERT_STREQ("array", valueTypeName(ValueType::Array));
+  ASSERT_STREQ("object", valueTypeName(ValueType::Object));
+  ASSERT_STREQ("external", valueTypeName(ValueType::External));
+  ASSERT_STREQ("utc-date", valueTypeName(ValueType::UTCDate));
+  ASSERT_STREQ("int", valueTypeName(ValueType::Int));
+  ASSERT_STREQ("uint", valueTypeName(ValueType::UInt));
+  ASSERT_STREQ("smallint", valueTypeName(ValueType::SmallInt));
+  ASSERT_STREQ("binary", valueTypeName(ValueType::Binary));
+  ASSERT_STREQ("bcd", valueTypeName(ValueType::BCD));
+  ASSERT_STREQ("min-key", valueTypeName(ValueType::MinKey));
+  ASSERT_STREQ("max-key", valueTypeName(ValueType::MaxKey));
+  ASSERT_STREQ("custom", valueTypeName(ValueType::Custom));
 }
 
 TEST(TypesTest, TestNamesArrays) {
   uint8_t const arrays[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x9 };
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[0]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[1]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[2]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[3]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[4]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[5]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[6]).type())));
-  ASSERT_EQ(0, strcmp("array", valueTypeName(Slice(&arrays[7]).type())));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[0]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[1]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[2]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[3]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[4]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[5]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[6]).type()));
+  ASSERT_STREQ("array", valueTypeName(Slice(&arrays[7]).type()));
 }
 
 TEST(TypesTest, TestNamesObjects) {
   uint8_t const objects[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12 };
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[0]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[1]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[2]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[3]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[4]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[5]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[6]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[7]).type())));
-  ASSERT_EQ(0, strcmp("object", valueTypeName(Slice(&objects[8]).type())));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[0]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[1]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[2]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[3]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[4]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[5]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[6]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[7]).type()));
+  ASSERT_STREQ("object", valueTypeName(Slice(&objects[8]).type()));
+}
+
+TEST(TypesTest, TestInvalidType) {
+  ASSERT_STREQ("unknown", valueTypeName(static_cast<ValueType>(0xff)));
+}
+
+TEST(TypesTest, TestStringifyObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.close();
+
+  Slice s(b.start());
+  std::ostringstream out;
+  out << s.type();
+
+  ASSERT_EQ("object", out.str());
+}
+
+TEST(TypesTest, TestStringifyArray) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.close();
+
+  Slice s(b.start());
+  std::ostringstream out;
+  out << s.type();
+
+  ASSERT_EQ("array", out.str());
 }
 
 int main (int argc, char* argv[]) {

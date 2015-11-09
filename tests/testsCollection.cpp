@@ -893,6 +893,46 @@ TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
   ASSERT_FALSE(s.hasKey("quetzalcoatl"));
 }
 
+TEST(CollectionTest, KeepManyAttributes) {
+  std::string value("{");
+  for (size_t i = 0; i < 100; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    value.append(std::to_string(i));
+    value.append("\":");
+    value.append(std::to_string(i));
+  }
+  value.push_back('}');
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  std::vector<std::string> toKeep;
+  for (size_t i = 0; i < 30; ++i) {
+    std::string key = "test" + std::to_string(i);
+    toKeep.push_back(key);
+  }
+
+  b = Collection::keep(s, toKeep);
+  s = b.slice();
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(30U, s.length());
+
+  for (size_t i = 0; i < 100; ++i) {
+    std::string key = "test" + std::to_string(i);
+    if (i < 30) {
+      ASSERT_TRUE(s.hasKey(key));
+      ASSERT_TRUE(s.get(key).isNumber());
+      ASSERT_EQ(i, s.get(key).getUInt());
+    }
+    else {
+      ASSERT_FALSE(s.hasKey(key));
+    }
+  }
+}
+
 TEST(CollectionTest, RemoveNonObject) {
   std::string const value("[]");
 
@@ -987,6 +1027,46 @@ TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
   ASSERT_EQ(1U, s.get("number").getUInt());
   ASSERT_TRUE(s.hasKey("boolean"));
   ASSERT_TRUE(s.get("boolean").getBoolean());
+}
+
+TEST(CollectionTest, RemoveManyAttributes) {
+  std::string value("{");
+  for (size_t i = 0; i < 100; ++i) {
+    if (i > 0) {
+      value.push_back(',');
+    }
+    value.append("\"test");
+    value.append(std::to_string(i));
+    value.append("\":");
+    value.append(std::to_string(i));
+  }
+  value.push_back('}');
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  std::vector<std::string> toRemove;
+  for (size_t i = 0; i < 30; ++i) {
+    std::string key = "test" + std::to_string(i);
+    toRemove.push_back(key);
+  }
+
+  b = Collection::remove(s, toRemove);
+  s = b.slice();
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(70U, s.length());
+
+  for (size_t i = 0; i < 100; ++i) {
+    std::string key = "test" + std::to_string(i);
+    if (i >= 30) {
+      ASSERT_TRUE(s.hasKey(key));
+      ASSERT_TRUE(s.get(key).isNumber());
+      ASSERT_EQ(i, s.get(key).getUInt());
+    }
+    else {
+      ASSERT_FALSE(s.hasKey(key));
+    }
+  }
 }
 
 TEST(CollectionTest, RemoveNonExistingAttributes) {

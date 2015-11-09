@@ -1070,6 +1070,42 @@ TEST(SliceTest, ObjectCases14) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
+TEST(SliceTest, ToStringNull) {
+  std::string const value("null");
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  ASSERT_EQ("null", s.toString());
+}
+
+TEST(SliceTest, ToStringArray) {
+  std::string const value("[1,2,3,4,5]");
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  ASSERT_EQ("[\n  1,\n  2,\n  3,\n  4,\n  5\n]", s.toString());
+}
+
+TEST(SliceTest, ToStringArrayEmpty) {
+  std::string const value("[]");
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  ASSERT_EQ("[\n]", s.toString());
+}
+
+TEST(SliceTest, ToStringObjectEmpty) {
+  std::string const value("{ }");
+
+  Builder b = Parser::fromJson(value);
+  Slice s(b.start());
+
+  ASSERT_EQ("{\n}", s.toString());
+}
+
 TEST(SliceTest, EqualToUniqueValues) {
   std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
 
@@ -1176,6 +1212,20 @@ TEST(SliceTest, HashString) {
   Slice s = b.slice();
 
   ASSERT_EQ(16298643255475496611ULL, s.hash());
+}
+
+TEST(SliceTest, HashStringEmpty) {
+  Builder b = Parser::fromJson("\"\"");
+  Slice s = b.slice();
+
+  ASSERT_EQ(5324680019219065241ULL, s.hash());
+}
+
+TEST(SliceTest, HashStringShort) {
+  Builder b = Parser::fromJson("\"123456\"");
+  Slice s = b.slice();
+
+  ASSERT_EQ(13345050106135537218ULL, s.hash());
 }
 
 TEST(SliceTest, HashArray) {

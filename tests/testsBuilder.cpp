@@ -756,6 +756,16 @@ TEST(BuilderTest, IsClosedObject) {
   ASSERT_TRUE(b.isClosed());
 }
 
+TEST(BuilderTest, CloseClosed) {
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  b.add(Value(ValueType::Object));
+  ASSERT_FALSE(b.isClosed());
+  b.close();
+  
+  ASSERT_VELOCYPACK_EXCEPTION(b.close(), Exception::BuilderNeedOpenCompound);
+}
+
 TEST(BuilderTest, Clone) {
   Builder b;
   b.add(Value(ValueType::Object));
@@ -812,6 +822,50 @@ TEST(BuilderTest, CloneDestroyOriginal) {
   ASSERT_FALSE(s.get("bar").getBoolean());
   ASSERT_TRUE(s.hasKey("baz"));
   ASSERT_EQ("foobarbaz", s.get("baz").copyString());
+}
+
+TEST(BuilderTest, RemoveLastNonObject) {
+  Builder b;
+  b.add(Value(true));
+  b.add(Value(false));
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedOpenCompound);
+}
+
+TEST(BuilderTest, RemoveLastSealed) {
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedOpenCompound);
+}
+
+TEST(BuilderTest, RemoveLastEmptyObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedSubvalue);
+}
+
+TEST(BuilderTest, RemoveLastObjectInvalid) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.removeLast();
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedSubvalue);
+}
+
+TEST(BuilderTest, RemoveLastObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+
+  b.removeLast();
+  b.close();
+
+  Slice s(b.start());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(1UL, s.length());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").getBoolean());
+  ASSERT_FALSE(s.hasKey("bar"));
 }
 
 int main (int argc, char* argv[]) {

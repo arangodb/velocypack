@@ -496,6 +496,65 @@ TEST(ParserTest, DoubleScientific4) {
   checkDump(s, valueOut);
 }
 
+TEST(ParserTest, DoubleScientific5) {
+  std::string const value("3122243.0124e+42");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_EQ(3122243.0124e+42, s.getDouble());
+
+  std::string const valueOut("3.1222430124e+48");
+  checkDump(s, valueOut);
+}
+
+TEST(ParserTest, DoubleNeg) {
+  std::string const value("-184467440737095516161"); 
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_DOUBLE_EQ(-184467440737095516161., s.getDouble());
+}
+
+TEST(ParserTest, DoubleBroken) {
+  std::string const value("1234."); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBrokenExponent) {
+  std::string const value("1234.33e"); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBrokenExponent2) {
+  std::string const value("1234.33e-"); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBrokenExponent3) {
+  std::string const value("1234.33e+"); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBrokenExponent4) {
+  std::string const value("1234.33ea"); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
 TEST(ParserTest, IntMinusInf) {
   std::string const value("-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
 
@@ -546,6 +605,126 @@ TEST(ParserTest, UnterminatedStringLiteral) {
   Parser parser;
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(8U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeSequence) {
+  std::string const value("\"der hund\\");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(9U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence1) {
+  std::string const value("\"\\u\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(3U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence2) {
+  std::string const value("\"\\u0\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(4U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence3) {
+  std::string const value("\"\\u01\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(5U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence4) {
+  std::string const value("\"\\u012\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(6U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence5) {
+  std::string const value("\"\\u");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(2U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence6) {
+  std::string const value("\"\\u1");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(3U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence7) {
+  std::string const value("\"\\u12");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(4U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence8) {
+  std::string const value("\"\\u123");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(5U, parser.errorPos());
+}
+
+TEST(ParserTest, UnterminatedEscapeUnicodeSequence9) {
+  std::string const value("\"\\u1234");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(6U, parser.errorPos());
+}
+
+TEST(ParserTest, InvalidEscapeUnicodeSequence1) {
+  std::string const value("\"\\uz\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(3U, parser.errorPos());
+}
+
+TEST(ParserTest, InvalidEscapeUnicodeSequence2) {
+  std::string const value("\"\\uzzzz\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(3U, parser.errorPos());
+}
+
+TEST(ParserTest, InvalidEscapeUnicodeSequence3) {
+  std::string const value("\"\\U----\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(2U, parser.errorPos());
+}
+
+TEST(ParserTest, InvalidEscapeSequence1) {
+  std::string const value("\"\\x\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(2U, parser.errorPos());
+}
+
+TEST(ParserTest, InvalidEscapeSequence2) {
+  std::string const value("\"\\z\"");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(2U, parser.errorPos());
 }
 
 TEST(ParserTest, StringLiteral) {
@@ -608,6 +787,22 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
   value.push_back('"');
   value.push_back(static_cast<unsigned char>(0xff));
   value.push_back(static_cast<unsigned char>(0xff));
+  value.push_back('"');
+
+  Parser parser;
+  parser.options.validateUtf8Strings = true;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_EQ(1U, parser.errorPos());
+  parser.options.validateUtf8Strings = false;
+  ASSERT_EQ(1ULL, parser.parse(value));
+}
+
+TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
+  std::string value;
+  value.push_back('"');
+  for (size_t i = 0; i < 100; ++i) {
+    value.push_back(static_cast<unsigned char>(0x80));
+  }
   value.push_back('"');
 
   Parser parser;
@@ -1299,6 +1494,14 @@ TEST(ParserTest, BrokenObject10) {
   Parser parser;
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(6U, parser.errorPos());
+}
+
+TEST(ParserTest, BrokenObject11) {
+  std::string const value("{\"foo\" : [");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(9U, parser.errorPos());
 }
 
 TEST(ParserTest, ObjectSimple1) {
