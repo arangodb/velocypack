@@ -18,5 +18,5 @@ int main (int, char*[]) {
 
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << HexDump(b.slice());
+  std::cout << HexDump(b.slice()) << std::endl;
 }

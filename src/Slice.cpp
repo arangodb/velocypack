@@ -26,7 +26,7 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Builder.h"
-#include "velocypack/Dump.h"
+#include "velocypack/Dumper.h"
 #include "velocypack/Slice.h"
 #include "velocypack/ValueType.h"
 
@@ -147,7 +147,12 @@ unsigned int const Slice::FirstSubMap[256] = {
 };
         
 std::string Slice::toString () const {
-  return StringPrettyDumper::Dump(this);
+  Options options;
+  options.prettyPrint = true;
+
+  StringSink sink;
+  Dumper::dump(this, &sink, options);
+  return sink.buffer;
 }
 
 std::string Slice::hexType () const {

@@ -3,12 +3,13 @@
 #include "velocypack/Buffer.h"
 #include "velocypack/Builder.h"
 #include "velocypack/Collection.h"
-#include "velocypack/Dump.h"
+#include "velocypack/Dumper.h"
 #include "velocypack/Exception.h"
 #include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Options.h"
 #include "velocypack/Parser.h"
+#include "velocypack/Sink.h"
 #include "velocypack/Slice.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
@@ -46,11 +47,10 @@ static void dumpDouble (double x, uint8_t* p) {
 static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
 
 static void checkDump (Slice s, std::string const& knownGood) {
-  CharBuffer buffer;
-  BufferDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.dump(s);
-  std::string output(buffer.data(), buffer.size());
-  ASSERT_EQ(knownGood, output);
+  ASSERT_EQ(knownGood, sink.buffer);
 }
 
 // don't complain if this function is not called

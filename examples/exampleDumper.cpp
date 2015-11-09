@@ -24,12 +24,11 @@ int main (int, char*[]) {
   // a Slice is a lightweight accessor for a VPack value
   Slice s(b.start());
  
-  // now dump the Slice into a Buffer 
-  CharBuffer buffer;
-  BufferDumper dumper(buffer);
+  // now dump the Slice into an std::string sink 
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.dump(s);
-  std::string output(buffer.data(), buffer.size());
 
   // and print it
-  std::cout << "Resulting VPack:" << std::endl << output << std::endl;
+  std::cout << "Resulting VPack:" << std::endl << sink.buffer << std::endl;
 }

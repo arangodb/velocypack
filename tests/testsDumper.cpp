@@ -45,8 +45,10 @@ TEST(OutStreamTest, StringifyComplexObject) {
   result << s;
 
   ASSERT_EQ("[Slice object (0x0f), byteSize: 107]", result.str());
-  
-  std::string prettyResult = StringPrettyDumper::Dump(s);
+ 
+  Options options;
+  options.prettyPrint = true; 
+  std::string prettyResult = Dumper::toString(s, options);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
 }
 
@@ -64,7 +66,9 @@ TEST(PrettyDumperTest, SimpleObject) {
 
   ASSERT_EQ("[Slice object (0x0b), byteSize: 11]", result.str());
 
-  std::string prettyResult = StringPrettyDumper::Dump(s);
+  Options options;
+  options.prettyPrint = true; 
+  std::string prettyResult = Dumper::toString(s, options);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
 
@@ -78,7 +82,9 @@ TEST(PrettyDumperTest, ComplexObject) {
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  std::string result = StringPrettyDumper::Dump(s);
+  Options options;
+  options.prettyPrint = true; 
+  std::string result = Dumper::toString(s, options);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
 }
 
@@ -87,11 +93,10 @@ TEST(BufferDumperTest, Null) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  CharBuffer buffer;
-  BufferDumper dumper(buffer);
+  CharBufferSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  std::string output(buffer.data(), buffer.size());
-  ASSERT_EQ(std::string("null"), output);
+  ASSERT_EQ(std::string("null"), std::string(sink.buffer.data(), sink.buffer.size()));
 }
 
 TEST(StringDumperTest, Null) {
@@ -99,10 +104,10 @@ TEST(StringDumperTest, Null) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 TEST(StringDumperTest, Numbers) {
@@ -114,11 +119,11 @@ TEST(StringDumperTest, Numbers) {
       Builder b;
       b.add(Value(i));
       Slice s(b.start());
-      CharBuffer buffer;
-      BufferDumper dumper(buffer);
+
+      StringSink sink;
+      Dumper dumper(&sink);
       dumper.dump(s);
-      std::string output(buffer.data(), buffer.size());
-      ASSERT_EQ(std::to_string(i), output);
+      ASSERT_EQ(std::to_string(i), sink.buffer);
     };
 
     i = pp; check();
@@ -137,11 +142,10 @@ TEST(BufferDumperTest, False) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  CharBuffer buffer;
-  BufferDumper dumper(buffer);
+  CharBufferSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  std::string output(buffer.data(), buffer.size());
-  ASSERT_EQ(std::string("false"), output);
+  ASSERT_EQ(std::string("false"), std::string(sink.buffer.data(), sink.buffer.size()));
 }
 
 TEST(StringDumperTest, False) {
@@ -149,10 +153,10 @@ TEST(StringDumperTest, False) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("false"), buffer);
+  ASSERT_EQ(std::string("false"), sink.buffer);
 }
 
 TEST(BufferDumperTest, True) {
@@ -160,11 +164,10 @@ TEST(BufferDumperTest, True) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  CharBuffer buffer;
-  BufferDumper dumper(buffer);
+  CharBufferSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  std::string output(buffer.data(), buffer.size());
-  ASSERT_EQ(std::string("true"), output);
+  ASSERT_EQ(std::string("true"), std::string(sink.buffer.data(), sink.buffer.size()));
 }
 
 TEST(StringDumperTest, True) {
@@ -172,10 +175,10 @@ TEST(StringDumperTest, True) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("true"), buffer);
+  ASSERT_EQ(std::string("true"), sink.buffer);
 }
 
 TEST(StringDumperTest, CustomWithoutHandler) {
@@ -183,8 +186,8 @@ TEST(StringDumperTest, CustomWithoutHandler) {
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -195,18 +198,25 @@ TEST(StringDumperTest, CustomWithCallback) {
   *p = 0xf0;
   b.close();
 
-  bool sawCustom = false;
-  std::string buffer;
-  StringDumper dumper(buffer);
-  dumper.setCallback([&] (std::string*, Slice const* slice, Slice const*) -> bool {
-    if (slice->type() == ValueType::Custom) {
+  struct MyCustomTypeHandler : public CustomTypeHandler {
+    void toJson (Slice const& value, Sink*, Slice const&) {
+      ASSERT_EQ(ValueType::Custom, value.type());
       sawCustom = true;
-      return true;
     }
-    return false;
-  });
+    ValueLength byteSize (Slice const&) {
+      EXPECT_TRUE(false);
+      return 0;
+    }
+    bool sawCustom = false;
+  };
+
+  MyCustomTypeHandler handler;
+  StringSink sink;
+  Options options;
+  options.customTypeHandler = &handler;
+  Dumper dumper(&sink, options);
   dumper.dump(b.slice());
-  ASSERT_TRUE(sawCustom);
+  ASSERT_TRUE(handler.sawCustom);
 }
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
@@ -217,75 +227,88 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   b.add("_key", Value("this is a key"));
   b.close();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  struct MyCustomTypeHandler : public CustomTypeHandler {
+    void toJson (Slice const& value, Sink* sink, Slice const& base) {
+      ASSERT_EQ(ValueType::Custom, value.type());
 
-  dumper.setCallback([] (std::string* buffer, Slice const* slice, Slice const* parent) -> bool {
-    if (slice->type() == ValueType::Custom) {
-      EXPECT_TRUE(parent->isObject());
-      auto key = parent->get("_key");
+      EXPECT_TRUE(base.isObject());
+      auto key = base.get("_key");
       EXPECT_EQ(ValueType::String, key.type());
-      buffer->append("\"foobar/");
-      buffer->append(key.copyString());
-      buffer->push_back('"');
-      return true;
+      sink->append("\"foobar/");
+      sink->append(key.copyString());
+      sink->push_back('"');
     }
-    return false;
-  });
+    ValueLength byteSize (Slice const&) {
+      EXPECT_TRUE(false);
+      return 0;
+    }
+  };
+
+  MyCustomTypeHandler handler;
+  StringSink sink;
+  Options options;
+  options.customTypeHandler = &handler;
+  Dumper dumper(&sink, options);
   dumper.dump(b.slice());
 
-  ASSERT_EQ(std::string("{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"), buffer);
+  ASSERT_EQ(std::string("{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendCharTest) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.appendString(std::string("this is a simple string"));
 
-  ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
+  ASSERT_EQ(std::string("\"this is a simple string\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringTest) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.appendString("this is a simple string");
 
-  ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
+  ASSERT_EQ(std::string("\"this is a simple string\""), sink.buffer);
 }
 
-TEST(StringDumperTest, AppendCharTestSpecialChars) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+TEST(StringDumperTest, AppendCharTestSpecialChars1) {
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
+}
 
-  dumper.reset();
+TEST(StringDumperTest, AppendCharTestSpecialChars2) {
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.options.escapeForwardSlashes = false;
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
-TEST(StringDumperTest, AppendStringTestSpecialChars) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+TEST(StringDumperTest, AppendStringTestSpecialChars1) {
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.options.escapeForwardSlashes = true;
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
+}
 
-  dumper.reset();
+TEST(StringDumperTest, AppendStringTestSpecialChars2) {
+  StringSink sink;
+  Dumper dumper(&sink);
   dumper.options.escapeForwardSlashes = false;
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
-TEST(StringDumperTest, AppendStringSlice) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+TEST(StringDumperTest, AppendStringSlice1) {
+  StringSink sink;
+  Dumper dumper(&sink);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
@@ -294,17 +317,26 @@ TEST(StringDumperTest, AppendStringSlice) {
   dumper.options.escapeForwardSlashes = true;
   dumper.append(slice);
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
-
-  dumper.reset();
-  dumper.options.escapeForwardSlashes = false;
-  dumper.append(slice);
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
-TEST(StringDumperTest, AppendStringSliceRef) {
-  std::string buffer;
-  StringDumper dumper(buffer);
+TEST(StringDumperTest, AppendStringSlice2) {
+  StringSink sink;
+  Dumper dumper(&sink);
+
+  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  Builder b;
+  b.add(Value(s));
+  Slice slice(b.start());
+
+  dumper.options.escapeForwardSlashes = false;
+  dumper.append(slice);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
+}
+
+TEST(StringDumperTest, AppendStringSliceRef1) {
+  StringSink sink;
+  Dumper dumper(&sink);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
@@ -313,32 +345,20 @@ TEST(StringDumperTest, AppendStringSliceRef) {
   dumper.options.escapeForwardSlashes = true;
   dumper.append(&slice);
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
-  
-  dumper.reset();
-  dumper.options.escapeForwardSlashes = false;
-  dumper.append(&slice);
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
-TEST(StringDumperTest, AppendToOstream) {
-  std::string const value("{\"foo\":\"the quick brown fox\"}");
+TEST(StringDumperTest, AppendStringSliceRef2) {
+  StringSink sink;
+  Dumper dumper(&sink);
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
-  parser.parse(value);
-
-  Builder builder = parser.steal();
-  Slice slice(builder.start());
-
-  std::string buffer;
-  StringDumper dumper(buffer);
-  dumper.dump(slice);
-
-  std::ostringstream out;
-  out << dumper;
-  
-  ASSERT_EQ(std::string("{\"foo\":\"the quick brown fox\"}"), out.str());
+  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  Builder b;
+  b.add(Value(s));
+  Slice slice(b.start());
+  dumper.options.escapeForwardSlashes = false;
+  dumper.append(&slice);
+  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
@@ -349,8 +369,8 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -362,12 +382,12 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
-  StringDumper dumper(buffer, options);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
@@ -378,8 +398,8 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -391,12 +411,12 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
-  StringDumper dumper(buffer, options);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
@@ -407,8 +427,8 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -420,12 +440,12 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
-  StringDumper dumper(buffer, options);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeBinary) {
@@ -434,8 +454,8 @@ TEST(StringDumperTest, UnsupportedTypeBinary) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -445,12 +465,12 @@ TEST(StringDumperTest, ConvertTypeBinary) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
-  StringDumper dumper(buffer, options);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeUTCDate) {
@@ -460,8 +480,8 @@ TEST(StringDumperTest, UnsupportedTypeUTCDate) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
-  StringDumper dumper(buffer);
+  StringSink sink;
+  Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
 }
 
@@ -472,12 +492,12 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
 
   Slice slice = b.slice();
 
-  std::string buffer;
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
-  StringDumper dumper(buffer, options);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(slice);
-  ASSERT_EQ(std::string("null"), buffer);
+  ASSERT_EQ(std::string("null"), sink.buffer);
 }
 
 int main (int argc, char* argv[]) {

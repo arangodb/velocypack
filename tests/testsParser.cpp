@@ -2012,24 +2012,29 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
 TEST(ParserTest, ExcludeAttributesTopLevel) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":7}");
 
-  Parser parser;
-  parser.options.excludeAttribute = [] (Slice const& key, int nesting) -> bool {
-    EXPECT_EQ(1, nesting);
+  struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
+    bool shouldExclude (Slice const& key, int nesting) override final {
+      EXPECT_EQ(1, nesting);
 
-    ValueLength keyLength;
-    char const* p = key.getString(keyLength);
+      ValueLength keyLength;
+      char const* p = key.getString(keyLength);
 
-    if (keyLength == 3 && 
-        (strncmp(p, "foo", keyLength) == 0 ||
-         strncmp(p, "bar", keyLength) == 0 ||
-         strncmp(p, "qux", keyLength) == 0)) {
-      // exclude attribute
-      return true;
+      if (keyLength == 3 && 
+          (strncmp(p, "foo", keyLength) == 0 ||
+           strncmp(p, "bar", keyLength) == 0 ||
+           strncmp(p, "qux", keyLength) == 0)) {
+        // exclude attribute
+        return true;
+      }
+      // keep attribute
+      return false;
     }
-    // keep attribute
-    return false;
   };
 
+  MyAttributeExcludeHandler handler;
+
+  Parser parser;
+  parser.options.attributeExcludeHandler = &handler;
   parser.parse(value);
 
   Builder b = parser.steal();
@@ -2052,23 +2057,28 @@ TEST(ParserTest, ExcludeAttributesTopLevel) {
 TEST(ParserTest, ExcludeAttributesSubLevel) {
   std::string const value("{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},\"qux\":5}");
 
-  Parser parser;
-  parser.options.excludeAttribute = [] (Slice const& key, int nesting) -> bool {
-    if (nesting == 3) {
-      ValueLength keyLength;
-      char const* p = key.getString(keyLength);
+  struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
+    bool shouldExclude (Slice const& key, int nesting) override final {
+      if (nesting == 3) {
+        ValueLength keyLength;
+        char const* p = key.getString(keyLength);
 
-      if (keyLength == 3 && 
-          (strncmp(p, "baz", keyLength) == 0 ||
-           strncmp(p, "qux", keyLength) == 0)) {
-        // exclude attribute
-        return true;
+        if (keyLength == 3 && 
+            (strncmp(p, "baz", keyLength) == 0 ||
+             strncmp(p, "qux", keyLength) == 0)) {
+          // exclude attribute
+          return true;
+        }
       }
+      // keep attribute
+      return false;
     }
-    // keep attribute
-    return false;
   };
 
+  MyAttributeExcludeHandler handler;
+
+  Parser parser;
+  parser.options.attributeExcludeHandler = &handler;
   parser.parse(value);
 
   Builder b = parser.steal();

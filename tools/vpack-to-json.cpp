@@ -29,8 +29,9 @@
 #include <fstream>
 
 #include "velocypack/ValueType.h"
-#include "velocypack/Dump.h"
+#include "velocypack/Dumper.h"
 #include "velocypack/Exception.h"
+#include "velocypack/Sink.h"
 #include "velocypack/Slice.h"
 #include "velocypack/Value.h"
 
@@ -73,8 +74,8 @@ int main (int argc, char* argv[]) {
   ifs.close();
 
   Slice const slice(s.c_str());
-  CharBuffer dumperBuffer(4096);
-  BufferDumper dumper(dumperBuffer);
+  CharBufferSink sink(4096);
+  Dumper dumper(&sink);
 
   try {
     dumper.dump(slice);
@@ -99,8 +100,8 @@ int main (int argc, char* argv[]) {
   ofs.seekp(0);
 
   // write into stream
-  char const* start = dumper.buffer()->data();
-  ofs.write(start, dumper.buffer()->size());
+  char const* start = sink.buffer.data();
+  ofs.write(start, sink.buffer.size());
 
   if (! ofs) {
     std::cerr << "Cannot write outfile '" << argv[2] << "'" << std::endl;
@@ -112,7 +113,7 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Successfully converted JSON infile '" << argv[1] << "'" << std::endl;
   std::cout << "VPack Infile size: " << s.size() << std::endl;
-  std::cout << "JSON Outfile size: " << dumper.buffer()->size() << std::endl;
+  std::cout << "JSON Outfile size: " << sink.buffer.size() << std::endl;
   
   return EXIT_SUCCESS;
 }

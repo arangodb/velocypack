@@ -25,10 +25,11 @@ int main (int, char*[]) {
   Slice s(b.start());
  
   // now dump the Slice into an std::string 
-  std::string output;
-  StringPrettyDumper dumper(output);
-  dumper.dump(s);
+  Options options;
+  options.prettyPrint = true;
+  StringSink sink;
+  Dumper::dump(s, &sink, options);
 
   // and print it
-  std::cout << "Resulting JSON:" << std::endl << output << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << sink.buffer << std::endl;
 }
