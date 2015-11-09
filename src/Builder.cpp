@@ -134,8 +134,8 @@ void Builder::sortObjectIndex (uint8_t* objBase,
 }
 
 void Builder::close () {
-  if (_stack.empty()) {
-    throw Exception(Exception::BuilderNeedOpenObject);
+  if (isClosed()) {
+    throw Exception(Exception::BuilderNeedOpenCompound);
   }
   ValueLength& tos = _stack.back();
   if (_start[tos] != 0x06 && _start[tos] != 0x0b) {

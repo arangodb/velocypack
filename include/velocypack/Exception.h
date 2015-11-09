@@ -56,8 +56,9 @@ namespace arangodb {
 
           BuilderNeedOpenObject       = 21,
           BuilderNeedOpenArray        = 22,
-          BuilderUnexpectedType       = 23,
-          BuilderUnexpectedValue      = 24,
+          BuilderNeedOpenCompound     = 23,
+          BuilderUnexpectedType       = 24,
+          BuilderUnexpectedValue      = 25,
 
           UnknownError                = 999 
         };
@@ -115,6 +116,8 @@ namespace arangodb {
               return "Need open Object";
             case BuilderNeedOpenArray:
               return "Need open Array";
+            case BuilderNeedOpenCompound:
+              return "Need open compound value (Array or Object)";
             case BuilderUnexpectedType:
               return "Unexpected type";
             case BuilderUnexpectedValue:

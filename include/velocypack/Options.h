@@ -27,10 +27,13 @@
 #ifndef VELOCYPACK_OPTIONS_H
 #define VELOCYPACK_OPTIONS_H 1
 
+#include <functional>
+
 #include "velocypack/velocypack-common.h"
 
 namespace arangodb {
   namespace velocypack {
+    class Slice;
         
     enum UnsupportedTypeBehavior {
       NullifyUnsupportedType,
@@ -40,6 +43,16 @@ namespace arangodb {
     struct Options {
       Options () {
       }
+      
+      // Dumper behavior when a VPack value is serialized to JSON that
+      // has no JSON equivalent
+      UnsupportedTypeBehavior unsupportedTypeBehavior = FailOnUnsupportedType;
+     
+      // callback for excluding attributes from being built by the Parser
+      std::function<bool(Slice const& key, int nesting)> excludeAttribute = nullptr;
+      
+      // keep top-level object/array open when building objects with the Parser
+      bool keepTopLevelOpen         = false;
 
       // validate UTF-8 strings when JSON-parsing with Parser
       bool validateUtf8Strings      = false;
@@ -57,10 +70,6 @@ namespace arangodb {
       // escape forward slashes when serializing VPack values into
       // JSON with a Dumper
       bool escapeForwardSlashes     = false;
-
-      // Dumper behavior when a VPack value is serialized to JSON that
-      // has no JSON equivalent
-      UnsupportedTypeBehavior unsupportedTypeBehavior = FailOnUnsupportedType;
 
       // default options with the above settings
       static Options Defaults;

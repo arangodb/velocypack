@@ -1759,6 +1759,95 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
+TEST(ParserTest, FromJson) {
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+
+  Options options;
+  Builder b = Parser::fromJson(value, options);
+
+  Slice s(b.start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("qux"));
+}
+
+TEST(ParserTest, KeepTopLevelOpenFalse) {
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+
+  Options options;
+  options.keepTopLevelOpen = false;
+  Builder b = Parser::fromJson(value, options);
+  ASSERT_TRUE(b.isClosed());
+
+  Slice s(b.start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("qux"));
+}
+
+TEST(ParserTest, KeepTopLevelOpenTrue) {
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+
+  Options options;
+  options.keepTopLevelOpen = true;
+  Builder b = Parser::fromJson(value, options);
+  ASSERT_FALSE(b.isClosed());
+
+  ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+  b.close();
+  ASSERT_TRUE(b.isClosed());
+
+  Slice s(b.start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("qux"));
+}
+
+/*
+TEST(ParserTest, ExcludeAttributes) {
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":7}");
+
+  Parser parser;
+  parser.options.excludeAttribute = [] (Slice const& key, int nesting) -> bool {
+    EXPECT_EQ(1UL, nesting);
+
+    ValueLength keyLength;
+    char const* p = key.getString(keyLength);
+
+    if (keyLength == 3 && 
+        (strncmp(p, "foo", keyLength) == 0 ||
+         strncmp(p, "bar", keyLength) == 0 ||
+         strncmp(p, "qux", keyLength) == 0)) {
+      // exclude attribute
+      return true;
+    }
+    // keep attribute
+    return false;
+  };
+
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+
+  ASSERT_EQ(4UL, s.length());
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("bar"));
+  ASSERT_FALSE(s.hasKey("qux"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ(3UL, s.get("baz").getUInt());
+  ASSERT_TRUE(s.hasKey("quux"));
+  ASSERT_EQ(5UL, s.get("quux").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(6UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(7UL, s.get("bark").getUInt());
+}
+*/
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

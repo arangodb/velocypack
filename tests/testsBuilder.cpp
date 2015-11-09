@@ -696,6 +696,124 @@ TEST(BuilderTest, HasKeySubObject) {
   b.close();
 }
 
+TEST(BuilderTest, IsClosedMixed) {
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  b.add(Value(ValueType::Null));
+  ASSERT_TRUE(b.isClosed());
+  b.add(Value(true));
+  ASSERT_TRUE(b.isClosed());
+
+  b.add(Value(ValueType::Array));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add(Value(true));
+  ASSERT_FALSE(b.isClosed());
+  b.add(Value(true));
+  ASSERT_FALSE(b.isClosed());
+
+  b.close();
+  ASSERT_TRUE(b.isClosed());
+
+  b.add(Value(ValueType::Object));
+  ASSERT_FALSE(b.isClosed());
+
+  b.add("foo", Value(true));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add("bar", Value(true));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add("baz", Value(ValueType::Array));
+  ASSERT_FALSE(b.isClosed());
+
+  b.close();
+  ASSERT_FALSE(b.isClosed());
+  
+  b.close();
+  ASSERT_TRUE(b.isClosed());
+}
+
+TEST(BuilderTest, IsClosedObject) {
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  b.add(Value(ValueType::Object));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add("foo", Value(true));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add("bar", Value(true));
+  ASSERT_FALSE(b.isClosed());
+  
+  b.add("baz", Value(ValueType::Object));
+  ASSERT_FALSE(b.isClosed());
+
+  b.close();
+  ASSERT_FALSE(b.isClosed());
+  
+  b.close();
+  ASSERT_TRUE(b.isClosed());
+}
+
+TEST(BuilderTest, Clone) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value("foobarbaz"));
+  b.close();
+
+  Slice s1(b.start());
+  Builder clone = b.clone(s1);
+  ASSERT_NE(s1.start(), clone.start());
+
+  Slice s2(clone.start());
+
+  ASSERT_TRUE(s1.isObject());
+  ASSERT_TRUE(s2.isObject());
+  ASSERT_EQ(3UL, s1.length());
+  ASSERT_EQ(3UL, s2.length());
+
+  ASSERT_TRUE(s1.hasKey("foo"));
+  ASSERT_TRUE(s2.hasKey("foo"));
+  ASSERT_NE(s1.get("foo").start(), s2.get("foo").start());
+  ASSERT_TRUE(s1.hasKey("bar"));
+  ASSERT_TRUE(s2.hasKey("bar"));
+  ASSERT_NE(s1.get("bar").start(), s2.get("bar").start());
+  ASSERT_TRUE(s1.hasKey("baz"));
+  ASSERT_TRUE(s2.hasKey("baz"));
+  ASSERT_NE(s1.get("baz").start(), s2.get("baz").start());
+}
+
+TEST(BuilderTest, CloneDestroyOriginal) {
+  Builder clone; // empty
+  {
+    Builder b;
+    b.add(Value(ValueType::Object));
+    b.add("foo", Value(true));
+    b.add("bar", Value(false));
+    b.add("baz", Value("foobarbaz"));
+    b.close();
+
+    Slice s(b.start());
+    clone = b.clone(s);
+    ASSERT_NE(b.start(), clone.start());
+    // now b goes out of scope. clone should survive!
+  }
+
+  Slice s(clone.start());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(3UL, s.length());
+
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").getBoolean());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_FALSE(s.get("bar").getBoolean());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ("foobarbaz", s.get("baz").copyString());
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
