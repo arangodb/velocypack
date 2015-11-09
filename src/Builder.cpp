@@ -133,6 +133,18 @@ void Builder::sortObjectIndex (uint8_t* objBase,
   }
 }
 
+void Builder::removeLast () {
+  if (_stack.empty()) {
+    throw Exception(Exception::BuilderNeedOpenObject);
+  }
+  std::vector<ValueLength>& index = _index[_stack.size() - 1];
+  if (index.empty()) {
+    throw Exception(Exception::BuilderNeedSubvalue);
+  }
+  _pos = index.back();
+  index.pop_back();
+}
+
 void Builder::close () {
   if (_stack.empty()) {
     throw Exception(Exception::BuilderNeedOpenObject);
