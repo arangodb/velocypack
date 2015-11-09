@@ -7,8 +7,8 @@ build:
 build_script:
   - md %APPVEYOR_BUILD_FOLDER%\build
   - cd %APPVEYOR_BUILD_FOLDER%\build
-  - cmake -G "Visual Studio 12 Win64" -DBuildTests=ON -DBuildExamples=ON -DBuildLargeTests=OFF -D_CRT_SECURE_NO_WARNINGS=1 ..
-  - msbuild /m /MT /p:Configuration=Release /SUBSYSTEM:CONSOLE /LTCG /ignore:4099 /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:msvcrtd.lib velocypack.sln
+  - cmake -G "Visual Studio 12 Win64" -DBuildTests=ON -DBuildExamples=ON -DBuildLargeTests=OFF Release ..
+  - cmake --build . --config Release
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%\build\tests
   - ctest -V 
