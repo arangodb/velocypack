@@ -15,7 +15,7 @@ link:
 using namespace arangodb::velocypack;
 
 int main () {
-  std::cout << ValueTypeName(ValueType::Object) << std::endl;
+  std::cout << valueTypeName(ValueType::Object) << std::endl;
 }
 ```
 
@@ -114,7 +114,7 @@ int main () {
 
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << HexDump(b.slice());
+  std::cout << HexDump(b.slice()) << std::endl;
 }
 ```
 
@@ -145,7 +145,7 @@ int main () {
 
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << HexDump(b.slice());
+  std::cout << HexDump(b.slice()) << std::endl;
 }
 ```
 
@@ -336,7 +336,7 @@ int main () {
 
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << HexDump(b.slice());
+  std::cout << HexDump(b.slice()) << std::endl;
 }
 ```
 
@@ -390,17 +390,9 @@ Serializing a VPack value into JSON
 -----------------------------------
 
 When the task is to create a JSON representation of a VPack value, the
-`Dumper` class can be used. `Dumper` is a template class and can write
-JSON output into a `char[]` buffer or into an `std::string`.
-
-For convenience, `Dumper` provides the following ready-to-use typedefs:
-
-- BufferDumper: will dump the JSON into a `Buffer` object
-- StringDumper: will dump the JSON into an `std::string`
-- StringPrettyDumper: will dump the JSON into an `std::string`,
-  using pretty printing
-
-Here we'll be using the `StringPrettyDumper` class.
+`Dumper` class can be used. A `Dumper` needs a `Sink` for writing the
+data. There are ready-to-use `Sink`s for writing into a `char[]` buffer 
+or into an `std::string`.
 
 ```cpp
 #include <iostream>
@@ -428,42 +420,51 @@ int main () {
 
   Slice s(b.start());
 
+  // turn on pretty printing
+  Options options;
+  options.prettyPrint = true;
+
   // now dump the Slice into an std::string
-  std::string output;
-  StringPrettyDumper dumper(output);
+  StringSink sink;
+  Dumper dumper(&sink, options);
   dumper.dump(s);
 
   // and print it
-  std::cout << "Resulting JSON:" << std::endl << output << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << sink.buffer << std::endl;
 }
 ```
 
 Note that VPack values may contain data types that cannot be represented in
 JSON. If a value is dumped that has no equivalent in JSON, a `Dumper` object
 will by default throw an exception. To change the default behavior, set the
-Dumper's `strategy` attribute to `StrategyNullifyUnsupportedType`:
+Dumper's `unsupportedTypeBehavior` attribute to `NullifyUnsupportedType`:
 
 ```cpp
-StringPrettyDumper dumper(output);
-dumper.strategy = StrategyNullifyUnsupportedType;
+// convert non-JSON types into JSON null values if possible
+Options options;
+options.unsupportedTypeBehavior = NullifyUnsupportedType;
+
+// now dump the Slice into an std::string
+Dumper dumper(&sink, options);
 dumper.dump(s);
 ```
 
 The `Dumper` also has an `options` attribute that can be used to control
 whether forward slashes inside strings should be escaped with a backslash
 when producing JSON. The default is to not escape them. This can be changed
-by setting the `escapeForwardSlashes` attribute of the Dumper's `option`
-attribute as follows:
+by setting the `escapeForwardSlashes` attribute of the Dumper's `option`s:
 
 ```
 Parser parser;
 parser.parse("{\"foo\":\"this/is/a/test\"}");
 
-std::string output;
-StringDumper dumper(output);
-dumper.options.escapeForwardSlashes = true;
+Options options;
+options.escapeForwardSlashes = true;
+
+StringSink sink;
+Dumper dumper(&sink, options);
 dumper.dump(parser.steal().slice());
-std::cout << output << std::endl;
+std::cout << sink.buffer << std::endl;
 ```
 
 Note that several JSON parsers in the wild provide extensions to the
