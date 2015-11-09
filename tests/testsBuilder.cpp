@@ -31,7 +31,7 @@
 
 TEST(BuilderTest, Null) {
   Builder b;
-  b.add(Value());
+  b.add(Value(ValueType::Null));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 

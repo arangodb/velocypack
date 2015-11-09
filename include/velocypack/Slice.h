@@ -87,7 +87,7 @@ namespace arangodb {
         }
 
         char const* typeName () const {
-          return ValueTypeName(type());
+          return valueTypeName(type());
         }
 
         // pointer to the head byte
