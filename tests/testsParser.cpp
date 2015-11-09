@@ -1806,13 +1806,12 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
   ASSERT_FALSE(s.hasKey("qux"));
 }
 
-/*
-TEST(ParserTest, ExcludeAttributes) {
+TEST(ParserTest, ExcludeAttributesTopLevel) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":7}");
 
   Parser parser;
   parser.options.excludeAttribute = [] (Slice const& key, int nesting) -> bool {
-    EXPECT_EQ(1UL, nesting);
+    EXPECT_EQ(1, nesting);
 
     ValueLength keyLength;
     char const* p = key.getString(keyLength);
@@ -1846,7 +1845,46 @@ TEST(ParserTest, ExcludeAttributes) {
   ASSERT_TRUE(s.hasKey("bark"));
   ASSERT_EQ(7UL, s.get("bark").getUInt());
 }
-*/
+
+TEST(ParserTest, ExcludeAttributesSubLevel) {
+  std::string const value("{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},\"qux\":5}");
+
+  Parser parser;
+  parser.options.excludeAttribute = [] (Slice const& key, int nesting) -> bool {
+    if (nesting == 3) {
+      ValueLength keyLength;
+      char const* p = key.getString(keyLength);
+
+      if (keyLength == 3 && 
+          (strncmp(p, "baz", keyLength) == 0 ||
+           strncmp(p, "qux", keyLength) == 0)) {
+        // exclude attribute
+        return true;
+      }
+    }
+    // keep attribute
+    return false;
+  };
+
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+
+  ASSERT_EQ(2UL, s.length());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").isObject());
+  ASSERT_EQ(2UL, s.get("foo").length());
+  ASSERT_TRUE(s.get("foo").hasKey("bar"));
+  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bar" })).isObject());
+  ASSERT_EQ(1UL, s.get(std::vector<std::string>({ "foo", "bar" })).length());
+  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bar" })).hasKey("bart"));
+  ASSERT_TRUE(s.get("foo").hasKey("qux"));
+  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "qux" })).isObject());
+  ASSERT_EQ(0UL, s.get(std::vector<std::string>({ "foo", "qux" })).length());
+  ASSERT_TRUE(s.hasKey("qux"));
+  ASSERT_EQ(5UL, s.get("qux").getUInt());
+}
 
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

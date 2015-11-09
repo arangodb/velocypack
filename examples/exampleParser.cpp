@@ -15,10 +15,12 @@ int main (int, char*[]) {
   }
   catch (std::bad_alloc const& e) {
     std::cout << "Out of memory!" << std::endl;
+    throw;
   }
   catch (Exception const& e) {
     std::cout << "Parse error: " << e.what() << std::endl;
     std::cout << "Position of error: " << parser.errorPos() << std::endl;
+    throw;
   }
 
   // get a pointer to the start of the data

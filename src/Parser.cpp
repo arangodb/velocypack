@@ -466,7 +466,17 @@ void Parser::parseObject () {
     ++_pos;
 
     _b.reportAdd(base);
-    parseString();
+    bool excludeAttribute = false;
+    if (options.excludeAttribute == nullptr) {
+      parseString();
+    }
+    else {
+      auto lastPos = _b._pos;
+      parseString();
+      if (options.excludeAttribute(Slice(_b._start + lastPos), _nesting)) {
+        excludeAttribute = true;
+      }
+    }
     i = skipWhiteSpace("Expecting ':'");
     // always expecting the ':' here
     if (i != ':') {
@@ -475,6 +485,11 @@ void Parser::parseObject () {
     ++_pos; // skip over the colon
 
     parseJson();
+
+    if (excludeAttribute) {
+      _b.removeLast();
+    }
+
     i = skipWhiteSpace("Expecting ',' or '}'");
     if (i == '}') {
       // end of object
