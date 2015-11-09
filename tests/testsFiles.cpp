@@ -54,7 +54,7 @@ static std::string readFile (std::string filename) {
 #else
   std::string const separator("/");
 #endif
-  filename = "jsonSample" + separator + filename;
+  filename = "tests" + separator + "jsonSample" + separator + filename;
 
   for (size_t i = 0; i < 3; ++i) {
     try {

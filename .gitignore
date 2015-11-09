@@ -32,9 +32,11 @@ libvelocypack.a
 stamp-h1
 config.h.in~
 
-googletest/
+tests/googletest/
 CMakeCache.txt
 CMakeFiles/
 build/
 cmake_install.cmake
 install_manifest.txt
+DartConfiguration.tcl
+tests/CTestTestfile.cmake
