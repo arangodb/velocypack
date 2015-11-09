@@ -7,8 +7,8 @@ build:
 build_script:
   - md %APPVEYOR_BUILD_FOLDER%\build
   - cd %APPVEYOR_BUILD_FOLDER%\build
-  - cmake -G "Visual Studio 12 Win64" -DEnableTests=ON -DEnableExamples=ON -DEnableLargeTests=OFF ..
-  - msbuild /m /p:Configuration=Release /p:Platform="Win64" velocypack.sln
+  - cmake -G "Visual Studio 12 Win64" -DBuildTests=ON -DBuildExamples=ON -DBuildLargeTests=OFF ..
+  - msbuild /m /p:Configuration=Release velocypack.sln
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%\build\tests
   - ctest -V 
