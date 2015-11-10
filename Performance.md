@@ -10,8 +10,9 @@ Data sizes
 The directory *tests/jsonSample* contains several example JSON files
 which can be converted to VPack values. The following sections show
 how much can be gained by converting these JSON data into VPack values.
-The VPack sizes are compared against other popular schema-free serialization
-formats.
+The VPack sizes are compared against some other popular schema-free 
+serialization formats [MessagePack / MsgPack](http://msgpack.org/)
+and [BSON](http://bsonspec.org/).
 
 ### tests/jsonSample/small.json
 
