@@ -43,7 +43,7 @@ namespace arangodb {
 
       public:
 
-        enum CType {
+        enum class CType {
           None     = 0,
           Bool     = 1,
           Double   = 2,
