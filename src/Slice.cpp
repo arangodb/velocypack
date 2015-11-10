@@ -27,6 +27,7 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Builder.h"
 #include "velocypack/Dumper.h"
+#include "velocypack/HexDump.h"
 #include "velocypack/Slice.h"
 #include "velocypack/ValueType.h"
 
@@ -153,7 +154,7 @@ std::string Slice::toJson () const {
   StringSink sink;
   Dumper dumper(&sink, options);
   dumper.dump(this);
-  return sink.buffer;
+  return std::move(sink.buffer);
 }
         
 std::string Slice::toString () const {
@@ -162,18 +163,11 @@ std::string Slice::toString () const {
 
   StringSink sink;
   Dumper::dump(this, &sink, options);
-  return sink.buffer;
+  return std::move(sink.buffer);
 }
 
 std::string Slice::hexType () const {
-  auto const h = head();
-  std::string result("0x");
-  uint8_t x;
-  x = h / 16;
-  result.push_back(x < 10 ? ('0' + x) : ('a' + x - 10));
-  x = h % 16;
-  result.push_back(x < 10 ? ('0' + x) : ('a' + x - 10));
-  return result;
+  return std::move(HexDump::toHex(head()));
 }
         
 std::ostream& operator<< (std::ostream& stream, Slice const* slice) {
