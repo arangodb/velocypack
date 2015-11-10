@@ -433,6 +433,38 @@ TEST(ParserTest, Double2) {
   checkDump(s, value);
 }
 
+TEST(ParserTest, DoubleScientificWithoutDot1) {
+  std::string const value("-3e12");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_EQ(-3.e12, s.getDouble());
+
+  std::string const valueOut("-3e+12");
+  checkDump(s, valueOut);
+}
+
+TEST(ParserTest, DoubleScientificWithoutDot2) {
+  std::string const value("3e12");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_EQ(3e12, s.getDouble());
+
+  std::string const valueOut("3e+12");
+  checkDump(s, valueOut);
+}
+
 TEST(ParserTest, DoubleScientific1) {
   std::string const value("-1.0124e42");
 
