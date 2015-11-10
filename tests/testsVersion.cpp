@@ -24,23 +24,52 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_VPACK_H
-#define VELOCYPACK_VPACK_H 1
+#include "tests-common.h"
 
-#include "velocypack/velocypack-common.h"
-#include "velocypack/Buffer.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Collection.h"
-#include "velocypack/Dumper.h"
-#include "velocypack/Exception.h"
-#include "velocypack/HexDump.h"
-#include "velocypack/Iterator.h"
-#include "velocypack/Options.h"
-#include "velocypack/Parser.h"
-#include "velocypack/Sink.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
-#include "velocypack/Version.h"
+TEST(VersionTest, TestDigits) {
+  int major = Version::major;
+  ASSERT_TRUE(major >= 0 && major <= 10);
+  int minor = Version::minor;
+  ASSERT_TRUE(minor >= 0 && minor <= 10);
+  int patch = Version::patch;
+  ASSERT_TRUE(patch >= 0 && patch <= 999);
+}
 
-#endif
+TEST(VersionTest, TestFormat) {
+  std::string version = Version::toString();
+
+  int majors = 0;
+  int minors = 0;
+  int patch = 0;
+
+  char const* p = version.c_str();
+  while (*p && *p >= '0' && *p <= '9') {
+    majors++;
+    ++p;
+  }
+  ASSERT_TRUE(majors > 0);
+  ASSERT_EQ('.', *p);
+  ++p;
+
+  while (*p && *p >= '0' && *p <= '9') {
+    minors++;
+    ++p;
+  }
+  ASSERT_TRUE(minors > 0);
+  ASSERT_EQ('.', *p);
+  ++p;
+
+  while (*p && *p >= '0' && *p <= '9') {
+    patch++;
+    ++p;
+  }
+  ASSERT_TRUE(patch > 0);
+  ASSERT_EQ('\0', *p);
+}
+
+int main (int argc, char* argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}
+

@@ -13,6 +13,7 @@
 #include "velocypack/Slice.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
+#include "velocypack/Version.h"
 
 #include "gtest/gtest.h"
 

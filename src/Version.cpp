@@ -24,23 +24,20 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_VPACK_H
-#define VELOCYPACK_VPACK_H 1
+#include <sstream>
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/Buffer.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Collection.h"
-#include "velocypack/Dumper.h"
-#include "velocypack/Exception.h"
-#include "velocypack/HexDump.h"
-#include "velocypack/Iterator.h"
-#include "velocypack/Options.h"
-#include "velocypack/Parser.h"
-#include "velocypack/Sink.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
 #include "velocypack/Version.h"
 
-#endif
+using namespace arangodb::velocypack;
+  
+int const Version::major = 0;      
+int const Version::minor = 1;      
+int const Version::patch = 0;
+
+std::string Version::toString () {
+  std::stringstream version;
+  version << major << "." << minor << "." << patch;
+  return version.str();
+}
+

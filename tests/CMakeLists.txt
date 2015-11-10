@@ -28,7 +28,8 @@ if(BuildTests)
           testsLookup
           testsParser
           testsSlice
-          testsType)
+          testsType
+          testsVersion)
     add_executable(
       ${testName}
       ${testName}.cpp

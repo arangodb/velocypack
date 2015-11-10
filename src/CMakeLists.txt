@@ -13,6 +13,7 @@ add_library(
   Parser.cpp
   Slice.cpp
   ValueType.cpp
+  Version.cpp
   asm-functions.cpp
   fasthash.cpp
   fpconv.cpp

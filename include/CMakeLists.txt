@@ -17,4 +17,5 @@ install(FILES velocypack/Sink.h DESTINATION include/velocypack)
 install(FILES velocypack/Slice.h DESTINATION include/velocypack)
 install(FILES velocypack/Value.h DESTINATION include/velocypack)
 install(FILES velocypack/ValueType.h DESTINATION include/velocypack)
+install(FILES velocypack/Version.h DESTINATION include/velocypack)
 
