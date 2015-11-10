@@ -411,7 +411,7 @@ whether forward slashes inside strings should be escaped with a backslash
 when producing JSON. The default is to not escape them. This can be changed
 by setting the `escapeForwardSlashes` attribute of the Dumper's `option`s:
 
-```
+```cpp
 Parser parser;
 parser.parse("{\"foo\":\"this/is/a/test\"}");
 
