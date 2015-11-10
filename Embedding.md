@@ -142,16 +142,24 @@ This header file makes the most common VPack classes available under alternative
 (hopefully unambiguous) class names with the prefix *VPack*:
 
 ```cpp
-using VPackBufferDumper       = arangodb::velocypack::BufferDumper;
+using VPackArrayIterator      = arangodb::velocypack::ArrayIterator;
 using VPackBuilder            = arangodb::velocypack::Builder;
 using VPackCharBuffer         = arangodb::velocypack::CharBuffer;
+using VPackCharBufferSink     = arangodb::velocypack::CharBufferSink;
 using VPackCollection         = arangodb::velocypack::Collection;
+using VPackDumper             = arangodb::velocypack::Dumper;
 using VPackException          = arangodb::velocypack::Exception;
+using VPackHexDump            = arangodb::velocypack::HexDump;
+using VPackObjectIterator     = arangodb::velocypack::ObjectIterator;
 using VPackOptions            = arangodb::velocypack::Options;
 using VPackParser             = arangodb::velocypack::Parser;
-using VPackStringDumper       = arangodb::velocypack::StringDumper;
-using VPackStringPrettyDumper = arangodb::velocypack::StringPrettyDumper;
+using VPackSink               = arangodb::velocypack::Sink;
 using VPackSlice              = arangodb::velocypack::Slice;
+using VPackStringSink         = arangodb::velocypack::StringSink;
 using VPackValue              = arangodb::velocypack::Value;
+using VPackValueLength        = arangodb::velocypack::ValueLength;
 using VPackValueType          = arangodb::velocypack::ValueType;
+using VPackVersion            = arangodb::velocypack::Version;
+
+#endif
 ```

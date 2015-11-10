@@ -1,8 +1,4 @@
-* create table with JSON/VPack size comparisons (JS)
-
-* add performance tests and results
-
-* comparison with other formats
+* write Performance.md and comparison with other formats
 
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 

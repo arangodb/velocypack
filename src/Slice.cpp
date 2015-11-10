@@ -145,6 +145,16 @@ unsigned int const Slice::FirstSubMap[256] = {
   8,   // 0x12, object with unsorted index table
   0
 };
+
+std::string Slice::toJson () const {
+  Options options;
+  options.customTypeHandler = customTypeHandler;
+
+  StringSink sink;
+  Dumper dumper(&sink, options);
+  dumper.dump(this);
+  return sink.buffer;
+}
         
 std::string Slice::toString () const {
   Options options;

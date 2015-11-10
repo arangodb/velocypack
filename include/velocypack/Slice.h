@@ -744,6 +744,7 @@ namespace arangodb {
           return 0;
         }
 
+        std::string toJson () const;
         std::string toString () const;
         std::string hexType () const;
 

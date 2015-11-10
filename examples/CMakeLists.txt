@@ -6,12 +6,16 @@ message(STATUS "Building examples: ${BuildExamples}")
 # build examples
 if(BuildExamples)
   foreach (exampleName
+           exampleArrayHandling
            exampleArrayIterator
            exampleBuilder
            exampleBuilderFancy
+           exampleCustom
            exampleDumper
            exampleDumperPretty
            exampleObjectIterator
+           exampleObjectLookup
+           exampleObjectMethods
            exampleParser
            exampleSlice)
 
