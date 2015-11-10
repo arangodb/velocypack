@@ -12,4 +12,3 @@
 
 * ideas: add ManagedSlice class, unique/distinct/sort for Arrays
 * test equal_to with custom types
-* test custom types without handler
