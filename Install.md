@@ -95,10 +95,14 @@ The following options can be set when building VPack:
 * `-DCMAKE_BUILD_TYPE=Debug`: builds the VPack library in debug mode. This
   adds debug symbols and turns off optimizations. Use this mode for development,
   but not for production or performance testing.
+* `-DBuildTools`: controls whether some tool binaries for VPack values should be
+  built. These tools can be used to inspect VPack values contained in files or to
+  convert JSON files to VPack. They are not needed when VPack is used as a library  
+  only.
 * `-DBuildBench`: controls whether the benchmark suite should be built. The
   default is `OFF`, meaning the suite will not be built. Set the option to `ON` to
   build it. Building the benchmark suite requires the subdirectory *rapidjson* to
-  be present (see below).
+  be present (see below) and the `BuildTools` option to be set to `ON`.
 * `-DBuildExamples`: controls whether VPack's examples should be built. The
   examples are not needed when VPack is used as a library only.
 * `-DBuildTests`: controls whether VPack's own test suite should be built. The

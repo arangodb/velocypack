@@ -49,8 +49,8 @@ This data format must be backed by good C++ classes to allow
 The VPack format is an attempt to achieve all this.
 
 This repository contains a C++ library for building, manipulating and
-serializing VPack data. It is the reference implementation for the VPack
-format.
+serializing VPack data. It is the *reference implementation for the VPack
+format*.
 
 
 Specification
@@ -72,7 +72,7 @@ Building the VPack library
 --------------------------
 
 The VPack library can be built on Linux, MacOS and Windows. It will likely
-compile and work on other platforms for which a recent version of `cmake` and
+compile and work on other platforms for which a recent version of *cmake* and
 a working C++11-enabled compiler are available.
 
 See the file [Install.md](Install.md) for compilation and installation
@@ -85,3 +85,4 @@ Using the VPack library
 Please consult the file [examples/API.md](examples/API.md) for usage examples, 
 and the file [examples/Embedding.md](examples/Embedding.md) for information
 about how to embed the library into client applications.
+
