@@ -1242,6 +1242,91 @@ TEST(SliceTest, HashObject) {
   ASSERT_EQ(6865527808070733846ULL, s.hash());
 }
 
+TEST(SliceTest, GetNumericValueIntNoLoss) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(-1));
+  b.add(Value(10));
+  b.add(Value(-10));
+  b.add(Value(INT64_MAX));
+  b.add(Value(-3453.32));
+  b.add(Value(2343323453.3232235));
+  b.close();
+
+  Slice s = Slice(b.start());
+
+  ASSERT_EQ(1, s.at(0).getNumericValue<int64_t>());
+  ASSERT_EQ(-1, s.at(1).getNumericValue<int64_t>());
+  ASSERT_EQ(10, s.at(2).getNumericValue<int64_t>());
+  ASSERT_EQ(-10, s.at(3).getNumericValue<int64_t>());
+  ASSERT_EQ(INT64_MAX, s.at(4).getNumericValue<int64_t>());
+  ASSERT_EQ(-3453, s.at(5).getNumericValue<int64_t>());
+  ASSERT_EQ(2343323453, s.at(6).getNumericValue<int64_t>());
+  
+  ASSERT_EQ(1, s.at(0).getNumericValue<int16_t>());
+  ASSERT_EQ(-1, s.at(1).getNumericValue<int16_t>());
+  ASSERT_EQ(10, s.at(2).getNumericValue<int16_t>());
+  ASSERT_EQ(-10, s.at(3).getNumericValue<int16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<int16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(-3453, s.at(5).getNumericValue<int16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumericValue<int16_t>(), Exception::NumberOutOfRange);
+}
+
+TEST(SliceTest, GetNumericValueUIntNoLoss) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(-1));
+  b.add(Value(10));
+  b.add(Value(-10));
+  b.add(Value(INT64_MAX));
+  b.add(Value(-3453.32));
+  b.add(Value(2343323453.3232235));
+  b.close();
+
+  Slice s = Slice(b.start());
+
+  ASSERT_EQ(1ULL, s.at(0).getNumericValue<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(10ULL, s.at(2).getNumericValue<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.at(4).getNumericValue<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(2343323453ULL, s.at(6).getNumericValue<uint64_t>());
+ 
+  ASSERT_EQ(1ULL, s.at(0).getNumericValue<uint16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(10ULL, s.at(2).getNumericValue<uint16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+}
+
+TEST(SliceTest, GetNumericValueDoubleNoLoss) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(-1));
+  b.add(Value(10));
+  b.add(Value(-10));
+  b.add(Value(INT64_MAX));
+  b.add(Value(-3453.32));
+  b.add(Value(2343323453.3232235));
+  b.close();
+
+  Slice s = Slice(b.start());
+  
+  ASSERT_DOUBLE_EQ(1., s.at(0).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(-1., s.at(1).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(10., s.at(2).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(-10., s.at(3).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumericValue<double>());
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

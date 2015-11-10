@@ -4,19 +4,16 @@
 
 * comparison with other formats
 
-* properly test custom types 0xf0 - 0xff (JS)
-  - Builder already has support for them
-  - Dumper & Slicer need support
-  - tests
-
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 
 * documentation of C++ classes (// ...) (MN)
 
-* test on MacOS, ARM and Windows
+* test on MacOS and ARM
 
 * implement type BCD in Builder, Slice, Parser and Dumper
 
 * SWIG support (MN)
 
 * ideas: add ManagedSlice class, unique/distinct/sort for Arrays
+* test equal_to with custom types
+* test custom types without handler

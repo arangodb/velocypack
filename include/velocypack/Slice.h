@@ -497,6 +497,11 @@ namespace arangodb {
             // Smallint >= 0
             return static_cast<uint64_t>(h - 0x30);
           }
+
+          if (h >= 0x3a && h <= 0x3f) {
+            // Smallint < 0
+            throw Exception(Exception::NumberOutOfRange);
+          }
           
           throw Exception(Exception::InvalidValueType, "Expecting type UInt");
         }
@@ -525,6 +530,62 @@ namespace arangodb {
           throw Exception(Exception::InvalidValueType, "Expecting type Smallint");
         }
 
+        template<typename T>
+        T getNumericValue () const {
+          if (std::is_integral<T>()) {
+            if (std::is_signed<T>()) {
+              // signed integral type
+              if (isDouble()) {
+                auto v = getDouble();
+                if (v < static_cast<double>(std::numeric_limits<T>::min()) || 
+                    v > static_cast<double>(std::numeric_limits<T>::max())) {
+                  throw Exception(Exception::NumberOutOfRange);
+                }
+                return static_cast<T>(v);
+              }
+
+              int64_t v = getInt();
+              if (v < static_cast<int64_t>(std::numeric_limits<T>::min()) || 
+                  v > static_cast<int64_t>(std::numeric_limits<T>::max())) {
+                throw Exception(Exception::NumberOutOfRange);
+              }
+              return static_cast<T>(v);
+            }
+            else {
+              // unsigned integral type
+              if (isDouble()) {
+                auto v = getDouble();
+                if (v < 0.0 ||
+                    v > static_cast<double>(UINT64_MAX) ||
+                    v > static_cast<double>(std::numeric_limits<T>::max())) {
+                  throw Exception(Exception::NumberOutOfRange);
+                }
+                return static_cast<T>(v);
+              }
+
+              uint64_t v = getUInt();
+              if (v > static_cast<uint64_t>(std::numeric_limits<T>::max())) {
+                throw Exception(Exception::NumberOutOfRange);
+              }
+              return static_cast<T>(v);
+            }
+          }
+
+          // floating point type
+
+          if (isDouble()) {
+            return static_cast<T>(getDouble());
+          }
+          if (isInt() || isSmallInt()) {
+            return static_cast<T>(getInt());
+          }
+          if (isUInt()) {
+            return static_cast<T>(getUInt());
+          }
+
+          throw Exception(Exception::InvalidValueType, "Expecting numeric type");
+        }
+        
         // return the value for a UTCDate object
         int64_t getUTCDate () const {
           assertType(ValueType::UTCDate);
