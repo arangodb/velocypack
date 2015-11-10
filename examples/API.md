@@ -1,60 +1,17 @@
 API documentation for the VPack library
 =======================================
 
-Minimal example
----------------
+This document provides a step-by-step instruction for using the most 
+important VPack classes. Use cases covered are 
 
-Let's start with a small example program *test.cpp* that uses the VPack library.
-It does nothing yet, the only goal is to make this minimal example compile and
-link:
+* building new VPack objects dynamically
+* inspecting the contents of VPack objects
+* converting JSON data into VPack values
+* serializing VPack values to JSON 
 
-```cpp
-#include <velocypack/vpack.h>
-#include <iostream>
-
-using namespace arangodb::velocypack;
-
-int main () {
-  std::cout << valueTypeName(ValueType::Object) << std::endl;
-}
-```
-
-To make the VPack classes available in your project, add the VPack headers
-to the list of include directories. How exactly this works is compiler-specific.
-For example, when using g++ or clang, include directories can be added using 
-the `-I` compiler option.
-
-When compiling the program, please make sure the compiler can understand C++11
-syntax. In g++ and clang, this can be controlled via the `-std=c++11` option.
-
-Additionally, the velocitypack library must be linked to the example program.
-In g++ this works by specifying the libary path with the `-L` option and specifying
-the library's name.
-
-The full instruction to compile and link the test program with g++ is:
-
-```bash
-g++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
-```
-
-With clang, it is:
-
-```bash
-clang++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
-```
-
-The test program can afterwards be run with
-
-```bash
-./test
-```
-
-With a working infrastructure for compiling and linking the VPack library,
-we can now adjust the example program so it does something useful. The 
-following sections cover a few common usage examples.
-
-Please also have a look at the *examples* subdirectory in this repository
-for example code.
+Please also have a look at the file [Embedding.md](Embedding.md) as it
+contains information about how to include the VPack classes in other
+applications and link against the VPack library.
 
 
 Building VPack objects programmatically

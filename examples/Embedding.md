@@ -1,10 +1,63 @@
 Embedder info for the VPack library
 ===================================
 
+Minimal example
+---------------
+
+Let's start with a small example program *test.cpp* that uses the VPack library.
+It does nothing yet, the only goal is to make this minimal example compile and
+link:
+
+```cpp
+#include <velocypack/vpack.h>
+#include <iostream>
+
+using namespace arangodb::velocypack;
+
+int main () {
+  std::cout << valueTypeName(ValueType::Object) << std::endl;
+}
+```
+
+To make the VPack classes available in your project, add the VPack headers
+to the list of include directories. How exactly this works is compiler-specific.
+For example, when using g++ or clang, include directories can be added using 
+the `-I` compiler option.
+
+When compiling the program, please make sure the compiler can understand C++11
+syntax. In g++ and clang, this can be controlled via the `-std=c++11` option.
+
+Additionally, the velocypack library must be linked to the example program.
+In g++ this works by specifying the libary path with the `-L` option and specifying
+the library's name.
+
+The full instruction to compile and link the test program with g++ is:
+
+```bash
+g++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
+```
+
+With clang, it is:
+
+```bash
+clang++ -std=c++11 -I/usr/local/include -L/usr/local/lib  main.cpp -lvelocypack -o test
+```
+
+The test program can afterwards be run with
+
+```bash
+./test
+```
+
+With a working infrastructure for compiling and linking the VPack library,
+you can now go ahead and adjust the example program so it does something useful. 
+There are some working usage examples in this directory.
+
+
 Exceptions and error reporting
 ------------------------------
 
-The VPack library way of signaling errors is to throw exceptions. Thus VPack
+The VPack library's way of signaling errors is to throw exceptions. Thus VPack
 library users need to make sure they handle exceptions properly.
 
 The VPack library will mostly throw exceptions of type `arangodb::vpack::Exception`. 
@@ -160,6 +213,4 @@ using VPackValue              = arangodb::velocypack::Value;
 using VPackValueLength        = arangodb::velocypack::ValueLength;
 using VPackValueType          = arangodb::velocypack::ValueType;
 using VPackVersion            = arangodb::velocypack::Version;
-
-#endif
 ```
