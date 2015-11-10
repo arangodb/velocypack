@@ -30,11 +30,17 @@
 #include <string>
 
 #include "velocypack/velocypack-common.h"
+#include "velocypack/Buffer.h"
 
 namespace arangodb {
   namespace velocypack {
 
     struct Sink {
+      Sink () {
+      }
+      Sink (Sink const&) = delete;
+      Sink& operator= (Sink const&) = delete;
+
       virtual ~Sink () {
       }
       virtual void push_back (char c) = 0;

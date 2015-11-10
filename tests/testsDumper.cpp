@@ -188,7 +188,7 @@ TEST(StringDumperTest, CustomWithoutHandler) {
 
   StringSink sink;
   Dumper dumper(&sink);
-  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NeedCustomTypeHandler);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {
@@ -201,6 +201,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
     void toJson (Slice const& value, Sink*, Slice const&) {
       ASSERT_EQ(ValueType::Custom, value.type());
+      ASSERT_EQ(0xf0UL, value.head());
       sawCustom = true;
     }
     ValueLength byteSize (Slice const&) {
@@ -217,6 +218,45 @@ TEST(StringDumperTest, CustomWithCallback) {
   Dumper dumper(&sink, options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.sawCustom);
+}
+
+TEST(StringDumperTest, CustomStringWithCallback) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  uint8_t* p = b.add("foo", ValuePair(5ULL, ValueType::Custom));
+  *p++ = 0xf1;
+  *p++ = 0x03;
+  *p++ = 'b';
+  *p++ = 'a';
+  *p++ = 'r';
+  b.close();
+
+  struct MyCustomTypeHandler : public CustomTypeHandler {
+    void toJson (Slice const& value, Sink* sink, Slice const&) {
+      ASSERT_EQ(ValueType::Custom, value.type());
+      ASSERT_EQ(0xf1UL, value.head());
+      uint8_t length = *(value.start() + 1);
+      sink->push_back('"');
+      sink->append(value.start() + 2, length);
+      sink->push_back('"');
+      sawCustom = true;
+    }
+    ValueLength byteSize (Slice const&) {
+      EXPECT_TRUE(false);
+      return 0;
+    }
+    bool sawCustom = false;
+  };
+
+  MyCustomTypeHandler handler;
+  StringSink sink;
+  Options options;
+  options.customTypeHandler = &handler;
+  Dumper dumper(&sink, options);
+  dumper.dump(b.slice());
+  ASSERT_TRUE(handler.sawCustom);
+  
+  ASSERT_EQ(std::string("{\"foo\":\"bar\"}"), sink.buffer);
 }
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
@@ -252,6 +292,65 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   dumper.dump(b.slice());
 
   ASSERT_EQ(std::string("{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"), sink.buffer);
+}
+
+TEST(StringDumperTest, ArrayWithCustom) {
+  struct MyCustomTypeHandler : public CustomTypeHandler {
+    int byteSizeCalled = 0;
+    void toJson (Slice const& value, Sink* sink, Slice const& base) {
+      ASSERT_EQ(ValueType::Custom, value.type());
+
+      EXPECT_TRUE(base.isArray());
+      if (value.head() == 0xf0) {
+        sink->append("\"foobar\"");
+      }
+      else if (value.head() == 0xf1) {
+        sink->append("1234");
+      }
+      else if (value.head() == 0xf2) {
+        sink->append("[]");
+      }
+      else if (value.head() == 0xf3) {
+        sink->append("{\"qux\":2}");
+      }
+      else {
+        EXPECT_TRUE(false);
+      }
+    }
+    ValueLength byteSize (Slice const& value) {
+      EXPECT_EQ(ValueType::Custom, value.type());
+      ++byteSizeCalled;
+      return 1;
+    }
+  };
+
+  MyCustomTypeHandler handler;
+  Options options;
+  options.customTypeHandler = &handler;
+
+  uint8_t* p;
+
+  Builder b(options);
+  b.add(Value(ValueType::Array));
+  p = b.add(ValuePair(1ULL, ValueType::Custom));
+  *p = 0xf0;
+  p = b.add(ValuePair(1ULL, ValueType::Custom));
+  *p = 0xf1;
+  p = b.add(ValuePair(1ULL, ValueType::Custom));
+  *p = 0xf2;
+  p = b.add(ValuePair(1ULL, ValueType::Custom));
+  *p = 0xf3;
+  b.close();
+ 
+  // array with same sizes
+  ASSERT_EQ(0x02, b.slice().head());
+
+  StringSink sink;
+  Dumper dumper(&sink, options);
+  dumper.dump(b.slice());
+  ASSERT_TRUE(handler.byteSizeCalled >= 4);
+
+  ASSERT_EQ(std::string("[\"foobar\",1234,[],{\"qux\":2}]"), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendCharTest) {

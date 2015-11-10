@@ -7,6 +7,7 @@ add_library(
   velocypack-common.cpp
   Builder.cpp
   Collection.cpp
+  Dumper.cpp
   Exception.cpp
   HexDump.cpp
   Options.cpp

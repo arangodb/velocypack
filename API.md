@@ -187,8 +187,8 @@ The `Slice` class can be used for accessing existing VPack objects and
 inspecting them. A `Slice` can be considered a *view over a memory
 region that contains a VPack value*, but it provides high-level access
 methods so users don't need to mess with the raw memory. 
-`Slice` objects themselves are very lightweight and don't need more memory 
-than a regular pointer. 
+`Slice` objects themselves are very lightweight and the cost of their
+construction is relatively low.
 
 ```cpp
 #include <velocypack/vpack.h>

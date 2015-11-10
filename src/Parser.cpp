@@ -473,7 +473,7 @@ void Parser::parseObject () {
     else {
       auto lastPos = _b._pos;
       parseString();
-      if (options.attributeExcludeHandler->shouldExclude(Slice(_b._start + lastPos), _nesting)) {
+      if (options.attributeExcludeHandler->shouldExclude(Slice(_b._start + lastPos, options.customTypeHandler), _nesting)) {
         excludeAttribute = true;
       }
     }
