@@ -131,6 +131,42 @@ namespace arangodb {
 
     typedef ByteBufferSink<char> CharBufferSink;
 
+    template<typename T>
+    struct StreamSink final : public Sink {
+      StreamSink (T* stream) 
+        : stream(stream) {
+      }
+
+      void push_back (char c) override final {
+        *stream << c;
+      }
+
+      void append (std::string const& p) override final {
+        *stream << p;
+      }
+
+      void append (char c) override final {
+        *stream << c;
+      }
+
+      void append (char const* p) override final {
+        stream->write(p, static_cast<std::streamsize>(strlen(p)));
+      }
+
+      void append (char const* p, ValueLength len) override final {
+        stream->write(p, static_cast<std::streamsize>(len));
+      }
+
+      void append (uint8_t const* p, ValueLength len) override final {
+        stream->write(reinterpret_cast<char const*>(p), static_cast<std::streamsize>(len));
+      }
+
+      void reserve (ValueLength) override final {
+      }
+
+      T* stream;
+    };
+
   }  // namespace arangodb::velocypack
 }  // namespace arangodb
 

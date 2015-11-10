@@ -3,10 +3,6 @@
 
 using namespace arangodb::velocypack;
 
-static std::string stringify (bool v) {
-  return v ? "true" : "false";
-}
-
 int main (int, char*[]) {
   // create an object with a few members
   Builder b;
@@ -34,16 +30,16 @@ int main (int, char*[]) {
   Slice quetzal(s.get("quetzal"));
   // note: this returns a slice of type None
   std::cout << "'quetzal' attribute value has type: " << quetzal.type() << std::endl;
-  std::cout << "'quetzal' attribute is None: " << stringify(quetzal.isNone()) << std::endl;
+  std::cout << "'quetzal' attribute is None: " << std::boolalpha << quetzal.isNone() << std::endl;
 
   // fetch subattribute "baz.qux"
   Slice qux(s.get(std::vector<std::string>({ "baz", "qux" })));
   std::cout << "'baz'.'qux' attribute has type: " << qux.type() << std::endl;
-  std::cout << "'baz'.'qux' attribute has bool value: " << stringify(qux.getBoolean()) << std::endl;
+  std::cout << "'baz'.'qux' attribute has bool value: " << std::boolalpha << qux.getBoolean() << std::endl;
 
   // fetch non-existing subattribute "bark.foobar" 
   Slice foobar(s.get(std::vector<std::string>({ "bark", "foobar" })));
-  std::cout << "'bark'.'foobar' attribute is None: " << stringify(foobar.isNone()) << std::endl;
+  std::cout << "'bark'.'foobar' attribute is None: " << std::boolalpha << foobar.isNone() << std::endl;
 
   // check if subattribute "baz"."bart" does exist
   if (s.hasKey(std::vector<std::string>({ "baz", "bart" }))) {

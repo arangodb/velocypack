@@ -12,6 +12,7 @@ if(BuildExamples)
            exampleBuilderFancy
            exampleCustom
            exampleDumper
+           exampleDumperFile
            exampleDumperPretty
            exampleObjectIterator
            exampleObjectLookup

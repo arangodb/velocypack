@@ -88,6 +88,43 @@ TEST(PrettyDumperTest, ComplexObject) {
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
 }
 
+TEST(StreamDumperTest, SimpleObject) {
+  std::string const value("{\"foo\":\"bar\"}");
+
+  Parser parser;
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  Options options;
+  options.prettyPrint = true; 
+  std::ostringstream result;
+  StreamSink<decltype(result)> sink(&result);
+  Dumper dumper(&sink, options);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result.str());
+}
+
+TEST(StreamDumperTest, ComplexObject) {
+  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.options.sortAttributeNames = false;
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  Options options;
+  options.prettyPrint = true; 
+  std::ostringstream result;
+  StreamSink<decltype(result)> sink(&result);
+  Dumper dumper(&sink, options);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
+}
+
 TEST(BufferDumperTest, Null) {
   LocalBuffer[0] = 0x18;
 
