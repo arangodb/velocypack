@@ -75,10 +75,10 @@ installed. To run the coverage tests, a debug build needs to be created as
 follows:
 
 ```bash
-(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF .. && make)
+(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF -DBuildTools=OFF .. && make)
 (cd build && lcov --zerocounters --directory . && lcov --capture --initial --directory . --output-file app)
 (cd build/tests && ctest)
-(cd build && lcov --no-checksum --directory src  --capture --output-file app.info && genhtml app.info)
+(cd build && lcov --no-checksum --directory . --capture --output-file app.info && genhtml app.info)
 ```
 
 This will create coverage info and HTML coverage reports in the `build` subdirectory.
