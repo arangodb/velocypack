@@ -73,7 +73,7 @@ namespace arangodb {
 
         Value () = delete;
 
-        explicit Value(ValueType t)
+        explicit Value (ValueType t)
           : _valueType(t), _cType(CType::None) {
         }
 
@@ -185,13 +185,13 @@ namespace arangodb {
 
       public:
 
-        explicit ValuePair (uint8_t const* start, uint64_t size,
-                            ValueType type = ValueType::Binary)
+        ValuePair (uint8_t const* start, uint64_t size,
+                   ValueType type = ValueType::Binary)
           : _start(start), _size(size), _type(type) {
         }
 
-        explicit ValuePair (char const* start, uint64_t size,
-                            ValueType type = ValueType::Binary)
+        ValuePair (char const* start, uint64_t size,
+                   ValueType type = ValueType::Binary)
           : _start(reinterpret_cast<uint8_t const*>(start)),
             _size(size), _type(type) {
         }
