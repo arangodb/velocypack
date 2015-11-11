@@ -634,7 +634,7 @@ void Builder::checkAttributeUniqueness (Slice const obj) const {
     for (ValueLength i = 1; i < n; ++i) {
       Slice current = obj.keyAt(i);
       if (! current.isString()) {
-        throw Exception(Exception::InternalError, "Expecting String key");
+        throw Exception(Exception::BuilderUnexpectedType, "Expecting String key");
       }
       
       ValueLength len2;
@@ -655,7 +655,7 @@ void Builder::checkAttributeUniqueness (Slice const obj) const {
     for (size_t i = 0; i < n; ++i) {
       Slice key = obj.keyAt(i);
       if (! key.isString()) {
-        throw Exception(Exception::InternalError, "Expecting String key");
+        throw Exception(Exception::BuilderUnexpectedType, "Expecting String key");
       }
       
       if (! keys.emplace(key.copyString()).second) {

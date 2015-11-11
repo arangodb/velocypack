@@ -114,6 +114,12 @@ namespace arangodb {
         uint8_t const* start () const {
           return _start;
         }
+        
+        // pointer to the head byte
+        template<typename T>
+        T const* startAs () const {
+          return reinterpret_cast<T const*>(_start);
+        }
 
         // value of the head byte
         inline uint8_t head () const {

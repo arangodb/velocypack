@@ -167,6 +167,14 @@ TEST(ParserTest, Punctuation5) {
   ASSERT_EQ(0U, parser.errorPos());
 }
 
+TEST(ParserTest, NullInvalid) {
+  std::string const value("nork");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(1U, parser.errorPos());
+}
+
 TEST(ParserTest, Null) {
   std::string const value("null");
 
@@ -179,6 +187,14 @@ TEST(ParserTest, Null) {
   checkBuild(s, ValueType::Null, 1ULL);
 
   checkDump(s, value);
+}
+
+TEST(ParserTest, FalseInvalid) {
+  std::string const value("fork");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(1U, parser.errorPos());
 }
 
 TEST(ParserTest, False) {
@@ -194,6 +210,14 @@ TEST(ParserTest, False) {
   ASSERT_FALSE(s.getBool());
 
   checkDump(s, value);
+}
+
+TEST(ParserTest, TrueInvalid) {
+  std::string const value("tork");
+
+  Parser parser;
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
+  ASSERT_EQ(1U, parser.errorPos());
 }
 
 TEST(ParserTest, True) {
@@ -585,6 +609,12 @@ TEST(ParserTest, DoubleBrokenExponent4) {
   std::string const value("1234.33ea"); 
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBrokenExponent5) {
+  std::string const value("1e22222222222222222222222222222222222222222222222222222222222222"); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, IntMinusInf) {

@@ -14,9 +14,9 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
       return;
     }
     if (value.head() == 0xf1) {
-      uint8_t const* start = value.start();
+      char const* start = value.startAs<char const>();
       // read string length
-      uint8_t length = *(start + 1);
+      uint8_t length = *(value.start() + 1);
       // append string (don't care about escaping here...)
       sink->push_back('"');
       sink->append(start + 2, static_cast<ValueLength>(length));

@@ -31,6 +31,89 @@
 
 static unsigned char LocalBuffer[4096];
 
+TEST(DumperTest, InvokeOnSlice) {
+  LocalBuffer[0] = 0x18;
+
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+
+  StringSink sink;
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(DumperTest, InvokeOnSlicePointer) {
+  LocalBuffer[0] = 0x18;
+
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+
+  StringSink sink;
+  Dumper dumper(&sink);
+  dumper.dump(&slice);
+  ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(SinkTest, CharBufferAppenders) {
+  CharBufferSink sink;
+  sink.push_back('1');
+  ASSERT_EQ(1UL, sink.buffer.length());
+  ASSERT_EQ(0, memcmp("1", sink.buffer.data(), sink.buffer.length()));
+  
+  sink.append(std::string("abcdef"));
+  ASSERT_EQ(7UL, sink.buffer.length());
+  ASSERT_EQ(0, memcmp("1abcdef", sink.buffer.data(), sink.buffer.length()));
+  
+  sink.append("foobar", strlen("foobar"));
+  ASSERT_EQ(13UL, sink.buffer.length());
+  ASSERT_EQ(0, memcmp("1abcdeffoobar", sink.buffer.data(), sink.buffer.length()));
+  
+  sink.append("quetzalcoatl");
+  ASSERT_EQ(25UL, sink.buffer.length());
+  ASSERT_EQ(0, memcmp("1abcdeffoobarquetzalcoatl", sink.buffer.data(), sink.buffer.length()));
+  
+  sink.push_back('*');
+  ASSERT_EQ(26UL, sink.buffer.length());
+  ASSERT_EQ(0, memcmp("1abcdeffoobarquetzalcoatl*", sink.buffer.data(), sink.buffer.length()));
+}
+
+TEST(SinkTest, StringAppenders) {
+  StringSink sink;
+  sink.push_back('1');
+  ASSERT_EQ("1", sink.buffer);
+  
+  sink.append(std::string("abcdef"));
+  ASSERT_EQ("1abcdef", sink.buffer);
+  
+  sink.append("foobar", strlen("foobar"));
+  ASSERT_EQ("1abcdeffoobar", sink.buffer);
+  
+  sink.append("quetzalcoatl");
+  ASSERT_EQ("1abcdeffoobarquetzalcoatl", sink.buffer);
+  
+  sink.push_back('*');
+  ASSERT_EQ("1abcdeffoobarquetzalcoatl*", sink.buffer);
+}
+
+TEST(SinkTest, OStreamAppenders) {
+  std::ostringstream result;
+
+  StreamSink<std::ostringstream> sink(&result);
+  sink.push_back('1');
+  ASSERT_EQ("1", result.str());
+  
+  sink.append(std::string("abcdef"));
+  ASSERT_EQ("1abcdef", result.str());
+  
+  sink.append("foobar", strlen("foobar"));
+  ASSERT_EQ("1abcdeffoobar", result.str());
+  
+  sink.append("quetzalcoatl");
+  ASSERT_EQ("1abcdeffoobarquetzalcoatl", result.str());
+  
+  sink.push_back('*');
+  ASSERT_EQ("1abcdeffoobarquetzalcoatl*", result.str());
+}
+
 TEST(OutStreamTest, StringifyComplexObject) {
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
@@ -218,6 +301,75 @@ TEST(StringDumperTest, True) {
   ASSERT_EQ(std::string("true"), sink.buffer);
 }
 
+TEST(StringDumperTest, StringSimple) {
+  Builder b;
+  b.add(Value("foobar"));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"foobar\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringSpecialChars) {
+  Builder b;
+  b.add(Value("\"fo\r \n \\to''\\ \\bar\""));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"\\\"fo\\r \\n \\\\to''\\\\ \\\\bar\\\"\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringControlChars) {
+  Builder b;
+  b.add(Value(std::string("\x00\x01\x02 baz \x03", 9)));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"\\u0000\\u0001\\u0002 baz \\u0003\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringUTF8) {
+  Builder b;
+  b.add(Value("mötör"));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"mötör\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringTwoByteUTF8) {
+  Builder b;
+  b.add(Value("\xc2\xa2"));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"\xc2\xa2\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringThreeByteUTF8) {
+  Builder b;
+  b.add(Value("\xe2\x82\xac"));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"\xe2\x82\xac\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, StringFourByteUTF8) {
+  Builder b;
+  b.add(Value("\xf0\xa4\xad\xa2"));
+
+  Slice slice = b.slice();
+  ASSERT_EQ(std::string("\"\xf0\xa4\xad\xa2\""), Dumper::toString(slice));
+}
+
+TEST(StringDumperTest, External) {
+  Builder b1;
+  b1.add(Value("this is a test string"));
+  Slice slice1 = b1.slice();
+
+  // create an external pointer to the string
+  Builder b2;
+  b2.add(Value(static_cast<void const*>(slice1.start())));
+  Slice slice2 = b2.slice();
+
+  ASSERT_EQ(std::string("\"this is a test string\""), Dumper::toString(slice2));
+}
+
 TEST(StringDumperTest, CustomWithoutHandler) {
   LocalBuffer[0] = 0xf0;
 
@@ -272,9 +424,9 @@ TEST(StringDumperTest, CustomStringWithCallback) {
     void toJson (Slice const& value, Sink* sink, Slice const&) {
       ASSERT_EQ(ValueType::Custom, value.type());
       ASSERT_EQ(0xf1UL, value.head());
-      uint8_t length = *(value.start() + 1);
+      ValueLength length = static_cast<ValueLength>(*(value.start() + 1));
       sink->push_back('"');
-      sink->append(value.start() + 2, length);
+      sink->append(value.startAs<char const>() + 2, length);
       sink->push_back('"');
       sawCustom = true;
     }
@@ -634,6 +786,70 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Dumper dumper(&sink, options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeNone) {
+  static uint8_t const b[] = { 0x00 }; 
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+}
+
+TEST(StringDumperTest, ConvertTypeNull) {
+  static uint8_t const b[] = { 0x00 }; 
+  Slice slice(&b[0]);
+
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringSink sink;
+  Dumper dumper(&sink, options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeMinKey) {
+  static uint8_t const b[] = { 0x1e }; 
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+}
+
+TEST(StringDumperTest, ConvertTypeMinKey) {
+  static uint8_t const b[] = { 0x1e }; 
+  Slice slice(&b[0]);
+
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringSink sink;
+  Dumper dumper(&sink, options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(StringDumperTest, UnsupportedTypeMaxKey) {
+  static uint8_t const b[] = { 0x1f }; 
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+}
+
+TEST(StringDumperTest, ConvertTypeMaxKey) {
+  static uint8_t const b[] = { 0x1f }; 
+  Slice slice(&b[0]);
+
+  Options options;
+  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  StringSink sink;
+  Dumper dumper(&sink, options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), sink.buffer);
+}
+
+TEST(StringDumperTest, BCD) {
+  static uint8_t const b[] = { 0xc8, 0x00, 0x00, 0x00 }; // fake BCD value
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NotImplemented);
 }
 
 int main (int argc, char* argv[]) {

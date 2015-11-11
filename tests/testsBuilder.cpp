@@ -29,6 +29,11 @@
 
 #include "tests-common.h"
 
+TEST(BuilderTest, None) {
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)), Exception::BuilderUnexpectedType);
+}
+
 TEST(BuilderTest, Null) {
   Builder b;
   b.add(Value(ValueType::Null));
@@ -60,6 +65,32 @@ TEST(BuilderTest, True) {
   ValueLength len = b.size();
 
   static uint8_t const correctResult[] = { 0x1a };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, Int64) {
+  static int64_t value = INT64_MAX;
+  Builder b;
+  b.add(Value(value));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[9] = { 0x27, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, UInt64) {
+  static uint64_t value = 1234;
+  Builder b;
+  b.add(Value(value));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[3] = { 0x29, 0xd2, 0x04 };
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -629,6 +660,11 @@ TEST(BuilderTest, ID) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, AddBCD) {
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::BCD)), Exception::NotImplemented);
+}
+
 TEST(BuilderTest, AddOnNonArray) {
   Builder b;
   b.add(Value(ValueType::Object));
@@ -655,6 +691,12 @@ TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
   b.add(Value(2));
   b.close();
   ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
+}
+
+TEST(BuilderTest, HasKeyNonObject) {
+  Builder b;
+  b.add(Value(1));
+  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"), Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, HasKeyEmptyObject) {

@@ -91,6 +91,7 @@ TEST(LookupTest, HasKeySubattributes) {
   Builder builder = parser.steal();
   Slice s(builder.start());
 
+  ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()), Exception::InvalidAttributePath); 
   ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo" }))); 
   ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bar" }))); 
   ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo" }))); 
@@ -158,6 +159,8 @@ TEST(LookupTest, LookupSubattributes) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()), Exception::InvalidAttributePath); 
 
   Slice v;
   v = s.get(std::vector<std::string>({ "foo" })); 
@@ -434,6 +437,72 @@ TEST(LookupTest, LookupBinaryLongObject) {
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
   } 
+}
+
+TEST(LookupTest, LookupInvalidTypeNull) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
+}
+
+TEST(LookupTest, LookupInvalidTypeArray) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
+}
+
+TEST(LookupTest, AtNull) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
+}
+
+TEST(LookupTest, AtObject) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
+}
+
+TEST(LookupTest, KeyAtArray) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
+}
+
+TEST(LookupTest, KeyAtNull) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
 }
 
 int main (int argc, char* argv[]) {

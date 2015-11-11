@@ -31,6 +31,160 @@
   
 static unsigned char LocalBuffer[4096];
 
+TEST(SliceTest, SliceStart) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  ASSERT_EQ(0x18UL, s.head());
+  ASSERT_EQ(0x18UL, * s.start());
+  ASSERT_EQ('\x18', * s.startAs<char>());
+  ASSERT_EQ('\x18', * s.startAs<unsigned char>());
+  ASSERT_EQ(0x18UL, * s.startAs<uint8_t>());
+  
+  ASSERT_EQ(s.start(), s.begin());
+  ASSERT_EQ(s.start() + 1, s.end());
+}
+
+TEST(SliceTest, ToJsonNull) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("null", s.toJson());
+}
+
+TEST(SliceTest, ToJsonFalse) {
+  std::string const value("false");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("false", s.toJson());
+}
+
+TEST(SliceTest, ToJsonTrue) {
+  std::string const value("true");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("true", s.toJson());
+}
+
+TEST(SliceTest, ToJsonNumber) {
+  std::string const value("-12345");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("-12345", s.toJson());
+}
+
+TEST(SliceTest, ToJsonString) {
+  std::string const value("\"foobarbaz\"");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("\"foobarbaz\"", s.toJson());
+}
+
+TEST(SliceTest, ToJsonArray) {
+  std::string const value("[1,2,3,4,5]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("[1,2,3,4,5]", s.toJson());
+}
+
+TEST(SliceTest, ToJsonObject) {
+  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
+}
+
+TEST(SliceTest, LengthNull) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
+}
+
+TEST(SliceTest, LengthTrue) {
+  std::string const value("true");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
+}
+
+TEST(SliceTest, LengthArrayEmpty) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(0UL, s.length());
+}
+
+TEST(SliceTest, LengthArray) {
+  std::string const value("[1,2,3,4,5,6,7,8,\"foo\",\"bar\"]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(10UL, s.length());
+}
+
+TEST(SliceTest, LengthObjectEmpty) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(0UL, s.length());
+}
+
+TEST(SliceTest, LengthObject) {
+  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":\"foo\",\"j\":\"bar\"}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(10UL, s.length());
+}
+
 TEST(SliceTest, Null) {
   LocalBuffer[0] = 0x18;
 
