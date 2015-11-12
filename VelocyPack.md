@@ -54,7 +54,9 @@ reference, for arrays and objects see below for details:
                 attribute name, 4-byte bytelen and # subvals
   - 0x12      : object with 8-byte index table offsets, not sorted by
                 attribute name, 8-byte bytelen and # subvals
-  - 0x13-0x17 : reserved
+  - 0x13      : compact array, no index table
+  - 0x14      : compact object, no index table
+  - 0x15-0x17 : reserved
   - 0x18      : null
   - 0x19      : false
   - 0x1a      : true
@@ -105,6 +107,9 @@ reference, for arrays and objects see below for details:
 ## Arrays
 
 Empty arrays are simply a single byte 0x01.
+
+We next describe the type cases 0x02 to 0x09, see below for the
+special compact type 0x13.
 
 Nonempty arrays look like this:
 
@@ -204,10 +209,54 @@ possible, though not necessarily advised to use:
 Note that it is not recommended to encode short arrays in too long a
 format.
 
+We now describe the special type 0x13, which is useful for a
+particularly compact array representation. Note that to some extent this
+goes against the principles of the VelocyPack format, since quick access
+to subvalues is no longer possible, all items in the array must be
+scanned to find a particular one. However, there are certain use cases
+for VelocyPack which only require sequential access (for example JSON
+dumping) and have a particular need for compactness.
+
+The overall format of this array type is
+
+  0x13 as type byte
+  BYTELENGTH
+  sub VPack values
+  NRITEMS
+
+There is no index table at all, although the sub VelocyPack values can
+have different byte sizes. The BYTELENGTH and NRITEMS are encoded in a
+special format, which we describe now.
+
+The BYTELENGTH consists of 1 to 8 bytes, of which all but the last one
+have their high bit set. Thus, the high bits determine, how many bytes
+are actually used. The lower 7 bits of all these bits together comprise
+the actual byte length in a little endian fashion. That is, the byte at
+address A+1 contains the least significant 7 bits (0 to 6) of the byte length,
+the following byte at address A+2 contains the bits 7 to 13, and so on.
+Since the total number of bytes is limited to 8, this encodes unsigned
+integers of up to 56 bits, which is the overall limit for the size of
+such a compact array representation.
+
+The NRITEMS entry is encoded essentially the same, except that it is
+laid out in reverse order in memory. That is, one has to use the
+BYTELENGTH to find the end of the array value and go back bytes until
+one finds a byte with high bit reset. The last byte (at the highest
+memory address) contains the least significant 7 bits of the NRITEMS
+value, the second one bits 7 to 13 and so on.
+
+Here is an example, the array [1, 16] can be encoded as follows:
+
+    13 06
+    31 28 10
+    01
 
 ## Objects
 
 Empty objects are simply a single byte 0x0a.
+
+We next describe the type cases 0x0b to 0x12, see below for the
+special compact type 0x14.
 
 Nonempty objects look like this:
 
@@ -309,6 +358,50 @@ be stored unsorted like in:
 
 Note that it is not recommended to encode short arrays with too long
 index tables.
+
+We now describe the special type 0x14, which is useful for a
+particularly compact object representation. Note that to some extent
+this goes against the principles of the VelocyPack format, since quick
+access to subvalues is no longer possible, all key/value pairs in the
+object must be scanned to find a particular one. However, there are
+certain use cases for VelocyPack which only require sequential access
+(for example JSON dumping) and have a particular need for compactness.
+
+The overall format of this object type is
+
+  0x14 as type byte
+  BYTELENGTH
+  sub VPack key/value pairs
+  NRPAIRS
+
+There is no index table at all, although the sub VelocyPack values can
+have different byte sizes. The BYTELENGTH and NRPAIRS are encoded in a
+special format, which we describe now. It is the same as for the special
+compact array type 0x13, which we repeat here for the sake of
+completeness.
+
+The BYTELENGTH consists of 1 to 8 bytes, of which all but the last one
+have their high bit set. Thus, the high bits determine, how many bytes
+are actually used. The lower 7 bits of all these bits together comprise
+the actual byte length in a little endian fashion. That is, the byte at
+address A+1 contains the least significant 7 bits (0 to 6) of the byte
+length, the following byte at address A+2 contains the bits 7 to 13, and
+so on. Since the total number of bytes is limited to 8, this encodes
+unsigned integers of up to 56 bits, which is the overall limit for the
+size of such a compact array representation.
+
+The NRPAIRS entry is encoded essentially the same, except that it
+is laid out in reverse order in memory. That is, one has to use the
+BYTELENGTH to find the end of the array value and go back bytes until
+one finds a byte with high bit reset. The last byte (at the highest
+memory address) contains the least significant 7 bits of the NRPAIRS
+value, the second one bits 7 to 13 and so on.
+
+Here is an example, the object {"a":1, "b":16} can be encoded as follows:
+
+    14 0a
+    41 61 31 42 62 28 10
+    02
 
 
 ## Doubles
