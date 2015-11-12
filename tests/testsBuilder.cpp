@@ -29,6 +29,101 @@
 
 #include "tests-common.h"
 
+TEST(BuilderTest, BufferSharedPointerNoSharing) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  // construct a long string that will exceed the Builder's initial buffer
+  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.close();
+
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+
+  // only the Builder itself is using the Buffer
+  ASSERT_EQ(1, builderBuffer.use_count());
+}
+
+TEST(BuilderTest, BufferSharedPointerStealFromParser) {
+  Parser parser;
+  parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
+ 
+  Builder b = parser.steal();  
+  // only the Builder itself is using its Buffer
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  ASSERT_EQ(1, builderBuffer.use_count());
+}
+
+TEST(BuilderTest, BufferSharedPointerCopy) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  // construct a long string that will exceed the Builder's initial buffer
+  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.close();
+
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  auto ptr = builderBuffer.get();
+
+  // only the Builder itself is using its Buffer
+  ASSERT_EQ(1, builderBuffer.use_count());
+
+  std::shared_ptr<Buffer<uint8_t>> copy = b.buffer();
+  ASSERT_EQ(2, copy.use_count());
+  ASSERT_EQ(2, builderBuffer.use_count());
+ 
+  copy.reset();
+  ASSERT_EQ(1, builderBuffer.use_count());
+  ASSERT_EQ(ptr, builderBuffer.get());
+}
+
+TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
+  Builder b;
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  ASSERT_EQ(1, builderBuffer.use_count());
+  auto ptr = builderBuffer.get();
+
+  {
+    Parser parser;
+    parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
+  
+    ASSERT_EQ(1, builderBuffer.use_count());
+
+    b = parser.steal();  
+    std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+    ASSERT_NE(ptr, builderBuffer.get());
+    ASSERT_EQ(1, builderBuffer.use_count());
+
+    ptr = builderBuffer.get();
+  }
+
+  ASSERT_EQ(1, builderBuffer.use_count());
+  ASSERT_EQ(ptr, builderBuffer.get());
+}
+
+TEST(BuilderTest, BufferSharedPointerStealAndReturn) {
+  auto func = [] () -> Builder {
+    Parser parser;
+    parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
+ 
+    return parser.steal();
+  };
+
+  Builder b = func();
+  ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
+  ASSERT_EQ(217UL, b.buffer()->size()); 
+}
+
+TEST(BuilderTest, BufferSharedPointerStealMultiple) {
+  Parser parser;
+  parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
+ 
+  Builder b = parser.steal();
+  ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
+  ASSERT_EQ(217UL, b.buffer()->size()); 
+  ASSERT_EQ(1, b.buffer().use_count());
+
+  // steal again
+  ASSERT_VELOCYPACK_EXCEPTION(parser.steal(), Exception::InternalError);
+}
+
 TEST(BuilderTest, None) {
   Builder b;
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)), Exception::BuilderUnexpectedType);

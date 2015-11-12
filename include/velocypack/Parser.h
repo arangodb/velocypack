@@ -84,7 +84,7 @@ namespace arangodb {
           bool isInteger;
         };
 
-        Builder   _b;
+        Builder        _b;
         uint8_t const* _start;
         size_t         _size;
         size_t         _pos;
@@ -121,12 +121,12 @@ namespace arangodb {
         }
 
         ValueLength parse (std::string const& json, bool multi = false) {
-          _start = reinterpret_cast<uint8_t const*>(json.c_str());
-          _size  = json.size();
-          _pos   = 0;
-          _b.clear();
-          _b.options = options;
-          return parseInternal(multi);
+          return parse(reinterpret_cast<uint8_t const*>(json.c_str()), json.size(), multi);
+        }
+
+        ValueLength parse (char const* start, size_t size,
+                           bool multi = false) {
+          return parse(reinterpret_cast<uint8_t const*>(start), size, multi);
         }
 
         ValueLength parse (uint8_t const* start, size_t size,
@@ -139,20 +139,13 @@ namespace arangodb {
           return parseInternal(multi);
         }
 
-        ValueLength parse (char const* start, size_t size,
-                           bool multi = false) {
-          _start = reinterpret_cast<uint8_t const*>(start);
-          _size = size;
-          _pos = 0;
-          _b.clear();
-          _b.options = options;
-          return parseInternal(multi);
-        }
-
         // We probably want a parse from stream at some stage...
         // Not with this high-performance two-pass approach. :-(
         
         Builder&& steal () {
+          if (_b._buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
           return std::move(_b);
         }
 
