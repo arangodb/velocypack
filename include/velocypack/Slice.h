@@ -575,6 +575,7 @@ namespace arangodb {
                 return readVariableValueLength<false>(_start + 1);
               }
 
+              VELOCYPACK_ASSERT(h <= 0x12);
               return readInteger<ValueLength>(_start + 1, WidthMap[h]);
             }
 
@@ -646,8 +647,9 @@ namespace arangodb {
 
         Slice getFromCompactObject (std::string const& attribute) const;
 
-        ValueLength findDataOffset (uint8_t const head) const {
+        ValueLength findDataOffset (uint8_t head) const {
           // Must be called for a nonempty array or object at start():
+          VELOCYPACK_ASSERT(head <= 0x12);
           unsigned int fsm = FirstSubMap[head];
           if (fsm <= 2 && _start[2] != 0) {
             return 2;
@@ -668,6 +670,7 @@ namespace arangodb {
         Slice getNthFromCompact (ValueLength index) const;
 
         ValueLength indexEntrySize (uint8_t head) const {
+          VELOCYPACK_ASSERT(head <= 0x12);
           return static_cast<ValueLength>(WidthMap[head]);
         }
 
@@ -726,8 +729,8 @@ namespace arangodb {
       private:
 
         static ValueType const TypeMap[256];
-        static unsigned int const WidthMap[256];
-        static unsigned int const FirstSubMap[256];
+        static unsigned int const WidthMap[32];
+        static unsigned int const FirstSubMap[32];
     };
 
   }  // namespace arangodb::velocypack

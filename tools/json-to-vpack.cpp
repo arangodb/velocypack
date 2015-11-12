@@ -28,30 +28,54 @@
 #include <string>
 #include <fstream>
 
-#include "velocypack/velocypack-common.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Exception.h"
-#include "velocypack/Parser.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
+#include "velocypack/vpack.h"
 
 using namespace arangodb::velocypack;
 
 static void usage (char* argv[]) {
-  std::cout << "Usage: " << argv[0] << " INFILE OUTFILE" << std::endl;
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
   std::cout << "This program reads the JSON INFILE into a string and saves its" << std::endl;
   std::cout << "VPack representation in file OUTFILE. Will work only for input" << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
+  std::cout << "Available options are:" << std::endl;
+  std::cout << " --compact       store Array and Object types without index tables" << std::endl;
+  std::cout << " --no-compact    store Array and Object types with index tables" << std::endl;
 }
 
 int main (int argc, char* argv[]) {
-  if (argc < 3) {
+  char const* infileName = nullptr;
+  char const* outfileName = nullptr;
+  bool compact = true;
+
+  int i = 1;
+  while (i < argc) {
+    char const* p = argv[i];
+    if (strncmp("--compact", p, strlen("--compact")) == 0) {
+      compact = true;
+    }
+    else if (strncmp("--no-compact", p, strlen("--no-compact")) == 0) {
+      compact = false;
+    }
+    else if (infileName == nullptr) {
+      infileName = p;
+    }
+    else if (outfileName == nullptr) {
+      outfileName = p;
+    }
+    else {
+      usage(argv);
+      return EXIT_FAILURE;
+    }
+    ++i;
+  }
+
+  if (infileName == nullptr || outfileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
   }
 
   // treat "-" as stdin
-  std::string infile = argv[1];
+  std::string infile = infileName;
 #ifdef __linux__
   if (infile == "-") {
     infile = "/proc/self/fd/0";
@@ -62,7 +86,7 @@ int main (int argc, char* argv[]) {
   std::ifstream ifs(infile, std::ifstream::in);
 
   if (! ifs.is_open()) {
-    std::cerr << "Cannot read infile '" << argv[1] << "'" << std::endl;
+    std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -73,24 +97,28 @@ int main (int argc, char* argv[]) {
   }
   ifs.close();
 
-  Parser parser;
+  Options options;
+  options.buildUnindexedArrays = compact;
+  options.buildUnindexedObjects = compact;
+
+  Parser parser(&options);
   try {
     parser.parse(s);
   }
   catch (Exception const& ex) {
-    std::cerr << "An exception occurred while parsing infile '" << argv[1] << "': " << ex.what() << std::endl;
+    std::cerr << "An exception occurred while parsing infile '" << infile << "': " << ex.what() << std::endl;
     std::cerr << "Error position: " << parser.errorPos() << std::endl;
     return EXIT_FAILURE;
   }
   catch (...) {
-    std::cerr << "An unknown exception occurred while parsing infile '" << argv[1] << "'" << std::endl;
+    std::cerr << "An unknown exception occurred while parsing infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
   
-  std::ofstream ofs(argv[2], std::ofstream::out);
+  std::ofstream ofs(outfileName, std::ofstream::out);
  
   if (! ofs.is_open()) {
-    std::cerr << "Cannot write outfile '" << argv[2] << "'" << std::endl;
+    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -103,14 +131,14 @@ int main (int argc, char* argv[]) {
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
   if (! ofs) {
-    std::cerr << "Cannot write outfile '" << argv[2] << "'" << std::endl;
+    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
     ofs.close();
     return EXIT_FAILURE;
   }
 
   ofs.close();
 
-  std::cout << "Successfully converted JSON infile '" << argv[1] << "'" << std::endl;
+  std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
   std::cout << "JSON Infile size:   " << s.size() << std::endl;
   std::cout << "VPack Outfile size: " << builder.size() << std::endl;
   

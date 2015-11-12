@@ -101,7 +101,7 @@ VT const Slice::TypeMap[256] = {
   /* 0xfc */  VT::Custom,      /* 0xfd */  VT::Custom,      /* 0xfe */  VT::Custom,      /* 0xff */  VT::Custom
 }; 
        
-unsigned int const Slice::WidthMap[256] = { 
+unsigned int const Slice::WidthMap[32] = { 
   0,   // 0x00, None
   1,   // 0x01, empty array
   1,   // 0x02, array without index table
@@ -124,7 +124,7 @@ unsigned int const Slice::WidthMap[256] = {
   0
 };
 
-unsigned int const Slice::FirstSubMap[256] = { 
+unsigned int const Slice::FirstSubMap[32] = { 
   0,   // 0x00, None
   1,   // 0x01, empty array
   2,   // 0x02, array without index table

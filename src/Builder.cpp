@@ -151,14 +151,17 @@ void Builder::close () {
     throw Exception(Exception::BuilderNeedOpenCompound);
   }
   ValueLength& tos = _stack.back();
-  if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
+  uint8_t const head = _start[tos];
+
+  if (head != 0x06 && head != 0x0b && head != 0x13 && head != 0x14) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
+  bool const isArray = (head == 0x06 || head == 0x13);
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
 
   if (index.empty()) {
     // empty Array or Object
-    _start[tos] = (_start[tos] == 0x06) ? 0x01 : 0x0a;
+    _start[tos] = (isArray ? 0x01 : 0x0a);
     VELOCYPACK_ASSERT(_pos == tos + 9);
     _pos -= 8;  // no bytelength and number subvalues needed
     _stack.pop_back();
@@ -169,10 +172,13 @@ void Builder::close () {
   // From now on index.size() > 0
   VELOCYPACK_ASSERT(index.size() > 0);
 
-#if 0
-  if (false) { // TODO: make this configurable
+  // check if we can use the compact Array / Object format
+  if (index.size() > 1 &&
+      ((head == 0x13 || head == 0x14) ||
+       (head == 0x06 && options->buildUnindexedArrays) ||
+       (head == 0x0b && options->buildUnindexedObjects))) { 
     // use compact notation
-    _start[tos] = (_start[tos] == 0x06) ? 0x13 : 0x14;
+    _start[tos] = (isArray ? 0x13 : 0x14);
     ValueLength nLen = getVariableValueLength(static_cast<ValueLength>(index.size()));
     ValueLength byteSize = _pos - (tos + 8) + nLen;
     ValueLength bLen = getVariableValueLength(byteSize);
@@ -188,7 +194,7 @@ void Builder::close () {
               _pos - (tos + 9));
     }
 
-    _pos -= 8; //(9 - targetPos);
+    _pos -= 8;
     _pos += nLen;
     _pos += bLen;
     // store byte lengths
@@ -197,8 +203,10 @@ void Builder::close () {
 
     _stack.pop_back();
     return;
-  } 
-#endif
+  }
+  
+  // fix head byte in case a compact Array / Object was originally requested
+  _start[tos] = (isArray ? 0x06 : 0x0b); 
 
   bool needIndexTable = true;
   bool needNrSubs = true;
@@ -209,7 +217,7 @@ void Builder::close () {
     }
     // For objects we leave needNrSubs at true here!
   }
-  else if (_start[tos] == 0x06 &&   // an array
+  else if (_start[tos] == 0x06 &&   // an Array
            (_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
@@ -279,7 +287,8 @@ void Builder::close () {
     reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
     tableBase = _pos;
     _pos += offsetSize * index.size();
-    if (_start[tos] == 0x0b) {  // an object
+    if (_start[tos] == 0x0b) {  
+      // Object
       if (! options->sortAttributeNames) {
         _start[tos] = 0x0f;  // unsorted
       }

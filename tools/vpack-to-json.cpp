@@ -28,12 +28,7 @@
 #include <string>
 #include <fstream>
 
-#include "velocypack/ValueType.h"
-#include "velocypack/Dumper.h"
-#include "velocypack/Exception.h"
-#include "velocypack/Sink.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
+#include "velocypack/vpack.h"
 
 using namespace arangodb::velocypack;
 

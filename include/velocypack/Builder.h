@@ -379,12 +379,12 @@ namespace arangodb {
           return target;
         }
 
-        void addArray () {
-          addCompoundValue(0x06);
+        inline void addArray (bool unindexed = false) {
+          addCompoundValue(unindexed ? 0x13 : 0x06);
         }
 
-        void addObject () {
-          addCompoundValue(0x0b);
+        inline void addObject (bool unindexed = false) {
+          addCompoundValue(unindexed ? 0x14 : 0x0b);
         }
 
       private:
@@ -393,7 +393,7 @@ namespace arangodb {
         uint8_t* addInternal (T const& sub) {
           if (! _stack.empty()) {
             ValueLength& tos = _stack.back();
-            if (_start[tos] != 0x06) {
+            if (_start[tos] != 0x06 && _start[tos] != 0x13) {
               throw Exception(Exception::BuilderNeedOpenArray);
             }
             reportAdd(tos);
@@ -405,7 +405,7 @@ namespace arangodb {
         uint8_t* addInternal (std::string const& attrName, T const& sub) {
           if (! _stack.empty()) {
             ValueLength& tos = _stack.back();
-            if (_start[tos] != 0x0b) {
+            if (_start[tos] != 0x0b && _start[tos] != 0x14) {
               throw Exception(Exception::BuilderNeedOpenObject);
             }
             reportAdd(tos);
@@ -416,7 +416,7 @@ namespace arangodb {
 
         void addCompoundValue (uint8_t type) {
           reserveSpace(9);
-          // an array is started:
+          // an Array or Object is started:
           _stack.push_back(_pos);
           while (_stack.size() > _index.size()) {
             _index.emplace_back();

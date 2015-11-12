@@ -68,6 +68,12 @@ namespace arangodb {
       // custom type handler used for processing custom types by Dumper and Slicer
       CustomTypeHandler* customTypeHandler = nullptr;
 
+      // allow building Arrays without index table?
+      bool buildUnindexedArrays     = false;
+
+      // allow building Objects without index table?
+      bool buildUnindexedObjects    = false;
+
       // pretty-print JSON output when dumping with Dumper
       bool prettyPrint              = false;
       
