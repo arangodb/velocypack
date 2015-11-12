@@ -40,6 +40,6 @@ int main (int, char*[]) {
     std::cout << "successfully wrote JSON to outfile 'prettified.json'" << std::endl;
   }
   catch (std::exception const& ex) {
-    std::cout << "could not write outfile 'prettified.json'" << std::endl;
+    std::cout << "could not write outfile 'prettified.json': " << ex.what() << std::endl;
   }
 }

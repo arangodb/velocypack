@@ -7,6 +7,7 @@ using namespace arangodb::velocypack;
 int main (int, char*[]) {
   // this is the JSON string we are going to parse
   std::string const json = "{\"a\":12}";
+  std::cout << "Parsing JSON string '" << json << "'" << std::endl;
   
   Parser parser;
   try {
@@ -17,8 +18,8 @@ int main (int, char*[]) {
     std::cout << "Out of memory!" << std::endl;
     throw;
   }
-  catch (Exception const& e) {
-    std::cout << "Parse error: " << e.what() << std::endl;
+  catch (Exception const& ex) {
+    std::cout << "Parse error: " << ex.what() << std::endl;
     std::cout << "Position of error: " << parser.errorPos() << std::endl;
     throw;
   }
