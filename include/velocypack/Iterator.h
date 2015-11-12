@@ -42,33 +42,56 @@ namespace arangodb {
         ArrayIterator () = delete;
 
         ArrayIterator (Slice const& slice) 
-          : _slice(slice), _size(_slice.length()), _position(0) {
+          : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr) {
 
           if (slice.type() != ValueType::Array) {
             throw Exception(Exception::InvalidValueType, "Expecting Array slice");
           }
+              
+          if (slice.head() == 0x13 && slice.length() > 0) {
+            _current = slice.at(0).start();
+          }
         }
         
         ArrayIterator (ArrayIterator const& other) 
-          : _slice(other._slice), _size(other._size), _position(other._position) {
+          : _slice(other._slice), _size(other._size), _position(other._position), _current(other._current) {
         }
         
         ArrayIterator& operator= (ArrayIterator const& other) {
           _slice = other._slice;
           _size  = other._size;
           _position = other._position;
+          _current = other._current;
           return *this;
         }
 
-        Slice operator++ () { 
-          return _slice.at(_position++);
+        // prefix ++
+        ArrayIterator& operator++ () {
+          ++_position;
+          if (_position <= _size && _current != nullptr) {
+            _current += Slice(_current, _slice.options).byteSize();
+          }
+          else {
+            _current = nullptr;
+          }
+          return *this;
+        }
+
+        // postfix ++
+        ArrayIterator operator++ (int) {
+          ArrayIterator result(*this);
+          ++(*this);
+          return result;
         }
 
         bool operator!= (ArrayIterator const& other) const {
           return _position != other._position;
         }
 
-        Slice operator* () const { 
+        Slice operator* () const {
+          if (_current != nullptr) {
+            return Slice(_current, _slice.options);
+          } 
           return _slice.at(_position); 
         }
 
@@ -100,12 +123,16 @@ namespace arangodb {
           if (_position >= _size) {
             throw Exception(Exception::IndexOutOfBounds);
           }
-          return _slice.at(_position);
+          return operator*();
         }
 
         inline bool next () throw() {
-          ++_position;
+          operator++();
           return valid();
+        }
+        
+        inline ValueLength index () const throw() {
+          return _position;
         }
 
       private: 
@@ -113,6 +140,7 @@ namespace arangodb {
         Slice _slice;
         ValueLength _size;
         ValueLength _position;
+        uint8_t const* _current;
     };
     
     class ObjectIterator {

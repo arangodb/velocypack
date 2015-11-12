@@ -179,7 +179,9 @@ void Builder::close () {
        (head == 0x0b && options->buildUnindexedObjects))) { 
     // use compact notation
     ValueLength nLen = getVariableValueLength(static_cast<ValueLength>(index.size()));
+    VELOCYPACK_ASSERT(nLen > 0);
     ValueLength byteSize = _pos - (tos + 8) + nLen;
+    VELOCYPACK_ASSERT(byteSize > 0);
     ValueLength bLen = getVariableValueLength(byteSize);
     byteSize += bLen; 
     if (getVariableValueLength(byteSize) != bLen) {
@@ -197,7 +199,8 @@ void Builder::close () {
                 _pos - (tos + 9));
       }
 
-      // store byte lengths
+      // store byte length
+      VELOCYPACK_ASSERT(byteSize > 0);
       storeVariableValueLength<false>(_start + tos + 1, byteSize);
 
       // need additional memory for storing the number of values

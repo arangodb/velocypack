@@ -28,6 +28,7 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Dumper.h"
+#include "velocypack/Iterator.h"
 #include "velocypack/ValueType.h"
     
 using namespace arangodb::velocypack;
@@ -237,11 +238,13 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
         indent();
       }
       else {
-        for (ValueLength i = 0; i < n; ++i) {
-          if (i > 0) {
+        ArrayIterator it(*slice);
+        while (it.valid()) {
+          if (it.index() > 0) {
             _sink->push_back(',');
           }
-          dumpValue(slice->at(i), base);
+          dumpValue(it.value(), base);
+          it.next();
         }
       }
       _sink->push_back(']');

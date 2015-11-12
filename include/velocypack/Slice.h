@@ -662,12 +662,23 @@ namespace arangodb {
           }
           return 9;
         }
+        
+        ValueLength valueOffset (ValueLength index) const {
+          if (type() != ValueType::Array && type() != ValueType::Object) {
+            throw Exception(Exception::InvalidValueType, "Expecting Array or Object");
+          }
+          
+          return getNthOffset(index);
+        }
+        
+        // get the offset for the nth member from an Array or Object type
+        ValueLength getNthOffset (ValueLength index) const;
           
         // extract the nth member from an Array or Object type
         Slice getNth (ValueLength index) const;
-
-        // extract the nth member from a compact Array or Object type
-        Slice getNthFromCompact (ValueLength index) const;
+        
+        // get the offset for the nth member from a compact Array or Object type
+        ValueLength getNthOffsetFromCompact (ValueLength index) const;
 
         ValueLength indexEntrySize (uint8_t head) const {
           VELOCYPACK_ASSERT(head <= 0x12);
