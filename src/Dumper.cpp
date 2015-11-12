@@ -221,26 +221,26 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Array: {
-      ValueLength const n = slice->length();
+      ArrayIterator it(*slice);
       _sink->push_back('[');
       if (options->prettyPrint) {
         _sink->push_back('\n');
         ++_indentation;
-        for (ValueLength i = 0; i < n; ++i) {
+        while (it.valid()) {
           indent();
-          dumpValue(slice->at(i), base);
-          if (i + 1 !=  n) {
+          dumpValue(it.value(), base);
+          if (! it.isLast()) {
             _sink->push_back(',');
           }
           _sink->push_back('\n');
+          it.next();
         }
         --_indentation;
         indent();
       }
       else {
-        ArrayIterator it(*slice);
         while (it.valid()) {
-          if (it.index() > 0) {
+          if (! it.isFirst()) {
             _sink->push_back(',');
           }
           dumpValue(it.value(), base);
@@ -252,32 +252,34 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Object: {
-      ValueLength const n = slice->length();
+      ObjectIterator it(*slice);
       _sink->push_back('{');
       if (options->prettyPrint) {
         _sink->push_back('\n');
         ++_indentation;
-        for (ValueLength i = 0; i < n; ++i) {
+        while (it.valid()) {
           indent();
-          dumpValue(slice->keyAt(i), base);
+          dumpValue(it.key(), base);
           _sink->append(" : ", 3);
-          dumpValue(slice->valueAt(i), base);
-          if (i + 1 !=  n) {
+          dumpValue(it.value(), base);
+          if (! it.isLast()) {
             _sink->push_back(',');
           }
           _sink->push_back('\n');
+          it.next();
         }
         --_indentation;
         indent();
       }
       else {
-        for (ValueLength i = 0; i < n; ++i) {
-          if (i > 0) {
+        while (it.valid()) {
+          if (! it.isFirst()) {
             _sink->push_back(',');
           }
-          dumpValue(slice->keyAt(i), base);
+          dumpValue(it.key(), base);
           _sink->push_back(':');
-          dumpValue(slice->valueAt(i), base);
+          dumpValue(it.value(), base);
+          it.next();
         }
       }
       _sink->push_back('}');

@@ -135,6 +135,14 @@ namespace arangodb {
           return _position;
         }
 
+        inline bool isFirst () const throw() {
+          return (_position == 0);
+        }
+
+        inline bool isLast () const throw() {
+          return (_position + 1 >= _size);
+        }
+
       private: 
 
         Slice _slice;
@@ -158,28 +166,49 @@ namespace arangodb {
         ObjectIterator () = delete;
 
         ObjectIterator (Slice const& slice) 
-          : _slice(slice), _size(_slice.length()), _position(0) {
+          : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr) {
 
           if (slice.type() != ValueType::Object) {
             throw Exception(Exception::InvalidValueType, "Expecting Object slice");
           }
+
+          if (slice.head() == 0x14 && slice.length() > 0) {
+            _current = slice.keyAt(0).start();
+          }
         }
         
         ObjectIterator (ObjectIterator const& other) 
-          : _slice(other._slice), _size(other._size), _position(other._position) {
+          : _slice(other._slice), _size(other._size), _position(other._position), _current(other._current) {
         }
         
         ObjectIterator& operator= (ObjectIterator const& other) {
           _slice = other._slice;
           _size  = other._size;
           _position = other._position;
+          _current = other._current;
           return *this;
         }
 
-        ObjectPair operator++ () { 
-          ObjectPair current(_slice.keyAt(_position), _slice.valueAt(_position)); 
+        // prefix ++
+        ObjectIterator& operator++ () { 
           ++_position;
-          return current;
+          if (_position <= _size && _current != nullptr) {
+            // skip over key
+            _current += Slice(_current, _slice.options).byteSize();
+            // skip over value
+            _current += Slice(_current, _slice.options).byteSize();
+          }
+          else {
+            _current = nullptr;
+          }
+          return *this;
+        }
+
+        // postfix ++
+        ObjectIterator operator++ (int) {
+          ObjectIterator result(*this);
+          ++(*this);
+          return result;
         }
 
         bool operator!= (ObjectIterator const& other) const {
@@ -187,6 +216,10 @@ namespace arangodb {
         }
 
         ObjectPair operator* () const { 
+          if (_current != nullptr) {
+            Slice key = Slice(_current, _slice.options);
+            return ObjectPair(key, Slice(_current + key.byteSize(), _slice.options));
+          } 
           return ObjectPair(_slice.keyAt(_position), _slice.valueAt(_position)); 
         }
 
@@ -218,6 +251,9 @@ namespace arangodb {
           if (_position >= _size) {
             throw Exception(Exception::IndexOutOfBounds);
           }
+          if (_current != nullptr) {
+            return Slice(_current, _slice.options);
+          } 
           return _slice.keyAt(_position);
         }
 
@@ -225,12 +261,28 @@ namespace arangodb {
           if (_position >= _size) {
             throw Exception(Exception::IndexOutOfBounds);
           }
+          if (_current != nullptr) {
+            Slice key = Slice(_current, _slice.options);
+            return Slice(_current + key.byteSize(), _slice.options);
+          } 
           return _slice.valueAt(_position);
         }
 
         inline bool next () throw() {
-          ++_position;
+          operator++();
           return valid();
+        }
+
+        inline ValueLength index () const throw() {
+          return _position;
+        }
+
+        inline bool isFirst () const throw() {
+          return (_position == 0);
+        }
+
+        inline bool isLast () const throw() {
+          return (_position + 1 >= _size);
         }
 
       private: 
@@ -238,6 +290,7 @@ namespace arangodb {
         Slice _slice;
         ValueLength _size;
         ValueLength _position;
+        uint8_t const* _current;
     };
 
   }  // namespace arangodb::velocypack
