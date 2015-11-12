@@ -149,8 +149,10 @@ TEST(BuilderTest, ObjectsSizesSorted) {
   // The attribute name generated below will use another 10.
 
   for (int i = 0; i < nr; i++) {
-    Builder b;
-    b.options.sortAttributeNames = true;
+    Options options;
+    options.sortAttributeNames = true;
+
+    Builder b(&options);
     b.reserve(byteSizes[i]);
     b.add(Value(ValueType::Object));
     for (ValueLength j = 0; j < nrs[i]; j++) {
@@ -203,8 +205,10 @@ TEST(BuilderTest, ObjectsSizesUnsorted) {
   // The attribute name generated below will use another 10.
 
   for (int i = 0; i < nr; i++) {
-    Builder b;
-    b.options.sortAttributeNames = false;
+    Options options;
+    options.sortAttributeNames = false;
+
+    Builder b(&options);
     b.reserve(byteSizes[i]);
     b.add(Value(ValueType::Object));
     for (ValueLength j = 0; j < nrs[i]; j++) {
