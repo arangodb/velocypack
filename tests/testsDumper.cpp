@@ -449,13 +449,6 @@ TEST(StringDumperTest, CustomStringWithCallback) {
 }
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
-  Builder b;
-  b.add(Value(ValueType::Object));
-  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf0;
-  b.add("_key", Value("this is a key"));
-  b.close();
-
   struct MyCustomTypeHandler : public CustomTypeHandler {
     void toJson (Slice const& value, Sink* sink, Slice const& base) {
       ASSERT_EQ(ValueType::Custom, value.type());
@@ -468,15 +461,22 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
       sink->push_back('"');
     }
     ValueLength byteSize (Slice const&) {
-      EXPECT_TRUE(false);
-      return 0;
+      return 1;
     }
   };
 
   MyCustomTypeHandler handler;
-  StringSink sink;
   Options options;
   options.customTypeHandler = &handler;
+  
+  Builder b(options);
+  b.add(Value(ValueType::Object));
+  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
+  *p = 0xf0;
+  b.add("_key", Value("this is a key"));
+  b.close();
+
+  StringSink sink;
   Dumper dumper(&sink, options);
   dumper.dump(b.slice());
 

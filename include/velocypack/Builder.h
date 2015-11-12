@@ -99,7 +99,7 @@ namespace arangodb {
           if (_pos + len <= _size) {
             return;  // All OK, we can just increase tos->pos by len
           }
-          CheckValueLength(_pos + len);
+          checkValueLength(_pos + len);
 
           _buffer.prealloc(len);
           _start = _buffer.data();
@@ -343,7 +343,7 @@ namespace arangodb {
 
         void addUTCDate (int64_t v) {
           uint8_t vSize = sizeof(int64_t);   // is always 8
-          uint64_t x = ToUInt64(v);
+          uint64_t x = toUInt64(v);
           reserveSpace(1 + vSize);
           _start[_pos++] = 0x1c;
           appendLength(x, 8);
@@ -466,7 +466,7 @@ namespace arangodb {
           uint8_t vSize = intLength(v);
           uint64_t x;
           if (vSize == 8) {
-            x = ToUInt64(v);
+            x = toUInt64(v);
           }
           else {
             int64_t shift = 1LL << (vSize * 8 - 1);  // will never overflow!
@@ -481,7 +481,7 @@ namespace arangodb {
           }
         }
  
-        void checkAttributeUniqueness (Slice const obj) const;
+        void checkAttributeUniqueness (Slice const& obj) const;
     };
 
   }  // namespace arangodb::velocypack

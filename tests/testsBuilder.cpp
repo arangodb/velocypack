@@ -532,7 +532,7 @@ TEST(BuilderTest, Int1Limits) {
                       -0x800000000001LL, 0x800000000000LL,
                       -0x80000000000000LL, 0x7fffffffffffffLL, 
                       -0x80000000000001LL, 0x80000000000000LL,
-                      arangodb::velocypack::ToInt64(0x8000000000000000ULL),
+                      arangodb::velocypack::toInt64(0x8000000000000000ULL),
                       0x7fffffffffffffffLL};
   for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];

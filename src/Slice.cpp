@@ -39,8 +39,8 @@ VT const Slice::TypeMap[256] = {
   /* 0x04 */  VT::Array,       /* 0x05 */  VT::Array,       /* 0x06 */  VT::Array,       /* 0x07 */  VT::Array,
   /* 0x08 */  VT::Array,       /* 0x09 */  VT::Array,       /* 0x0a */  VT::Object,      /* 0x0b */  VT::Object, 
   /* 0x0c */  VT::Object,      /* 0x0d */  VT::Object,      /* 0x0e */  VT::Object,      /* 0x0f */  VT::Object,
-  /* 0x10 */  VT::Object,      /* 0x11 */  VT::Object,      /* 0x12 */  VT::Object,      /* 0x13 */  VT::None,     
-  /* 0x14 */  VT::None,        /* 0x15 */  VT::None,        /* 0x16 */  VT::None,        /* 0x17 */  VT::None,     
+  /* 0x10 */  VT::Object,      /* 0x11 */  VT::Object,      /* 0x12 */  VT::Object,      /* 0x13 */  VT::Array,     
+  /* 0x14 */  VT::Object,      /* 0x15 */  VT::None,        /* 0x16 */  VT::None,        /* 0x17 */  VT::None,     
   /* 0x18 */  VT::Null,        /* 0x19 */  VT::Bool,        /* 0x1a */  VT::Bool,        /* 0x1b */  VT::Double,         
   /* 0x1c */  VT::UTCDate,     /* 0x1d */  VT::External,    /* 0x1e */  VT::MinKey,      /* 0x1f */  VT::MaxKey,         
   /* 0x20 */  VT::Int,         /* 0x21 */  VT::Int,         /* 0x22 */  VT::Int,         /* 0x23 */  VT::Int,         
@@ -168,6 +168,347 @@ std::string Slice::toString () const {
 
 std::string Slice::hexType () const {
   return std::move(HexDump::toHex(head()));
+}
+
+// look for the specified attribute inside an Object
+// returns a Slice(ValueType::None) if not found
+Slice Slice::get (std::string const& attribute) const {
+  if (! isType(ValueType::Object)) {
+    throw Exception(Exception::InvalidValueType, "Expecting Object");
+  }
+
+  auto const h = head();
+  if (h == 0x0a) {
+    // special case, empty object
+    return Slice();
+  }
+
+  if (h == 0x14) {
+    // compact Object
+    return getFromCompactObject(attribute);
+  }
+  
+  ValueLength const offsetSize = indexEntrySize(h);
+  ValueLength end = readInteger<ValueLength>(_start + 1, offsetSize);
+  ValueLength dataOffset = 0;
+
+  // read number of items
+  ValueLength n;
+  if (h <= 0x05) {    // No offset table or length, need to compute:
+    dataOffset = findDataOffset(h);
+    Slice first(_start + dataOffset, customTypeHandler);
+    n = (end - dataOffset) / first.byteSize();
+  } 
+  else if (offsetSize < 8) {
+    n = readInteger<ValueLength>(_start + 1 + offsetSize, offsetSize);
+  }
+  else {
+    n = readInteger<ValueLength>(_start + end - offsetSize, offsetSize);
+  }
+  
+  if (n == 1) {
+    // Just one attribute, there is no index table!
+    if (dataOffset == 0) {
+      dataOffset = findDataOffset(h);
+    }
+
+    Slice key = Slice(_start + dataOffset, customTypeHandler);
+    if (! key.isString()) {
+      return Slice();
+    }
+    if (! key.isEqualString(attribute)) {
+      return Slice();
+    }
+
+    return Slice(key.start() + key.byteSize(), customTypeHandler);
+  }
+
+  ValueLength const ieBase = end - n * offsetSize 
+                             - (offsetSize == 8 ? offsetSize : 0);
+
+  // only use binary search for attributes if we have at least this many entries
+  // otherwise we'll always use the linear search
+  static ValueLength const SortedSearchEntriesThreshold = 4;
+
+  if (isSorted() && n >= SortedSearchEntriesThreshold) {
+    // This means, we have to handle the special case n == 1 only
+    // in the linear search!
+    return searchObjectKeyBinary(attribute, ieBase, offsetSize, n);
+  }
+
+  return searchObjectKeyLinear(attribute, ieBase, offsetSize, n);
+}
+
+// return the value for an Int object
+int64_t Slice::getInt () const {
+  uint8_t const h = head();
+  if (h >= 0x20 && h <= 0x27) {
+    // Int  T
+    uint64_t v = readInteger<uint64_t>(_start + 1, h - 0x1f);
+    if (h == 0x27) {
+      return toInt64(v);
+    }
+    else {
+      int64_t vv = static_cast<int64_t>(v);
+      int64_t shift = 1LL << ((h - 0x1f) * 8 - 1);
+      return vv < shift ? vv : vv - (shift << 1);
+    }
+  }
+
+  if (h >= 0x28 && h <= 0x2f) { 
+    // UInt
+    uint64_t v = getUInt();
+    if (v > static_cast<uint64_t>(INT64_MAX)) {
+      throw Exception(Exception::NumberOutOfRange);
+    }
+    return static_cast<int64_t>(v);
+  }
+  
+  if (h >= 0x30 && h <= 0x3f) {
+    // SmallInt
+    return getSmallInt();
+  }
+
+  throw Exception(Exception::InvalidValueType, "Expecting type Int");
+}
+
+// return the value for a UInt object
+uint64_t Slice::getUInt () const {
+  uint8_t const h = head();
+  if (h >= 0x28 && h <= 0x2f) {
+    // UInt
+    return readInteger<uint64_t>(_start + 1, h - 0x27);
+  }
+  
+  if (h >= 0x20 && h <= 0x27) {
+    // Int 
+    int64_t v = getInt();
+    if (v < 0) {
+      throw Exception(Exception::NumberOutOfRange);
+    }
+    return static_cast<int64_t>(v);
+  }
+
+  if (h >= 0x30 && h <= 0x39) {
+    // Smallint >= 0
+    return static_cast<uint64_t>(h - 0x30);
+  }
+
+  if (h >= 0x3a && h <= 0x3f) {
+    // Smallint < 0
+    throw Exception(Exception::NumberOutOfRange);
+  }
+  
+  throw Exception(Exception::InvalidValueType, "Expecting type UInt");
+}
+
+// return the value for a SmallInt object
+int64_t Slice::getSmallInt () const {
+  uint8_t const h = head();
+
+  if (h >= 0x30 && h <= 0x39) {
+    // Smallint >= 0
+    return static_cast<int64_t>(h - 0x30);
+  }
+
+  if (h >= 0x3a && h <= 0x3f) {
+    // Smallint < 0
+    return static_cast<int64_t>(h - 0x3a) - 6;
+  }
+
+  if ((h >= 0x20 && h <= 0x27) ||
+      (h >= 0x28 && h <= 0x2f)) {
+    // Int and UInt
+    // we'll leave it to the compiler to detect the two ranges above are adjacent
+    return getInt();
+  }
+
+  throw Exception(Exception::InvalidValueType, "Expecting type Smallint");
+}
+
+int Slice::compareString (std::string const& attribute) const {
+  ValueLength keyLength;
+  char const* k = getString(keyLength); 
+  size_t const attributeLength = attribute.size();
+  size_t const compareLength = (std::min)(static_cast<size_t>(keyLength), attributeLength);
+  int res = memcmp(k, attribute.c_str(), compareLength);
+
+  if (res == 0) {
+    if (keyLength != attributeLength) {
+      return (keyLength > attributeLength) ? 1 : -1; 
+    }
+  }
+  return res;
+}
+
+bool Slice::isEqualString (std::string const& attribute) const {
+  ValueLength keyLength;
+  char const* k = getString(keyLength); 
+  if (static_cast<size_t>(keyLength) != attribute.size()) {
+    return false;
+  }
+  return (memcmp(k, attribute.c_str(), attribute.size()) == 0);
+}
+
+Slice Slice::getFromCompactObject (std::string const& attribute) const {
+  ValueLength n = length();
+  ValueLength current = 0;
+
+  while (current != n) { 
+    Slice key = keyAt(current);
+    if (key.isString()) {
+      if (key.isEqualString(attribute)) {
+        return Slice(key.start() + key.byteSize(), customTypeHandler);
+      }
+    }
+    ++current;
+  }
+  // not found
+  return Slice();
+}
+
+// extract the nth member from an Array or Object type
+Slice Slice::getNth (ValueLength index) const {
+  VELOCYPACK_ASSERT(type() == ValueType::Array || type() == ValueType::Object);
+
+  auto const h = head();
+  if (h == 0x01 || h == 0x0a) {
+    // special case. empty array or object
+    throw Exception(Exception::IndexOutOfBounds);
+  }
+
+  if (h == 0x13 || h == 0x14) {
+    // compact Array or Object
+    return getNthFromCompact(index);
+  }
+
+  ValueLength const offsetSize = indexEntrySize(h);
+  ValueLength end = readInteger<ValueLength>(_start + 1, offsetSize);
+
+  ValueLength dataOffset = findDataOffset(h);
+  
+  // find the number of items
+  ValueLength n;
+  if (h <= 0x05) {    // No offset table or length, need to compute:
+    Slice first(_start + dataOffset, customTypeHandler);
+    n = (end - dataOffset) / first.byteSize();
+  }
+  else if (offsetSize < 8) {
+    n = readInteger<ValueLength>(_start + 1 + offsetSize, offsetSize);
+  }
+  else {
+    n = readInteger<ValueLength>(_start + end - offsetSize, offsetSize);
+  }
+
+  if (index >= n) {
+    throw Exception(Exception::IndexOutOfBounds);
+  }
+
+  // empty array case was already covered
+  VELOCYPACK_ASSERT(n > 0);
+
+  if (h <= 0x05 || n == 1) {
+    // no index table, but all array items have the same length
+    // now fetch first item and determine its length
+    if (dataOffset == 0) {
+      dataOffset = findDataOffset(h);
+    }
+    Slice firstItem(_start + dataOffset, customTypeHandler);
+    return Slice(_start + dataOffset + index * firstItem.byteSize(), customTypeHandler);
+  }
+  
+  ValueLength const ieBase = end - n * offsetSize + index * offsetSize
+                             - (offsetSize == 8 ? 8 : 0);
+  return Slice(_start + readInteger<ValueLength>(_start + ieBase, offsetSize), customTypeHandler);
+}
+
+// extract the nth member from a compact Array or Object type
+Slice Slice::getNthFromCompact (ValueLength index) const {
+  ValueLength end = readVariableValueLength<false>(_start + 1);
+  ValueLength n = readVariableValueLength<true>(_start + end - 1);
+  if (index >= n) {
+    throw Exception(Exception::IndexOutOfBounds);
+  }
+
+  auto const h = head();
+  uint8_t const* s = _start + 1 + getVariableValueLength(end); 
+  ValueLength current = 0;
+  while (current != index) {
+    Slice key = Slice(s, customTypeHandler);
+    s += key.byteSize();
+    if (h == 0x14) {
+      Slice value = Slice(s, customTypeHandler); 
+      s += value.byteSize();
+    }
+    ++current;
+  }
+  return Slice(s, customTypeHandler);
+}
+
+Slice Slice::searchObjectKeyLinear (std::string const& attribute, 
+                                    ValueLength ieBase, 
+                                    ValueLength offsetSize, 
+                                    ValueLength n) const {
+  for (ValueLength index = 0; index < n; ++index) {
+    ValueLength offset = ieBase + index * offsetSize;
+    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), customTypeHandler);
+    if (! key.isString()) {
+      // invalid object
+      return Slice();
+    }
+
+    if (! key.isEqualString(attribute)) {
+      continue;
+    }
+    // key is identical. now return value
+    return Slice(key.start() + key.byteSize(), customTypeHandler);
+  }
+
+  // nothing found
+  return Slice();
+}
+
+// perform a binary search for the specified attribute inside an Object
+Slice Slice::searchObjectKeyBinary (std::string const& attribute, 
+                                    ValueLength ieBase,
+                                    ValueLength offsetSize, 
+                                    ValueLength n) const {
+  VELOCYPACK_ASSERT(n > 0);
+    
+  ValueLength l = 0;
+  ValueLength r = n - 1;
+
+  while (true) {
+    // midpoint
+    ValueLength index = l + ((r - l) / 2);
+
+    ValueLength offset = ieBase + index * offsetSize;
+    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), customTypeHandler);
+    if (! key.isString()) {
+      // invalid object
+      return Slice();
+    }
+
+    int res = key.compareString(attribute);
+
+    if (res == 0) {
+      // found
+      return Slice(key.start() + key.byteSize(), customTypeHandler);
+    } 
+
+    if (res > 0) {
+      if (index == 0) {
+        return Slice();
+      }
+      r = index - 1;
+    }
+    else {
+      l = index + 1;
+    }
+    if (r < l) {
+      return Slice();
+    }
+  }
 }
         
 std::ostream& operator<< (std::ostream& stream, Slice const* slice) {

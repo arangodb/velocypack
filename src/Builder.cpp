@@ -155,7 +155,9 @@ void Builder::close () {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
+
   if (index.empty()) {
+    // empty Array or Object
     _start[tos] = (_start[tos] == 0x06) ? 0x01 : 0x0a;
     VELOCYPACK_ASSERT(_pos == tos + 9);
     _pos -= 8;  // no bytelength and number subvalues needed
@@ -166,6 +168,37 @@ void Builder::close () {
 
   // From now on index.size() > 0
   VELOCYPACK_ASSERT(index.size() > 0);
+
+#if 0
+  if (false) { // TODO: make this configurable
+    // use compact notation
+    _start[tos] = (_start[tos] == 0x06) ? 0x13 : 0x14;
+    ValueLength nLen = getVariableValueLength(static_cast<ValueLength>(index.size()));
+    ValueLength byteSize = _pos - (tos + 8) + nLen;
+    ValueLength bLen = getVariableValueLength(byteSize);
+    byteSize += bLen; 
+    if (getVariableValueLength(byteSize) != bLen) {
+      byteSize += 1;
+      bLen += 1;
+    }
+    ValueLength targetPos = 1 + bLen;
+
+    if (_pos > (tos + 9)) {
+      memmove(_start + tos + targetPos, _start + tos + 9,
+              _pos - (tos + 9));
+    }
+
+    _pos -= 8; //(9 - targetPos);
+    _pos += nLen;
+    _pos += bLen;
+    // store byte lengths
+    storeVariableValueLength<false>(_start + tos + 1, byteSize);
+    storeVariableValueLength<true>(_start + tos + byteSize - 1, static_cast<ValueLength>(index.size()));
+
+    _stack.pop_back();
+    return;
+  } 
+#endif
 
   bool needIndexTable = true;
   bool needNrSubs = true;
@@ -436,7 +469,7 @@ uint8_t* Builder::set (Value const& item) {
           v = item.getInt64();
           break;
         case Value::CType::UInt64:
-          v = ToInt64(item.getUInt64());
+          v = toInt64(item.getUInt64());
           break;
         default:
           throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::Int");
@@ -478,7 +511,7 @@ uint8_t* Builder::set (Value const& item) {
           v = item.getInt64();
           break;
         case Value::CType::UInt64:
-          v = ToInt64(item.getUInt64());
+          v = toInt64(item.getUInt64());
           break;
         default:
           throw Exception(Exception::BuilderUnexpectedValue, "Must give number for ValueType::UTCDate");
@@ -620,7 +653,7 @@ uint8_t* Builder::set (ValuePair const& pair) {
   throw Exception(Exception::BuilderUnexpectedType, "Only ValueType::Binary, ValueType::String and ValueType::Custom are valid for ValuePair argument");
 }
 
-void Builder::checkAttributeUniqueness (Slice const obj) const {
+void Builder::checkAttributeUniqueness (Slice const& obj) const {
   VELOCYPACK_ASSERT(options.checkAttributeUniqueness == true);
   ValueLength const n = obj.length();
 

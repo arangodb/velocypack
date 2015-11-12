@@ -132,7 +132,7 @@ void Parser::parseNumber () {
       if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
         _b.addInt(-static_cast<int64_t>(numberValue.intValue));
       }
-      else if (numberValue.intValue == ToUInt64(INT64_MIN)) {
+      else if (numberValue.intValue == toUInt64(INT64_MIN)) {
         _b.addInt(INT64_MIN);
       }
       else {
