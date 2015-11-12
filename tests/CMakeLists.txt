@@ -65,7 +65,7 @@ endif()
 if (BuildAsmTest)
   add_executable(
     AsmTest
-    src/asm-functions.cpp
+    ${CMAKE_SOURCE_DIR}/src/asm-functions.cpp
   )
 
   target_link_libraries(
