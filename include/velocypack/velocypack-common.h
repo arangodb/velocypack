@@ -120,17 +120,17 @@ namespace arangodb {
 
       if (reverse) {
         while (value >= 0x80) {
-          *dst-- = static_cast<uint8_t>(value & 0x80);
+          *dst-- = static_cast<uint8_t>(value | 0x80);
           value >>= 7;
         }
-        *dst-- = static_cast<uint8_t>(value);
+        *dst-- = static_cast<uint8_t>(value & 0x7f);
       }
       else {
         while (value >= 0x80) {
-          *dst++ = static_cast<uint8_t>(value & 0x80);
+          *dst++ = static_cast<uint8_t>(value | 0x80);
           value >>= 7;
         }
-        *dst++ = static_cast<uint8_t>(value);
+        *dst++ = static_cast<uint8_t>(value & 0x7f);
       }
     }
 

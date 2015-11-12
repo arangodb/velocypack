@@ -207,7 +207,7 @@ TEST(BuilderTest, ArraySameSizeEntries) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
-TEST(BuilderTest, Array4) {
+TEST(BuilderTest, ArraySomeValues) {
   double value = 2.3;
   Builder b;
   b.add(Value(ValueType::Array));
@@ -233,6 +233,33 @@ TEST(BuilderTest, Array4) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, ArrayCompact) {
+  double value = 2.3;
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  b.add(Value(uint64_t(1200)));
+  b.add(Value(value));
+  b.add(Value("abc"));
+  b.add(Value(true));
+  b.close();
+
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] 
+    = { 0x13, 0x14,
+        0x29, 0xb0, 0x04,
+        0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // double
+        0x43, 0x61, 0x62, 0x63,
+        0x1a,
+        0x04
+      };
+  dumpDouble(value, correctResult + 6);
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
 TEST(BuilderTest, ObjectEmpty) {
   Builder b;
   b.add(Value(ValueType::Object));
@@ -240,6 +267,20 @@ TEST(BuilderTest, ObjectEmpty) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
+  static uint8_t correctResult[] = { 0x0a };
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ObjectEmptyCompact) {
+  Builder b;
+  b.add(Value(ValueType::Object, true));
+  b.close();
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  // should still build the compact variant
   static uint8_t correctResult[] = { 0x0a };
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -308,32 +349,120 @@ TEST(BuilderTest, ObjectUnsorted) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
-TEST(BuilderTest, Object4) {
+TEST(BuilderTest, ObjectCompact) {
   double value = 2.3;
   Builder b;
-  b.add(Value(ValueType::Object));
-  b.add("a", Value(uint64_t(1200)));
-  b.add("b", Value(value));
-  b.add("c", Value("abc"));
-  b.add("d", Value(true));
+  b.add(Value(ValueType::Object, true));
+  b.add("d", Value(uint64_t(1200)));
+  b.add("c", Value(value));
+  b.add("b", Value("abc"));
+  b.add("a", Value(true));
   b.close();
 
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
   static uint8_t correctResult[] 
-    = { 0x0b, 0x20, 0x04,
-        0x41, 0x61, 0x29, 0xb0, 0x04,        // "a": uint(1200) = 0x4b0
-        0x41, 0x62, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
-                                             // "b": double(2.3)
-        0x41, 0x63, 0x43, 0x61, 0x62, 0x63,  // "c": "abc"
-        0x41, 0x64, 0x1a,                    // "d": true
-        0x03, 0x08, 0x13, 0x19
+    = { 0x14, 0x1c,
+        0x41, 0x64, 0x29, 0xb0, 0x04,
+        0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // double
+        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,
+        0x41, 0x61, 0x1a,
+        0x04
       };
-  dumpDouble(value, correctResult + 11);
+
+  dumpDouble(value, correctResult + 10);
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ObjectCompactBytesizeBelowThreshold) {
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  for (size_t i = 0; i < 124; ++i) {
+    b.add(Value(uint64_t(i % 10)));
+  }
+  b.close();
+
+  uint8_t* result = b.start();
+  Slice s(result);
+
+  ASSERT_EQ(127UL, s.byteSize());
+
+  ASSERT_EQ(0x13, result[0]); 
+  ASSERT_EQ(0x7f, result[1]); 
+  for (size_t i = 0; i < 124; ++i) {
+    ASSERT_EQ(0x30 + (i % 10), result[2 + i]);
+  }
+  ASSERT_EQ(0x7c, result[126]); 
+}
+
+TEST(BuilderTest, ObjectCompactBytesizeAboveThreshold) {
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  for (size_t i = 0; i < 125; ++i) {
+    b.add(Value(uint64_t(i % 10)));
+  }
+  b.close();
+
+  uint8_t* result = b.start();
+  Slice s(result);
+
+  ASSERT_EQ(129UL, s.byteSize());
+
+  ASSERT_EQ(0x13, result[0]); 
+  ASSERT_EQ(0x81, result[1]); 
+  ASSERT_EQ(0x01, result[2]); 
+  for (size_t i = 0; i < 125; ++i) {
+    ASSERT_EQ(0x30 + (i % 10), result[3 + i]);
+  }
+  ASSERT_EQ(0x7d, result[128]); 
+}
+
+TEST(BuilderTest, ObjectCompactLengthBelowThreshold) {
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  for (size_t i = 0; i < 127; ++i) {
+    b.add(Value("aaa"));
+  }
+  b.close();
+
+  uint8_t* result = b.start();
+  Slice s(result);
+
+  ASSERT_EQ(512UL, s.byteSize());
+
+  ASSERT_EQ(0x13, result[0]); 
+  ASSERT_EQ(0x80, result[1]); 
+  ASSERT_EQ(0x04, result[2]); 
+  for (size_t i = 0; i < 127; ++i) {
+    ASSERT_EQ(0x43, result[3 + i * 4]);
+  }
+  ASSERT_EQ(0x7f, result[511]);
+}
+
+TEST(BuilderTest, ObjectCompactLengthAboveThreshold) {
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  for (size_t i = 0; i < 128; ++i) {
+    b.add(Value("aaa"));
+  }
+  b.close();
+
+  uint8_t* result = b.start();
+  Slice s(result);
+
+  ASSERT_EQ(517UL, s.byteSize());
+
+  ASSERT_EQ(0x13, result[0]); 
+  ASSERT_EQ(0x85, result[1]); 
+  ASSERT_EQ(0x04, result[2]); 
+  for (size_t i = 0; i < 128; ++i) {
+    ASSERT_EQ(0x43, result[3 + i * 4]);
+  }
+  ASSERT_EQ(0x01, result[515]);
+  ASSERT_EQ(0x80, result[516]); 
 }
 
 TEST(BuilderTest, External) {
@@ -648,7 +777,7 @@ TEST(BuilderTest, UTCDateMax) {
   ASSERT_EQ(value, s.getUTCDate());
 }
 
-TEST(BuilderTest, ID) {
+TEST(BuilderTest, CustomTypeID) {
   // This is somewhat tautological, nevertheless...
   static uint8_t const correctResult[]
     = { 0xf1, 0x2b, 0x78, 0x56, 0x34, 0x12,
@@ -703,6 +832,13 @@ TEST(BuilderTest, HasKeyNonObject) {
   ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"), Exception::BuilderNeedOpenObject);
 }
 
+TEST(BuilderTest, HasKeyArray) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"), Exception::BuilderNeedOpenObject);
+}
+
 TEST(BuilderTest, HasKeyEmptyObject) {
   Builder b;
   b.add(Value(ValueType::Object));
@@ -723,6 +859,35 @@ TEST(BuilderTest, HasKeySubObject) {
   ASSERT_FALSE(b.hasKey("baz"));
 
   b.add("bark", Value(ValueType::Object));
+  ASSERT_FALSE(b.hasKey("bark"));
+  ASSERT_FALSE(b.hasKey("foo"));
+  ASSERT_FALSE(b.hasKey("bar"));
+  ASSERT_FALSE(b.hasKey("baz"));
+  b.close();
+
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_TRUE(b.hasKey("bark"));
+  ASSERT_FALSE(b.hasKey("baz"));
+
+  b.add("baz", Value(42));
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_TRUE(b.hasKey("bark"));
+  ASSERT_TRUE(b.hasKey("baz"));
+  b.close();
+}
+
+TEST(BuilderTest, HasKeyCompact) {
+  Builder b;
+  b.add(Value(ValueType::Object, true));
+  b.add("foo", Value(1));
+  b.add("bar", Value(true));
+  ASSERT_TRUE(b.hasKey("foo"));
+  ASSERT_TRUE(b.hasKey("bar"));
+  ASSERT_FALSE(b.hasKey("baz"));
+
+  b.add("bark", Value(ValueType::Object, true));
   ASSERT_FALSE(b.hasKey("bark"));
   ASSERT_FALSE(b.hasKey("foo"));
   ASSERT_FALSE(b.hasKey("bar"));

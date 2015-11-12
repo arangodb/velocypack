@@ -81,7 +81,7 @@ namespace arangodb {
           : _valueType(t), _cType(CType::None), _unindexed(allowUnindexed) {
           
           if (allowUnindexed && 
-              (_valueType == ValueType::Array || _valueType == ValueType::Object)) {
+              (_valueType != ValueType::Array && _valueType != ValueType::Object)) {
             throw Exception(Exception::InvalidValueType, "Expecting compound type");
           }
         }

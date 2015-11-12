@@ -174,6 +174,25 @@ TEST(CollectionsTest, ObjectKeysRef) {
   ASSERT_EQ("5empty", keys[4]);
 }
 
+TEST(CollectionTest, ObjectKeysCompact) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::vector<std::string> keys = Collection::keys(s);
+  ASSERT_EQ(5U, keys.size());
+  ASSERT_EQ("1foo", keys[0]);
+  ASSERT_EQ("2baz", keys[1]);
+  ASSERT_EQ("3number", keys[2]);
+  ASSERT_EQ("4boolean", keys[3]);
+  ASSERT_EQ("5empty", keys[4]);
+}
+
 TEST(CollectionTest, ValuesNonObject1) {
   std::string const value("null");
   Parser parser;
@@ -207,6 +226,34 @@ TEST(CollectionTest, ObjectValues) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
+
+  Builder b = Collection::values(s);
+  s = b.slice();
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(5U, s.length());
+
+  ASSERT_TRUE(s.at(0).isString());
+  ASSERT_EQ("bar", s.at(0).copyString());
+  ASSERT_TRUE(s.at(1).isString());
+  ASSERT_EQ("quux", s.at(1).copyString());
+  ASSERT_TRUE(s.at(2).isNumber());
+  ASSERT_EQ(1UL, s.at(2).getUInt());
+  ASSERT_TRUE(s.at(3).isBoolean());
+  ASSERT_TRUE(s.at(3).getBoolean());
+  ASSERT_TRUE(s.at(4).isNull());
+}
+
+TEST(CollectionTest, ObjectValuesCompact) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x14, s.head());
 
   Builder b = Collection::values(s);
   s = b.slice();
