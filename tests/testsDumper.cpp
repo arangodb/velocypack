@@ -115,10 +115,12 @@ TEST(SinkTest, OStreamAppenders) {
 }
 
 TEST(OutStreamTest, StringifyComplexObject) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
 
   Builder builder = parser.steal();
@@ -129,9 +131,9 @@ TEST(OutStreamTest, StringifyComplexObject) {
 
   ASSERT_EQ("[Slice object (0x0f), byteSize: 107]", result.str());
  
-  Options options;
-  options.prettyPrint = true; 
-  std::string prettyResult = Dumper::toString(s, options);
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true; 
+  std::string prettyResult = Dumper::toString(s, &dumperOptions);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
 }
 
@@ -149,25 +151,27 @@ TEST(PrettyDumperTest, SimpleObject) {
 
   ASSERT_EQ("[Slice object (0x0b), byteSize: 11]", result.str());
 
-  Options options;
-  options.prettyPrint = true; 
-  std::string prettyResult = Dumper::toString(s, options);
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true; 
+  std::string prettyResult = Dumper::toString(s, &dumperOptions);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, ComplexObject) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
 
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  Options options;
-  options.prettyPrint = true; 
-  std::string result = Dumper::toString(s, options);
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true; 
+  std::string result = Dumper::toString(s, &dumperOptions);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
 }
 
@@ -184,26 +188,46 @@ TEST(StreamDumperTest, SimpleObject) {
   options.prettyPrint = true; 
   std::ostringstream result;
   StreamSink<decltype(result)> sink(&result);
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result.str());
+}
+
+TEST(StreamDumperTest, UseStringStreamTypedef) {
+  std::string const value("{\"foo\":\"bar\"}");
+
+  Parser parser;
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  Options options;
+  options.prettyPrint = true; 
+  std::ostringstream result;
+  StringStreamSink sink(&result);
+  Dumper dumper(&sink, &options);
   dumper.dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result.str());
 }
 
 TEST(StreamDumperTest, ComplexObject) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
 
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  Options options;
-  options.prettyPrint = true; 
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true; 
   std::ostringstream result;
   StreamSink<decltype(result)> sink(&result);
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &dumperOptions);
   dumper.dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
 }
@@ -404,7 +428,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   StringSink sink;
   Options options;
   options.customTypeHandler = &handler;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.sawCustom);
 }
@@ -441,7 +465,7 @@ TEST(StringDumperTest, CustomStringWithCallback) {
   StringSink sink;
   Options options;
   options.customTypeHandler = &handler;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.sawCustom);
   
@@ -469,7 +493,7 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   Options options;
   options.customTypeHandler = &handler;
   
-  Builder b(options);
+  Builder b(&options);
   b.add(Value(ValueType::Object));
   uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
   *p = 0xf0;
@@ -477,7 +501,7 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   b.close();
 
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
 
   ASSERT_EQ(std::string("{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"), sink.buffer);
@@ -519,7 +543,7 @@ TEST(StringDumperTest, ArrayWithCustom) {
 
   uint8_t* p;
 
-  Builder b(options);
+  Builder b(&options);
   b.add(Value(ValueType::Array));
   p = b.add(ValuePair(1ULL, ValueType::Custom));
   *p = 0xf0;
@@ -535,7 +559,7 @@ TEST(StringDumperTest, ArrayWithCustom) {
   ASSERT_EQ(0x02, b.slice().head());
 
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.byteSizeCalled >= 4);
 
@@ -559,92 +583,108 @@ TEST(StringDumperTest, AppendStringTest) {
 }
 
 TEST(StringDumperTest, AppendCharTestSpecialChars1) {
+  Options options;
+  options.escapeForwardSlashes = true;
+
   StringSink sink;
-  Dumper dumper(&sink);
-  dumper.options.escapeForwardSlashes = true;
+  Dumper dumper(&sink, &options);
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendCharTestSpecialChars2) {
+  Options options;
+  options.escapeForwardSlashes = false;
+
   StringSink sink;
-  Dumper dumper(&sink);
-  dumper.options.escapeForwardSlashes = false;
+  Dumper dumper(&sink, &options);
   dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
   ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringTestSpecialChars1) {
+  Options options;
+  options.escapeForwardSlashes = true;
+
   StringSink sink;
-  Dumper dumper(&sink);
-  dumper.options.escapeForwardSlashes = true;
+  Dumper dumper(&sink, &options);
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringTestSpecialChars2) {
+  Options options;
+  options.escapeForwardSlashes = false;
+
   StringSink sink;
-  Dumper dumper(&sink);
-  dumper.options.escapeForwardSlashes = false;
+  Dumper dumper(&sink, &options);
   dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
   ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringSlice1) {
+  Options options;
+  options.escapeForwardSlashes = true;
+
   StringSink sink;
-  Dumper dumper(&sink);
+  Dumper dumper(&sink, &options);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
-  dumper.options.escapeForwardSlashes = true;
   dumper.append(slice);
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringSlice2) {
+  Options options;
+  options.escapeForwardSlashes = false;
+
   StringSink sink;
-  Dumper dumper(&sink);
+  Dumper dumper(&sink, &options);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
 
-  dumper.options.escapeForwardSlashes = false;
   dumper.append(slice);
   ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringSliceRef1) {
+  Options options;
+  options.escapeForwardSlashes = true;
+
   StringSink sink;
-  Dumper dumper(&sink);
+  Dumper dumper(&sink, &options);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
-  dumper.options.escapeForwardSlashes = true;
   dumper.append(&slice);
 
   ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
 
 TEST(StringDumperTest, AppendStringSliceRef2) {
+  Options options;
+  options.escapeForwardSlashes = false;
+
   StringSink sink;
-  Dumper dumper(&sink);
+  Dumper dumper(&sink, &options);
 
   std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
-  dumper.options.escapeForwardSlashes = false;
   dumper.append(&slice);
   ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), sink.buffer);
 }
@@ -673,7 +713,7 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -702,7 +742,7 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -731,7 +771,7 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -756,7 +796,7 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -783,7 +823,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -802,7 +842,7 @@ TEST(StringDumperTest, ConvertTypeNull) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -821,7 +861,7 @@ TEST(StringDumperTest, ConvertTypeMinKey) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }
@@ -840,7 +880,7 @@ TEST(StringDumperTest, ConvertTypeMaxKey) {
   Options options;
   options.unsupportedTypeBehavior = NullifyUnsupportedType;
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), sink.buffer);
 }

@@ -280,11 +280,11 @@ void Builder::close () {
     tableBase = _pos;
     _pos += offsetSize * index.size();
     if (_start[tos] == 0x0b) {  // an object
-      if (! options.sortAttributeNames) {
+      if (! options->sortAttributeNames) {
         _start[tos] = 0x0f;  // unsorted
       }
       else if (index.size() >= 2 &&
-               options.sortAttributeNames) {
+               options->sortAttributeNames) {
         sortObjectIndex(_start + tos, index);
       }
     }
@@ -333,10 +333,10 @@ void Builder::close () {
   }
 
   // And, if desired, check attribute uniqueness:
-  if (options.checkAttributeUniqueness && index.size() > 1 &&
+  if (options->checkAttributeUniqueness && index.size() > 1 &&
       _start[tos] >= 0x0b) {
     // check uniqueness of attribute names
-    checkAttributeUniqueness(Slice(_start + tos, options.customTypeHandler));
+    checkAttributeUniqueness(Slice(_start + tos, options));
   }
 
   // Now the array or object is complete, we pop a ValueLength 
@@ -359,8 +359,8 @@ bool Builder::hasKey (std::string const& key) const {
     return false;
   }
   for (size_t i = 0; i < index.size(); ++i) {
-    Slice s(_start + tos + index[i], options.customTypeHandler);
-    if (s.isString() && s.copyString() == key) {
+    Slice s(_start + tos + index[i], options);
+    if (s.isString() && s.isEqualString(key)) {
       return true;
     }
   }
@@ -654,7 +654,7 @@ uint8_t* Builder::set (ValuePair const& pair) {
 }
 
 void Builder::checkAttributeUniqueness (Slice const& obj) const {
-  VELOCYPACK_ASSERT(options.checkAttributeUniqueness == true);
+  VELOCYPACK_ASSERT(options->checkAttributeUniqueness == true);
   ValueLength const n = obj.length();
 
   if (obj.isSorted()) {

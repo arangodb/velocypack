@@ -92,22 +92,28 @@ namespace arangodb {
 
       public:
 
-        Options options;        
+        Options const* options;        
 
         Parser (Parser const&) = delete;
         Parser& operator= (Parser const&) = delete;
 
-        Parser () : _start(nullptr), _size(0), _pos(0), _nesting(0) {
+        Parser (Options const* options = &Options::Defaults) 
+          : _start(nullptr), _size(0), _pos(0), _nesting(0), options(options) {
+          
+          VELOCYPACK_ASSERT(options != nullptr);
+          if (options == nullptr) {
+            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+          }
         }
 
-        static Builder fromJson (std::string const& json, Options const& options = Options::Defaults) {
+        static Builder fromJson (std::string const& json, Options const* options = &Options::Defaults) {
           Parser parser;
           parser.options = options;
           parser.parse(json);
           return parser.steal();
         }
         
-        static Builder fromJson (uint8_t const* start, size_t size, Options const& options = Options::Defaults) {
+        static Builder fromJson (uint8_t const* start, size_t size, Options const* options = &Options::Defaults) {
           Parser parser;
           parser.options = options;
           parser.parse(start, size);

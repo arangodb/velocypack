@@ -247,9 +247,11 @@ TEST(BuilderTest, ObjectEmpty) {
 }
 
 TEST(BuilderTest, ObjectSorted) {
+  Options options;
+  options.sortAttributeNames = true;
+
   double value = 2.3;
-  Builder b;
-  b.options.sortAttributeNames = true;
+  Builder b(&options);
   b.add(Value(ValueType::Object));
   b.add("d", Value(uint64_t(1200)));
   b.add("c", Value(value));
@@ -276,9 +278,11 @@ TEST(BuilderTest, ObjectSorted) {
 }
 
 TEST(BuilderTest, ObjectUnsorted) {
+  Options options;
+  options.sortAttributeNames = false;
+
   double value = 2.3;
-  Builder b;
-  b.options.sortAttributeNames = false;
+  Builder b(&options);
   b.add(Value(ValueType::Object));
   b.add("d", Value(uint64_t(1200)));
   b.add("c", Value(value));

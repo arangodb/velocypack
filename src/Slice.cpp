@@ -148,9 +148,6 @@ unsigned int const Slice::FirstSubMap[256] = {
 };
 
 std::string Slice::toJson () const {
-  Options options;
-  options.customTypeHandler = customTypeHandler;
-
   StringSink sink;
   Dumper dumper(&sink, options);
   dumper.dump(this);
@@ -158,11 +155,12 @@ std::string Slice::toJson () const {
 }
         
 std::string Slice::toString () const {
-  Options options;
-  options.prettyPrint = true;
+  // copy options and set prettyPrint in copy
+  Options prettyOptions = *options;
+  prettyOptions.prettyPrint = true;
 
   StringSink sink;
-  Dumper::dump(this, &sink, options);
+  Dumper::dump(this, &sink, &prettyOptions);
   return std::move(sink.buffer);
 }
 
@@ -196,7 +194,7 @@ Slice Slice::get (std::string const& attribute) const {
   ValueLength n;
   if (h <= 0x05) {    // No offset table or length, need to compute:
     dataOffset = findDataOffset(h);
-    Slice first(_start + dataOffset, customTypeHandler);
+    Slice first(_start + dataOffset, options);
     n = (end - dataOffset) / first.byteSize();
   } 
   else if (offsetSize < 8) {
@@ -212,7 +210,7 @@ Slice Slice::get (std::string const& attribute) const {
       dataOffset = findDataOffset(h);
     }
 
-    Slice key = Slice(_start + dataOffset, customTypeHandler);
+    Slice key = Slice(_start + dataOffset, options);
     if (! key.isString()) {
       return Slice();
     }
@@ -220,7 +218,7 @@ Slice Slice::get (std::string const& attribute) const {
       return Slice();
     }
 
-    return Slice(key.start() + key.byteSize(), customTypeHandler);
+    return Slice(key.start() + key.byteSize(), options);
   }
 
   ValueLength const ieBase = end - n * offsetSize 
@@ -358,7 +356,7 @@ Slice Slice::getFromCompactObject (std::string const& attribute) const {
     Slice key = keyAt(current);
     if (key.isString()) {
       if (key.isEqualString(attribute)) {
-        return Slice(key.start() + key.byteSize(), customTypeHandler);
+        return Slice(key.start() + key.byteSize(), options);
       }
     }
     ++current;
@@ -390,7 +388,7 @@ Slice Slice::getNth (ValueLength index) const {
   // find the number of items
   ValueLength n;
   if (h <= 0x05) {    // No offset table or length, need to compute:
-    Slice first(_start + dataOffset, customTypeHandler);
+    Slice first(_start + dataOffset, options);
     n = (end - dataOffset) / first.byteSize();
   }
   else if (offsetSize < 8) {
@@ -413,13 +411,13 @@ Slice Slice::getNth (ValueLength index) const {
     if (dataOffset == 0) {
       dataOffset = findDataOffset(h);
     }
-    Slice firstItem(_start + dataOffset, customTypeHandler);
-    return Slice(_start + dataOffset + index * firstItem.byteSize(), customTypeHandler);
+    Slice firstItem(_start + dataOffset, options);
+    return Slice(_start + dataOffset + index * firstItem.byteSize(), options);
   }
   
   ValueLength const ieBase = end - n * offsetSize + index * offsetSize
                              - (offsetSize == 8 ? 8 : 0);
-  return Slice(_start + readInteger<ValueLength>(_start + ieBase, offsetSize), customTypeHandler);
+  return Slice(_start + readInteger<ValueLength>(_start + ieBase, offsetSize), options);
 }
 
 // extract the nth member from a compact Array or Object type
@@ -434,15 +432,15 @@ Slice Slice::getNthFromCompact (ValueLength index) const {
   uint8_t const* s = _start + 1 + getVariableValueLength(end); 
   ValueLength current = 0;
   while (current != index) {
-    Slice key = Slice(s, customTypeHandler);
+    Slice key = Slice(s, options);
     s += key.byteSize();
     if (h == 0x14) {
-      Slice value = Slice(s, customTypeHandler); 
+      Slice value = Slice(s, options);
       s += value.byteSize();
     }
     ++current;
   }
-  return Slice(s, customTypeHandler);
+  return Slice(s, options);
 }
 
 Slice Slice::searchObjectKeyLinear (std::string const& attribute, 
@@ -451,7 +449,7 @@ Slice Slice::searchObjectKeyLinear (std::string const& attribute,
                                     ValueLength n) const {
   for (ValueLength index = 0; index < n; ++index) {
     ValueLength offset = ieBase + index * offsetSize;
-    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), customTypeHandler);
+    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), options);
     if (! key.isString()) {
       // invalid object
       return Slice();
@@ -461,7 +459,7 @@ Slice Slice::searchObjectKeyLinear (std::string const& attribute,
       continue;
     }
     // key is identical. now return value
-    return Slice(key.start() + key.byteSize(), customTypeHandler);
+    return Slice(key.start() + key.byteSize(), options);
   }
 
   // nothing found
@@ -483,7 +481,7 @@ Slice Slice::searchObjectKeyBinary (std::string const& attribute,
     ValueLength index = l + ((r - l) / 2);
 
     ValueLength offset = ieBase + index * offsetSize;
-    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), customTypeHandler);
+    Slice key(_start + readInteger<ValueLength>(_start + offset, offsetSize), options);
     if (! key.isString()) {
       // invalid object
       return Slice();
@@ -493,7 +491,7 @@ Slice Slice::searchObjectKeyBinary (std::string const& attribute,
 
     if (res == 0) {
       // found
-      return Slice(key.start() + key.byteSize(), customTypeHandler);
+      return Slice(key.start() + key.byteSize(), options);
     } 
 
     if (res > 0) {

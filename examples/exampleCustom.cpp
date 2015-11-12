@@ -48,7 +48,7 @@ int main (int, char*[]) {
   Options options;
   options.customTypeHandler = &handler;
   
-  Builder b(options);
+  Builder b(&options);
 
   b(Value(ValueType::Object));
 

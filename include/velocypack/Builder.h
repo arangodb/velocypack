@@ -126,16 +126,21 @@ namespace arangodb {
 
       public:
         
-        Options options;
+        Options const* options;
 
         // Constructor and destructor:
 
-        Builder (Options const& options = Options::Defaults)
+        Builder (Options const* options = &Options::Defaults)
           : _buffer({ 0 }),
             _pos(0),
             options(options) {
           _start = _buffer.data();
           _size = _buffer.size();
+
+          VELOCYPACK_ASSERT(options != nullptr);
+          if (options == nullptr) {
+            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+          }
         }
 
         // The rule of five:
@@ -146,6 +151,7 @@ namespace arangodb {
         Builder (Builder const& that) 
           : _buffer(that._buffer), _start(_buffer.data()), _size(_buffer.size()), _pos(that._pos),
             _stack(that._stack), _index(that._index), options(that.options) {
+          VELOCYPACK_ASSERT(options != nullptr);
         }
 
         Builder& operator= (Builder const& that) {
@@ -156,6 +162,7 @@ namespace arangodb {
           _stack = that._stack;
           _index = that._index;
           options = that.options;
+          VELOCYPACK_ASSERT(options != nullptr);
           return *this;
         }
 
@@ -171,6 +178,7 @@ namespace arangodb {
           _index.clear();
           _index.swap(that._index);
           options = that.options;
+          VELOCYPACK_ASSERT(options != nullptr);
           that._start = nullptr;
           that._size = 0;
           that._pos = 0;
@@ -188,13 +196,18 @@ namespace arangodb {
           _index.clear();
           _index.swap(that._index);
           options = that.options;
+          VELOCYPACK_ASSERT(options != nullptr);
           that._start = nullptr;
           that._size = 0;
           that._pos = 0;
           return *this;
         }
 
-        static Builder clone (Slice const& slice, Options const& options = Options::Defaults) {
+        static Builder clone (Slice const& slice, Options const* options = &Options::Defaults) {
+          VELOCYPACK_ASSERT(options != nullptr);
+          if (options == nullptr) {
+            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+          }
           Builder b;
           b.options = options;
           b.add(slice);
@@ -217,7 +230,7 @@ namespace arangodb {
 
         // Return a Slice of the result:
         Slice slice () const {
-          return Slice(start(), options.customTypeHandler);
+          return Slice(start(), options);
         }
 
         // Compute the actual size here, but only when sealed

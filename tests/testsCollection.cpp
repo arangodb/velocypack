@@ -92,9 +92,11 @@ TEST(CollectionTest, KeysNonObject6) {
 }
   
 TEST(CollectionTest, ObjectKeys1) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
  
@@ -106,9 +108,11 @@ TEST(CollectionTest, ObjectKeys1) {
 }
 
 TEST(CollectionTest, ObjectKeys2) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
  
@@ -121,9 +125,11 @@ TEST(CollectionTest, ObjectKeys2) {
 }
 
 TEST(CollectionTest, ObjectKeys3) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
  

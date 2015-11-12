@@ -31,12 +31,7 @@
 #include <chrono>
 #include <thread>
 
-#include "velocypack/velocypack-common.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Parser.h"
-#include "velocypack/Slice.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
+#include "velocypack/vpack.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -93,19 +88,20 @@ static std::string readFile (std::string filename) {
 }
 
 static void run (std::string& data, int runTime, size_t copies, bool useVPack, bool fullOutput) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::vector<std::string> inputs;
   std::vector<Parser*> outputs;
   inputs.push_back(data);
-  outputs.push_back(new Parser());
-  outputs.back()->options.sortAttributeNames = false;
+  outputs.push_back(new Parser(&options));
 
   for (size_t i = 1; i < copies; i++) {
     // Make an explicit copy:
     data.clear();
     data.insert(data.begin(), inputs[0].begin(), inputs[0].end());
     inputs.push_back(data);
-    outputs.push_back(new Parser());
-    outputs.back()->options.sortAttributeNames = false;
+    outputs.push_back(new Parser(&options));
   }
 
   size_t count = 0;

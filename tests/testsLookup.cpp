@@ -269,8 +269,10 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
   }
   value.append("}"); 
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Options options;
+  options.sortAttributeNames = false;
+
+  Parser parser(&options);
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());

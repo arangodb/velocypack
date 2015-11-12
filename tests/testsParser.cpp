@@ -831,35 +831,43 @@ TEST(ParserTest, StringLiteralEmpty) {
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue1) {
+  Options options;
+  options.validateUtf8Strings = true;
+
   std::string value;
   value.push_back('"');
   value.push_back(static_cast<unsigned char>(0x80));
   value.push_back('"');
 
-  Parser parser;
-  parser.options.validateUtf8Strings = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
-  parser.options.validateUtf8Strings = false;
+
+  options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue2) {
+  Options options;
+  options.validateUtf8Strings = true;
+
   std::string value;
   value.push_back('"');
   value.push_back(static_cast<unsigned char>(0xff));
   value.push_back(static_cast<unsigned char>(0xff));
   value.push_back('"');
 
-  Parser parser;
-  parser.options.validateUtf8Strings = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
-  parser.options.validateUtf8Strings = false;
+  options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
+  Options options;
+  options.validateUtf8Strings = true;
+
   std::string value;
   value.push_back('"');
   for (size_t i = 0; i < 100; ++i) {
@@ -867,11 +875,10 @@ TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
   }
   value.push_back('"');
 
-  Parser parser;
-  parser.options.validateUtf8Strings = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
-  parser.options.validateUtf8Strings = false;
+  options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
 }
 
@@ -1987,27 +1994,33 @@ TEST(ParserTest, DuplicateAttributesAllowed) {
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowed) {
+  Options options;
+  options.checkAttributeUniqueness = true;
+
   std::string const value("{\"foo\":1,\"foo\":2}");
 
-  Parser parser;
-  parser.options.checkAttributeUniqueness = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
+  Options options;
+  options.checkAttributeUniqueness = true;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"foo\":1,\"bar\":3,\"foo\":2}");
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
-  parser.options.checkAttributeUniqueness = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateSubAttributesAllowed) {
+  Options options;
+  options.checkAttributeUniqueness = true;
+
   std::string const value("{\"foo\":{\"bar\":1},\"baz\":{\"bar\":2},\"bar\":{\"foo\":23,\"baz\":9}}");
 
-  Parser parser;
-  parser.options.checkAttributeUniqueness = true;
+  Parser parser(&options);
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
@@ -2017,10 +2030,12 @@ TEST(ParserTest, DuplicateSubAttributesAllowed) {
 }
 
 TEST(ParserTest, DuplicateSubAttributesDisallowed) {
+  Options options;
+  options.checkAttributeUniqueness = true;
+
   std::string const value("{\"roo\":{\"bar\":1,\"abc\":true,\"def\":7,\"abc\":2}}");
 
-  Parser parser;
-  parser.options.checkAttributeUniqueness = true;
+  Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
 }
 
@@ -2028,7 +2043,7 @@ TEST(ParserTest, FromJson) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
 
   Options options;
-  Builder b = Parser::fromJson(value, options);
+  Builder b = Parser::fromJson(value, &options);
 
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("foo"));
@@ -2042,7 +2057,7 @@ TEST(ParserTest, KeepTopLevelOpenFalse) {
 
   Options options;
   options.keepTopLevelOpen = false;
-  Builder b = Parser::fromJson(value, options);
+  Builder b = Parser::fromJson(value, &options);
   ASSERT_TRUE(b.isClosed());
 
   Slice s(b.start());
@@ -2057,7 +2072,7 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
 
   Options options;
   options.keepTopLevelOpen = true;
-  Builder b = Parser::fromJson(value, options);
+  Builder b = Parser::fromJson(value, &options);
   ASSERT_FALSE(b.isClosed());
 
   ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
@@ -2094,9 +2109,10 @@ TEST(ParserTest, ExcludeAttributesTopLevel) {
   };
 
   MyAttributeExcludeHandler handler;
+  Options options;
+  options.attributeExcludeHandler = &handler;
 
-  Parser parser;
-  parser.options.attributeExcludeHandler = &handler;
+  Parser parser(&options);
   parser.parse(value);
 
   Builder b = parser.steal();
@@ -2138,9 +2154,10 @@ TEST(ParserTest, ExcludeAttributesSubLevel) {
   };
 
   MyAttributeExcludeHandler handler;
+  Options options;
+  options.attributeExcludeHandler = &handler;
 
-  Parser parser;
-  parser.options.attributeExcludeHandler = &handler;
+  Parser parser(&options);
   parser.parse(value);
 
   Builder b = parser.steal();

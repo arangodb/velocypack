@@ -43,13 +43,17 @@ namespace arangodb {
 
       public:
 
-        Options options;        
+        Options const* options;        
     
         Dumper (Dumper const&) = delete;
         Dumper& operator= (Dumper const&) = delete;
 
-        Dumper (Sink* sink, Options const& options = Options::Defaults)
+        Dumper (Sink* sink, Options const* options = &Options::Defaults)
           : options(options), _sink(sink), _indentation(0) {
+          
+          if (options == nullptr) {
+            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+          }
         }
 
         ~Dumper () {
@@ -65,22 +69,22 @@ namespace arangodb {
           dump(*slice);
         }
 
-        static void dump (Slice const& slice, Sink* sink, Options const& options = Options::Defaults) {
+        static void dump (Slice const& slice, Sink* sink, Options const* options = &Options::Defaults) {
           Dumper dumper(sink, options);
           dumper.dump(slice);
         }
 
-        static void dump (Slice const* slice, Sink* sink, Options const& options = Options::Defaults) {
+        static void dump (Slice const* slice, Sink* sink, Options const* options = &Options::Defaults) {
           dump(*slice, sink, options);
         }
 
-        static std::string toString (Slice const& slice, Options const& options = Options::Defaults) {
+        static std::string toString (Slice const& slice, Options const* options = &Options::Defaults) {
           StringSink sink;
           dump(slice, &sink, options);
           return std::move(sink.buffer);
         }
 
-        static std::string toString (Slice const* slice, Options const& options = Options::Defaults) {
+        static std::string toString (Slice const* slice, Options const* options = &Options::Defaults) {
           return std::move(toString(*slice, options));
         }
 
@@ -127,7 +131,7 @@ namespace arangodb {
         }
 
         void handleUnsupportedType (Slice const*) {
-          if (options.unsupportedTypeBehavior == NullifyUnsupportedType) {
+          if (options->unsupportedTypeBehavior == NullifyUnsupportedType) {
             _sink->append("null", 4);
             return;
           }

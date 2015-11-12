@@ -58,38 +58,44 @@ namespace arangodb {
 
       public:
         
-        CustomTypeHandler* customTypeHandler;
+        Options const* options;
  
         // constructor for an empty Value of type None 
         Slice () 
-          : Slice("\x00", nullptr) {
+          : Slice("\x00", &Options::Defaults) {
         }
 
-        explicit Slice (uint8_t const* start, CustomTypeHandler* handler = nullptr) 
-          : _start(start), customTypeHandler(handler) {
+        explicit Slice (uint8_t const* start, Options const* options = &Options::Defaults) 
+          : _start(start), options(options) {
+          VELOCYPACK_ASSERT(options != nullptr);
         }
 
-        explicit Slice (char const* start, CustomTypeHandler* handler = nullptr) 
-          : _start(reinterpret_cast<uint8_t const*>(start)), customTypeHandler(handler) {
+        explicit Slice (char const* start, Options const* options = &Options::Defaults) 
+          : _start(reinterpret_cast<uint8_t const*>(start)), options(options) {
+          VELOCYPACK_ASSERT(options != nullptr);
         }
 
         Slice (Slice const& other) 
-          : _start(other._start), customTypeHandler(other.customTypeHandler) {
+          : _start(other._start), options(other.options) {
+          VELOCYPACK_ASSERT(options != nullptr);
         }
 
         Slice (Slice&& other) 
-          : _start(other._start), customTypeHandler(other.customTypeHandler) {
+          : _start(other._start), options(other.options) {
+          VELOCYPACK_ASSERT(options != nullptr);
         }
 
         Slice& operator= (Slice const& other) {
           _start = other._start;
-          customTypeHandler = other.customTypeHandler;
+          options = other.options;
+          VELOCYPACK_ASSERT(options != nullptr);
           return *this;
         }
 
         Slice& operator= (Slice&& other) {
           _start = other._start;
-          customTypeHandler = other.customTypeHandler;
+          options = other.options;
+          VELOCYPACK_ASSERT(options != nullptr);
           return *this;
         }
         
@@ -321,7 +327,7 @@ namespace arangodb {
           // find number of items
           if (h <= 0x05) {    // No offset table or length, need to compute:
             ValueLength firstSubOffset = findDataOffset(h);
-            Slice first(_start + firstSubOffset, customTypeHandler);
+            Slice first(_start + firstSubOffset, options);
             return (end - firstSubOffset) / first.byteSize();
           } 
           else if (offsetSize < 8) {
@@ -351,7 +357,7 @@ namespace arangodb {
 
         Slice valueAt (ValueLength index) const {
           Slice key = keyAt(index);
-          return Slice(key.start() + key.byteSize(), customTypeHandler);
+          return Slice(key.start() + key.byteSize(), options);
         }
 
         // look for the specified attribute path inside an Object
@@ -363,7 +369,7 @@ namespace arangodb {
           }
 
           // use ourselves as the starting point
-          Slice last = Slice(start(), customTypeHandler);
+          Slice last = Slice(start(), options);
           for (size_t i = 0; i < attributes.size(); ++i) {
             // fetch subattribute
             last = last.get(attributes[i]);
@@ -616,11 +622,11 @@ namespace arangodb {
             }
 
             case ValueType::Custom: {
-              if (customTypeHandler == nullptr) {
+              if (options->customTypeHandler == nullptr) {
                 throw Exception(Exception::NeedCustomTypeHandler);
               }
 
-              return customTypeHandler->byteSize(*this);
+              return options->customTypeHandler->byteSize(*this);
             }
           }
 

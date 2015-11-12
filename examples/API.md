@@ -199,6 +199,35 @@ Slice object s is created and used.
 VPack value. In order to modify an existing `VPack` value, a new value
 needs to be assembled using a `Builder` or a `Parser` object.
 
+The recommended way to get the contents of a String VPack value is to
+use the method `Slice::copyString`, which returns the String value in
+an `std::string`.
+If access to the VPack value's underlying `char const*` is needed, then
+`Slice::getString` will also work, but this is potentially unsafe because
+VPack String values are not terminated with a NUL-byte. Using the `char const*`
+in functions that work on NUL-byte-terminated C strings will therefore
+likely cause problems (crashes, undefined behavior etc.). In order to
+avoid some of these problems, `Slice::getString` also returns the length
+of the String value in bytes in its first call argument:
+
+```cpp
+Slice slice = object.get("name"); 
+
+if (slice.isString()) {
+  // the following is unsafe, because the char* returned by
+  // getString is not terminated with a NUL-byte
+  ValueLength length;
+  std::cout << "name* " << slice.getString(length) << std::endl;
+  
+  // better do this:
+  char const* p = slice.getString(length);
+  std::cout << "name* " << std::string(p, length) << std::endl;
+
+  // or even better: 
+  std::cout << "name: " << slice.copyString() << std::endl;
+}
+```
+
 
 Iterating over VPack Arrays and Objects
 ---------------------------------------
@@ -358,15 +387,17 @@ or into an `std::string`.
 using namespace arangodb::velocypack;
 
 int main () {
-  Builder b;
   // don't sort the attribute names in the VPack object we construct
   // attribute name sorting is turned on by default, so attributes can
   // be quickly accessed by name. however, sorting adds overhead when
   // constructing VPack objects so it's optional. there may also be
   // cases when the original attribute order needs to be preserved. in
   // this case, turning off sorting will help, too
-  b.options.sortAttributeNames = false;
+  Options options;
+  options.sortAttributeNames = false;
 
+  Builder b(&options);
+  
   // build an object with attribute names "b", "a", "l", "name"
   b(Value(ValueType::Object))
     ("b", Value(12))
@@ -378,12 +409,12 @@ int main () {
   Slice s(b.start());
 
   // turn on pretty printing
-  Options options;
-  options.prettyPrint = true;
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true;
 
   // now dump the Slice into an std::string
   StringSink sink;
-  Dumper dumper(&sink, options);
+  Dumper dumper(&sink, &dumperOptions);
   dumper.dump(s);
 
   // and print it
@@ -402,7 +433,7 @@ Options options;
 options.unsupportedTypeBehavior = NullifyUnsupportedType;
 
 // now dump the Slice into an std::string
-Dumper dumper(&sink, options);
+Dumper dumper(&sink, &options);
 dumper.dump(s);
 ```
 
@@ -419,7 +450,7 @@ Options options;
 options.escapeForwardSlashes = true;
 
 StringSink sink;
-Dumper dumper(&sink, options);
+Dumper dumper(&sink, &options);
 dumper.dump(parser.steal().slice());
 std::cout << sink.buffer << std::endl;
 ```

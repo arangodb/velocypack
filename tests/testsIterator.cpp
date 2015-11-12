@@ -284,10 +284,12 @@ TEST(IteratorTest, IterateObjectEmpty) {
 }
 
 TEST(IteratorTest, IterateObject) {
+  Options options;
+  options.sortAttributeNames = false;
+
   std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\",\"h\":\"bar\"}");
 
-  Parser parser;
-  parser.options.sortAttributeNames = false;
+  Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
 

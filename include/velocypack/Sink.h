@@ -140,6 +140,8 @@ namespace arangodb {
 
       T* stream;
     };
+    
+    typedef StreamSink<std::ostringstream> StringStreamSink;
 
   }  // namespace arangodb::velocypack
 }  // namespace arangodb

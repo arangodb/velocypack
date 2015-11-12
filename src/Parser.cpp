@@ -221,7 +221,7 @@ void Parser::parseString () {
     if (remainder >= 16) {
       _b.reserveSpace(remainder);
       size_t count;
-      if (options.validateUtf8Strings) {
+      if (options->validateUtf8Strings) {
         count = JSONStringCopyCheckUtf8(_b._start + _b._pos, _start + _pos,
                                         remainder);
       }
@@ -370,7 +370,7 @@ void Parser::parseString () {
           _b._start[_b._pos++] = static_cast<uint8_t>(i);
         }
         else {
-          if (! options.validateUtf8Strings) {
+          if (! options->validateUtf8Strings) {
             highSurrogate = 0;
             _b.reserveSpace(1);
             _b._start[_b._pos++] = static_cast<uint8_t>(i);
@@ -460,7 +460,7 @@ void Parser::parseObject () {
   if (i == '}') {
     // empty object
     consume();   // the closing ']'
-    if (_nesting != 0 || ! options.keepTopLevelOpen) {
+    if (_nesting != 0 || ! options->keepTopLevelOpen) {
       // only close if we've not been asked to keep top level open
       _b.close();
     }
@@ -479,13 +479,13 @@ void Parser::parseObject () {
 
     _b.reportAdd(base);
     bool excludeAttribute = false;
-    if (options.attributeExcludeHandler == nullptr) {
+    if (options->attributeExcludeHandler == nullptr) {
       parseString();
     }
     else {
       auto lastPos = _b._pos;
       parseString();
-      if (options.attributeExcludeHandler->shouldExclude(Slice(_b._start + lastPos, options.customTypeHandler), _nesting)) {
+      if (options->attributeExcludeHandler->shouldExclude(Slice(_b._start + lastPos, options), _nesting)) {
         excludeAttribute = true;
       }
     }
@@ -506,7 +506,7 @@ void Parser::parseObject () {
     if (i == '}') {
       // end of object
       ++_pos;  // the closing '}'
-      if (_nesting != 1 || ! options.keepTopLevelOpen) {
+      if (_nesting != 1 || ! options->keepTopLevelOpen) {
         // only close if we've not been asked to keep top level open
         _b.close();
       }

@@ -5,14 +5,16 @@
 using namespace arangodb::velocypack;
 
 int main (int, char*[]) {
-  Builder b;
   // don't sort the attribute names in the VPack object we construct
   // attribute name sorting is turned on by default, so attributes can
   // be quickly accessed by name. however, sorting adds overhead when
   // constructing VPack objects so it's optional. there may also be
   // cases when the original attribute order needs to be preserved. in
   // this case, turning off sorting will help, too 
-  b.options.sortAttributeNames = false;
+  Options options;
+  options.sortAttributeNames = false;
+
+  Builder b(&options);
 
   // build an object with attribute names "b", "a", "l", "name"
   b(Value(ValueType::Object))
@@ -26,15 +28,15 @@ int main (int, char*[]) {
   Slice s(b.start());
  
   // now dump the Slice into an outfile
-  Options options;
-  options.prettyPrint = true;
+  Options dumperOptions;
+  dumperOptions.prettyPrint = true;
 
   // this is our output file
   try {
     std::ofstream ofs("prettified.json", std::ofstream::out);
 
     StreamSink<std::ofstream> sink(&ofs);
-    Dumper::dump(s, &sink, options);
+    Dumper::dump(s, &sink, &options);
     std::cout << "successfully wrote JSON to outfile 'prettified.json'" << std::endl;
   }
   catch (std::exception const& ex) {

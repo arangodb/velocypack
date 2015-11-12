@@ -141,7 +141,7 @@ void Dumper::dumpString (char const* src, ValueLength len) {
       char esc = EscapeTable[c];
 
       if (esc) {
-        if (c != '/' || options.escapeForwardSlashes) {
+        if (c != '/' || options->escapeForwardSlashes) {
           // escape forward slashes only when requested
           _sink->push_back('\\');
         }
@@ -222,7 +222,7 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     case ValueType::Array: {
       ValueLength const n = slice->length();
       _sink->push_back('[');
-      if (options.prettyPrint) {
+      if (options->prettyPrint) {
         _sink->push_back('\n');
         ++_indentation;
         for (ValueLength i = 0; i < n; ++i) {
@@ -251,7 +251,7 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     case ValueType::Object: {
       ValueLength const n = slice->length();
       _sink->push_back('{');
-      if (options.prettyPrint) {
+      if (options->prettyPrint) {
         _sink->push_back('\n');
         ++_indentation;
         for (ValueLength i = 0; i < n; ++i) {
@@ -300,7 +300,7 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     }
 
     case ValueType::External: {
-      Slice const external(slice->getExternal(), slice->customTypeHandler);
+      Slice const external(slice->getExternal(), slice->options);
       dumpValue(&external, base);
       break;
     }
@@ -339,11 +339,11 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
     }
     
     case ValueType::Custom: {
-      if (options.customTypeHandler == nullptr) {
+      if (options->customTypeHandler == nullptr) {
         handleUnsupportedType(slice);
       }
       else {
-        options.customTypeHandler->toJson(*slice, _sink, *base);
+        options->customTypeHandler->toJson(*slice, _sink, *base);
       }
       break;
     }
