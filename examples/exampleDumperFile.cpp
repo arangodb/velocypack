@@ -35,7 +35,7 @@ int main (int, char*[]) {
   try {
     std::ofstream ofs("prettified.json", std::ofstream::out);
 
-    StreamSink<std::ofstream> sink(&ofs);
+    OutputFileStreamSink sink(&ofs);
     Dumper::dump(s, &sink, &options);
     std::cout << "successfully wrote JSON to outfile 'prettified.json'" << std::endl;
   }

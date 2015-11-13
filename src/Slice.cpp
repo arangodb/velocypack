@@ -149,7 +149,7 @@ unsigned int const Slice::FirstSubMap[32] = {
 
 std::string Slice::toJson () const {
   std::string buffer;
-  StringSink<std::string> sink(&buffer);
+  StringSink sink(&buffer);
   Dumper dumper(&sink, options);
   dumper.dump(this);
   return std::move(buffer);
@@ -161,7 +161,7 @@ std::string Slice::toString () const {
   prettyOptions.prettyPrint = true;
 
   std::string buffer;
-  StringSink<std::string> sink(&buffer);
+  StringSink sink(&buffer);
   Dumper::dump(this, &sink, &prettyOptions);
   return std::move(buffer);
 }

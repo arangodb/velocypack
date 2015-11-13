@@ -49,7 +49,7 @@ static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
 
 static void checkDump (Slice s, std::string const& knownGood) {
   std::string buffer;
-  StringSink<std::string> sink(&buffer);
+  StringSink sink(&buffer);
   Dumper dumper(&sink);
   dumper.dump(s);
   ASSERT_EQ(knownGood, buffer);

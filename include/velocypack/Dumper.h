@@ -84,7 +84,7 @@ namespace arangodb {
 
         static std::string toString (Slice const& slice, Options const* options = &Options::Defaults) {
           std::string buffer;
-          StringSink<std::string> sink(&buffer);
+          StringSink sink(&buffer);
           dump(slice, &sink, options);
           return std::move(buffer);
         }

@@ -28,6 +28,8 @@
 #define VELOCYPACK_SINK_H 1
 
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Buffer.h"
@@ -51,8 +53,8 @@ namespace arangodb {
     };
  
     template<typename T>
-    struct ByteBufferSink final : public Sink {
-      explicit ByteBufferSink (Buffer<T>* buffer)
+    struct ByteBufferSinkImpl final : public Sink {
+      explicit ByteBufferSinkImpl (Buffer<T>* buffer)
         : buffer(buffer) {
       }
 
@@ -79,11 +81,11 @@ namespace arangodb {
       Buffer<T>* buffer;
     };
     
-    typedef ByteBufferSink<char> CharBufferSink;
+    typedef ByteBufferSinkImpl<char> CharBufferSink;
 
     template<typename T>
-    struct StringSink final : public Sink {
-      explicit StringSink (T* buffer) 
+    struct StringSinkImpl final : public Sink {
+      explicit StringSinkImpl (T* buffer) 
         : buffer(buffer) {
       }
 
@@ -109,10 +111,12 @@ namespace arangodb {
 
       T* buffer;
     };
+    
+    typedef StringSinkImpl<std::string> StringSink;
 
     template<typename T>
-    struct StreamSink final : public Sink {
-      explicit StreamSink (T* stream) 
+    struct StreamSinkImpl final : public Sink {
+      explicit StreamSinkImpl (T* stream) 
         : stream(stream) {
       }
 
@@ -138,7 +142,8 @@ namespace arangodb {
       T* stream;
     };
     
-    typedef StreamSink<std::ostringstream> StringStreamSink;
+    typedef StreamSinkImpl<std::ostringstream> StringStreamSink;
+    typedef StreamSinkImpl<std::ofstream> OutputFileStreamSink;
 
   }  // namespace arangodb::velocypack
 }  // namespace arangodb

@@ -27,7 +27,7 @@ int main (int, char*[]) {
  
   // now dump the Slice into an std::string sink 
   std::string buffer;
-  StringSink<std::string> sink(&buffer);
+  StringSink sink(&buffer);
   Dumper dumper(&sink);
   dumper.dump(s);
 

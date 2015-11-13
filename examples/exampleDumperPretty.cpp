@@ -29,7 +29,7 @@ int main (int, char*[]) {
   dumperOptions.prettyPrint = true;
   // now dump the Slice into an std::string 
   std::string buffer;
-  StringSink<std::string> sink(&buffer);
+  StringSink sink(&buffer);
   Dumper::dump(s, &sink, &dumperOptions);
 
   // and print it

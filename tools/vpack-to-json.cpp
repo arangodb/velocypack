@@ -117,7 +117,7 @@ int main (int argc, char* argv[]) {
   options.prettyPrint = pretty;
 
   Buffer<char> buffer(4096);
-  ByteBufferSink<char> sink(&buffer);
+  CharBufferSink sink(&buffer);
   Dumper dumper(&sink, &options);
 
   try {
