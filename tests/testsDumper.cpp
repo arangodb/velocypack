@@ -424,7 +424,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Sink*, Slice const&) {
+    void toJson (Slice const& value, Dumper*, Slice const&) {
       ASSERT_EQ(ValueType::Custom, value.type());
       ASSERT_EQ(0xf0UL, value.head());
       sawCustom = true;
@@ -458,7 +458,8 @@ TEST(StringDumperTest, CustomStringWithCallback) {
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Sink* sink, Slice const&) {
+    void toJson (Slice const& value, Dumper* dumper, Slice const&) {
+      Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
       ASSERT_EQ(0xf1UL, value.head());
       ValueLength length = static_cast<ValueLength>(*(value.start() + 1));
@@ -488,7 +489,8 @@ TEST(StringDumperTest, CustomStringWithCallback) {
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Sink* sink, Slice const& base) {
+    void toJson (Slice const& value, Dumper* dumper, Slice const& base) {
+      Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
       EXPECT_TRUE(base.isObject());
@@ -525,7 +527,8 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
 TEST(StringDumperTest, ArrayWithCustom) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
     int byteSizeCalled = 0;
-    void toJson (Slice const& value, Sink* sink, Slice const& base) {
+    void toJson (Slice const& value, Dumper* dumper, Slice const& base) {
+      Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
       EXPECT_TRUE(base.isArray());

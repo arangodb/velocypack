@@ -124,6 +124,37 @@ TEST(BuilderTest, BufferSharedPointerStealMultiple) {
   ASSERT_VELOCYPACK_EXCEPTION(parser.steal(), Exception::InternalError);
 }
 
+TEST(BuilderTest, BufferSharedPointerInject) {
+  std::shared_ptr<Buffer<uint8_t>> buffer(new Buffer<uint8_t>);
+  auto ptr = buffer.get();
+
+  Builder b(buffer);
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+
+  ASSERT_EQ(2, buffer.use_count());
+  ASSERT_EQ(2, builderBuffer.use_count());
+  ASSERT_EQ(ptr, builderBuffer.get());
+
+  b.add(Value(ValueType::Array));
+  // construct a long string that will exceed the Builder's initial buffer
+  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.close();
+
+  std::shared_ptr<Buffer<uint8_t>> copy = b.buffer();
+  ASSERT_EQ(3, buffer.use_count());
+  ASSERT_EQ(3, copy.use_count());
+  ASSERT_EQ(3, builderBuffer.use_count());
+  ASSERT_EQ(ptr, copy.get());
+
+  copy.reset();
+  ASSERT_EQ(2, buffer.use_count());
+  ASSERT_EQ(2, builderBuffer.use_count());
+
+  b.buffer().reset();
+  ASSERT_EQ(1, buffer.use_count());
+  ASSERT_EQ(ptr, buffer.get());
+}
+
 TEST(BuilderTest, None) {
   Builder b;
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)), Exception::BuilderUnexpectedType);

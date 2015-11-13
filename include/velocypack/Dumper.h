@@ -59,6 +59,10 @@ namespace arangodb {
         ~Dumper () {
         }
 
+        Sink* sink () const {
+          return _sink;
+        }
+
         void dump (Slice const& slice) {
           _indentation = 0;
           _sink->reserve(slice.byteSize());

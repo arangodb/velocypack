@@ -31,7 +31,7 @@
 
 namespace arangodb {
   namespace velocypack {
-    struct Sink;
+    class Dumper;
     class Slice;
 
     struct AttributeExcludeHandler {
@@ -45,7 +45,7 @@ namespace arangodb {
       virtual ~CustomTypeHandler () {
       }
 
-      virtual void toJson (Slice const& value, Sink* sink, Slice const& base) = 0;
+      virtual void toJson (Slice const& value, Dumper* dumper, Slice const& base) = 0;
       virtual ValueLength byteSize (Slice const& value) = 0;
     }; 
         

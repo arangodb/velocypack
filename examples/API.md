@@ -378,7 +378,7 @@ Serializing a VPack value into JSON
 When the task is to create a JSON representation of a VPack value, the
 `Dumper` class can be used. A `Dumper` needs a `Sink` for writing the
 data. There are ready-to-use `Sink`s for writing into a `char[]` buffer 
-or into an `std::string`.
+or into an `std::string` or an `std::ostringstream`.
 
 ```cpp
 #include <iostream>
@@ -413,12 +413,13 @@ int main () {
   dumperOptions.prettyPrint = true;
 
   // now dump the Slice into an std::string
-  StringSink sink;
+  std::string result;
+  StringSink sink(&result);
   Dumper dumper(&sink, &dumperOptions);
   dumper.dump(s);
 
   // and print it
-  std::cout << "Resulting JSON:" << std::endl << sink.buffer << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << result << std::endl;
 }
 ```
 
@@ -449,10 +450,11 @@ parser.parse("{\"foo\":\"this/is/a/test\"}");
 Options options;
 options.escapeForwardSlashes = true;
 
-StringSink sink;
+std::string result;
+StringSink sink(&result);
 Dumper dumper(&sink, &options);
 dumper.dump(parser.steal().slice());
-std::cout << sink.buffer << std::endl;
+std::cout << result << std::endl;
 ```
 
 Note that several JSON parsers in the wild provide extensions to the

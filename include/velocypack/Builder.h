@@ -129,6 +129,18 @@ namespace arangodb {
         Options const* options;
 
         // Constructor and destructor:
+        Builder (std::shared_ptr<Buffer<uint8_t>>& buffer, Options const* options = &Options::Defaults)
+          : _buffer(buffer),
+            _pos(0),
+            options(options) {
+          _start = _buffer->data();
+          _size = _buffer->size();
+
+          VELOCYPACK_ASSERT(options != nullptr);
+          if (options == nullptr) {
+            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+          }
+        }
 
         Builder (Options const* options = &Options::Defaults)
           : _buffer(new Buffer<uint8_t>()),
@@ -215,6 +227,11 @@ namespace arangodb {
 
         // get a const reference to the Builder's Buffer object
         std::shared_ptr<Buffer<uint8_t>> const& buffer () const {
+          return _buffer;
+        }
+        
+        // get a non-const reference to the Builder's Buffer object
+        std::shared_ptr<Buffer<uint8_t>>& buffer () {
           return _buffer;
         }
 
