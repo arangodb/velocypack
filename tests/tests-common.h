@@ -48,10 +48,11 @@ static void dumpDouble (double x, uint8_t* p) {
 static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
 
 static void checkDump (Slice s, std::string const& knownGood) {
-  StringSink sink;
+  std::string buffer;
+  StringSink<std::string> sink(&buffer);
   Dumper dumper(&sink);
   dumper.dump(s);
-  ASSERT_EQ(knownGood, sink.buffer);
+  ASSERT_EQ(knownGood, buffer);
 }
 
 // don't complain if this function is not called

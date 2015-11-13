@@ -52,70 +52,67 @@ namespace arangodb {
  
     template<typename T>
     struct ByteBufferSink final : public Sink {
-      ByteBufferSink ()
-        : buffer() {
-      }
-
-      ByteBufferSink (ValueLength size)
-        : buffer(size) {
-      }
-      
-      void push_back (char c) override final {
-        buffer.push_back(c);
-      }
-
-      void append (std::string const& p) override final {
-        buffer.append(p.c_str(), p.size());
-      }
-
-      void append (char const* p) override final {
-        buffer.append(p, strlen(p));
-      }
-
-      void append (char const* p, ValueLength len) override final {
-        buffer.append(p, len);
-      }
-
-      void reserve (ValueLength len) override final {
-        buffer.reserve(len);
-      }
-
-      Buffer<T> buffer;
-    };
-
-    struct StringSink final : public Sink {
-      StringSink () 
-        : buffer() {
+      explicit ByteBufferSink (Buffer<T>* buffer)
+        : buffer(buffer) {
       }
 
       void push_back (char c) override final {
-        buffer.push_back(c);
+        buffer->push_back(c);
       }
 
       void append (std::string const& p) override final {
-        buffer.append(p);
+        buffer->append(p.c_str(), p.size());
       }
 
       void append (char const* p) override final {
-        buffer.append(p, strlen(p));
+        buffer->append(p, strlen(p));
       }
 
       void append (char const* p, ValueLength len) override final {
-        buffer.append(p, len);
+        buffer->append(p, len);
       }
 
       void reserve (ValueLength len) override final {
-        buffer.reserve(len);
+        buffer->reserve(len);
       }
 
-      std::string buffer;
+      Buffer<T>* buffer;
     };
-
+    
     typedef ByteBufferSink<char> CharBufferSink;
 
     template<typename T>
+    struct StringSink final : public Sink {
+      explicit StringSink (T* buffer) 
+        : buffer(buffer) {
+      }
+
+      void push_back (char c) override final {
+        buffer->push_back(c);
+      }
+
+      void append (std::string const& p) override final {
+        buffer->append(p);
+      }
+
+      void append (char const* p) override final {
+        buffer->append(p, strlen(p));
+      }
+
+      void append (char const* p, ValueLength len) override final {
+        buffer->append(p, len);
+      }
+
+      void reserve (ValueLength len) override final {
+        buffer->reserve(len);
+      }
+
+      T* buffer;
+    };
+
+    template<typename T>
     struct StreamSink final : public Sink {
-      StreamSink (T* stream) 
+      explicit StreamSink (T* stream) 
         : stream(stream) {
       }
 

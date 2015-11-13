@@ -102,10 +102,12 @@ int main (int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  char buffer[4096];
-  while (ifs.good()) {
-    ifs.read(&buffer[0], sizeof(buffer));
-    s.append(buffer, ifs.gcount());
+  {
+    char buffer[4096];
+    while (ifs.good()) {
+      ifs.read(&buffer[0], sizeof(buffer));
+      s.append(buffer, ifs.gcount());
+    }
   }
   ifs.close();
 
@@ -114,7 +116,8 @@ int main (int argc, char* argv[]) {
   Options options;
   options.prettyPrint = pretty;
 
-  CharBufferSink sink(4096);
+  Buffer<char> buffer(4096);
+  ByteBufferSink<char> sink(&buffer);
   Dumper dumper(&sink, &options);
 
   try {
@@ -140,8 +143,8 @@ int main (int argc, char* argv[]) {
   ofs.seekp(0);
 
   // write into stream
-  char const* start = sink.buffer.data();
-  ofs.write(start, sink.buffer.size());
+  char const* start = buffer.data();
+  ofs.write(start, buffer.size());
 
   if (! ofs) {
     std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
@@ -153,7 +156,7 @@ int main (int argc, char* argv[]) {
 
   std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
   std::cout << "VPack Infile size: " << s.size() << std::endl;
-  std::cout << "JSON Outfile size: " << sink.buffer.size() << std::endl;
+  std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
   
   return EXIT_SUCCESS;
 }
