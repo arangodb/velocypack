@@ -371,6 +371,97 @@ TEST(IteratorTest, IterateObject) {
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
 
+TEST(IteratorTest, IterateObjectCompact) {
+  Options options;
+  options.sortAttributeNames = false;
+  options.buildUnindexedObjects = true;
+
+  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\",\"h\":\"bar\"}");
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x14, s.head());
+
+  ObjectIterator it(s);
+
+  ASSERT_TRUE(it.valid());
+  Slice key = it.key();
+  Slice current = it.value();
+  ASSERT_EQ("a", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(1UL, current.getUInt());
+
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("b", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(2UL, current.getUInt());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("c", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(3UL, current.getUInt());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("d", key.copyString());
+  ASSERT_TRUE(current.isNumber());  
+  ASSERT_EQ(4UL, current.getUInt());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("e", key.copyString());
+  ASSERT_TRUE(current.isNull());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("f", key.copyString());
+  ASSERT_TRUE(current.isBool());
+  ASSERT_TRUE(current.getBool());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("g", key.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("foo", current.copyString());
+  
+  ASSERT_TRUE(it.next());
+  
+  ASSERT_TRUE(it.valid());
+  key = it.key();
+  current = it.value();
+  ASSERT_EQ("h", key.copyString());
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("bar", current.copyString());
+  
+  ASSERT_FALSE(it.next());
+  ASSERT_FALSE(it.valid());
+
+  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+}
+
 TEST(IteratorTest, IterateObjectKeys) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
@@ -417,12 +508,91 @@ TEST(IteratorTest, IterateObjectKeys) {
   ASSERT_EQ(5U, state);
 }
 
+TEST(IteratorTest, IterateObjectKeysCompact) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x14, s.head());
+
+  size_t state = 0;
+  ObjectIterator it(s);
+
+  while (it.valid()) {
+    Slice key(it.key());
+    Slice value(it.value());
+
+    switch (state++) {
+      case 0:
+        ASSERT_EQ("1foo", key.copyString());
+        ASSERT_TRUE(value.isString());
+        ASSERT_EQ("bar", value.copyString());
+        break;
+      case 1:
+        ASSERT_EQ("2baz", key.copyString());
+        ASSERT_TRUE(value.isString());
+        ASSERT_EQ("quux", value.copyString());
+        break;
+      case 2:
+        ASSERT_EQ("3number", key.copyString());
+        ASSERT_TRUE(value.isNumber());
+        ASSERT_EQ(1ULL, value.getUInt());
+        break;
+      case 3:
+        ASSERT_EQ("4boolean", key.copyString());
+        ASSERT_TRUE(value.isBoolean());
+        ASSERT_TRUE(value.getBoolean());
+        break;
+      case 4:
+        ASSERT_EQ("5empty", key.copyString());
+        ASSERT_TRUE(value.isNull());
+        break;
+    }
+    it.next();
+  }
+
+  ASSERT_EQ(5U, state);
+}
+
 TEST(IteratorTest, IterateObjectValues) {
   std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
+
+  std::vector<std::string> seenKeys;
+  ObjectIterator it(s);
+
+  while (it.valid()) {
+    seenKeys.emplace_back(it.key().copyString());
+    it.next();
+  };
+
+  ASSERT_EQ(5U, seenKeys.size());
+  ASSERT_EQ("1foo", seenKeys[0]);
+  ASSERT_EQ("2baz", seenKeys[1]);
+  ASSERT_EQ("3number", seenKeys[2]);
+  ASSERT_EQ("4boolean", seenKeys[3]);
+  ASSERT_EQ("5empty", seenKeys[4]);
+}
+  
+TEST(IteratorTest, IterateObjectValuesCompact) {
+  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x14, s.head());
 
   std::vector<std::string> seenKeys;
   ObjectIterator it(s);
@@ -503,7 +673,28 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
   ASSERT_EQ(5UL, seen);
 }
 
-TEST(IteratorTest, ObjectArrayIteratorRangeBasedFor) {
+TEST(IteratorTest, ArrayIteratorRangeBasedForCompact) {
+  std::string const value("[1,2,3,4,5]");
+  
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x13, s.head());
+
+  size_t seen = 0;
+  for (auto it : ArrayIterator(s)) {
+    ASSERT_TRUE(it.isNumber());
+    ASSERT_EQ(seen + 1, it.getUInt());
+    ++seen;
+  }
+  ASSERT_EQ(5UL, seen);
+}
+
+TEST(IteratorTest, ObjectIteratorRangeBasedForEmpty) {
   std::string const value("{}");
 
   Parser parser;
@@ -579,6 +770,37 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
 
   size_t seen = 0;
   for (auto const& it : ObjectIterator(s)) {
+    ASSERT_TRUE(it.key.isString());
+    if (seen == 0) {
+      ASSERT_EQ("1foo", it.key.copyString());
+    }
+    else if (seen == 1) {
+      ASSERT_EQ("2bar", it.key.copyString());
+    }
+    else if (seen == 2) {
+      ASSERT_EQ("3qux", it.key.copyString());
+    }
+    ASSERT_TRUE(it.value.isNumber());
+    ASSERT_EQ(seen + 1, it.value.getUInt());
+    ++seen;
+  }
+  ASSERT_EQ(3UL, seen);
+}
+
+TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
+  std::string const value("{\"1foo\":1,\"2bar\":2,\"3qux\":3}");
+  
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ASSERT_EQ(0x14, s.head());
+
+  size_t seen = 0;
+  for (auto it : ObjectIterator(s)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());

@@ -27,11 +27,11 @@
 #ifndef VELOCYPACK_BUILDER_H
 #define VELOCYPACK_BUILDER_H
 
-#include <ostream>
 #include <vector>
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
+#include <memory>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Buffer.h"
@@ -62,7 +62,7 @@ namespace arangodb {
 
       private:
 
-        Buffer<uint8_t> _buffer;  // Here we collect the result
+        std::shared_ptr<Buffer<uint8_t>> _buffer;  // Here we collect the result
         uint8_t*        _start;   // Always points to the start of _buffer
         ValueLength     _size;    // Always contains the size of _buffer
         ValueLength     _pos;     // the append position, always <= _size
@@ -101,9 +101,9 @@ namespace arangodb {
           }
           checkValueLength(_pos + len);
 
-          _buffer.prealloc(len);
-          _start = _buffer.data();
-          _size = _buffer.size();
+          _buffer->prealloc(len);
+          _start = _buffer->data();
+          _size = _buffer->size();
         }
 
         // Sort the indices by attribute name:
@@ -131,11 +131,11 @@ namespace arangodb {
         // Constructor and destructor:
 
         Builder (Options const* options = &Options::Defaults)
-          : _buffer({ 0 }),
+          : _buffer(new Buffer<uint8_t>()),
             _pos(0),
             options(options) {
-          _start = _buffer.data();
-          _size = _buffer.size();
+          _start = _buffer->data();
+          _size = _buffer->size();
 
           VELOCYPACK_ASSERT(options != nullptr);
           if (options == nullptr) {
@@ -149,15 +149,21 @@ namespace arangodb {
         }
 
         Builder (Builder const& that) 
-          : _buffer(that._buffer), _start(_buffer.data()), _size(_buffer.size()), _pos(that._pos),
+          : _buffer(that._buffer), _start(_buffer->data()), _size(_buffer->size()), _pos(that._pos),
             _stack(that._stack), _index(that._index), options(that.options) {
           VELOCYPACK_ASSERT(options != nullptr);
+          if (that._buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
         }
 
         Builder& operator= (Builder const& that) {
+          if (that._buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
           _buffer = that._buffer;
-          _start = _buffer.data();
-          _size = _buffer.size();
+          _start = _buffer->data();
+          _size = _buffer->size();
           _pos = that._pos;
           _stack = that._stack;
           _index = that._index;
@@ -167,11 +173,13 @@ namespace arangodb {
         }
 
         Builder (Builder&& that) {
-          _buffer.reset();
+          if (that._buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
           _buffer = that._buffer;
           that._buffer.reset();
-          _start = _buffer.data();
-          _size = _buffer.size();
+          _start = _buffer->data();
+          _size = _buffer->size();
           _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
@@ -185,11 +193,13 @@ namespace arangodb {
         }
 
         Builder& operator= (Builder&& that) {
-          _buffer.reset();
+          if (that._buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
           _buffer = that._buffer;
           that._buffer.reset();
-          _start = _buffer.data();
-          _size = _buffer.size();
+          _start = _buffer->data();
+          _size = _buffer->size();
           _pos = that._pos;
           _stack.clear();
           _stack.swap(that._stack);
@@ -203,6 +213,11 @@ namespace arangodb {
           return *this;
         }
 
+        // get a const reference to the Builder's Buffer object
+        std::shared_ptr<Buffer<uint8_t>> const& buffer () const {
+          return _buffer;
+        }
+
         static Builder clone (Slice const& slice, Options const* options = &Options::Defaults) {
           VELOCYPACK_ASSERT(options != nullptr);
           if (options == nullptr) {
@@ -211,7 +226,7 @@ namespace arangodb {
           Builder b;
           b.options = options;
           b.add(slice);
-          return b; 
+          return std::move(b); 
         }
 
         // Clear and start from scratch:

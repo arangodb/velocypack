@@ -29,6 +29,14 @@
 
 #include "tests-common.h"
 
+extern size_t JSONStringCopyC (uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t JSONStringCopyCheckUtf8C (uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t JSONSkipWhiteSpaceC (uint8_t const* ptr, size_t limit);
+
+extern size_t (*JSONStringCopy) (uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t (*JSONStringCopyCheckUtf8) (uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t (*JSONSkipWhiteSpace) (uint8_t const* ptr, size_t limit);
+
 TEST(ParserTest, GarbageCatchVelocyPackException) {
   std::string const value("z");
 
@@ -2176,6 +2184,58 @@ TEST(ParserTest, ExcludeAttributesSubLevel) {
   ASSERT_EQ(0UL, s.get(std::vector<std::string>({ "foo", "qux" })).length());
   ASSERT_TRUE(s.hasKey("qux"));
   ASSERT_EQ(5UL, s.get("qux").getUInt());
+}
+
+TEST(ParserTest, UseNonSSEStringCopy) {
+  // modify global function pointer!
+  JSONStringCopy = JSONStringCopyC;
+
+  std::string const value("\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
+  
+  Parser parser;
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.slice());
+
+  ASSERT_EQ("der\thund\nging\rin\fden\\wald\"und\b\nden'fux", s.copyString());
+}
+
+TEST(ParserTest, UseNonSSEUtf8Check) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  // modify global function pointer!
+  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+
+  std::string value;
+  value.push_back('"');
+  for (size_t i = 0; i < 100; ++i) {
+    value.push_back(static_cast<unsigned char>(0x80));
+  }
+  value.push_back('"');
+
+  Parser parser(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_EQ(1U, parser.errorPos());
+  options.validateUtf8Strings = false;
+  ASSERT_EQ(1ULL, parser.parse(value));
+}
+
+TEST(ParserTest, UseNonSSEWhitespaceCheck) {
+  JSONSkipWhiteSpace = JSONSkipWhiteSpaceC;
+
+  // modify global function pointer!
+  std::string const value("\"foo                 bar\"");
+  std::string const all("                                                                                  " + value + "                            ");
+
+  Parser parser;
+  parser.parse(all);
+  Builder builder = parser.steal();
+  
+  Slice s(builder.slice());
+
+  ASSERT_EQ(value.substr(1, value.size() - 2), s.copyString());
 }
 
 int main (int argc, char* argv[]) {

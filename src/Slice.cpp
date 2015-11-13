@@ -364,9 +364,9 @@ Slice Slice::getFromCompactObject (std::string const& attribute) const {
   // not found
   return Slice();
 }
-
-// extract the nth member from an Array or Object type
-Slice Slice::getNth (ValueLength index) const {
+        
+// get the offset for the nth member from an Array or Object type
+ValueLength Slice::getNthOffset (ValueLength index) const {
   VELOCYPACK_ASSERT(type() == ValueType::Array || type() == ValueType::Object);
 
   auto const h = head();
@@ -377,7 +377,7 @@ Slice Slice::getNth (ValueLength index) const {
 
   if (h == 0x13 || h == 0x14) {
     // compact Array or Object
-    return getNthFromCompact(index);
+    return getNthOffsetFromCompact(index);
   }
 
   ValueLength const offsetSize = indexEntrySize(h);
@@ -412,16 +412,29 @@ Slice Slice::getNth (ValueLength index) const {
       dataOffset = findDataOffset(h);
     }
     Slice firstItem(_start + dataOffset, options);
-    return Slice(_start + dataOffset + index * firstItem.byteSize(), options);
+    return dataOffset + index * firstItem.byteSize();
   }
   
   ValueLength const ieBase = end - n * offsetSize + index * offsetSize
                              - (offsetSize == 8 ? 8 : 0);
-  return Slice(_start + readInteger<ValueLength>(_start + ieBase, offsetSize), options);
+  return readInteger<ValueLength>(_start + ieBase, offsetSize);
 }
 
-// extract the nth member from a compact Array or Object type
-Slice Slice::getNthFromCompact (ValueLength index) const {
+// extract the nth member from an Array or Object type
+Slice Slice::getNth (ValueLength index) const {
+  VELOCYPACK_ASSERT(type() == ValueType::Array || type() == ValueType::Object);
+
+  auto const h = head();
+  if (h == 0x01 || h == 0x0a) {
+    // special case. empty array or object
+    throw Exception(Exception::IndexOutOfBounds);
+  }
+
+  return Slice(_start + getNthOffset(index), options);
+}
+        
+// get the offset for the nth member from a compact Array or Object type
+ValueLength Slice::getNthOffsetFromCompact (ValueLength index) const {
   ValueLength end = readVariableValueLength<false>(_start + 1);
   ValueLength n = readVariableValueLength<true>(_start + end - 1);
   if (index >= n) {
@@ -429,20 +442,22 @@ Slice Slice::getNthFromCompact (ValueLength index) const {
   }
 
   auto const h = head();
-  uint8_t const* s = _start + 1 + getVariableValueLength(end); 
+  ValueLength offset = 1 + getVariableValueLength(end); 
   ValueLength current = 0;
   while (current != index) {
+    uint8_t const* s = _start + offset;
     Slice key = Slice(s, options);
-    s += key.byteSize();
+    offset += key.byteSize();
     if (h == 0x14) {
-      Slice value = Slice(s, options);
-      s += value.byteSize();
+      Slice value = Slice(_start + offset, options);
+      offset += value.byteSize();
     }
     ++current;
   }
-  return Slice(s, options);
+  return offset;
 }
 
+// perform a linear search for the specified attribute inside an Object
 Slice Slice::searchObjectKeyLinear (std::string const& attribute, 
                                     ValueLength ieBase, 
                                     ValueLength offsetSize, 

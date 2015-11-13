@@ -37,7 +37,7 @@ int main (int, char*[]) {
   }
 
   // iterate again, this time using Collection::forEach
-  std::cout << "Iterating Array members using forEach:" << std::endl;
+  std::cout << "Iterating some Array members using forEach:" << std::endl;
   Collection::forEach(f, [] (Slice const& current, ValueLength index) {
     std::cout << current << ", number value: " << current.getUInt() << std::endl;
     return (index != 2); // stop after the 3rd element (indexes are 0-based)

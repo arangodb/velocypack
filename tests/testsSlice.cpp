@@ -109,7 +109,37 @@ TEST(SliceTest, ToJsonArray) {
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
 }
 
+TEST(SliceTest, ToJsonArrayCompact) {
+  std::string const value("[1,2,3,4,5]");
+
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ(0x13, s.head());
+
+  ASSERT_EQ("[1,2,3,4,5]", s.toJson());
+}
+
 TEST(SliceTest, ToJsonObject) {
+  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}");
+  
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  ASSERT_EQ(0x14, s.head());
+
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
+}
+
+TEST(SliceTest, ToJsonObjectCompact) {
   std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}");
 
   Parser parser;
@@ -163,6 +193,21 @@ TEST(SliceTest, LengthArray) {
   ASSERT_EQ(10UL, s.length());
 }
 
+TEST(SliceTest, LengthArrayCompact) {
+  std::string const value("[1,2,3,4,5,6,7,8,\"foo\",\"bar\"]");
+
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(0x13, s.head());
+  ASSERT_EQ(10UL, s.length());
+}
+
 TEST(SliceTest, LengthObjectEmpty) {
   std::string const value("{}");
 
@@ -182,6 +227,21 @@ TEST(SliceTest, LengthObject) {
   Builder builder = parser.steal();
   Slice s(builder.start());
   
+  ASSERT_EQ(10UL, s.length());
+}
+
+TEST(SliceTest, LengthObjectCompact) {
+  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":\"foo\",\"j\":\"bar\"}");
+  
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+  
+  ASSERT_EQ(0x14, s.head());
   ASSERT_EQ(10UL, s.length());
 }
 
@@ -1020,6 +1080,24 @@ TEST(SliceTest, ArrayCases17) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
+TEST(SliceTest, ArrayCasesCompact) {
+  uint8_t buf[] = { 0x13, 0x08, 0x30, 0x31, 0x32, 0x33, 0x34, 0x05 };
+
+  Slice s(buf);
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(5ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  Slice ss = s[0];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(0LL, ss.getInt());
+  ss = s[1];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+  ss = s[4];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(4LL, ss.getInt());
+}
+
 TEST(SliceTest, ObjectCases1) {
   uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
                     0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
@@ -1224,6 +1302,24 @@ TEST(SliceTest, ObjectCases14) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
+TEST(SliceTest, ObjectCompact) {
+  uint8_t const buf[] = { 0x14, 0x0f, 0x41, 0x61, 0x30, 0x41, 0x62, 0x31,
+                          0x41, 0x63, 0x32, 0x41, 0x64, 0x33, 0x04 };
+  Slice s(buf);
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(4ULL, s.length());
+  ASSERT_EQ(sizeof(buf), s.byteSize());
+  Slice ss = s["a"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(0LL, ss.getInt());
+  ss = s["b"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(1LL, ss.getInt());
+  ss = s["d"];
+  ASSERT_TRUE(ss.isSmallInt());
+  ASSERT_EQ(3LL, ss.getInt());
+}
+
 TEST(SliceTest, ToStringNull) {
   std::string const value("null");
 
@@ -1239,6 +1335,19 @@ TEST(SliceTest, ToStringArray) {
   Builder b = Parser::fromJson(value);
   Slice s(b.start());
 
+  ASSERT_EQ("[\n  1,\n  2,\n  3,\n  4,\n  5\n]", s.toString());
+}
+
+TEST(SliceTest, ToStringArrayCompact) {
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  std::string const value("[1,2,3,4,5]");
+
+  Builder b = Parser::fromJson(value, &options);
+  Slice s(b.start());
+
+  ASSERT_EQ(0x13, s.head());
   ASSERT_EQ("[\n  1,\n  2,\n  3,\n  4,\n  5\n]", s.toString());
 }
 
@@ -1479,6 +1588,38 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumericValue<double>());
   ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumericValue<double>());
   ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumericValue<double>());
+}
+
+TEST(SliceTest, GetNumericValueWrongSource) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(ValueType::Null));
+  b.add(Value(true));
+  b.add(Value("foo"));
+  b.add(Value("bar"));
+  b.add(Value(ValueType::Array));
+  b.close();
+  b.add(Value(ValueType::Object));
+  b.close();
+  b.close();
+
+  Slice s = Slice(b.start());
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<double>(), Exception::InvalidValueType);
 }
 
 int main (int argc, char* argv[]) {

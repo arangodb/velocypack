@@ -69,10 +69,22 @@ int main (int argc, char* argv[]) {
     ++i;
   }
 
-  if (infileName == nullptr || outfileName == nullptr) {
+  if (infileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
   }
+
+#ifdef __linux__
+  // treat missing outfile as stdout
+  if (outfileName == nullptr) {
+    outfileName = "/proc/self/fd/1";
+  }
+#else 
+  if (outfileName == nullptr) {
+    usage(argv);
+    return EXIT_FAILURE;
+  }
+#endif
 
   // treat "-" as stdin
   std::string infile = infileName;

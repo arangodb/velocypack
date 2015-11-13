@@ -178,31 +178,43 @@ void Builder::close () {
        (head == 0x06 && options->buildUnindexedArrays) ||
        (head == 0x0b && options->buildUnindexedObjects))) { 
     // use compact notation
-    _start[tos] = (isArray ? 0x13 : 0x14);
     ValueLength nLen = getVariableValueLength(static_cast<ValueLength>(index.size()));
+    VELOCYPACK_ASSERT(nLen > 0);
     ValueLength byteSize = _pos - (tos + 8) + nLen;
+    VELOCYPACK_ASSERT(byteSize > 0);
     ValueLength bLen = getVariableValueLength(byteSize);
     byteSize += bLen; 
     if (getVariableValueLength(byteSize) != bLen) {
       byteSize += 1;
       bLen += 1;
     }
-    ValueLength targetPos = 1 + bLen;
 
-    if (_pos > (tos + 9)) {
-      memmove(_start + tos + targetPos, _start + tos + 9,
-              _pos - (tos + 9));
+    if (bLen < 9) {
+      // can only use compact notation if total byte length is at most 8 bytes long
+      _start[tos] = (isArray ? 0x13 : 0x14);
+      ValueLength targetPos = 1 + bLen;
+
+      if (_pos > (tos + 9)) {
+        memmove(_start + tos + targetPos, _start + tos + 9,
+                _pos - (tos + 9));
+      }
+
+      // store byte length
+      VELOCYPACK_ASSERT(byteSize > 0);
+      storeVariableValueLength<false>(_start + tos + 1, byteSize);
+
+      // need additional memory for storing the number of values
+      if (nLen > 8 - bLen) {
+        reserveSpace(nLen);
+      }
+      storeVariableValueLength<true>(_start + tos + byteSize - 1, static_cast<ValueLength>(index.size()));
+      
+      _pos -= 8;
+      _pos += nLen + bLen;
+
+      _stack.pop_back();
+      return;
     }
-
-    _pos -= 8;
-    _pos += nLen;
-    _pos += bLen;
-    // store byte lengths
-    storeVariableValueLength<false>(_start + tos + 1, byteSize);
-    storeVariableValueLength<true>(_start + tos + byteSize - 1, static_cast<ValueLength>(index.size()));
-
-    _stack.pop_back();
-    return;
   }
   
   // fix head byte in case a compact Array / Object was originally requested
@@ -360,7 +372,7 @@ bool Builder::hasKey (std::string const& key) const {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   ValueLength const& tos = _stack.back();
-  if (_start[tos] != 0x06 && _start[tos] != 0x0b) {
+  if (_start[tos] != 0x0b && _start[tos] != 0x14) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   std::vector<ValueLength> const& index = _index[_stack.size() - 1];
@@ -560,11 +572,11 @@ uint8_t* Builder::set (Value const& item) {
       break;
     }
     case ValueType::Array: {
-      addArray();
+      addArray(item._unindexed);
       break;
     }
     case ValueType::Object: {
-      addObject();
+      addObject(item._unindexed);
       break;
     }
     case ValueType::Binary: {

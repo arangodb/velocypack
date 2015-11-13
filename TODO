@@ -1,4 +1,4 @@
-* write Performance.md and comparison with other formats
+* write Performance.md section for speed tests
 
 * implement lookup table support in Builder, Slice, Parser and Dumper (MN)
 
@@ -10,5 +10,5 @@
 
 * SWIG support (MN)
 
-* ideas: add ManagedSlice class, unique/distinct/sort for Arrays
+* ideas: unique/distinct/sort for Arrays
 * test equal_to with custom types
