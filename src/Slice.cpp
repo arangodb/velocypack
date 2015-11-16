@@ -148,10 +148,11 @@ unsigned int const Slice::FirstSubMap[32] = {
 };
 
 std::string Slice::toJson () const {
-  StringSink sink;
+  std::string buffer;
+  StringSink sink(&buffer);
   Dumper dumper(&sink, options);
   dumper.dump(this);
-  return std::move(sink.buffer);
+  return std::move(buffer);
 }
         
 std::string Slice::toString () const {
@@ -159,9 +160,10 @@ std::string Slice::toString () const {
   Options prettyOptions = *options;
   prettyOptions.prettyPrint = true;
 
-  StringSink sink;
+  std::string buffer;
+  StringSink sink(&buffer);
   Dumper::dump(this, &sink, &prettyOptions);
-  return std::move(sink.buffer);
+  return std::move(buffer);
 }
 
 std::string Slice::hexType () const {

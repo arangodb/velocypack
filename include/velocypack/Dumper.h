@@ -59,6 +59,10 @@ namespace arangodb {
         ~Dumper () {
         }
 
+        Sink* sink () const {
+          return _sink;
+        }
+
         void dump (Slice const& slice) {
           _indentation = 0;
           _sink->reserve(slice.byteSize());
@@ -79,9 +83,10 @@ namespace arangodb {
         }
 
         static std::string toString (Slice const& slice, Options const* options = &Options::Defaults) {
-          StringSink sink;
+          std::string buffer;
+          StringSink sink(&buffer);
           dump(slice, &sink, options);
-          return std::move(sink.buffer);
+          return std::move(buffer);
         }
 
         static std::string toString (Slice const* slice, Options const* options = &Options::Defaults) {

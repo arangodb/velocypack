@@ -8,7 +8,9 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
   // serialize a custom type into JSON
   static int const myMagicNumber = 42;
 
-  void toJson (Slice const& value, Sink* sink, Slice const&) {
+  void toJson (Slice const& value, Dumper* dumper, Slice const&) {
+    Sink* sink = dumper->sink();
+
     if (value.head() == 0xf0) {
       sink->append(std::to_string(myMagicNumber));
       return;

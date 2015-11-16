@@ -348,7 +348,7 @@ void Dumper::dumpValue (Slice const* slice, Slice const* base) {
         handleUnsupportedType(slice);
       }
       else {
-        options->customTypeHandler->toJson(*slice, _sink, *base);
+        options->customTypeHandler->toJson(*slice, this, *base);
       }
       break;
     }

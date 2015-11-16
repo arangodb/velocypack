@@ -28,9 +28,10 @@ int main (int, char*[]) {
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
   // now dump the Slice into an std::string 
-  StringSink sink;
+  std::string buffer;
+  StringSink sink(&buffer);
   Dumper::dump(s, &sink, &dumperOptions);
 
   // and print it
-  std::cout << "Resulting JSON:" << std::endl << sink.buffer << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << buffer << std::endl;
 }

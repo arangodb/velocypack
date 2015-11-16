@@ -26,10 +26,11 @@ int main (int, char*[]) {
   Slice s(b.start());
  
   // now dump the Slice into an std::string sink 
-  StringSink sink;
+  std::string buffer;
+  StringSink sink(&buffer);
   Dumper dumper(&sink);
   dumper.dump(s);
 
   // and print it
-  std::cout << "Resulting VPack:" << std::endl << sink.buffer << std::endl;
+  std::cout << "Resulting VPack:" << std::endl << buffer << std::endl;
 }
