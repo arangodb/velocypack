@@ -1622,6 +1622,209 @@ TEST(SliceTest, GetNumericValueWrongSource) {
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<double>(), Exception::InvalidValueType);
 }
 
+TEST(SliceTest, Translations) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  Options options;
+  Builder b(&options);
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bart", Value(2));
+  b.add("bark", Value(42));
+  b.add("mötör", Value(19));
+  b.add("mötörhead", Value(20));
+  b.add("quetzal", Value(21));
+  b.close();
+
+  Slice s = Slice(b.start(), &options);
+
+  ASSERT_EQ(8UL, s.length());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").getBoolean());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_FALSE(s.get("bar").getBoolean());
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ(1UL, s.get("baz").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(2UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(42UL, s.get("bark").getUInt());
+  ASSERT_TRUE(s.hasKey("mötör"));
+  ASSERT_EQ(19UL, s.get("mötör").getUInt());
+  ASSERT_TRUE(s.hasKey("mötörhead"));
+  ASSERT_EQ(20UL, s.get("mötörhead").getUInt());
+  ASSERT_TRUE(s.hasKey("quetzal"));
+  ASSERT_EQ(21UL, s.get("quetzal").getUInt());
+  
+  ASSERT_EQ("foo", s.keyAt(0).copyString());
+  ASSERT_EQ("bar", s.keyAt(1).copyString());
+  ASSERT_EQ("baz", s.keyAt(2).copyString());
+  ASSERT_EQ("bart", s.keyAt(3).copyString());
+  ASSERT_EQ("bark", s.keyAt(4).copyString());
+  ASSERT_EQ("mötör", s.keyAt(5).copyString());
+  ASSERT_EQ("mötörhead", s.keyAt(6).copyString());
+  ASSERT_EQ("quetzal", s.keyAt(7).copyString());
+}
+
+TEST(SliceTest, TranslationsSubObjects) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  Builder b(&options);
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(ValueType::Object));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bark", Value(ValueType::Object));
+  b.add("foo", Value(2));
+  b.add("bar", Value(3));
+  b.close();
+  b.close();
+  b.add("bar", Value(4));
+  b.add("bark", Value(ValueType::Object));
+  b.add("foo", Value(5));
+  b.add("bar", Value(6));
+  b.close();
+  b.close();
+
+  Slice s = Slice(b.start(), &options);
+
+  ASSERT_EQ(3UL, s.length());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").isObject());
+  ASSERT_FALSE(s.get(std::vector<std::string>({ "foo", "bar" })).getBoolean());
+  ASSERT_EQ(1UL, s.get(std::vector<std::string>({ "foo", "baz" })).getUInt());
+  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bark" })).isObject());
+  ASSERT_EQ(2UL, s.get(std::vector<std::string>({ "foo", "bark", "foo" })).getUInt());
+  ASSERT_EQ(3UL, s.get(std::vector<std::string>({ "foo", "bark", "bar" })).getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_EQ(4UL, s.get("bar").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_TRUE(s.get("bark").isObject());
+  ASSERT_EQ(5UL, s.get(std::vector<std::string>({ "bark", "foo" })).getUInt());
+  ASSERT_EQ(6UL, s.get(std::vector<std::string>({ "bark", "bar" })).getUInt());
+  ASSERT_EQ("foo", s.keyAt(0).copyString());
+  ASSERT_EQ("bar", s.valueAt(0).keyAt(0).copyString());
+  ASSERT_EQ("baz", s.valueAt(0).keyAt(1).copyString());
+  ASSERT_EQ("bark", s.valueAt(0).keyAt(2).copyString());
+  ASSERT_EQ("bar", s.keyAt(1).copyString());
+  ASSERT_EQ("bark", s.keyAt(2).copyString());
+  ASSERT_EQ("foo", s.valueAt(2).keyAt(0).copyString());
+  ASSERT_EQ("bar", s.valueAt(2).keyAt(1).copyString());
+}
+
+TEST(SliceTest, TranslatedObjectWithoutTranslator) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->seal();
+
+  Options options;
+  Builder b(&options);
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("mötör", Value(1));
+  b.add("quetzal", Value(2));
+  b.add("foo", Value(3));
+  b.add("bar", Value(4));
+  b.add("baz", Value(5));
+  b.add("bart", Value(6));
+  b.close();
+
+  Slice s = Slice(b.start());
+
+  ASSERT_EQ(6UL, s.length());
+  ASSERT_EQ("mötör", s.keyAt(0).copyString());
+  ASSERT_EQ("quetzal", s.keyAt(1).copyString());
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(2).copyString(), Exception::NeedAttributeTranslator);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(3).copyString(), Exception::NeedAttributeTranslator);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4).copyString(), Exception::NeedAttributeTranslator);
+  ASSERT_EQ("bart", s.keyAt(5).copyString());
+}
+
+TEST(SliceTest, TranslatedWithCompactNotation) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bart", 4);
+  translator->add("bark", 5);
+  translator->seal();
+
+  Options options;
+  Builder b(&options);
+  options.sortAttributeNames = false;
+  options.buildUnindexedObjects = true;
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(1));
+  b.add("bar", Value(2));
+  b.add("baz", Value(3));
+  b.add("bark", Value(4));
+  b.add("bart", Value(5));
+  b.close();
+
+  Slice s = Slice(b.start(), &options);
+  ASSERT_EQ(0x14, s.head());
+
+  ASSERT_EQ(5UL, s.length());
+  ASSERT_EQ("foo", s.keyAt(0).copyString());
+  ASSERT_EQ("bar", s.keyAt(1).copyString());
+  ASSERT_EQ("baz", s.keyAt(2).copyString());
+  ASSERT_EQ("bark", s.keyAt(3).copyString());
+  ASSERT_EQ("bart", s.keyAt(4).copyString());
+}
+
+TEST(SliceTest, TranslatedInvalidKey) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  // a compact object with a single member (key: 4, value: false)
+  uint8_t const data[] = {
+    0x14, 0x05, 0x34, 0x19, 0x01
+  };
+
+  Slice s = Slice(data, &options);
+
+  ASSERT_EQ(1UL, s.length());
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(), Exception::KeyNotFound);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::KeyNotFound);
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

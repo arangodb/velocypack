@@ -818,6 +818,149 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
   ASSERT_EQ(3UL, seen);
 }
 
+TEST(IteratorTest, ObjectIteratorTranslations) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("bart", 0);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  std::string const value("{\"foo\":1,\"bar\":2,\"qux\":3,\"baz\":4,\"bark\":5,\"bart\":6}");
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ObjectIterator it(s);
+  ASSERT_EQ(6UL, it.size());
+
+  while (it.valid()) {
+    switch (it.index()) {
+      case 0:
+        ASSERT_EQ("foo", it.key().copyString());
+        break;
+      case 1:
+        ASSERT_EQ("bar", it.key().copyString());
+        break;
+      case 2:
+        ASSERT_EQ("qux", it.key().copyString());
+        break;
+      case 3:
+        ASSERT_EQ("baz", it.key().copyString());
+        break;
+      case 4:
+        ASSERT_EQ("bark", it.key().copyString());
+        break;
+      case 5:
+        ASSERT_EQ("bart", it.key().copyString());
+        break;
+    }
+    it.next();
+  }
+
+  ASSERT_FALSE(it.valid());
+  ASSERT_EQ(6UL, it.index());
+}
+
+TEST(IteratorTest, ArrayIteratorToStream) {
+  std::string const value("[1,2,3,4,5]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ArrayIterator it(s);
+
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 0 / 5]", result.str());
+  }
+
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 1 / 5]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 2 / 5]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 3 / 5]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 4 / 5]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 5 / 5]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ArrayIterator 6 / 5]", result.str());
+  }
+}
+
+TEST(IteratorTest, ObjectIteratorToStream) {
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ObjectIterator it(s);
+
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ObjectIterator 0 / 3]", result.str());
+  }
+
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ObjectIterator 1 / 3]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ObjectIterator 2 / 3]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ObjectIterator 3 / 3]", result.str());
+  }
+  it.next();
+  {
+    std::ostringstream result;
+    result << it;
+    ASSERT_EQ("[ObjectIterator 4 / 3]", result.str());
+  }
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

@@ -934,6 +934,79 @@ TEST(StringDumperTest, BCD) {
   ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NotImplemented);
 }
 
+TEST(StringDumperTest, AttributeTranslationsNotSet) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  // intentionally don't add any translations 
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  std::string const value("{\"test\":\"bar\"}");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  std::string result = Dumper::toString(s, &options);
+  ASSERT_EQ(value, result);
+}
+
+TEST(StringDumperTest, AttributeTranslations) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  std::string result = Dumper::toString(s, &options);
+  ASSERT_EQ(value, result);
+}
+
+TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  std::string const value("{\"foo\":{\"bar\":{\"baz\":\"baz\"},\"bark\":3,\"foo\":true},\"bar\":1}");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  std::string result = Dumper::toString(s, &options);
+  ASSERT_EQ(value, result);
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

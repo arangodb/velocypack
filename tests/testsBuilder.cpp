@@ -1205,6 +1205,53 @@ TEST(BuilderTest, RemoveLastObject) {
   ASSERT_FALSE(s.hasKey("bar"));
 }
 
+TEST(BuilderTest, AttributeTranslations) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+  
+  Builder b(&options);
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bart", Value(2));
+  b.add("bark", Value(42));
+  b.add("mötör", Value(19));
+  b.add("mötörhead", Value(20));
+  b.add("quetzal", Value(21));
+  b.close();
+
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+    0x0f, 0x35, 0x08, 
+    0x31, 0x1a, 
+    0x32, 0x19, 
+    0x33, 0x31, 
+    0x44, 0x62, 0x61, 0x72, 0x74, 0x32, 
+    0x34, 0x20, 0x2a, 
+    0x35, 0x20, 0x13, 
+    0x4b, 0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64, 0x20, 0x14, 
+    0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20, 0x15, 
+    0x03, 0x05, 0x07, 0x09, 0x0f, 0x12, 0x15, 0x23
+  };  
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

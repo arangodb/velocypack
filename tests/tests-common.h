@@ -1,5 +1,6 @@
 
 #include "velocypack/velocypack-common.h"
+#include "velocypack/AttributeTranslator.h"
 #include "velocypack/Buffer.h"
 #include "velocypack/Builder.h"
 #include "velocypack/Collection.h"

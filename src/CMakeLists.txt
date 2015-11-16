@@ -5,11 +5,13 @@ add_library(
   velocypack
   STATIC
   velocypack-common.cpp
+  AttributeTranslator.cpp
   Builder.cpp
   Collection.cpp
   Dumper.cpp
   Exception.cpp
   HexDump.cpp
+  Iterator.cpp
   Options.cpp
   Parser.cpp
   Slice.cpp
