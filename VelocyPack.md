@@ -1,6 +1,8 @@
 VelocyPack (VPack)
 ==================
 
+    Version 1.0
+
 VelocyPack (VPack) is a fast and compact serialization format
 
 
@@ -308,12 +310,13 @@ encoded as normal VPack values as above, the first is always a short or
 long UTF-8 string starting with a byte 0x40-0xbf as described below. The
 second is any other VPack value.
 
-There is one extension: For the key it is possible to use the values
-0x00-0x27 as indexes into an outside-given table of attribute names, or
-the values 0x28-0x2f to store the index in a uint as above. These are
-convenient when only very few attribute names occur or some are repeated
-very often. The standard way to encode such an attribute name table is
-as a VPack array of strings as specified here.
+There is one extension: For the key it is possible to use the positive
+small integer values 0x30-0x39 or an unsigned integer starting with a
+type byte of 0x28-0x2f. Any such integer value is an index into an
+outside-given table of attribute names. These are convenient when only
+very few attribute names occur or some are repeated very often. The
+standard way to encode such an attribute name table is as a VPack array
+of strings as specified here.
 
 Objects can be stored sorted or unsorted. The sorted object variants
 need to store key/value pairs in order, sorted by bytewise comparions
