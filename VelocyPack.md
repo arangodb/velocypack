@@ -1,7 +1,7 @@
 VelocyPack (VPack)
 ==================
 
-    Version 1.0
+    Version 1
 
 VelocyPack (VPack) is a fast and compact serialization format
 
