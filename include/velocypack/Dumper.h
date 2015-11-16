@@ -114,10 +114,10 @@ namespace arangodb {
           dumpString(str.c_str(), str.size());
           _sink->push_back('"');
         }
+        
+        void appendUInt (uint64_t);
 
       private:
-
-        void dumpUInt (uint64_t);
 
         void dumpInteger (Slice const*);
 

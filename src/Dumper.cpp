@@ -40,7 +40,7 @@ namespace arangodb {
   }
 };
 
-void Dumper::dumpUInt (uint64_t v) {
+void Dumper::appendUInt (uint64_t v) {
   if (10000000000000000000ULL <= v) { _sink->push_back('0' + (v / 10000000000000000000ULL) % 10); }
   if ( 1000000000000000000ULL <= v) { _sink->push_back('0' + (v /  1000000000000000000ULL) % 10); }
   if (  100000000000000000ULL <= v) { _sink->push_back('0' + (v /   100000000000000000ULL) % 10); }
@@ -68,7 +68,7 @@ void Dumper::dumpInteger (Slice const* slice) {
   if (slice->isType(ValueType::UInt)) {
     uint64_t v = slice->getUInt();
 
-    dumpUInt(v);
+    appendUInt(v);
   } 
   else if (slice->isType(ValueType::Int)) {
     int64_t v = slice->getInt();
