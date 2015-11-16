@@ -6,6 +6,7 @@ message(STATUS "Building examples: ${BuildExamples}")
 # build examples
 if(BuildExamples)
   foreach (exampleName
+           exampleAttributeTranslation
            exampleArrayHandling
            exampleArrayIterator
            exampleBuilder
