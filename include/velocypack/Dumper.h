@@ -117,6 +117,8 @@ namespace arangodb {
 
       private:
 
+        void dumpUInt (uint64_t);
+
         void dumpInteger (Slice const*);
 
         void dumpString (char const*, ValueLength);
