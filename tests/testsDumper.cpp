@@ -741,7 +741,7 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   Slice slice = b.slice();
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -772,7 +772,7 @@ TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   Slice slice = b.slice();
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -803,7 +803,7 @@ TEST(StringDumperTest, ConvertTypeDoubleNan) {
   Slice slice = b.slice();
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -830,7 +830,7 @@ TEST(StringDumperTest, ConvertTypeBinary) {
   Slice slice = b.slice();
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -859,7 +859,7 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   Slice slice = b.slice();
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -879,7 +879,7 @@ TEST(StringDumperTest, ConvertTypeNull) {
   Slice slice(&b[0]);
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -899,7 +899,7 @@ TEST(StringDumperTest, ConvertTypeMinKey) {
   Slice slice(&b[0]);
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
@@ -919,7 +919,7 @@ TEST(StringDumperTest, ConvertTypeMaxKey) {
   Slice slice(&b[0]);
 
   Options options;
-  options.unsupportedTypeBehavior = NullifyUnsupportedType;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);

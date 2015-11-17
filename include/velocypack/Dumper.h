@@ -114,6 +114,8 @@ namespace arangodb {
           dumpString(str.c_str(), str.size());
           _sink->push_back('"');
         }
+        
+        void appendUInt (uint64_t);
 
       private:
 
@@ -136,7 +138,7 @@ namespace arangodb {
         }
 
         void handleUnsupportedType (Slice const*) {
-          if (options->unsupportedTypeBehavior == NullifyUnsupportedType) {
+          if (options->unsupportedTypeBehavior == Options::NullifyUnsupportedType) {
             _sink->append("null", 4);
             return;
           }
