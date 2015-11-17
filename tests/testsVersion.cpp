@@ -26,17 +26,39 @@
 
 #include "tests-common.h"
 
+TEST(VersionTest, TestCompare) {
+  ASSERT_EQ(0, Version::compare(Version(1, 0, 0), Version(1, 0, 0)));
+  ASSERT_EQ(0, Version::compare(Version(1, 2, 3), Version(1, 2, 3)));
+  ASSERT_EQ(0, Version::compare(Version(0, 0, 1), Version(0, 0, 1)));
+
+  ASSERT_EQ(1, Version::compare(Version(2, 0, 0), Version(1, 0, 0)));
+  ASSERT_EQ(1, Version::compare(Version(1, 1, 0), Version(1, 0, 0)));
+  ASSERT_EQ(1, Version::compare(Version(1, 1, 0), Version(1, 0, 1)));
+  ASSERT_EQ(1, Version::compare(Version(1, 0, 1), Version(1, 0, 0)));
+  ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 0, 0)));
+  ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 0, 1)));
+  ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 1, 0)));
+  
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(2, 0, 0)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(1, 1, 0)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 1), Version(1, 1, 0)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(1, 0, 1)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(1, 1, 1)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 0, 1), Version(1, 1, 1)));
+  ASSERT_EQ(-1, Version::compare(Version(1, 1, 0), Version(1, 1, 1)));
+}
+
 TEST(VersionTest, TestDigits) {
-  int major = Version::major;
+  int major = Version::BuildVersion.majorValue;
   ASSERT_TRUE(major >= 0 && major <= 10);
-  int minor = Version::minor;
+  int minor = Version::BuildVersion.minorValue;
   ASSERT_TRUE(minor >= 0 && minor <= 10);
-  int patch = Version::patch;
+  int patch = Version::BuildVersion.patchValue;
   ASSERT_TRUE(patch >= 0 && patch <= 999);
 }
 
 TEST(VersionTest, TestFormat) {
-  std::string version = Version::toString();
+  std::string version = Version::BuildVersion.toString();
 
   int majors = 0;
   int minors = 0;

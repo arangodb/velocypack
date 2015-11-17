@@ -22,6 +22,7 @@ if(BuildTests)
           testsAliases
           testsBuilder
           testsCollection
+          testsCommon
           testsDumper
           testsFiles
           testsHexDump
