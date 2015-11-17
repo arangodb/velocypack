@@ -196,6 +196,45 @@ TEST(LookupTest, HasKeySubattributesCompact) {
   ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurk" }))); 
   ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" }))); 
 }
+
+TEST(LookupTest, EmptyObject) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  Slice v;
+  v = s.get("foo"); 
+  ASSERT_TRUE(v.isNone());
+ 
+  v = s.get("bar");  
+  ASSERT_TRUE(v.isNone());
+
+  v = s.get("baz");  
+  ASSERT_TRUE(v.isNone());
+}
+
+TEST(LookupTest, AlmostEmptyObject) {
+  std::string const value("{\"foo\":1}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  Slice v;
+  v = s.get("foo"); 
+  ASSERT_TRUE(v.isInteger());
+  ASSERT_EQ(1UL, v.getUInt());
+ 
+  v = s.get("bar");  
+  ASSERT_TRUE(v.isNone());
+
+  v = s.get("baz");  
+  ASSERT_TRUE(v.isNone());
+}
   
 TEST(LookupTest, LookupShortObject) {
   std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
