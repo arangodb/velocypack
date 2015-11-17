@@ -158,10 +158,11 @@ namespace arangodb {
 
     static inline uint64_t readUInt64 (uint8_t const* start) throw() {
       uint64_t value = 0;
+      uint64_t x = 0;
       uint8_t const* end = start + 8;
       do {
-        value <<= 8;
-        value += static_cast<uint64_t>(*start++);
+        value += static_cast<uint64_t>(*start++) << x;
+        x += 8;
       }
       while (start < end);
       return value;
