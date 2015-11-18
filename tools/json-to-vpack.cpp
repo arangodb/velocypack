@@ -46,6 +46,7 @@ int main (int argc, char* argv[]) {
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
   bool compact = true;
+  bool resetStream = true;
 
   int i = 1;
   while (i < argc) {
@@ -78,6 +79,7 @@ int main (int argc, char* argv[]) {
   // treat missing outfile as stdout
   if (outfileName == nullptr) {
     outfileName = "/proc/self/fd/1";
+    resetStream = false;
   }
 #else 
   if (outfileName == nullptr) {
@@ -126,7 +128,7 @@ int main (int argc, char* argv[]) {
     std::cerr << "An unknown exception occurred while parsing infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
-  
+ 
   std::ofstream ofs(outfileName, std::ofstream::out);
  
   if (! ofs.is_open()) {
@@ -135,21 +137,17 @@ int main (int argc, char* argv[]) {
   }
 
   // reset stream
-  ofs.seekp(0);
+  if (resetStream) {
+    ofs.seekp(0);
+  }
 
   // write into stream
   Builder builder = parser.steal();
   uint8_t const* start = builder.start();
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
-  if (! ofs) {
-    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
-    ofs.close();
-    return EXIT_FAILURE;
-  }
-
   ofs.close();
-
+  
   std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
   std::cout << "JSON Infile size:   " << s.size() << std::endl;
   std::cout << "VPack Outfile size: " << builder.size() << std::endl;
