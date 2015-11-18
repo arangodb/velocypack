@@ -21,7 +21,8 @@
                    "velocypack_wrap.cxx" ],
       "include_dirs": [ "../../include", "../../src", "/usr/local/node-v5.0.0-linux-x64/include/node" ],
       "cflags!": [ "-fno-exceptions" ],
-      "cflags_cc!": [ "-fno-exceptions" ]
+      "cflags_cc!": [ "-fno-exceptions" ],
+      "cflags": [ "-std=c++11 -DSWIG=1" ]
     }
   ]
 }
