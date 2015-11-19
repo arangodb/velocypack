@@ -27,30 +27,80 @@
 #ifndef VELOCYPACK_ALIASES_H
 #define VELOCYPACK_ALIASES_H 1
 
-#include "velocypack/vpack.h"
+#include "velocypack/velocypack-common.h"
 
-using VPackArrayIterator           = arangodb::velocypack::ArrayIterator;
-using VPackAttributeExcludeHandler = arangodb::velocypack::AttributeExcludeHandler;
-using VPackAttributeTranslator     = arangodb::velocypack::AttributeTranslator;
-using VPackBuilder                 = arangodb::velocypack::Builder;
-using VPackCharBuffer              = arangodb::velocypack::CharBuffer;
-using VPackCharBufferSink          = arangodb::velocypack::CharBufferSink;
-using VPackCollection              = arangodb::velocypack::Collection;
-using VPackCustomTypeHandler       = arangodb::velocypack::CustomTypeHandler;
-using VPackDumper                  = arangodb::velocypack::Dumper;
-using VPackException               = arangodb::velocypack::Exception;
-using VPackHexDump                 = arangodb::velocypack::HexDump;
-using VPackObjectIterator          = arangodb::velocypack::ObjectIterator;
-using VPackOptions                 = arangodb::velocypack::Options;
-using VPackParser                  = arangodb::velocypack::Parser;
-using VPackSink                    = arangodb::velocypack::Sink;
-using VPackSlice                   = arangodb::velocypack::Slice;
-using VPackStringSink              = arangodb::velocypack::StringSink;
-using VPackStringStreamSink        = arangodb::velocypack::StringStreamSink;
-using VPackValue                   = arangodb::velocypack::Value;
-using VPackValueLength             = arangodb::velocypack::ValueLength;
-using VPackValuePair               = arangodb::velocypack::ValuePair;
-using VPackValueType               = arangodb::velocypack::ValueType;
-using VPackVersion                 = arangodb::velocypack::Version;
+namespace {
+
+  // unconditional typedefs
+  using VPackValueLength             = arangodb::velocypack::ValueLength;
+  
+  // conditional typedefs, only uses when the respective headers are already included
+#ifdef VELOCYPACK_ITERATOR_H
+  using VPackArrayIterator           = arangodb::velocypack::ArrayIterator;
+  using VPackObjectIterator          = arangodb::velocypack::ObjectIterator;
+#endif
+
+#ifdef VELOCYPACK_BUILDER_H
+  using VPackBuilder                 = arangodb::velocypack::Builder;
+#endif
+
+#ifdef VELOCYPACK_BUILDER_H
+  using VPackCharBuffer              = arangodb::velocypack::CharBuffer;
+#endif
+
+#ifdef VELOCYPACK_SINK_H
+  using VPackSink                    = arangodb::velocypack::Sink;
+  using VPackCharBufferSink          = arangodb::velocypack::CharBufferSink;
+  using VPackStringSink              = arangodb::velocypack::StringSink;
+  using VPackStringStreamSink        = arangodb::velocypack::StringStreamSink;
+#endif
+
+#ifdef VELOCYPACK_COLLECTION_H
+  using VPackCollection              = arangodb::velocypack::Collection;
+#endif
+
+#ifdef VELOCYPACK_ATTRIBUTETRANSLATOR_H
+  using VPackAttributeTranslator     = arangodb::velocypack::AttributeTranslator;
+#endif
+
+#ifdef VELOCYPACK_DUMPER_H
+  using VPackDumper                  = arangodb::velocypack::Dumper;
+#endif
+
+#ifdef VELOCYPACK_EXCEPTION_H
+  using VPackException               = arangodb::velocypack::Exception;
+#endif
+
+#ifdef VELOCYPACK_HEXDUMP_H
+  using VPackHexDump                 = arangodb::velocypack::HexDump;
+#endif
+
+#ifdef VELOCYPACK_OPTIONS_H
+  using VPackOptions                 = arangodb::velocypack::Options;
+  using VPackAttributeExcludeHandler = arangodb::velocypack::AttributeExcludeHandler;
+  using VPackCustomTypeHandler       = arangodb::velocypack::CustomTypeHandler;
+#endif
+
+#ifdef VELOCYPACK_PARSER_H
+  using VPackParser                  = arangodb::velocypack::Parser;
+#endif
+
+#ifdef VELOCYPACK_SLICE_H
+  using VPackSlice                   = arangodb::velocypack::Slice;
+#endif
+
+#ifdef VELOCYPACK_VALUE_H
+  using VPackValue                   = arangodb::velocypack::Value;
+  using VPackValuePair               = arangodb::velocypack::ValuePair;
+#endif
+
+#ifdef VELOCYPACK_VALUETYPE_H
+  using VPackValueType               = arangodb::velocypack::ValueType;
+#endif
+
+#ifdef VELOCYPACK_VERSION_H
+  using VPackVersion                 = arangodb::velocypack::Version;
+#endif
+}
 
 #endif
