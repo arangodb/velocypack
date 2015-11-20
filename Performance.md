@@ -30,24 +30,24 @@ The columns in the table have the following meanings:
 * *VPack-c*: size after converting JSON input to VPack, using *compact* option in VPack
 
 ```
-test case        original JSON    net JSON     MsgPack        BSON       VPack     VPack-c
------------------------------------------------------------------------------------------- 
-api-docs.json        1,205,964   1,054,928   1,003,337   1,012,938   1,004,012     994,160
-commits.json            25,216      25,216      23,091      30,907      22,935      20,789 
-countries.json       1,134,029   1,134,029   1,161,461   1,367,765   1,061,291     956,786 
-directory-tree.json    297,695     297,695     306,534     368,518     276,862     244,716 
-doubles.json         1,187,062   1,187,062     899,981   1,488,895   1,299,984     899,982 
-doubles-small.json     158,706     108,705      89,995     138,895     130,001      89,998  
-file-list.json         151,317     151,316     139,979     195,268     150,177     133,536
-object.json            157,781     157,781     118,519     178,895     158,633     118,630
-pass1.json               1,441         961         844       1,181         916         804
-pass2.json                  52          52          32         169          51          51
-pass3.json                 148         115         124         123         110         108
-random1.json             9,672       7,577       7,007       8,209       7,310       6,836
-random2.json             8,239       6,443       5,960       6,992       6,222       5,815
-random3.json            72,953      57,112      52,780      61,903      55,066      51,515
-sample.json            687,491     168,089     150,697     155,462     162,113     153,187
-small.json                  82          58          35          79          35          30
+test case         original JSON    net JSON     MsgPack        BSON       VPack     VPack-c
+------------------------------------------------------------------------------------------- 
+api-docs.json         1,205,964   1,054,928   1,003,337   1,012,938   1,004,012     994,160
+commits.json             25,216      25,216      23,091      30,907      22,935      20,789 
+countries.json        1,134,029   1,134,029   1,161,461   1,367,765   1,061,291     956,786 
+directory-tree.json     297,695     297,695     306,534     368,518     276,862     244,716 
+doubles.json          1,187,062   1,187,062     899,981   1,488,895   1,299,984     899,982 
+doubles-small.json      158,706     108,705      89,995     138,895     130,001      89,998  
+file-list.json          151,317     151,316     139,979     195,268     150,177     133,536
+object.json             157,781     157,781     118,519     178,895     158,633     118,630
+pass1.json                1,441         961         844       1,181         916         804
+pass2.json                   52          52          32         169          51          51
+pass3.json                  148         115         124         123         110         108
+random1.json              9,672       7,577       7,007       8,209       7,310       6,836
+random2.json              8,239       6,443       5,960       6,992       6,222       5,815
+random3.json             72,953      57,112      52,780      61,903      55,066      51,515
+sample.json             687,491     168,089     150,697     155,462     162,113     153,187
+small.json                   82          58          35          79          35          30
 ```
 
 Data size comparison, with Object key compression
@@ -90,24 +90,24 @@ but adds two extra columns with Object key compression turned on. The column des
 found below.
 
 ```
-test case        original JSON    net JSON     MsgPack        BSON     VPack-c     VPack-d       Dict
------------------------------------------------------------------------------------------------------
-api-docs.json        1,205,964   1,054,928   1,003,337   1,012,938     994,160     964,647      1,091
-commits.json            25,216      25,216      23,091      30,907      22,935       9,200        983
-countries.json       1,134,029   1,134,029   1,161,461   1,367,765   1,061,291     574,333         47 
-directory-tree.json    297,695     297,695     306,534     368,518     276,862     194,391        881 
-doubles.json         1,187,062   1,187,062     899,981   1,488,895   1,299,984     899,982          0 
-doubles-small.json     158,706     108,705      89,995     138,895     130,001      89,998          0
-file-list.json         151,317     151,316     139,979     195,268     150,177     124,849        872
-object.json            157,781     157,781     118,519     178,895     158,633     118,630          0
-pass1.json               1,441         961         844       1,181         916         804          0
-pass2.json                  52          52          32         169          51          51          0
-pass3.json                 148         115         124         123         110         108          0
-random1.json             9,672       7,577       7,007       8,209       7,310       5,807        231
-random2.json             8,239       6,443       5,960       6,992       6,222       4,933        231
-random3.json            72,953      57,112      52,780      61,903      55,066      43,724        231
-sample.json            687,491     168,089     150,697     155,462     162,113      48,977     56,679
-small.json                  82          58          35          79          35          30          0
+test case         original JSON    net JSON     MsgPack        BSON     VPack-c     VPack-d       Dict
+------------------------------------------------------------------------------------------------------
+api-docs.json         1,205,964   1,054,928   1,003,337   1,012,938     994,160     964,647      1,091
+commits.json             25,216      25,216      23,091      30,907      20,789       9,200        983
+countries.json        1,134,029   1,134,029   1,161,461   1,367,765     956,786     574,333         47 
+directory-tree.json     297,695     297,695     306,534     368,518     244,716     194,391        881 
+doubles.json          1,187,062   1,187,062     899,981   1,488,895     899,982     899,982          0 
+doubles-small.json      158,706     108,705      89,995     138,895      89,998      89,998          0
+file-list.json          151,317     151,316     139,979     195,268     133,536     124,849        872
+object.json             157,781     157,781     118,519     178,895     118,630     118,630          0
+pass1.json                1,441         961         844       1,181         804         804          0
+pass2.json                   52          52          32         169          51          51          0
+pass3.json                  148         115         124         123         108         108          0
+random1.json              9,672       7,577       7,007       8,209       6,836       5,807        231
+random2.json              8,239       6,443       5,960       6,992       5,815       4,933        231
+random3.json             72,953      57,112      52,780      61,903      51,515      43,724        231
+sample.json             687,491     168,089     150,697     155,462     153,187      48,977     56,679
+small.json                   82          58          35          79          35          30          0
 ```
 
 The columns in the above table have the following meanings:
@@ -125,3 +125,19 @@ All values are byte sizes.
 Note that when the dictionary size is 0, there would be no benefit from compressing object keys,
 likely because the input data does not contain repeating attribute key names or not even objects.
 
+Still for most inputs the object key compression makes sense space-wise, even when taking the size of
+the object key dictionary into account. In most cases, the combined size of the compressed VPack value
+and the dictionary are way smaller than when not using the compression.
+
+Converting other JSON files to VPack
+====================================
+
+The VPack library contains the tool binary `json-to-vpack`. It can be used to convert any JSON
+input to a VPack value. It provides the options `--compress` and `--no-compress` for toggling the
+Object key compression, and the options `--compact` and `--no-compact` for toggling the usage of
+the compact format.
+
+To convert the input file `input.json` to a VPack value file `output.vpack` while using both the
+compact format and the object key compression, use this command:
+
+`json-to-vpack --compact --compress input.json output.vpack`
