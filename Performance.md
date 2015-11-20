@@ -117,7 +117,7 @@ The columns in the above table have the following meanings:
 * *BSON*: size after converting JSON input to BSON
 * *MsgPack*: size after converting JSON input to MsgPack
 * *VPack-c*: size after converting JSON input to VPack, using *compact* option in VPack
-* *Vpack-d*: size after converting JSON input to VPack, using *compact* option and object key compression
+* *VPack-d*: size after converting JSON input to VPack, using *compact* option and object key compression
 * *Dict*: size of the generated object key dictionary 
 
 All values are byte sizes.
