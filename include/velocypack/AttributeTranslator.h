@@ -59,6 +59,10 @@ namespace arangodb {
 
         void seal ();
 
+        Builder* builder () {
+          return _builder.get();
+        }
+
         // translate from string to id
         uint8_t const* translate (std::string const& key) const;
 

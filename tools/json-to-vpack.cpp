@@ -184,15 +184,15 @@ int main (int argc, char* argv[]) {
 
     // print statistics
     if (compressedOccurrences > 0) {
-      std::cerr << compressedOccurrences << " occurrences of Object keys will be stored compressed:" << std::endl;
+      std::cout << compressedOccurrences << " occurrences of Object keys will be stored compressed:" << std::endl;
 
       size_t printed = 0;
       for (auto const& it : stats) {
         if (++printed > 20) {
-          std::cerr << " - ... " << (stats.size() - printed + 1) << " Object key(s) follow ..." << std::endl; 
+          std::cout << " - ... " << (stats.size() - printed + 1) << " Object key(s) follow ..." << std::endl; 
           break;
         }
-        std::cerr << " - #" << std::get<0>(it) << ": " << std::get<1>(it) << " (" << std::get<2>(it) << " occurrences)" << std::endl; 
+        std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it) << " (" << std::get<2>(it) << " occurrences)" << std::endl; 
       }
     }
   }
@@ -231,8 +231,17 @@ int main (int argc, char* argv[]) {
   ofs.close();
   
   std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
-  std::cout << "JSON Infile size:   " << s.size() << std::endl;
-  std::cout << "VPack Outfile size: " << builder.size() << std::endl;
+  std::cout << "JSON Infile size:    " << s.size() << std::endl;
+  std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
+
+  if (compress) {
+    if (translator.get()->count() > 0) {
+      std::cout << "Key dictionary size: " << Slice(translator.get()->builder()->data(), &options).byteSize() << std::endl;
+    }
+    else {
+      std::cout << "Key dictionary size: 0 (no benefit from compression)" << std::endl;
+    }
+  }
   
   return EXIT_SUCCESS;
 }
