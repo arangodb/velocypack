@@ -90,24 +90,24 @@ but adds two extra columns with Object key compression turned on. The column des
 found below.
 
 ```
-test case        original JSON    net JSON     MsgPack        BSON       VPack     VPack-c     VPack-d      Dict
-----------------------------------------------------------------------------------------------------------------
-api-docs.json        1,205,964   1,054,928   1,003,337   1,012,938   1,004,012     994,160     964,647     1,091
-commits.json            25,216      25,216      23,091      30,907      22,935      22,935       9,200       983
-countries.json       1,134,029   1,134,029   1,161,461   1,367,765   1,061,291   1,061,291     574,333        47 
-directory-tree.json    297,695     297,695     306,534     368,518     276,862     276,862     194,391       881 
-doubles.json         1,187,062   1,187,062     899,981   1,488,895   1,299,984   1,299,984     899,982         0 
-doubles-small.json     158,706     108,705      89,995     138,895     130,001     130,001      89,998         0
-file-list.json         151,317     151,316     139,979     195,268     150,177     150,177     124,849       872
-object.json            157,781     157,781     118,519     178,895     158,633     158,633     118,630         0
-pass1.json               1,441         961         844       1,181         916         916         804         0
-pass2.json                  52          52          32         169          51          51          51         0
-pass3.json                 148         115         124         123         110         110         108         0
-random1.json             9,672       7,577       7,007       8,209       7,310       7,310       5,807       231
-random2.json             8,239       6,443       5,960       6,992       6,222       6,222       4,933       231
-random3.json            72,953      57,112      52,780      61,903      55,066      55,066      43,724       231
-sample.json            687,491     168,089     150,697     155,462     162,113     162,113      48,977    56,679
-small.json                  82          58          35          79          35          35          30         0
+test case        original JSON    net JSON     MsgPack        BSON     VPack-c     VPack-d       Dict
+-----------------------------------------------------------------------------------------------------
+api-docs.json        1,205,964   1,054,928   1,003,337   1,012,938     994,160     964,647      1,091
+commits.json            25,216      25,216      23,091      30,907      22,935       9,200        983
+countries.json       1,134,029   1,134,029   1,161,461   1,367,765   1,061,291     574,333         47 
+directory-tree.json    297,695     297,695     306,534     368,518     276,862     194,391        881 
+doubles.json         1,187,062   1,187,062     899,981   1,488,895   1,299,984     899,982          0 
+doubles-small.json     158,706     108,705      89,995     138,895     130,001      89,998          0
+file-list.json         151,317     151,316     139,979     195,268     150,177     124,849        872
+object.json            157,781     157,781     118,519     178,895     158,633     118,630          0
+pass1.json               1,441         961         844       1,181         916         804          0
+pass2.json                  52          52          32         169          51          51          0
+pass3.json                 148         115         124         123         110         108          0
+random1.json             9,672       7,577       7,007       8,209       7,310       5,807        231
+random2.json             8,239       6,443       5,960       6,992       6,222       4,933        231
+random3.json            72,953      57,112      52,780      61,903      55,066      43,724        231
+sample.json            687,491     168,089     150,697     155,462     162,113      48,977     56,679
+small.json                  82          58          35          79          35          30          0
 ```
 
 The columns in the above table have the following meanings:
@@ -116,7 +116,6 @@ The columns in the above table have the following meanings:
 * *net JSON*: size of the remaining JSON data after stripping whitespace
 * *BSON*: size after converting JSON input to BSON
 * *MsgPack*: size after converting JSON input to MsgPack
-* *VPack*: size after converting JSON input to VPack
 * *VPack-c*: size after converting JSON input to VPack, using *compact* option in VPack
 * *Vpack-d*: size after converting JSON input to VPack, using *compact* option and object key compression
 * *Dict*: size of the generated object key dictionary 
