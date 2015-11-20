@@ -42,20 +42,27 @@ static void usage (char* argv[]) {
   std::cout << " --no-pretty     don't pretty print JSON output" << std::endl;
 }
 
+static inline bool isOption (char const* arg, char const* expected) {
+  return (strcmp(arg, expected) == 0);
+}
+
 int main (int argc, char* argv[]) {
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
-  bool pretty = true;
-  bool resetStream = true;
+  bool allowFlags  = true;
+  bool pretty      = true;
 
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
-    if (strncmp("--pretty", p, strlen("--pretty")) == 0) {
+    if (allowFlags && isOption(p, "--pretty")) {
       pretty = true;
     }
-    else if (strncmp("--no-pretty", p, strlen("--no-pretty")) == 0) {
+    else if (allowFlags && isOption(p, "--no-pretty")) {
       pretty = false;
+    }
+    else if (allowFlags && isOption(p, "--")) {
+      allowFlags = false;
     }
     else if (infileName == nullptr) {
       infileName = p;
@@ -77,11 +84,13 @@ int main (int argc, char* argv[]) {
 
 #ifdef __linux__
   // treat missing outfile as stdout
+  bool resetStream = true;
   if (outfileName == nullptr) {
     outfileName = "/proc/self/fd/1";
     resetStream = false;
   }
 #else 
+  bool const resetStream = true;
   if (outfileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;

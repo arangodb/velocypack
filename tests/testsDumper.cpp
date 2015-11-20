@@ -976,7 +976,7 @@ TEST(StringDumperTest, AttributeTranslations) {
   parser.parse(value);
 
   Builder builder = parser.steal();
-  Slice s(builder.start());
+  Slice s(builder.start(), &options);
 
   std::string result = Dumper::toString(s, &options);
   ASSERT_EQ(value, result);
@@ -1001,7 +1001,7 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   parser.parse(value);
 
   Builder builder = parser.steal();
-  Slice s(builder.start());
+  Slice s(builder.start(), &options);
 
   std::string result = Dumper::toString(s, &options);
   ASSERT_EQ(value, result);
