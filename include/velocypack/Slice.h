@@ -33,6 +33,7 @@
 #include <vector>
 #include <iosfwd>
 #include <algorithm>
+#include <type_traits>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
