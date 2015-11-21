@@ -57,7 +57,8 @@ respect to the above list. To name but a few:
     not good for rapid subvalue access
   - MessagePack is probably the closest to our shopping list, it is
     quite compact, has decent data types but again no quick subvalue
-    access
+    access. However, we found that one can do better even with respect
+    to data size.
   - Our own shaped JSON (used in ArangoDB as internal storage format)
     has very quick subvalue access, but the shape data is kept outside
     the actual data, so the data markers are not self-contained.
