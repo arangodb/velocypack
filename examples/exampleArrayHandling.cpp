@@ -18,7 +18,7 @@ int main (int, char*[]) {
 
   // filter out all array values less than 5
   Builder filtered = Collection::filter(s, [] (Slice const& current, ValueLength) {
-    if (current.getNumericValue<int>() < 5) {
+    if (current.getNumber<int>() < 5) {
       // exclude
       return false;
     }

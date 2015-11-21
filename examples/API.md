@@ -14,9 +14,8 @@ contains information about how to include the VPack classes in other
 applications and link against the VPack library.
 
 All examples provided here and even more are available as separate files in 
-the [examples](examples/) directory. These examples are also built and
-placed in the `build/examples/` directory when building VelocyPack with 
-the default options.
+the *examples* directory. These examples are also built and placed in the 
+`build/examples/` directory when building VelocyPack with the default options.
 
 
 Building VPack objects programmatically
@@ -175,8 +174,29 @@ Slice object s is created and used.
 To inspect the value contained in a Slice, it's best to call the Slice's
 `type()` method first. Based on its return value, other actions can
 follow. Slice also provides convenience methods for type checking such
-as `isObject()`, `isArray()`, `isString()`, `isNumber()`, `isInt()`,
-`isBool()` etc.
+as `isObject()`, `isArray()`, `isString()`, `isNumber()`, `isBool()` etc.
+
+To access the value contents of a Slice, call the appropriate value getter
+method, e.g.:
+
+* `getBool()` for boolean values
+* `getUInt()`, `getInt()`, `getDouble()` for retrieving the number value
+  as uint64_t, int64_t or double, or `getNumber<T>` as a generic method
+* `getString()` or `copyString()` for String values (note that you should better 
+  use `copyString()` for reasons outlined in [Embedding.md](Embedding.md)
+
+Slices of type `Array` and `Object` provide a method `length()` that
+returns the number of Array / Object members. Objects also provide
+`get()` and `hasKey()` to access members, Arrays provide `at()`.
+
+To lookup a key in a Slice of type Object, there is the Slice's `get()`
+method. It works by passing it a single key name as an `std::string` or by
+passing it a vector of `std::strings` for recursive key lookups. `operator[]`
+for a Slice will also call `get()`.
+
+The existence of a key can be checked by using the Slice's `hasKey()`
+method. Both methods should only be called on Slices that contain Object
+values and will throw an Exception otherwise.
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -220,26 +240,8 @@ int main () {
 }
 ```
 
-To retrieve the storage size of a Slice value (including any sub values)
-there is the `byteSize()` method. Slice objects can easily be printed to 
-JSON using the Slice's `toJson()` method. Slices can also be used in hashed 
-containers as they implemented `std::hash` and `std::equal_to`. Retrieving 
-the hash value for a Slice can be achieved by calling the Slice's `hash()` 
-method. 
+Here's an example working on nested Object values:
 
-Slices of type `Array` and `Object` provide a method `length()` that
-returns the number of Array / Object members. Objects also provide
-`get()` and `hasKey()` to access members, Arrays provide `at()`.
-
-To lookup a key in a Slice of type Object, there is the Slice's `get()`
-method. It works by passing it a single key name as an `std::string` or by
-passing it a vector of `std::strings` for recursive key lookups. `operator[]`
-for a Slice will also call `get()`.
-
-The existence of a key can be checked by using the Slice's `hasKey()`
-method. Both methods should only be called on Slices that contain Object
-values and will throw an Exception otherwise.
- 
 ```cpp
 // create an object with a few members
 Builder b;
@@ -285,6 +287,13 @@ if (s.hasKey(std::vector<std::string>({ "baz", "bart" }))) {
   std::cout << "'baz'.'bart' attribute has value: '" << s["baz"]["bart"].copyString() << "'" << std::endl;
 }
 ```
+
+To retrieve the storage size of a Slice value (including any sub values)
+there is the `byteSize()` method. Slice objects can easily be printed to 
+JSON using the Slice's `toJson()` method. Slices can also be used in hashed 
+containers as they implemented `std::hash` and `std::equal_to`. Retrieving 
+the hash value for a Slice can be achieved by calling the Slice's `hash()` 
+method. 
 
 
 Iterating over VPack Arrays and Objects

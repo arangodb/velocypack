@@ -1519,21 +1519,21 @@ TEST(SliceTest, GetNumericValueIntNoLoss) {
 
   Slice s = Slice(b.start());
 
-  ASSERT_EQ(1, s.at(0).getNumericValue<int64_t>());
-  ASSERT_EQ(-1, s.at(1).getNumericValue<int64_t>());
-  ASSERT_EQ(10, s.at(2).getNumericValue<int64_t>());
-  ASSERT_EQ(-10, s.at(3).getNumericValue<int64_t>());
-  ASSERT_EQ(INT64_MAX, s.at(4).getNumericValue<int64_t>());
-  ASSERT_EQ(-3453, s.at(5).getNumericValue<int64_t>());
-  ASSERT_EQ(2343323453, s.at(6).getNumericValue<int64_t>());
+  ASSERT_EQ(1, s.at(0).getNumber<int64_t>());
+  ASSERT_EQ(-1, s.at(1).getNumber<int64_t>());
+  ASSERT_EQ(10, s.at(2).getNumber<int64_t>());
+  ASSERT_EQ(-10, s.at(3).getNumber<int64_t>());
+  ASSERT_EQ(INT64_MAX, s.at(4).getNumber<int64_t>());
+  ASSERT_EQ(-3453, s.at(5).getNumber<int64_t>());
+  ASSERT_EQ(2343323453, s.at(6).getNumber<int64_t>());
   
-  ASSERT_EQ(1, s.at(0).getNumericValue<int16_t>());
-  ASSERT_EQ(-1, s.at(1).getNumericValue<int16_t>());
-  ASSERT_EQ(10, s.at(2).getNumericValue<int16_t>());
-  ASSERT_EQ(-10, s.at(3).getNumericValue<int16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<int16_t>(), Exception::NumberOutOfRange);
-  ASSERT_EQ(-3453, s.at(5).getNumericValue<int16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumericValue<int16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(1, s.at(0).getNumber<int16_t>());
+  ASSERT_EQ(-1, s.at(1).getNumber<int16_t>());
+  ASSERT_EQ(10, s.at(2).getNumber<int16_t>());
+  ASSERT_EQ(-10, s.at(3).getNumber<int16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(-3453, s.at(5).getNumber<int16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<int16_t>(), Exception::NumberOutOfRange);
 }
 
 TEST(SliceTest, GetNumericValueUIntNoLoss) {
@@ -1550,21 +1550,21 @@ TEST(SliceTest, GetNumericValueUIntNoLoss) {
 
   Slice s = Slice(b.start());
 
-  ASSERT_EQ(1ULL, s.at(0).getNumericValue<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
-  ASSERT_EQ(10ULL, s.at(2).getNumericValue<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
-  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.at(4).getNumericValue<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumericValue<uint64_t>(), Exception::NumberOutOfRange);
-  ASSERT_EQ(2343323453ULL, s.at(6).getNumericValue<uint64_t>());
+  ASSERT_EQ(1ULL, s.at(0).getNumber<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(10ULL, s.at(2).getNumber<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.at(4).getNumber<uint64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(2343323453ULL, s.at(6).getNumber<uint64_t>());
  
-  ASSERT_EQ(1ULL, s.at(0).getNumericValue<uint16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_EQ(10ULL, s.at(2).getNumericValue<uint16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumericValue<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(1ULL, s.at(0).getNumber<uint16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(10ULL, s.at(2).getNumber<uint16_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<uint16_t>(), Exception::NumberOutOfRange);
 }
 
 TEST(SliceTest, GetNumericValueDoubleNoLoss) {
@@ -1581,13 +1581,13 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
 
   Slice s = Slice(b.start());
   
-  ASSERT_DOUBLE_EQ(1., s.at(0).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(-1., s.at(1).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(10., s.at(2).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(-10., s.at(3).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumericValue<double>());
-  ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumericValue<double>());
+  ASSERT_DOUBLE_EQ(1., s.at(0).getNumber<double>());
+  ASSERT_DOUBLE_EQ(-1., s.at(1).getNumber<double>());
+  ASSERT_DOUBLE_EQ(10., s.at(2).getNumber<double>());
+  ASSERT_DOUBLE_EQ(-10., s.at(3).getNumber<double>());
+  ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumber<double>());
+  ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumber<double>());
+  ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumber<double>());
 }
 
 TEST(SliceTest, GetNumericValueWrongSource) {
@@ -1605,21 +1605,21 @@ TEST(SliceTest, GetNumericValueWrongSource) {
 
   Slice s = Slice(b.start());
   
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumericValue<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumericValue<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumericValue<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumericValue<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumericValue<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<double>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint64_t>(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<double>(), Exception::InvalidValueType);
 }
 
 TEST(SliceTest, Translations) {

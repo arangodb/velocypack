@@ -268,6 +268,6 @@ or, when using selective headers:
 #include <velocypack/velocypack-aliases.h>
 ```
 
-Please check the file [examples/exampleAliases.cpp](examples/exampleAliases.cpp)
+Please check the file [exampleAliases.cpp](exampleAliases.cpp)
 for a working example.
 
