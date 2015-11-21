@@ -25,6 +25,7 @@ access to subobjects and rapid conversion from and to JSON.
 
 We have invented VPack because we need a binary format that
 
+  - is self-contained, schemaless and platform independent
   - is compact
   - covers all of JSON plus dates, integers, binary data and arbitrary
     precision numbers
@@ -37,8 +38,33 @@ We have invented VPack because we need a binary format that
     in the database in an unchanged way
   - allows to use an external table for frequently used attribute names
   - quickly allows to read off the type and length of a given object
+    from its beginning
 
-This data format must be backed by good C++ classes to allow
+All this gives us the possibility to use *the same byte sequence of
+data* for **transport**, **storage** and (read-only) **work**.
+
+The other popular formats we looked at have all some deficiency with
+respect to the above list. To name but a few:
+
+  - JSON itself lacks some data types (dates and binary data) and does
+    not provide quick subvalue access without parsing
+  - XML is not compact and is not good with binary data, it also lacks
+    quick subvalue access
+  - BSON is relatively compact, gets quite a lot right with respect to
+    data types, but is seriously lacking w.r.t. subvalue access
+  - Apache Thrift and Google's Protocol Buffers are not schemaless and 
+    self-contained and the transport format is a serialization that is
+    not good for rapid subvalue access
+  - MessagePack is probably the closest to our shopping list, it is
+    quite compact, has decent data types but again no quick subvalue
+    access
+  - Our own shaped JSON (used in ArangoDB as internal storage format)
+    has very quick subvalue access, but the shape data is kept outside
+    the actual data, so the data markers are not self-contained.
+    Furthermore, we have run into scalability issues on multi-core
+    because of the shared data structures for the shapes.
+
+Any new data format must be backed by good C++ classes to allow
 
   - easy and fast parsing from JSON
   - easy and convenient buildup without too many memory allocations
@@ -46,7 +72,8 @@ This data format must be backed by good C++ classes to allow
   - flexible memory management
   - fast dumping to JSON
 
-The VPack format is an attempt to achieve all this.
+The VelocyPack format is an attempt to achieve all this and our first
+experiments and usage attempts are very encouraging..
 
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the VPack
