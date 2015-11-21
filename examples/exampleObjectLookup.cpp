@@ -36,6 +36,7 @@ int main (int, char*[]) {
   Slice qux(s.get(std::vector<std::string>({ "baz", "qux" })));
   std::cout << "'baz'.'qux' attribute has type: " << qux.type() << std::endl;
   std::cout << "'baz'.'qux' attribute has bool value: " << std::boolalpha << qux.getBoolean() << std::endl;
+  std::cout << "Complete value of 'baz' is: " << s.get("baz").toJson() << std::endl;
 
   // fetch non-existing subattribute "bark.foobar" 
   Slice foobar(s.get(std::vector<std::string>({ "bark", "foobar" })));

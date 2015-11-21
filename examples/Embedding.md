@@ -167,6 +167,41 @@ allocated. Client-code must not access the `Buffer` object's memory
 after that.
 
 
+String handling
+---------------
+
+The recommended way to get the contents of a String VPack value is to
+use the method `Slice::copyString()`, which returns the String value in
+an `std::string`. This is safe and convenient.
+
+If access to a VPack String value's underlying `char const*` is needed for
+performance reasons, then `Slice::getString()` will also work. Please be
+careful when using it because VPack String values are not terminated with a 
+NUL-byte as regular C string values. Using the returned `char const*` pointer
+in functions that work on NUL-byte-terminated C strings will therefore
+likely cause problems (crashes, undefined behavior etc.). In order to
+avoid some of these problems, `Slice::getString()` also returns the length
+of the String value in bytes in its first call argument:
+
+```cpp
+Slice slice = object.get("name"); 
+
+if (slice.isString()) {
+  // the following is unsafe, because the char* returned by
+  // getString is not terminated with a NUL-byte
+  ValueLength length;
+  std::cout << "name* " << slice.getString(length) << std::endl;
+  
+  // better do this:
+  char const* p = slice.getString(length);
+  std::cout << "name* " << std::string(p, length) << std::endl;
+
+  // or even better: 
+  std::cout << "name: " << slice.copyString() << std::endl;
+}
+```
+
+
 Including the VPack headers
 ---------------------------
 
@@ -232,4 +267,7 @@ or, when using selective headers:
 #include <velocypack/Slice.h>
 #include <velocypack/velocypack-aliases.h>
 ```
+
+Please check the file [examples/exampleAliases.cpp](examples/exampleAliases.cpp)
+for a working example.
 

@@ -13,9 +13,16 @@ Please also have a look at the file [Embedding.md](Embedding.md) as it
 contains information about how to include the VPack classes in other
 applications and link against the VPack library.
 
+All examples provided here and even more are available as separate files in 
+the [examples](examples/) directory. These examples are also built and
+placed in the `build/examples/` directory when building VelocyPack with 
+the default options.
+
 
 Building VPack objects programmatically
 ---------------------------------------
+
+See also: [examples/exampleBuilder.cpp](examples/exampleBuilder.cpp)
 
 VPack objects can be assembled easily with a `Builder` object.
 This `Builder` class organizes the buildup of one or many VPack objects.
@@ -75,9 +82,12 @@ int main () {
 }
 ```
 
-Values will automatically be added to the last created compound value, 
-i.e. the last created `Array` or `Object` value. To finish a compound
-object, the Builder's `close` method must be called.
+Values will automatically be added to the last opened compound value, 
+i.e. the last opened `Array` or `Object` value. To finish a compound
+object, the Builder's `close()` method must be called.
+
+
+See also: [examples/exampleBuilderFancy.cpp](examples/exampleBuilderFancy.cpp)
 
 If you like fancy syntactic sugar, the same object can alternatively be
 built using operator syntax:
@@ -129,9 +139,11 @@ For example, to turn on attribute name uniqueness checks and turn off
 the attribute name sorting, a `Builder` could be configured as follows:
 
 ```cpp
-Builder b;
-b.options.checkAttributeUniqueness = true;
-b.options.sortAttributeNames = false;
+Options options;
+options.checkAttributeUniqueness = true;
+options.sortAttributeNames = false;
+
+Builder b(&options);
 
 // now do something with Builder b
 ```
@@ -140,12 +152,31 @@ b.options.sortAttributeNames = false;
 Inspecting the contents of a VPack object
 -----------------------------------------
 
+See also: [examples/exampleSlice.cpp](examples/exampleSlice.cpp),
+[examples/exampleObjectLookup.cpp](examples/exampleObjectLookup.cpp)
+
 The `Slice` class can be used for accessing existing VPack objects and
 inspecting them. A `Slice` can be considered a *view over a memory
 region that contains a VPack value*, but it provides high-level access
 methods so users don't need to mess with the raw memory. 
 `Slice` objects themselves are very lightweight and the cost of their
 construction is relatively low.
+
+`Slice` objects are immutable and cannot be used to modify the underlying 
+VPack value. In order to modify an existing `VPack` value, a new value
+needs to be assembled using a `Builder` or a `Parser` object.
+
+It should be noted that `Slice` objects do not own the VPack value
+they are pointing to. The client must make sure that the memory a `Slice`
+refers to is actually valid. In the above case, the VPack value is
+owned by the Builder object b, which is still available and valid when
+Slice object s is created and used. 
+
+To inspect the value contained in a Slice, it's best to call the Slice's
+`type()` method first. Based on its return value, other actions can
+follow. Slice also provides convenience methods for type checking such
+as `isObject()`, `isArray()`, `isString()`, `isNumber()`, `isInt()`,
+`isBool()` etc.
 
 ```cpp
 #include <velocypack/vpack.h>
@@ -189,48 +220,78 @@ int main () {
 }
 ```
 
-It should be noted that `Slice` objects do not own the VPack value
-they are pointing to. The client must make sure that the memory a `Slice`
-refers to is actually valid. In the above case, the VPack value is
-owned by the Builder object b, which is still available and valid when
-Slice object s is created and used. 
+To retrieve the storage size of a Slice value (including any sub values)
+there is the `byteSize()` method. Slice objects can easily be printed to 
+JSON using the Slice's `toJson()` method. Slices can also be used in hashed 
+containers as they implemented `std::hash` and `std::equal_to`. Retrieving 
+the hash value for a Slice can be achieved by calling the Slice's `hash()` 
+method. 
 
-`Slice` objects are immutable and cannot be used to modify the underlying 
-VPack value. In order to modify an existing `VPack` value, a new value
-needs to be assembled using a `Builder` or a `Parser` object.
+Slices of type `Array` and `Object` provide a method `length()` that
+returns the number of Array / Object members. Objects also provide
+`get()` and `hasKey()` to access members, Arrays provide `at()`.
 
-The recommended way to get the contents of a String VPack value is to
-use the method `Slice::copyString`, which returns the String value in
-an `std::string`.
-If access to the VPack value's underlying `char const*` is needed, then
-`Slice::getString` will also work, but this is potentially unsafe because
-VPack String values are not terminated with a NUL-byte. Using the `char const*`
-in functions that work on NUL-byte-terminated C strings will therefore
-likely cause problems (crashes, undefined behavior etc.). In order to
-avoid some of these problems, `Slice::getString` also returns the length
-of the String value in bytes in its first call argument:
+To lookup a key in a Slice of type Object, there is the Slice's `get()`
+method. It works by passing it a single key name as an `std::string` or by
+passing it a vector of `std::strings` for recursive key lookups. `operator[]`
+for a Slice will also call `get()`.
 
+The existence of a key can be checked by using the Slice's `hasKey()`
+method. Both methods should only be called on Slices that contain Object
+values and will throw an Exception otherwise.
+ 
 ```cpp
-Slice slice = object.get("name"); 
+// create an object with a few members
+Builder b;
 
-if (slice.isString()) {
-  // the following is unsafe, because the char* returned by
-  // getString is not terminated with a NUL-byte
-  ValueLength length;
-  std::cout << "name* " << slice.getString(length) << std::endl;
+b(Value(ValueType::Object));
+b.add("foo", Value(42)); 
+b.add("bar", Value("some string value")); 
+b.add("baz", Value(ValueType::Object));
+b.add("qux", Value(true));
+b.add("bart", Value("this is a string"));
+b.close();
+b.add("quux", Value(12345));
+b.close();
   
-  // better do this:
-  char const* p = slice.getString(length);
-  std::cout << "name* " << std::string(p, length) << std::endl;
+Slice s(b.start());
 
-  // or even better: 
-  std::cout << "name: " << slice.copyString() << std::endl;
+// now fetch the string in the object's "bar" attribute
+if (s.hasKey("bar")) {
+  Slice bar(s.get("bar"));
+  std::cout << "'bar' attribute value has type: " << bar.type() << std::endl;
+}
+
+// fetch non-existing attribute "quetzal"
+Slice quetzal(s.get("quetzal"));
+// note: this returns a slice of type None
+std::cout << "'quetzal' attribute value has type: " << quetzal.type() << std::endl;
+std::cout << "'quetzal' attribute is None: " << std::boolalpha << quetzal.isNone() << std::endl;
+
+// fetch subattribute "baz.qux"
+Slice qux(s.get(std::vector<std::string>({ "baz", "qux" })));
+std::cout << "'baz'.'qux' attribute has type: " << qux.type() << std::endl;
+std::cout << "'baz'.'qux' attribute has bool value: " << std::boolalpha << qux.getBoolean() << std::endl;
+std::cout << "Complete value of 'baz' is: " << s.get("baz").toJson() << std::endl;
+
+// fetch non-existing subattribute "bark.foobar" 
+Slice foobar(s.get(std::vector<std::string>({ "bark", "foobar" })));
+std::cout << "'bark'.'foobar' attribute is None: " << std::boolalpha << foobar.isNone() << std::endl;
+
+// check if subattribute "baz"."bart" does exist
+if (s.hasKey(std::vector<std::string>({ "baz", "bart" }))) {
+  // access subattribute using operator syntax
+  std::cout << "'baz'.'bart' attribute has type: " << s["baz"]["bart"].type() << std::endl;
+  std::cout << "'baz'.'bart' attribute has value: '" << s["baz"]["bart"].copyString() << "'" << std::endl;
 }
 ```
 
 
 Iterating over VPack Arrays and Objects
 ---------------------------------------
+
+See also: [examples/exampleArrayIterator.cpp](examples/exampleArrayIterator.cpp),
+[examples/exampleObjectIterator.cpp](examples/exampleObjectIterator.cpp)
 
 With the VPack compound value types *Array* and *Object* there comes the
 need to iterate over their individual members. This can be achieved easily
@@ -280,8 +341,52 @@ for (auto const& it : ObjectIterator(s)) {
 ```
 
 
+Working with Arrays and Objects
+-------------------------------
+
+See also: [examples/exampleArrayHandling.cpp](examples/exampleArrayHandling.cpp),
+[examples/exampleObjectHandling.cpp](examples/exampleObjectHandling.cpp)
+
+When working with Array values, a common task is to iterate over the Array's
+members. The `Collection` class provides several static helper methods for this:
+
+* `forEach()`: walks the Array's members one by one and calls a user-defined
+  function for each. The current value and the member index are provided as 
+  parameters to the user function
+
+* `filter()`: runs a user-defined predicate function on all members and returns
+  a new Array containing those members for which the predicate function returned
+  true.
+
+* `find()`: walks the Array's members one by one and calls a user-defined predicate
+  function for each. Returns the member for which the predicate function returned 
+  true, and a Slice of type None in case the predicate was always false. 
+
+* `contains()`: same as find, but returns a boolean value and not the sought Slice.
+
+* `all()`: walks the Array's members one by one and calls a user-defined predicate 
+  function for each. Returns true if the predicate function returned true for all
+  members, and false otherwise.
+
+* `any()`: walks the Array's members one by one and calls a user-defined predicate 
+  function for each. Returns true if the predicate function returned true for any of
+  the Array members, and false otherwise.
+
+The `Collection` class provides the following methods for working with `Object` values:
+
+* `keys()`: returns the Object's keys as a vector strings or an unordered set
+* `values()`: returns the Object's values as a new Array value
+* `keep()`: returns a new Object value that contains only the mentioned keys
+* `remove()`: returns a new Object value that contains all but the mentioned keys
+* `merge()`: recursively merges two Object values
+* `visitRecursive()`: recursively visits an Array and calls a user-defined predicate
+  function for each visited value
+
+
 Parsing JSON into a VPack value
 -------------------------------
+
+See also: [examples/exampleParser.cpp](examples/exampleParser.cpp)
 
 Often there is already existing data in JSON format. To convert that
 data into VPack, use the `Parser` class. `Parser` provides an efficient 
@@ -289,7 +394,7 @@ JSON parser.
 
 A `Parser` object contains its own `Builder` object. After parsing this
 `Builder` object will contain the VPack value constructed from the JSON
-input. Use the Parser's `steal` method to get your hands on that 
+input. Use the Parser's `steal()` method to get your hands on that 
 `Builder` object:
 
 ```cpp
@@ -327,9 +432,9 @@ int main () {
 ```
 
 When a parse error occurs while parsing the JSON input, the `Parser`
-object will throw an exception. The exception message can be retrieved
-by querying the Exception's `what` method. The error position in the
-input JSON can be retrieved by using the Parser's `errorPos` method.
+object will throw a VPack `Exception`. The exception message can be retrieved
+by querying the Exception's `what()` method. The error position in the
+input JSON can be retrieved by using the Parser's `errorPos()` method.
 
 The parser behavior can be adjusted by setting the following attributes
 in the Parser's `options` attribute:
@@ -363,10 +468,12 @@ object are adjusted so attribute name uniqueness is checked and attribute
 name sorting is turned off:
 
 ```cpp
-Parser parser;
-parser.options.validateUtf8Strings = true;
-parser.options.checkAttributeUniqueness = true;
-parser.options.sortAttributeNames = false;
+Options options;
+options.validateUtf8Strings = true;
+options.checkAttributeUniqueness = true;
+options.sortAttributeNames = false;
+
+Parser parser(&options);
 
 // now do something with the parser
 ```
@@ -374,6 +481,9 @@ parser.options.sortAttributeNames = false;
 
 Serializing a VPack value into JSON
 -----------------------------------
+
+See also: [examples/exampleDumper.cpp](examples/exampleDumper.cpp),
+[examples/exampleDumperPretty.cpp](examples/exampleDumperPretty.cpp)
 
 When the task is to create a JSON representation of a VPack value, the
 `Dumper` class can be used. A `Dumper` needs a `Sink` for writing the
@@ -438,10 +548,10 @@ Dumper dumper(&sink, &options);
 dumper.dump(s);
 ```
 
-The `Dumper` also has an `options` attribute that can be used to control
-whether forward slashes inside strings should be escaped with a backslash
-when producing JSON. The default is to not escape them. This can be changed
-by setting the `escapeForwardSlashes` attribute of the Dumper's `option`s:
+The options can also be used to control whether forward slashes inside strings 
+should be escaped with a backslash when producing JSON. The default is to not 
+escape them. This can be changed by setting the `escapeForwardSlashes` attribute 
+in the options.
 
 ```cpp
 Parser parser;

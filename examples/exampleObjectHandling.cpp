@@ -14,7 +14,11 @@ int main (int, char*[]) {
   b.add("qux", Value(true));
   b.add("bart", Value("this is a string"));
   b.close();
-  b.add("quux", Value(12345));
+  b.add("quux", Value(ValueType::Array));
+  b.add(Value(1));
+  b.add(Value(2));
+  b.add(Value(3));
+  b.close();
   b.close();
 
   // a Slice is a lightweight accessor for a VPack value
@@ -31,4 +35,20 @@ int main (int, char*[]) {
   for (auto it : ArrayIterator(values.slice())) {
     std::cout << "Object value is: " << it << ", as JSON: " << it.toJson() << std::endl;
   }
+
+  // recursively visit all members in the Object
+  // PostOrder here means we'll be visiting compound members before
+  // we're diving into their subvalues
+  Collection::visitRecursive(s, Collection::PostOrder, [] (Slice const& key, Slice const& value) -> bool {
+    if (! key.isNone()) {
+      // we are visiting an Object member
+      std::cout << "Visiting Object member: " << key.copyString() << ", value: " << value.toJson() << std::endl;
+    }
+    else {
+      // we are visiting an Array member
+      std::cout << "Visiting Array member: " << value.toJson() << std::endl;
+    }
+    // to continue visiting, return true. to abort visiting, return false
+    return true; 
+  });
 }

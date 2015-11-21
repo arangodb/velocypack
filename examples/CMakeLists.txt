@@ -16,9 +16,9 @@ if(BuildExamples)
            exampleDumper
            exampleDumperFile
            exampleDumperPretty
+           exampleObjectHandling
            exampleObjectIterator
            exampleObjectLookup
-           exampleObjectMethods
            exampleParser
            exampleSlice)
 
