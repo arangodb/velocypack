@@ -38,47 +38,54 @@ We have invented VPack because we need a binary format that
     in the database in an unchanged way
   - allows to use an external table for frequently used attribute names
   - quickly allows to read off the type and length of a given object
-    from its beginning
+    from its first byte(s)
 
 All this gives us the possibility to use *the same byte sequence of
-data* for **transport**, **storage** and (read-only) **work**.
+data* for **transport**, **storage** and (read-only) **work**. Using a
+single data format not only eliminates a lot of conversions but can 
+also reduce runtime memory usage, as data does only need a single 
+in-memory representation.
 
 The other popular formats we looked at have all some deficiency with
 respect to the above list. To name but a few:
 
   - JSON itself lacks some data types (dates and binary data) and does
-    not provide quick subvalue access without parsing
+    not provide quick subvalue access without parsing. Parsing JSON is
+    also quite a challenge performance-wise
   - XML is not compact and is not good with binary data, it also lacks
     quick subvalue access
-  - BSON is relatively compact, gets quite a lot right with respect to
-    data types, but is seriously lacking w.r.t. subvalue access
+  - BSON gets quite a lot right with respect to data types, but is 
+    seriously lacking w.r.t. subvalue access. Furthermore, it is not
+    very compact and quite wasteful spacewise when storing array values
   - Apache Thrift and Google's Protocol Buffers are not schemaless and 
-    self-contained and the transport format is a serialization that is
+    self-contained. Their transport format is a serialization that is
     not good for rapid subvalue access
-  - MessagePack is probably the closest to our shopping list, it is
-    quite compact, has decent data types but again no quick subvalue
-    access. However, we found that one can do better even with respect
-    to data size.
+  - MessagePack is probably the closest to our shopping list. It has
+    has decent data types and is quite compact. However, we found that 
+    one can do better in terms of compactness for some cases. More
+    important for us, MessagePack provides no quick subvalue access
   - Our own shaped JSON (used in ArangoDB as internal storage format)
     has very quick subvalue access, but the shape data is kept outside
-    the actual data, so the data markers are not self-contained.
+    the actual data, so the shaped values are not self-contained.
     Furthermore, we have run into scalability issues on multi-core
-    because of the shared data structures for the shapes.
+    because of the shared data structures used for interpretation of
+    the values
 
 Any new data format must be backed by good C++ classes to allow
 
   - easy and fast parsing from JSON
   - easy and convenient buildup without too many memory allocations
-  - fast access of subobjects (arrays and objects)
+  - fast access to data and its subobjects (for arrays and objects)
   - flexible memory management
   - fast dumping to JSON
 
-The VelocyPack format is an attempt to achieve all this and our first
-experiments and usage attempts are very encouraging..
+The VelocyPack format is an attempt to achieve all this, and our first
+experiments and usage attempts are very encouraging.
 
 This repository contains a C++ library for building, manipulating and
-serializing VPack data. It is the *reference implementation for the VPack
-format*.
+serializing VPack data. It is the *reference implementation for the 
+VelocyPack format*. The library is written in good old C++11 so it
+should compile on modern systems.
 
 
 Specification

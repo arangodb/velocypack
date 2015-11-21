@@ -161,7 +161,6 @@ Slice getSlice () {
 In the latter case it would have been better to return the `Builder`
 object from the function and not the `Slice`.
 
-
 VPack `Buffer` objects also manage their own memory. When a `Buffer`
 object goes out of scope, it will deallocate any dynamic memory it has
 allocated. Client-code must not access the `Buffer` object's memory
@@ -178,7 +177,7 @@ to selectively include the headers for just the classes needed, e.g.
 
 ```cpp
 // only need Builder and Slice in the following code
-// no need to include all VPack classes 
+// no need to include all VPack classes via #include <velocypack/vpack.h>
 #include <velocypack/Builder.h>
 #include <velocypack/Slice.h>
 ```
