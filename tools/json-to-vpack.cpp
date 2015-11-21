@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <fstream>
 
 #include "velocypack/vpack.h"
@@ -40,21 +41,60 @@ static void usage (char* argv[]) {
   std::cout << "Available options are:" << std::endl;
   std::cout << " --compact       store Array and Object types without index tables" << std::endl;
   std::cout << " --no-compact    store Array and Object types with index tables" << std::endl;
+  std::cout << " --compress      compress Object keys" << std::endl;
+  std::cout << " --no-compress   don't compress Object keys" << std::endl;
+}
+
+static inline bool isOption (char const* arg, char const* expected) {
+  return (strcmp(arg, expected) == 0);
+}
+
+static bool buildCompressedKeys (std::string const& s, std::unordered_map<std::string, size_t>& keysFound) {
+  Options options;
+  Parser parser(&options);
+  try {
+    parser.parse(s);
+    Builder builder = parser.steal();
+
+    Collection::visitRecursive(builder.slice(), Collection::PreOrder, [&keysFound] (Slice const& key, Slice const&) -> bool {
+      if (key.isString()) {
+        keysFound[key.copyString()]++;
+      }
+      return true;
+    });
+
+    return true;
+  }
+  catch (...) {
+    // simply don't use compressed keys
+    return false;
+  }
 }
 
 int main (int argc, char* argv[]) {
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
-  bool compact = true;
+  bool allowFlags  = true;
+  bool compact     = true;
+  bool compress    = false;
 
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
-    if (strncmp("--compact", p, strlen("--compact")) == 0) {
+    if (allowFlags && isOption(p, "--compact")) {
       compact = true;
     }
-    else if (strncmp("--no-compact", p, strlen("--no-compact")) == 0) {
+    else if (allowFlags && isOption(p, "--no-compact")) {
       compact = false;
+    }
+    else if (allowFlags && isOption(p, "--compress")) {
+      compress = true;
+    }
+    else if (allowFlags && isOption(p, "--no-compress")) {
+      compress = false;
+    }
+    else if (allowFlags && isOption(p, "--")) {
+      allowFlags = false;
     }
     else if (infileName == nullptr) {
       infileName = p;
@@ -76,10 +116,13 @@ int main (int argc, char* argv[]) {
 
 #ifdef __linux__
   // treat missing outfile as stdout
+  bool resetStream = true;
   if (outfileName == nullptr) {
     outfileName = "/proc/self/fd/1";
+    resetStream = false;
   }
 #else 
+  bool const resetStream = true;
   if (outfileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
@@ -113,6 +156,47 @@ int main (int argc, char* argv[]) {
   options.buildUnindexedArrays = compact;
   options.buildUnindexedObjects = compact;
 
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  // compress object keys?
+  if (compress) {
+    size_t compressedOccurrences = 0;
+    std::unordered_map<std::string, size_t> keysFound;
+    buildCompressedKeys(s, keysFound);
+
+    std::vector<std::tuple<size_t, std::string, size_t>> stats;
+    size_t requiredLength = 2;
+    uint64_t nextId = 0;
+    for (auto const& it : keysFound) {
+      if (it.second > 1 && it.first.size() >= requiredLength) {
+        translator->add(it.first, ++nextId);
+        stats.emplace_back(std::make_tuple(nextId, it.first, it.second));
+
+        if (translator->count() == 255) {
+          requiredLength = 3;
+        }
+        compressedOccurrences += it.second;
+      }
+    }
+    translator->seal();
+
+    options.attributeTranslator = translator.get();
+
+    // print statistics
+    if (compressedOccurrences > 0) {
+      std::cout << compressedOccurrences << " occurrences of Object keys will be stored compressed:" << std::endl;
+
+      size_t printed = 0;
+      for (auto const& it : stats) {
+        if (++printed > 20) {
+          std::cout << " - ... " << (stats.size() - printed + 1) << " Object key(s) follow ..." << std::endl; 
+          break;
+        }
+        std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it) << " (" << std::get<2>(it) << " occurrences)" << std::endl; 
+      }
+    }
+  }
+
   Parser parser(&options);
   try {
     parser.parse(s);
@@ -126,7 +210,7 @@ int main (int argc, char* argv[]) {
     std::cerr << "An unknown exception occurred while parsing infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
-  
+ 
   std::ofstream ofs(outfileName, std::ofstream::out);
  
   if (! ofs.is_open()) {
@@ -135,24 +219,29 @@ int main (int argc, char* argv[]) {
   }
 
   // reset stream
-  ofs.seekp(0);
+  if (resetStream) {
+    ofs.seekp(0);
+  }
 
   // write into stream
   Builder builder = parser.steal();
   uint8_t const* start = builder.start();
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
-  if (! ofs) {
-    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
-    ofs.close();
-    return EXIT_FAILURE;
-  }
-
   ofs.close();
-
+  
   std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
-  std::cout << "JSON Infile size:   " << s.size() << std::endl;
-  std::cout << "VPack Outfile size: " << builder.size() << std::endl;
+  std::cout << "JSON Infile size:    " << s.size() << std::endl;
+  std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
+
+  if (compress) {
+    if (translator.get()->count() > 0) {
+      std::cout << "Key dictionary size: " << Slice(translator.get()->builder()->data(), &options).byteSize() << std::endl;
+    }
+    else {
+      std::cout << "Key dictionary size: 0 (no benefit from compression)" << std::endl;
+    }
+  }
   
   return EXIT_SUCCESS;
 }

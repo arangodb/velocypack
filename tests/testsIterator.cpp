@@ -836,7 +836,7 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.start());
+  Slice s(parser.start(), &options);
 
   ObjectIterator it(s);
   ASSERT_EQ(6UL, it.size());

@@ -1,7 +1,5 @@
 * write Performance.md section for speed tests
 
-* implement lookup table support in Builder, Slice, Parser and Dumper (MN)
-
 * documentation of C++ classes (// ...) (MN)
 
 * test on MacOS and ARM

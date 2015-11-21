@@ -168,12 +168,26 @@ allocated. Client-code must not access the `Buffer` object's memory
 after that.
 
 
+Including the VPack headers
+---------------------------
+
+The easiest way of making the VPack library's classes available to a client
+program is to include the header `velocypack/vpack.h`. This will import all
+class declarations from the namespace `arangodb::velocypack`. It is also possible 
+to selectively include the headers for just the classes needed, e.g.
+
+```cpp
+// only need Builder and Slice in the following code
+// no need to include all VPack classes 
+#include <velocypack/Builder.h>
+#include <velocypack/Slice.h>
+```
+
+Because only the actually required headers will be included, this variant may 
+save some compilation time.
+
 Name clashes and class aliases
 ------------------------------
-
-The default way of making the VPack library's classes available to a client
-program is to include the header `velocypack/vpack.h`. This will load the
-classes definitions from namespace `arangodb::velocypack`.
 
 To avoid full name qualification in client programs, it may be convenient to
 make all classes from this namespace available without extra qualification.
@@ -192,26 +206,31 @@ not an option, an alternative is to use the class name aliases that are
 defined in the header file `velocypack/velocypack-aliases.h`. 
 
 This header file makes the most common VPack classes available under alternative 
-(hopefully unambiguous) class names with the prefix *VPack*:
+(hopefully unambiguous) class names with the prefix *VPack*, for example:
 
 ```cpp
 using VPackArrayIterator      = arangodb::velocypack::ArrayIterator;
 using VPackBuilder            = arangodb::velocypack::Builder;
 using VPackCharBuffer         = arangodb::velocypack::CharBuffer;
 using VPackCharBufferSink     = arangodb::velocypack::CharBufferSink;
-using VPackCollection         = arangodb::velocypack::Collection;
-using VPackDumper             = arangodb::velocypack::Dumper;
-using VPackException          = arangodb::velocypack::Exception;
-using VPackHexDump            = arangodb::velocypack::HexDump;
-using VPackObjectIterator     = arangodb::velocypack::ObjectIterator;
-using VPackOptions            = arangodb::velocypack::Options;
-using VPackParser             = arangodb::velocypack::Parser;
-using VPackSink               = arangodb::velocypack::Sink;
-using VPackSlice              = arangodb::velocypack::Slice;
-using VPackStringSink         = arangodb::velocypack::StringSink;
-using VPackStringStreamSink   = arangodb::velocypack::StringStreamSink;
-using VPackValue              = arangodb::velocypack::Value;
-using VPackValueLength        = arangodb::velocypack::ValueLength;
-using VPackValueType          = arangodb::velocypack::ValueType;
-using VPackVersion            = arangodb::velocypack::Version;
+...
 ```
+
+Note that the `velocypack-aliases.h` header will only make those VPack classes
+available under alternative names that have been included already. When using
+this header, it should be included after the other VPack headers have been
+included:
+
+```cpp
+#include <velocypack/vpack.h>
+#include <velocypack/velocypack-aliases.h>
+```
+
+or, when using selective headers:
+
+```cpp
+#include <velocypack/Builder.h>
+#include <velocypack/Slice.h>
+#include <velocypack/velocypack-aliases.h>
+```
+

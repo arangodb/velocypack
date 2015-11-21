@@ -138,6 +138,7 @@ namespace arangodb {
           _size = _buffer->size();
 
           VELOCYPACK_ASSERT(options != nullptr);
+
           if (options == nullptr) {
             throw Exception(Exception::InternalError, "Options cannot be a nullptr");
           }
@@ -151,6 +152,7 @@ namespace arangodb {
           _size = _buffer->size();
 
           VELOCYPACK_ASSERT(options != nullptr);
+
           if (options == nullptr) {
             throw Exception(Exception::InternalError, "Options cannot be a nullptr");
           }
@@ -230,6 +232,14 @@ namespace arangodb {
         std::shared_ptr<Buffer<uint8_t>> const& buffer () const {
           return _buffer;
         }
+
+        uint8_t const* data () const {
+          if (_buffer == nullptr) {
+            throw Exception(Exception::InternalError, "Buffer of Builder is already gone");
+          }
+
+          return _buffer.get()->data();
+        }
         
         // get a non-const reference to the Builder's Buffer object
         std::shared_ptr<Buffer<uint8_t>>& buffer () {
@@ -238,11 +248,8 @@ namespace arangodb {
 
         static Builder clone (Slice const& slice, Options const* options = &Options::Defaults) {
           VELOCYPACK_ASSERT(options != nullptr);
-          if (options == nullptr) {
-            throw Exception(Exception::InternalError, "Options cannot be a nullptr");
-          }
-          Builder b;
-          b.options = options;
+
+          Builder b(options);
           b.add(slice);
           return std::move(b); 
         }
@@ -310,25 +317,37 @@ namespace arangodb {
         Slice getKey (std::string const& key) const;
 
         // Syntactic sugar for add:
-        Builder& operator() (std::string const& attrName, Value sub) {
+        Builder& operator() (std::string const& attrName, Value const& sub) {
           add(attrName, sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        Builder& operator() (std::string const& attrName, ValuePair sub) {
+        Builder& operator() (std::string const& attrName, ValuePair const& sub) {
           add(attrName, sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        Builder& operator() (Value sub) {
+        Builder& operator() (std::string const& attrName, Slice const& sub) {
+          add(attrName, sub);
+          return *this;
+        }
+
+        // Syntactic sugar for add:
+        Builder& operator() (Value const& sub) {
           add(sub);
           return *this;
         }
 
         // Syntactic sugar for add:
-        Builder& operator() (ValuePair sub) {
+        Builder& operator() (ValuePair const& sub) {
+          add(sub);
+          return *this;
+        }
+
+        // Syntactic sugar for add:
+        Builder& operator() (Slice const& sub) {
           add(sub);
           return *this;
         }
@@ -450,6 +469,7 @@ namespace arangodb {
           if (options->attributeTranslator != nullptr) {
             // check if a translation for the attribute name exists
             uint8_t const* translated = options->attributeTranslator->translate(attrName);
+
             if (translated != nullptr) {
               set(Slice(options->attributeTranslator->translate(attrName), options));
               return set(sub);
