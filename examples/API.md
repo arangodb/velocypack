@@ -22,7 +22,7 @@ the default options.
 Building VPack objects programmatically
 ---------------------------------------
 
-See also: [examples/exampleBuilder.cpp](examples/exampleBuilder.cpp)
+See also: [exampleBuilder.cpp](exampleBuilder.cpp)
 
 VPack objects can be assembled easily with a `Builder` object.
 This `Builder` class organizes the buildup of one or many VPack objects.
@@ -87,7 +87,7 @@ i.e. the last opened `Array` or `Object` value. To finish a compound
 object, the Builder's `close()` method must be called.
 
 
-See also: [examples/exampleBuilderFancy.cpp](examples/exampleBuilderFancy.cpp)
+See also: [exampleBuilderFancy.cpp](exampleBuilderFancy.cpp)
 
 If you like fancy syntactic sugar, the same object can alternatively be
 built using operator syntax:
@@ -152,8 +152,8 @@ Builder b(&options);
 Inspecting the contents of a VPack object
 -----------------------------------------
 
-See also: [examples/exampleSlice.cpp](examples/exampleSlice.cpp),
-[examples/exampleObjectLookup.cpp](examples/exampleObjectLookup.cpp)
+See also: [exampleSlice.cpp](exampleSlice.cpp),
+[exampleObjectLookup.cpp](exampleObjectLookup.cpp)
 
 The `Slice` class can be used for accessing existing VPack objects and
 inspecting them. A `Slice` can be considered a *view over a memory
@@ -290,8 +290,8 @@ if (s.hasKey(std::vector<std::string>({ "baz", "bart" }))) {
 Iterating over VPack Arrays and Objects
 ---------------------------------------
 
-See also: [examples/exampleArrayIterator.cpp](examples/exampleArrayIterator.cpp),
-[examples/exampleObjectIterator.cpp](examples/exampleObjectIterator.cpp)
+See also: [exampleArrayIterator.cpp](exampleArrayIterator.cpp),
+[exampleObjectIterator.cpp](exampleObjectIterator.cpp)
 
 With the VPack compound value types *Array* and *Object* there comes the
 need to iterate over their individual members. This can be achieved easily
@@ -344,8 +344,8 @@ for (auto const& it : ObjectIterator(s)) {
 Working with Arrays and Objects
 -------------------------------
 
-See also: [examples/exampleArrayHandling.cpp](examples/exampleArrayHandling.cpp),
-[examples/exampleObjectHandling.cpp](examples/exampleObjectHandling.cpp)
+See also: [exampleArrayHandling.cpp](exampleArrayHandling.cpp),
+[exampleObjectHandling.cpp](exampleObjectHandling.cpp)
 
 When working with Array values, a common task is to iterate over the Array's
 members. The `Collection` class provides several static helper methods for this:
@@ -386,7 +386,7 @@ The `Collection` class provides the following methods for working with `Object` 
 Parsing JSON into a VPack value
 -------------------------------
 
-See also: [examples/exampleParser.cpp](examples/exampleParser.cpp)
+See also: [exampleParser.cpp](exampleParser.cpp)
 
 Often there is already existing data in JSON format. To convert that
 data into VPack, use the `Parser` class. `Parser` provides an efficient 
@@ -482,8 +482,8 @@ Parser parser(&options);
 Serializing a VPack value into JSON
 -----------------------------------
 
-See also: [examples/exampleDumper.cpp](examples/exampleDumper.cpp),
-[examples/exampleDumperPretty.cpp](examples/exampleDumperPretty.cpp)
+See also: [exampleDumper.cpp](exampleDumper.cpp),
+[exampleDumperPretty.cpp](exampleDumperPretty.cpp)
 
 When the task is to create a JSON representation of a VPack value, the
 `Dumper` class can be used. A `Dumper` needs a `Sink` for writing the
