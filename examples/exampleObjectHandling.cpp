@@ -25,15 +25,15 @@ int main (int, char*[]) {
   Slice s(b.start());
 
   // get all object keys. returns a vector of strings
-  for (auto& it : Collection::keys(s)) {
+  for (auto const& key : Collection::keys(s)) {
     // print key
-    std::cout << "Object has key '" << it << "'" << std::endl;
+    std::cout << "Object has key '" << key << "'" << std::endl;
   }
 
   // get all object values. returns a Builder object with an Array inside
   Builder values = Collection::values(s);
-  for (auto it : ArrayIterator(values.slice())) {
-    std::cout << "Object value is: " << it << ", as JSON: " << it.toJson() << std::endl;
+  for (auto const& value : ArrayIterator(values.slice())) {
+    std::cout << "Object value is: " << value << ", as JSON: " << value.toJson() << std::endl;
   }
 
   // recursively visit all members in the Object
