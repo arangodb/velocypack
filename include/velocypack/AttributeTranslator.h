@@ -28,6 +28,7 @@
 #define VELOCYPACK_ATTRIBUTETRANSLATOR_H 1
 
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 #include <memory>
 
