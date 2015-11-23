@@ -31,7 +31,8 @@
 #include "tests-common.h"
 
 TEST(LookupTest, HasKeyShortObject) {
-  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+  std::string const value(
+      "{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
   Parser parser;
   parser.parse(value);
@@ -52,7 +53,8 @@ TEST(LookupTest, HasKeyShortObject) {
 }
 
 TEST(LookupTest, HasKeyShortObjectCompact) {
-  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+  std::string const value(
+      "{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
   Options options;
   options.buildUnindexedObjects = true;
@@ -82,47 +84,47 @@ TEST(LookupTest, HasKeyLongObject) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
-  
+  value.append("}");
+
   Parser parser;
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  ASSERT_TRUE(s.hasKey("test4")); 
-  ASSERT_TRUE(s.hasKey("test10")); 
-  ASSERT_TRUE(s.hasKey("test42")); 
-  ASSERT_TRUE(s.hasKey("test100")); 
-  ASSERT_TRUE(s.hasKey("test932")); 
-  ASSERT_TRUE(s.hasKey("test1000")); 
-  ASSERT_TRUE(s.hasKey("test1023")); 
-  ASSERT_FALSE(s.hasKey("test0")); 
-  ASSERT_FALSE(s.hasKey("test1")); 
-  ASSERT_FALSE(s.hasKey("test2")); 
-  ASSERT_FALSE(s.hasKey("test3")); 
-  ASSERT_FALSE(s.hasKey("test1024")); 
+  ASSERT_TRUE(s.hasKey("test4"));
+  ASSERT_TRUE(s.hasKey("test10"));
+  ASSERT_TRUE(s.hasKey("test42"));
+  ASSERT_TRUE(s.hasKey("test100"));
+  ASSERT_TRUE(s.hasKey("test932"));
+  ASSERT_TRUE(s.hasKey("test1000"));
+  ASSERT_TRUE(s.hasKey("test1023"));
+  ASSERT_FALSE(s.hasKey("test0"));
+  ASSERT_FALSE(s.hasKey("test1"));
+  ASSERT_FALSE(s.hasKey("test2"));
+  ASSERT_FALSE(s.hasKey("test3"));
+  ASSERT_FALSE(s.hasKey("test1024"));
 }
 
 TEST(LookupTest, HasKeyLongObjectCompact) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
-  
+  value.append("}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -130,48 +132,54 @@ TEST(LookupTest, HasKeyLongObjectCompact) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0x14, s.head());
 
-  ASSERT_TRUE(s.hasKey("test4")); 
-  ASSERT_TRUE(s.hasKey("test10")); 
-  ASSERT_TRUE(s.hasKey("test42")); 
-  ASSERT_TRUE(s.hasKey("test100")); 
-  ASSERT_TRUE(s.hasKey("test932")); 
-  ASSERT_TRUE(s.hasKey("test1000")); 
-  ASSERT_TRUE(s.hasKey("test1023")); 
-  ASSERT_FALSE(s.hasKey("test0")); 
-  ASSERT_FALSE(s.hasKey("test1")); 
-  ASSERT_FALSE(s.hasKey("test2")); 
-  ASSERT_FALSE(s.hasKey("test3")); 
-  ASSERT_FALSE(s.hasKey("test1024")); 
+  ASSERT_TRUE(s.hasKey("test4"));
+  ASSERT_TRUE(s.hasKey("test10"));
+  ASSERT_TRUE(s.hasKey("test42"));
+  ASSERT_TRUE(s.hasKey("test100"));
+  ASSERT_TRUE(s.hasKey("test932"));
+  ASSERT_TRUE(s.hasKey("test1000"));
+  ASSERT_TRUE(s.hasKey("test1023"));
+  ASSERT_FALSE(s.hasKey("test0"));
+  ASSERT_FALSE(s.hasKey("test1"));
+  ASSERT_FALSE(s.hasKey("test2"));
+  ASSERT_FALSE(s.hasKey("test3"));
+  ASSERT_FALSE(s.hasKey("test1024"));
 }
 
 TEST(LookupTest, HasKeySubattributes) {
-  std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
+  std::string const value(
+      "{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
 
   Parser parser;
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()), Exception::InvalidAttributePath); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bar" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo", "far" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bark" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "bark", "baz" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurk" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" }))); 
+  ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()),
+                              Exception::InvalidAttributePath);
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "bar"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"boo"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"boo", "far"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "bark"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"foo", "bark", "baz"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "baz"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "baz", "qux"})));
+  ASSERT_TRUE(
+      s.hasKey(std::vector<std::string>({"foo", "baz", "qux", "qurz"})));
+  ASSERT_FALSE(
+      s.hasKey(std::vector<std::string>({"foo", "baz", "qux", "qurk"})));
+  ASSERT_FALSE(s.hasKey(
+      std::vector<std::string>({"foo", "baz", "qux", "qurz", "p0rk"})));
 }
 
 TEST(LookupTest, HasKeySubattributesCompact) {
-  std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
-  
+  std::string const value(
+      "{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -179,22 +187,26 @@ TEST(LookupTest, HasKeySubattributesCompact) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0x0b, s.head());
 
-  ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()), Exception::InvalidAttributePath); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo" }))); 
-  ASSERT_EQ(0x14, s.get(std::vector<std::string>({ "foo" })).head()); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bar" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "boo", "far" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "bark" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "bark", "baz" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux" }))); 
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurk" }))); 
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" }))); 
+  ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()),
+                              Exception::InvalidAttributePath);
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo"})));
+  ASSERT_EQ(0x14, s.get(std::vector<std::string>({"foo"})).head());
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "bar"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"boo"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"boo", "far"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "bark"})));
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"foo", "bark", "baz"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "baz"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"foo", "baz", "qux"})));
+  ASSERT_TRUE(
+      s.hasKey(std::vector<std::string>({"foo", "baz", "qux", "qurz"})));
+  ASSERT_FALSE(
+      s.hasKey(std::vector<std::string>({"foo", "baz", "qux", "qurk"})));
+  ASSERT_FALSE(s.hasKey(
+      std::vector<std::string>({"foo", "baz", "qux", "qurz", "p0rk"})));
 }
 
 TEST(LookupTest, EmptyObject) {
@@ -206,13 +218,13 @@ TEST(LookupTest, EmptyObject) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("foo"); 
-  ASSERT_TRUE(v.isNone());
- 
-  v = s.get("bar");  
+  v = s.get("foo");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("baz");  
+  v = s.get("bar");
+  ASSERT_TRUE(v.isNone());
+
+  v = s.get("baz");
   ASSERT_TRUE(v.isNone());
 }
 
@@ -225,19 +237,20 @@ TEST(LookupTest, AlmostEmptyObject) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("foo"); 
+  v = s.get("foo");
   ASSERT_TRUE(v.isInteger());
   ASSERT_EQ(1UL, v.getUInt());
- 
-  v = s.get("bar");  
+
+  v = s.get("bar");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("baz");  
+  v = s.get("baz");
   ASSERT_TRUE(v.isNone());
 }
-  
+
 TEST(LookupTest, LookupShortObject) {
-  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+  std::string const value(
+      "{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
   Parser parser;
   parser.parse(value);
@@ -245,47 +258,48 @@ TEST(LookupTest, LookupShortObject) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("foo"); 
+  v = s.get("foo");
   ASSERT_TRUE(v.isNull());
- 
-  v = s.get("bar");  
+
+  v = s.get("bar");
   ASSERT_TRUE(v.isBool());
   ASSERT_EQ(true, v.getBool());
 
-  v = s.get("baz");  
+  v = s.get("baz");
   ASSERT_TRUE(v.isDouble());
   ASSERT_DOUBLE_EQ(13.53, v.getDouble());
 
-  v = s.get("qux");  
+  v = s.get("qux");
   ASSERT_TRUE(v.isArray());
   ASSERT_TRUE(v.isType(ValueType::Array));
   ASSERT_EQ(1ULL, v.length());
 
-  v = s.get("quz");  
+  v = s.get("quz");
   ASSERT_TRUE(v.isObject());
   ASSERT_TRUE(v.isType(ValueType::Object));
   ASSERT_EQ(0ULL, v.length());
 
   // non-present attributes
-  v = s.get("nada");  
+  v = s.get("nada");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::string("foo\0", 4));  
+  v = s.get(std::string("foo\0", 4));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("Foo");  
+  v = s.get("Foo");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("food");  
+  v = s.get("food");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("");  
+  v = s.get("");
   ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupShortObjectCompact) {
-  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
-  
+  std::string const value(
+      "{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -297,93 +311,96 @@ TEST(LookupTest, LookupShortObjectCompact) {
   ASSERT_EQ(0x14, s.head());
 
   Slice v;
-  v = s.get("foo"); 
+  v = s.get("foo");
   ASSERT_TRUE(v.isNull());
- 
-  v = s.get("bar");  
+
+  v = s.get("bar");
   ASSERT_TRUE(v.isBool());
   ASSERT_EQ(true, v.getBool());
 
-  v = s.get("baz");  
+  v = s.get("baz");
   ASSERT_TRUE(v.isDouble());
   ASSERT_DOUBLE_EQ(13.53, v.getDouble());
 
-  v = s.get("qux");  
+  v = s.get("qux");
   ASSERT_TRUE(v.isArray());
   ASSERT_TRUE(v.isType(ValueType::Array));
   ASSERT_EQ(1ULL, v.length());
 
-  v = s.get("quz");  
+  v = s.get("quz");
   ASSERT_TRUE(v.isObject());
   ASSERT_TRUE(v.isType(ValueType::Object));
   ASSERT_EQ(0ULL, v.length());
 
   // non-present attributes
-  v = s.get("nada");  
+  v = s.get("nada");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::string("foo\0", 4));  
+  v = s.get(std::string("foo\0", 4));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("Foo");  
+  v = s.get("Foo");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("food");  
+  v = s.get("food");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("");  
+  v = s.get("");
   ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupSubattributes) {
-  std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
+  std::string const value(
+      "{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
 
   Parser parser;
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()), Exception::InvalidAttributePath); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()),
+                              Exception::InvalidAttributePath);
 
   Slice v;
-  v = s.get(std::vector<std::string>({ "foo" })); 
+  v = s.get(std::vector<std::string>({"foo"}));
   ASSERT_TRUE(v.isObject());
- 
-  v = s.get(std::vector<std::string>({ "foo", "bar" })); 
+
+  v = s.get(std::vector<std::string>({"foo", "bar"}));
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1ULL, v.getUInt());
 
-  v = s.get(std::vector<std::string>({ "boo" })); 
+  v = s.get(std::vector<std::string>({"boo"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "boo", "far" })); 
+  v = s.get(std::vector<std::string>({"boo", "far"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "bark" })); 
+  v = s.get(std::vector<std::string>({"foo", "bark"}));
   ASSERT_TRUE(v.isArray());
 
-  v = s.get(std::vector<std::string>({ "foo", "bark", "baz" })); 
+  v = s.get(std::vector<std::string>({"foo", "bark", "baz"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz"}));
   ASSERT_TRUE(v.isObject());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux"}));
   ASSERT_TRUE(v.isObject());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurz"}));
   ASSERT_TRUE(v.isNull());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurk" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurk"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurz", "p0rk"}));
   ASSERT_TRUE(v.isNone());
 }
 
 TEST(LookupTest, LookupSubattributesCompact) {
-  std::string const value("{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
-  
+  std::string const value(
+      "{\"foo\":{\"bar\":1,\"bark\":[],\"baz\":{\"qux\":{\"qurz\":null}}}}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -393,43 +410,44 @@ TEST(LookupTest, LookupSubattributesCompact) {
   Slice s(builder.start());
 
   ASSERT_EQ(0x0b, s.head());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()), Exception::InvalidAttributePath); 
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()),
+                              Exception::InvalidAttributePath);
 
   Slice v;
-  v = s.get(std::vector<std::string>({ "foo" })); 
+  v = s.get(std::vector<std::string>({"foo"}));
   ASSERT_TRUE(v.isObject());
   ASSERT_EQ(0x14, v.head());
- 
-  v = s.get(std::vector<std::string>({ "foo", "bar" })); 
+
+  v = s.get(std::vector<std::string>({"foo", "bar"}));
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1ULL, v.getUInt());
 
-  v = s.get(std::vector<std::string>({ "boo" })); 
+  v = s.get(std::vector<std::string>({"boo"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "boo", "far" })); 
+  v = s.get(std::vector<std::string>({"boo", "far"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "bark" })); 
+  v = s.get(std::vector<std::string>({"foo", "bark"}));
   ASSERT_TRUE(v.isArray());
 
-  v = s.get(std::vector<std::string>({ "foo", "bark", "baz" })); 
+  v = s.get(std::vector<std::string>({"foo", "bark", "baz"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz"}));
   ASSERT_TRUE(v.isObject());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux"}));
   ASSERT_TRUE(v.isObject());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurz"}));
   ASSERT_TRUE(v.isNull());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurk" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurk"}));
   ASSERT_TRUE(v.isNone());
 
-  v = s.get(std::vector<std::string>({ "foo", "baz", "qux", "qurz", "p0rk" })); 
+  v = s.get(std::vector<std::string>({"foo", "baz", "qux", "qurz", "p0rk"}));
   ASSERT_TRUE(v.isNone());
 }
 
@@ -437,14 +455,14 @@ TEST(LookupTest, LookupLongObject) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Parser parser;
   parser.parse(value);
@@ -452,42 +470,42 @@ TEST(LookupTest, LookupLongObject) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("test4"); 
+  v = s.get("test4");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(4ULL, v.getUInt());
 
-  v = s.get("test10"); 
+  v = s.get("test10");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(10ULL, v.getUInt());
 
-  v = s.get("test42"); 
+  v = s.get("test42");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(42ULL, v.getUInt());
 
-  v = s.get("test100"); 
+  v = s.get("test100");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(100ULL, v.getUInt());
-  
-  v = s.get("test932"); 
+
+  v = s.get("test932");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(932ULL, v.getUInt());
 
-  v = s.get("test1000"); 
+  v = s.get("test1000");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1000ULL, v.getUInt());
 
-  v = s.get("test1023"); 
+  v = s.get("test1023");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1023ULL, v.getUInt());
 
   // none existing
-  v = s.get("test0"); 
+  v = s.get("test0");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1"); 
+  v = s.get("test1");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1024"); 
+  v = s.get("test1024");
   ASSERT_TRUE(v.isNone());
 }
 
@@ -495,14 +513,14 @@ TEST(LookupTest, LookupLongObjectCompact) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Options options;
   options.buildUnindexedObjects = true;
@@ -515,42 +533,42 @@ TEST(LookupTest, LookupLongObjectCompact) {
   ASSERT_EQ(0x14, s.head());
 
   Slice v;
-  v = s.get("test4"); 
+  v = s.get("test4");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(4ULL, v.getUInt());
 
-  v = s.get("test10"); 
+  v = s.get("test10");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(10ULL, v.getUInt());
 
-  v = s.get("test42"); 
+  v = s.get("test42");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(42ULL, v.getUInt());
 
-  v = s.get("test100"); 
+  v = s.get("test100");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(100ULL, v.getUInt());
-  
-  v = s.get("test932"); 
+
+  v = s.get("test932");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(932ULL, v.getUInt());
 
-  v = s.get("test1000"); 
+  v = s.get("test1000");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1000ULL, v.getUInt());
 
-  v = s.get("test1023"); 
+  v = s.get("test1023");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1023ULL, v.getUInt());
 
   // none existing
-  v = s.get("test0"); 
+  v = s.get("test0");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1"); 
+  v = s.get("test1");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1024"); 
+  v = s.get("test1024");
   ASSERT_TRUE(v.isNone());
 }
 
@@ -558,14 +576,14 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
   std::string value("{");
   for (size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Options options;
   options.sortAttributeNames = false;
@@ -576,42 +594,42 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("test4"); 
+  v = s.get("test4");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(4ULL, v.getUInt());
 
-  v = s.get("test10"); 
+  v = s.get("test10");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(10ULL, v.getUInt());
 
-  v = s.get("test42"); 
+  v = s.get("test42");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(42ULL, v.getUInt());
 
-  v = s.get("test100"); 
+  v = s.get("test100");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(100ULL, v.getUInt());
-  
-  v = s.get("test932"); 
+
+  v = s.get("test932");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(932ULL, v.getUInt());
 
-  v = s.get("test1000"); 
+  v = s.get("test1000");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1000ULL, v.getUInt());
 
-  v = s.get("test1023"); 
+  v = s.get("test1023");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1023ULL, v.getUInt());
 
   // none existing
-  v = s.get("test0"); 
+  v = s.get("test0");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1"); 
+  v = s.get("test1");
   ASSERT_TRUE(v.isNone());
 
-  v = s.get("test1024"); 
+  v = s.get("test1024");
   ASSERT_TRUE(v.isNone());
 }
 
@@ -619,14 +637,14 @@ TEST(LookupTest, LookupLinear) {
   std::string value("{");
   for (size_t i = 0; i < 4; ++i) {
     if (i > 0) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Parser parser;
   parser.parse(value);
@@ -634,19 +652,19 @@ TEST(LookupTest, LookupLinear) {
   Slice s(builder.start());
 
   Slice v;
-  v = s.get("test0"); 
+  v = s.get("test0");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(0ULL, v.getUInt());
-  
-  v = s.get("test1"); 
+
+  v = s.get("test1");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1ULL, v.getUInt());
 
-  v = s.get("test2"); 
+  v = s.get("test2");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(2ULL, v.getUInt());
-  
-  v = s.get("test3"); 
+
+  v = s.get("test3");
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(3ULL, v.getUInt());
 }
@@ -655,14 +673,14 @@ TEST(LookupTest, LookupBinary) {
   std::string value("{");
   for (size_t i = 0; i < 128; ++i) {
     if (i > 0) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Parser parser;
   parser.parse(value);
@@ -673,25 +691,25 @@ TEST(LookupTest, LookupBinary) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
-  
+
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
-  } 
+  }
 }
 
 TEST(LookupTest, LookupBinaryCompact) {
   std::string value("{");
   for (size_t i = 0; i < 128; ++i) {
     if (i > 0) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
-  
+  value.append("}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -706,26 +724,26 @@ TEST(LookupTest, LookupBinaryCompact) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
-  
+
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
-  } 
+  }
 }
 
 TEST(LookupTest, LookupBinarySamePrefix) {
   std::string value("{");
   for (size_t i = 0; i < 128; ++i) {
     if (i > 0) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     for (size_t j = 0; j < i; ++j) {
       value.append("x");
     }
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Parser parser;
   parser.parse(value);
@@ -738,24 +756,24 @@ TEST(LookupTest, LookupBinarySamePrefix) {
       key.append("x");
     }
     Slice v = s.get(key);
-  
+
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
-  } 
+  }
 }
 
 TEST(LookupTest, LookupBinaryLongObject) {
   std::string value("{");
   for (size_t i = 0; i < 1127; ++i) {
     if (i > 0) {
-      value.append(","); 
+      value.append(",");
     }
-    value.append("\"test"); 
+    value.append("\"test");
     value.append(std::to_string(i));
-    value.append("\":"); 
+    value.append("\":");
     value.append(std::to_string(i));
   }
-  value.append("}"); 
+  value.append("}");
 
   Parser parser;
   parser.parse(value);
@@ -766,10 +784,10 @@ TEST(LookupTest, LookupBinaryLongObject) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
-  
+
     ASSERT_TRUE(v.isNumber());
     ASSERT_EQ(i, v.getUInt());
-  } 
+  }
 }
 
 TEST(LookupTest, LookupInvalidTypeNull) {
@@ -779,7 +797,7 @@ TEST(LookupTest, LookupInvalidTypeNull) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
 }
 
@@ -790,7 +808,7 @@ TEST(LookupTest, LookupInvalidTypeArray) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
 }
 
@@ -801,7 +819,7 @@ TEST(LookupTest, AtNull) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
 }
 
@@ -812,7 +830,7 @@ TEST(LookupTest, AtObject) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
 }
 
@@ -823,18 +841,18 @@ TEST(LookupTest, AtArray) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(1, s.at(0).getInt());
   ASSERT_EQ(2, s.at(1).getInt());
   ASSERT_EQ(3, s.at(2).getInt());
   ASSERT_EQ(4, s.at(3).getInt());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4), Exception::IndexOutOfBounds);
 }
 
 TEST(LookupTest, AtArrayCompact) {
   std::string const value("[1,2,3,4]");
-  
+
   Options options;
   options.buildUnindexedArrays = true;
 
@@ -844,12 +862,12 @@ TEST(LookupTest, AtArrayCompact) {
   Slice s(builder.start());
 
   ASSERT_EQ(0x13, s.head());
-  
+
   ASSERT_EQ(1, s.at(0).getInt());
   ASSERT_EQ(2, s.at(1).getInt());
   ASSERT_EQ(3, s.at(2).getInt());
   ASSERT_EQ(4, s.at(3).getInt());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4), Exception::IndexOutOfBounds);
 }
 
@@ -860,7 +878,7 @@ TEST(LookupTest, KeyAtArray) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
 }
 
@@ -871,7 +889,7 @@ TEST(LookupTest, KeyAtNull) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
 }
 
@@ -890,7 +908,7 @@ TEST(LookupTest, KeyAtObject) {
   ASSERT_EQ("bar", s.keyAt(1).copyString());
   ASSERT_EQ("baz", s.keyAt(2).copyString());
   ASSERT_EQ("qux", s.keyAt(3).copyString());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4), Exception::IndexOutOfBounds);
 }
 
@@ -909,7 +927,7 @@ TEST(LookupTest, KeyAtObjectSorted) {
   ASSERT_EQ("baz", s.keyAt(1).copyString());
   ASSERT_EQ("foo", s.keyAt(2).copyString());
   ASSERT_EQ("qux", s.keyAt(3).copyString());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4), Exception::IndexOutOfBounds);
 }
 
@@ -931,7 +949,7 @@ TEST(LookupTest, KeyAtObjectCompact) {
   ASSERT_EQ("bar", s.keyAt(1).copyString());
   ASSERT_EQ("baz", s.keyAt(2).copyString());
   ASSERT_EQ("qux", s.keyAt(3).copyString());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4), Exception::IndexOutOfBounds);
 }
 
@@ -942,7 +960,7 @@ TEST(LookupTest, ValueAtArray) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::InvalidValueType);
 }
 
@@ -953,7 +971,7 @@ TEST(LookupTest, ValueAtNull) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::InvalidValueType);
 }
 
@@ -972,7 +990,7 @@ TEST(LookupTest, ValueAtObject) {
   ASSERT_EQ(2, s.valueAt(1).getInt());
   ASSERT_EQ(3, s.valueAt(2).getInt());
   ASSERT_EQ(4, s.valueAt(3).getInt());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(4), Exception::IndexOutOfBounds);
 }
 
@@ -991,7 +1009,7 @@ TEST(LookupTest, ValueAtObjectSorted) {
   ASSERT_EQ(3, s.valueAt(1).getInt());
   ASSERT_EQ(1, s.valueAt(2).getInt());
   ASSERT_EQ(4, s.valueAt(3).getInt());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(4), Exception::IndexOutOfBounds);
 }
 
@@ -1008,18 +1026,17 @@ TEST(LookupTest, ValueAtObjectCompact) {
   Slice s(builder.start());
 
   ASSERT_EQ(0x14, s.head());
-  
+
   ASSERT_EQ(1, s.valueAt(0).getInt());
   ASSERT_EQ(2, s.valueAt(1).getInt());
   ASSERT_EQ(3, s.valueAt(2).getInt());
   ASSERT_EQ(4, s.valueAt(3).getInt());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(4), Exception::IndexOutOfBounds);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

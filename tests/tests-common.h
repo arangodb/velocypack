@@ -22,21 +22,19 @@ using namespace arangodb::velocypack;
 
 // helper for catching VPack-specific exceptions
 #define ASSERT_VELOCYPACK_EXCEPTION(operation, code) \
-  try {                                         \
-    (operation);                                \
-    ASSERT_FALSE(true);                         \
-  }                                             \
-  catch (Exception const& ex) {                 \
-    ASSERT_EQ(code, ex.errorCode());            \
-  }                                             \
-  catch (...) {                                 \
-    ASSERT_FALSE(true);                         \
-  } 
+  try {                                              \
+    (operation);                                     \
+    ASSERT_FALSE(true);                              \
+  } catch (Exception const& ex) {                    \
+    ASSERT_EQ(code, ex.errorCode());                 \
+  } catch (...) {                                    \
+    ASSERT_FALSE(true);                              \
+  }
 
 // don't complain if this function is not called
-static void dumpDouble (double, uint8_t*) VELOCYPACK_UNUSED;
-  
-static void dumpDouble (double x, uint8_t* p) {
+static void dumpDouble(double, uint8_t*) VELOCYPACK_UNUSED;
+
+static void dumpDouble(double x, uint8_t* p) {
   uint64_t u;
   memcpy(&u, &x, sizeof(double));
   for (size_t i = 0; i < 8; i++) {
@@ -46,9 +44,9 @@ static void dumpDouble (double x, uint8_t* p) {
 }
 
 // don't complain if this function is not called
-static void checkDump (Slice, std::string const&) VELOCYPACK_UNUSED;
+static void checkDump(Slice, std::string const&) VELOCYPACK_UNUSED;
 
-static void checkDump (Slice s, std::string const& knownGood) {
+static void checkDump(Slice s, std::string const& knownGood) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
@@ -57,15 +55,15 @@ static void checkDump (Slice s, std::string const& knownGood) {
 }
 
 // don't complain if this function is not called
-static void checkBuild (Slice, ValueType, ValueLength) VELOCYPACK_UNUSED;
+static void checkBuild(Slice, ValueType, ValueLength) VELOCYPACK_UNUSED;
 
 // With the following function we check type determination and size
 // of the produced VPack value:
-static void checkBuild (Slice s, ValueType t, ValueLength byteSize) {
+static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
   ASSERT_EQ(t, s.type());
   ASSERT_TRUE(s.isType(t));
-  ValueType other = (t == ValueType::String) ? ValueType::Int
-                                             : ValueType::String;
+  ValueType other =
+      (t == ValueType::String) ? ValueType::Int : ValueType::String;
   ASSERT_FALSE(s.isType(other));
   ASSERT_FALSE(other == s.type());
 

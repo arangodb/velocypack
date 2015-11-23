@@ -101,7 +101,7 @@ TEST(CommonTest, StoreUInt64SomethingMore) {
   ASSERT_EQ(0x31, LocalBuffer[5]);
   ASSERT_EQ(0x98, LocalBuffer[6]);
   ASSERT_EQ(0x7f, LocalBuffer[7]);
-  
+
   ASSERT_EQ(value, readUInt64(&LocalBuffer[0]));
 }
 
@@ -120,10 +120,9 @@ TEST(CommonTest, StoreUInt64Max) {
 
   ASSERT_EQ(value, readUInt64(&LocalBuffer[0]));
 }
-  
-int main (int argc, char* argv[]) {
+
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

@@ -33,76 +33,76 @@
 
 using namespace arangodb::velocypack;
 
-static void usage (char* argv[]) {
+static void usage(char* argv[]) {
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
-  std::cout << "This program reads the JSON INFILE into a string and saves its" << std::endl;
-  std::cout << "VPack representation in file OUTFILE. Will work only for input" << std::endl;
+  std::cout << "This program reads the JSON INFILE into a string and saves its"
+            << std::endl;
+  std::cout << "VPack representation in file OUTFILE. Will work only for input"
+            << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
   std::cout << "Available options are:" << std::endl;
-  std::cout << " --compact       store Array and Object types without index tables" << std::endl;
-  std::cout << " --no-compact    store Array and Object types with index tables" << std::endl;
+  std::cout
+      << " --compact       store Array and Object types without index tables"
+      << std::endl;
+  std::cout << " --no-compact    store Array and Object types with index tables"
+            << std::endl;
   std::cout << " --compress      compress Object keys" << std::endl;
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
 }
 
-static inline bool isOption (char const* arg, char const* expected) {
+static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-static bool buildCompressedKeys (std::string const& s, std::unordered_map<std::string, size_t>& keysFound) {
+static bool buildCompressedKeys(
+    std::string const& s, std::unordered_map<std::string, size_t>& keysFound) {
   Options options;
   Parser parser(&options);
   try {
     parser.parse(s);
     Builder builder = parser.steal();
 
-    Collection::visitRecursive(builder.slice(), Collection::PreOrder, [&keysFound] (Slice const& key, Slice const&) -> bool {
-      if (key.isString()) {
-        keysFound[key.copyString()]++;
-      }
-      return true;
-    });
+    Collection::visitRecursive(
+        builder.slice(), Collection::PreOrder,
+        [&keysFound](Slice const& key, Slice const&) -> bool {
+          if (key.isString()) {
+            keysFound[key.copyString()]++;
+          }
+          return true;
+        });
 
     return true;
-  }
-  catch (...) {
+  } catch (...) {
     // simply don't use compressed keys
     return false;
   }
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
-  bool allowFlags  = true;
-  bool compact     = true;
-  bool compress    = false;
+  bool allowFlags = true;
+  bool compact = true;
+  bool compress = false;
 
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
     if (allowFlags && isOption(p, "--compact")) {
       compact = true;
-    }
-    else if (allowFlags && isOption(p, "--no-compact")) {
+    } else if (allowFlags && isOption(p, "--no-compact")) {
       compact = false;
-    }
-    else if (allowFlags && isOption(p, "--compress")) {
+    } else if (allowFlags && isOption(p, "--compress")) {
       compress = true;
-    }
-    else if (allowFlags && isOption(p, "--no-compress")) {
+    } else if (allowFlags && isOption(p, "--no-compress")) {
       compress = false;
-    }
-    else if (allowFlags && isOption(p, "--")) {
+    } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
-    }
-    else if (infileName == nullptr) {
+    } else if (infileName == nullptr) {
       infileName = p;
-    }
-    else if (outfileName == nullptr) {
+    } else if (outfileName == nullptr) {
       outfileName = p;
-    }
-    else {
+    } else {
       usage(argv);
       return EXIT_FAILURE;
     }
@@ -121,7 +121,7 @@ int main (int argc, char* argv[]) {
     outfileName = "/proc/self/fd/1";
     resetStream = false;
   }
-#else 
+#else
   bool const resetStream = true;
   if (outfileName == nullptr) {
     usage(argv);
@@ -140,7 +140,7 @@ int main (int argc, char* argv[]) {
   std::string s;
   std::ifstream ifs(infile, std::ifstream::in);
 
-  if (! ifs.is_open()) {
+  if (!ifs.is_open()) {
     std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
@@ -184,15 +184,19 @@ int main (int argc, char* argv[]) {
 
     // print statistics
     if (compressedOccurrences > 0) {
-      std::cout << compressedOccurrences << " occurrences of Object keys will be stored compressed:" << std::endl;
+      std::cout << compressedOccurrences
+                << " occurrences of Object keys will be stored compressed:"
+                << std::endl;
 
       size_t printed = 0;
       for (auto const& it : stats) {
         if (++printed > 20) {
-          std::cout << " - ... " << (stats.size() - printed + 1) << " Object key(s) follow ..." << std::endl; 
+          std::cout << " - ... " << (stats.size() - printed + 1)
+                    << " Object key(s) follow ..." << std::endl;
           break;
         }
-        std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it) << " (" << std::get<2>(it) << " occurrences)" << std::endl; 
+        std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it)
+                  << " (" << std::get<2>(it) << " occurrences)" << std::endl;
       }
     }
   }
@@ -200,20 +204,20 @@ int main (int argc, char* argv[]) {
   Parser parser(&options);
   try {
     parser.parse(s);
-  }
-  catch (Exception const& ex) {
-    std::cerr << "An exception occurred while parsing infile '" << infile << "': " << ex.what() << std::endl;
+  } catch (Exception const& ex) {
+    std::cerr << "An exception occurred while parsing infile '" << infile
+              << "': " << ex.what() << std::endl;
     std::cerr << "Error position: " << parser.errorPos() << std::endl;
     return EXIT_FAILURE;
-  }
-  catch (...) {
-    std::cerr << "An unknown exception occurred while parsing infile '" << infile << "'" << std::endl;
+  } catch (...) {
+    std::cerr << "An unknown exception occurred while parsing infile '"
+              << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
- 
+
   std::ofstream ofs(outfileName, std::ofstream::out);
- 
-  if (! ofs.is_open()) {
+
+  if (!ofs.is_open()) {
     std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
     return EXIT_FAILURE;
   }
@@ -229,19 +233,22 @@ int main (int argc, char* argv[]) {
   ofs.write(reinterpret_cast<char const*>(start), builder.size());
 
   ofs.close();
-  
-  std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
+
+  std::cout << "Successfully converted JSON infile '" << infile << "'"
+            << std::endl;
   std::cout << "JSON Infile size:    " << s.size() << std::endl;
   std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
 
   if (compress) {
     if (translator.get()->count() > 0) {
-      std::cout << "Key dictionary size: " << Slice(translator.get()->builder()->data(), &options).byteSize() << std::endl;
-    }
-    else {
-      std::cout << "Key dictionary size: 0 (no benefit from compression)" << std::endl;
+      std::cout << "Key dictionary size: "
+                << Slice(translator.get()->builder()->data(), &options)
+                       .byteSize() << std::endl;
+    } else {
+      std::cout << "Key dictionary size: 0 (no benefit from compression)"
+                << std::endl;
     }
   }
-  
+
   return EXIT_SUCCESS;
 }

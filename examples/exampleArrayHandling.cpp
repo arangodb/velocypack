@@ -3,7 +3,7 @@
 
 using namespace arangodb::velocypack;
 
-int main (int, char*[]) {
+int main(int, char* []) {
   // create an array with 10 number members
   Builder b;
 
@@ -17,14 +17,15 @@ int main (int, char*[]) {
   Slice s(b.start());
 
   // filter out all array values less than 5
-  Builder filtered = Collection::filter(s, [] (Slice const& current, ValueLength) {
-    if (current.getNumber<int>() < 5) {
-      // exclude
-      return false;
-    }
-    // include
-    return true;
-  });
+  Builder filtered =
+      Collection::filter(s, [](Slice const& current, ValueLength) {
+        if (current.getNumber<int>() < 5) {
+          // exclude
+          return false;
+        }
+        // include
+        return true;
+      });
 
   // print filtered array
   Slice f(filtered.slice());
@@ -38,8 +39,9 @@ int main (int, char*[]) {
 
   // iterate again, this time using Collection::forEach
   std::cout << "Iterating some Array members using forEach:" << std::endl;
-  Collection::forEach(f, [] (Slice const& current, ValueLength index) {
-    std::cout << current << ", number value: " << current.getUInt() << std::endl;
-    return (index != 2); // stop after the 3rd element (indexes are 0-based)
+  Collection::forEach(f, [](Slice const& current, ValueLength index) {
+    std::cout << current << ", number value: " << current.getUInt()
+              << std::endl;
+    return (index != 2);  // stop after the 3rd element (indexes are 0-based)
   });
 }

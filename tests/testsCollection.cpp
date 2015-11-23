@@ -29,9 +29,13 @@
 #include <vector>
 
 #include "tests-common.h"
-  
-static auto DoNothingCallback = [] (Slice const&, ValueLength) -> bool { return false; };
-static auto FailCallback = [] (Slice const&, ValueLength) -> bool { EXPECT_TRUE(false); return false; };
+
+static auto DoNothingCallback =
+    [](Slice const&, ValueLength) -> bool { return false; };
+static auto FailCallback = [](Slice const&, ValueLength) -> bool {
+  EXPECT_TRUE(false);
+  return false;
+};
 
 TEST(CollectionTest, KeysNonObject1) {
   std::string const value("null");
@@ -49,7 +53,8 @@ TEST(CollectionTest, KeysNonObject2) {
   Slice s(parser.start());
 
   std::vector<std::string> result;
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject3) {
@@ -59,7 +64,8 @@ TEST(CollectionTest, KeysNonObject3) {
   Slice s(parser.start());
 
   std::unordered_set<std::string> result;
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject4) {
@@ -78,7 +84,8 @@ TEST(CollectionTest, KeysNonObject5) {
   Slice s(parser.start());
 
   std::vector<std::string> result;
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeysNonObject6) {
@@ -88,9 +95,10 @@ TEST(CollectionTest, KeysNonObject6) {
   Slice s(parser.start());
 
   std::unordered_set<std::string> result;
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result),
+                              Exception::InvalidValueType);
 }
-  
+
 TEST(CollectionTest, ObjectKeys1) {
   Options options;
   options.sortAttributeNames = false;
@@ -99,7 +107,7 @@ TEST(CollectionTest, ObjectKeys1) {
   Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
- 
+
   std::vector<std::string> keys = Collection::keys(s);
   ASSERT_EQ(3UL, keys.size());
   ASSERT_EQ("foo", keys[0]);
@@ -115,7 +123,7 @@ TEST(CollectionTest, ObjectKeys2) {
   Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
- 
+
   std::vector<std::string> keys;
   Collection::keys(s, keys);
   ASSERT_EQ(3UL, keys.size());
@@ -132,7 +140,7 @@ TEST(CollectionTest, ObjectKeys3) {
   Parser parser(&options);
   parser.parse(value);
   Slice s(parser.start());
- 
+
   std::unordered_set<std::string> keys;
   Collection::keys(s, keys);
   ASSERT_EQ(3UL, keys.size());
@@ -142,7 +150,9 @@ TEST(CollectionTest, ObjectKeys3) {
 }
 
 TEST(CollectionTest, ObjectKeys) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
@@ -158,7 +168,9 @@ TEST(CollectionTest, ObjectKeys) {
 }
 
 TEST(CollectionsTest, ObjectKeysRef) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
@@ -175,7 +187,9 @@ TEST(CollectionsTest, ObjectKeysRef) {
 }
 
 TEST(CollectionTest, ObjectKeysCompact) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Options options;
   options.buildUnindexedArrays = true;
@@ -199,7 +213,8 @@ TEST(CollectionTest, ValuesNonObject1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ValuesNonObject2) {
@@ -208,7 +223,8 @@ TEST(CollectionTest, ValuesNonObject2) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ValuesNonObject3) {
@@ -217,11 +233,14 @@ TEST(CollectionTest, ValuesNonObject3) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::values(s),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ObjectValues) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
@@ -244,7 +263,9 @@ TEST(CollectionTest, ObjectValues) {
 }
 
 TEST(CollectionTest, ObjectValuesCompact) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Options options;
   options.buildUnindexedObjects = true;
@@ -276,8 +297,9 @@ TEST(CollectionTest, ForEachNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::forEach(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::forEach(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ForEachEmptyArray) {
@@ -285,7 +307,7 @@ TEST(CollectionTest, ForEachEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   Collection::forEach(s, FailCallback);
 }
 
@@ -294,25 +316,26 @@ TEST(CollectionTest, ForEachArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  Collection::forEach(s, [&seen] (Slice const& slice, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
+  Collection::forEach(s,
+                      [&seen](Slice const& slice, ValueLength index) -> bool {
+                        EXPECT_EQ(seen, index);
 
-    switch (seen) {
-      case 0:
-      case 1:
-      case 2:
-        EXPECT_TRUE(slice.isNumber());
-        break;
-      case 3:
-      case 4:
-        EXPECT_TRUE(slice.isString());
-    }
+                        switch (seen) {
+                          case 0:
+                          case 1:
+                          case 2:
+                            EXPECT_TRUE(slice.isNumber());
+                            break;
+                          case 3:
+                          case 4:
+                            EXPECT_TRUE(slice.isString());
+                        }
 
-    ++seen;
-    return true;
-  });
+                        ++seen;
+                        return true;
+                      });
 
   ASSERT_EQ(5UL, seen);
 }
@@ -322,9 +345,9 @@ TEST(CollectionTest, ForEachArrayAbort) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  Collection::forEach(s, [&seen] (Slice const&, ValueLength index) -> bool {
+  Collection::forEach(s, [&seen](Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     if (seen == 3) {
@@ -345,7 +368,7 @@ TEST(CollectionTest, IterateArrayValues) {
   Slice s(parser.start());
 
   size_t state = 0;
-  Collection::forEach(s, [&state] (Slice const& value, ValueLength) -> bool {
+  Collection::forEach(s, [&state](Slice const& value, ValueLength) -> bool {
     switch (state++) {
       case 0:
         EXPECT_TRUE(value.isNumber());
@@ -389,8 +412,9 @@ TEST(CollectionTest, FilterNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::filter(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::filter(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, FilterEmptyArray) {
@@ -398,7 +422,7 @@ TEST(CollectionTest, FilterEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   Builder b = Collection::filter(s, FailCallback);
 
   s = b.slice();
@@ -411,7 +435,7 @@ TEST(CollectionTest, FilterAll) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   Builder b = Collection::filter(s, DoNothingCallback);
 
   s = b.slice();
@@ -424,35 +448,36 @@ TEST(CollectionTest, FilterArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  Builder b = Collection::filter(s, [&seen] (Slice const& slice, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
-    EXPECT_TRUE(slice.isNumber());
 
-    switch (seen) {
-      case 0:
-        EXPECT_EQ(1, slice.getInt());
-        break;
-      case 1:
-        EXPECT_EQ(2, slice.getInt());
-        break;
-      case 2:
-        EXPECT_EQ(3, slice.getInt());
-        break;
-      case 3:
-        EXPECT_EQ(4, slice.getInt());
-        break;
-      case 4:
-        EXPECT_EQ(-42, slice.getInt());
-        break;
-      case 5:
-        EXPECT_EQ(19, slice.getInt());
-        break;
-    }
-    ++seen;
-    return (index != 4);
-  });
+  size_t seen = 0;
+  Builder b = Collection::filter(
+      s, [&seen](Slice const& slice, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+        EXPECT_TRUE(slice.isNumber());
+
+        switch (seen) {
+          case 0:
+            EXPECT_EQ(1, slice.getInt());
+            break;
+          case 1:
+            EXPECT_EQ(2, slice.getInt());
+            break;
+          case 2:
+            EXPECT_EQ(3, slice.getInt());
+            break;
+          case 3:
+            EXPECT_EQ(4, slice.getInt());
+            break;
+          case 4:
+            EXPECT_EQ(-42, slice.getInt());
+            break;
+          case 5:
+            EXPECT_EQ(19, slice.getInt());
+            break;
+        }
+        ++seen;
+        return (index != 4);
+      });
   ASSERT_EQ(6UL, seen);
 
   s = b.slice();
@@ -480,8 +505,9 @@ TEST(CollectionTest, FindNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::find(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::find(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, FindEmptyArray) {
@@ -489,7 +515,7 @@ TEST(CollectionTest, FindEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   Slice found = Collection::find(s, FailCallback);
   ASSERT_TRUE(found.isNone());
 }
@@ -499,7 +525,7 @@ TEST(CollectionTest, FindArrayFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   Slice found = Collection::find(s, DoNothingCallback);
   ASSERT_TRUE(found.isNone());
 }
@@ -509,9 +535,9 @@ TEST(CollectionTest, FindArrayFirst) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  Slice found = Collection::find(s, [&seen] (Slice const&, ValueLength) {
+  Slice found = Collection::find(s, [&seen](Slice const&, ValueLength) {
     ++seen;
     return true;
   });
@@ -525,9 +551,9 @@ TEST(CollectionTest, FindArrayLast) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  Slice found = Collection::find(s, [&seen] (Slice const&, ValueLength index) {
+  Slice found = Collection::find(s, [&seen](Slice const&, ValueLength index) {
     ++seen;
     if (index == 2) {
       return true;
@@ -544,8 +570,9 @@ TEST(CollectionTest, ContainsNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::contains(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::contains(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, ContainsEmptyArray) {
@@ -553,7 +580,7 @@ TEST(CollectionTest, ContainsEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_FALSE(Collection::contains(s, FailCallback));
 }
 
@@ -562,7 +589,7 @@ TEST(CollectionTest, ContainsArrayFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_FALSE(Collection::contains(s, DoNothingCallback));
 }
 
@@ -571,9 +598,9 @@ TEST(CollectionTest, ContainsArrayFirst) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  ASSERT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength) {
+  ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength) {
     ++seen;
     return true;
   }));
@@ -585,9 +612,9 @@ TEST(CollectionTest, ContainsArrayLast) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   size_t seen = 0;
-  ASSERT_TRUE(Collection::contains(s, [&seen] (Slice const&, ValueLength index) {
+  ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength index) {
     ++seen;
     if (index == 2) {
       return true;
@@ -602,8 +629,9 @@ TEST(CollectionTest, AllNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::all(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::all(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, AllEmptyArray) {
@@ -611,7 +639,7 @@ TEST(CollectionTest, AllEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_TRUE(Collection::all(s, FailCallback));
 }
 
@@ -620,7 +648,7 @@ TEST(CollectionTest, AllArrayFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_FALSE(Collection::all(s, DoNothingCallback));
 }
 
@@ -629,14 +657,15 @@ TEST(CollectionTest, AllArrayFirstFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  ASSERT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
 
-    ++seen;
-    return false;
-  }));
+  size_t seen = 0;
+  ASSERT_FALSE(
+      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+
+        ++seen;
+        return false;
+      }));
 
   ASSERT_EQ(1UL, seen);
 }
@@ -646,17 +675,18 @@ TEST(CollectionTest, AllArrayLastFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  ASSERT_FALSE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
 
-    ++seen;
-    if (index == 2) {
-      return false;
-    }
-    return true;
-  }));
+  size_t seen = 0;
+  ASSERT_FALSE(
+      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+
+        ++seen;
+        if (index == 2) {
+          return false;
+        }
+        return true;
+      }));
 
   ASSERT_EQ(3UL, seen);
 }
@@ -666,14 +696,15 @@ TEST(CollectionTest, AllArrayTrue) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  ASSERT_TRUE(Collection::all(s, [&seen] (Slice const&, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
 
-    ++seen;
-    return true;
-  }));
+  size_t seen = 0;
+  ASSERT_TRUE(
+      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+
+        ++seen;
+        return true;
+      }));
 
   ASSERT_EQ(4UL, seen);
 }
@@ -683,8 +714,9 @@ TEST(CollectionTest, AnyNonArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::any(s, DoNothingCallback), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::any(s, DoNothingCallback),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, AnyEmptyArray) {
@@ -692,7 +724,7 @@ TEST(CollectionTest, AnyEmptyArray) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_FALSE(Collection::any(s, FailCallback));
 }
 
@@ -701,7 +733,7 @@ TEST(CollectionTest, AnyArrayFalse) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
+
   ASSERT_FALSE(Collection::all(s, DoNothingCallback));
 }
 
@@ -710,17 +742,18 @@ TEST(CollectionTest, AnyArrayLastTrue) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  ASSERT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
 
-    ++seen;
-    if (index == 3) {
-      return true;
-    }
-    return false;
-  }));
+  size_t seen = 0;
+  ASSERT_TRUE(
+      Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+
+        ++seen;
+        if (index == 3) {
+          return true;
+        }
+        return false;
+      }));
 
   ASSERT_EQ(4UL, seen);
 }
@@ -730,14 +763,15 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  size_t seen = 0;
-  ASSERT_TRUE(Collection::any(s, [&seen] (Slice const&, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
 
-    ++seen;
-    return true;
-  }));
+  size_t seen = 0;
+  ASSERT_TRUE(
+      Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
+        EXPECT_EQ(seen, index);
+
+        ++seen;
+        return true;
+      }));
 
   ASSERT_EQ(1UL, seen);
 }
@@ -749,8 +783,9 @@ TEST(CollectionTest, KeepNonObject) {
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toKeep = { "foo", "bar" };
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keep(s, toKeep), Exception::InvalidValueType);
+  std::vector<std::string> const toKeep = {"foo", "bar"};
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keep(s, toKeep),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, KeepEmptyObject) {
@@ -760,7 +795,7 @@ TEST(CollectionTest, KeepEmptyObject) {
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toKeep = { "foo", "bar" };
+  std::vector<std::string> const toKeep = {"foo", "bar"};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -768,13 +803,15 @@ TEST(CollectionTest, KeepEmptyObject) {
 }
 
 TEST(CollectionTest, KeepNoAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toKeep = { };
+  std::vector<std::string> const toKeep = {};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -782,13 +819,15 @@ TEST(CollectionTest, KeepNoAttributes) {
 }
 
 TEST(CollectionTest, KeepSomeAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toKeep = { "foo", "baz", "empty" };
+  std::vector<std::string> const toKeep = {"foo", "baz", "empty"};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -809,13 +848,15 @@ TEST(CollectionTest, KeepSomeAttributes) {
 }
 
 TEST(CollectionTest, KeepSomeAttributesUsingSet) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::unordered_set<std::string> const toKeep = { "foo", "baz", "empty" };
+  std::unordered_set<std::string> const toKeep = {"foo", "baz", "empty"};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -836,13 +877,16 @@ TEST(CollectionTest, KeepSomeAttributesUsingSet) {
 }
 
 TEST(CollectionTest, KeepNonExistingAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
+  std::vector<std::string> const toKeep = {"boo", "far", "quetzalcoatl",
+                                           "empty"};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -859,13 +903,16 @@ TEST(CollectionTest, KeepNonExistingAttributes) {
 }
 
 TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::unordered_set<std::string> const toKeep = { "boo", "far", "quetzalcoatl", "empty" };
+  std::unordered_set<std::string> const toKeep = {"boo", "far", "quetzalcoatl",
+                                                  "empty"};
   Builder b = Collection::keep(s, toKeep);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -914,8 +961,7 @@ TEST(CollectionTest, KeepManyAttributes) {
       ASSERT_TRUE(s.hasKey(key));
       ASSERT_TRUE(s.get(key).isNumber());
       ASSERT_EQ(i, s.get(key).getUInt());
-    }
-    else {
+    } else {
       ASSERT_FALSE(s.hasKey(key));
     }
   }
@@ -928,8 +974,9 @@ TEST(CollectionTest, RemoveNonObject) {
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toRemove = { "foo", "bar" };
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::remove(s, toRemove), Exception::InvalidValueType);
+  std::vector<std::string> const toRemove = {"foo", "bar"};
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::remove(s, toRemove),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, RemoveEmptyObject) {
@@ -939,7 +986,7 @@ TEST(CollectionTest, RemoveEmptyObject) {
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toRemove = { "foo", "bar" };
+  std::vector<std::string> const toRemove = {"foo", "bar"};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -947,13 +994,15 @@ TEST(CollectionTest, RemoveEmptyObject) {
 }
 
 TEST(CollectionTest, RemoveNoAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toRemove = { };
+  std::vector<std::string> const toRemove = {};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -972,13 +1021,15 @@ TEST(CollectionTest, RemoveNoAttributes) {
 }
 
 TEST(CollectionTest, RemoveSomeAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toRemove = { "foo", "baz", "empty" };
+  std::vector<std::string> const toRemove = {"foo", "baz", "empty"};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -995,13 +1046,15 @@ TEST(CollectionTest, RemoveSomeAttributes) {
 }
 
 TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::unordered_set<std::string> const toRemove = { "foo", "baz", "empty" };
+  std::unordered_set<std::string> const toRemove = {"foo", "baz", "empty"};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -1050,21 +1103,23 @@ TEST(CollectionTest, RemoveManyAttributes) {
       ASSERT_TRUE(s.hasKey(key));
       ASSERT_TRUE(s.get(key).isNumber());
       ASSERT_EQ(i, s.get(key).getUInt());
-    }
-    else {
+    } else {
       ASSERT_FALSE(s.hasKey(key));
     }
   }
 }
 
 TEST(CollectionTest, RemoveNonExistingAttributes) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::vector<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
+  std::vector<std::string> const toRemove = {"boo", "far", "quetzalcoatl",
+                                             "empty"};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -1082,13 +1137,16 @@ TEST(CollectionTest, RemoveNonExistingAttributes) {
 }
 
 TEST(CollectionTest, RemoveNonExistingAttributesUsingSet) {
-  std::string const value("{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,\"empty\":null}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":\"quux\",\"number\":1,\"boolean\":true,"
+      "\"empty\":null}");
 
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  std::unordered_set<std::string> const toRemove = { "boo", "far", "quetzalcoatl", "empty" };
+  std::unordered_set<std::string> const toRemove = {"boo", "far",
+                                                    "quetzalcoatl", "empty"};
   Builder b = Collection::remove(s, toRemove);
   s = b.slice();
   ASSERT_TRUE(s.isObject());
@@ -1114,9 +1172,12 @@ TEST(CollectionTest, MergeNonObject) {
   b2.add(Value(ValueType::Object));
   b2.close();
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false),
+                              Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, MergeEmptyLeft) {
@@ -1187,7 +1248,8 @@ TEST(CollectionTest, MergeDistinct) {
 
 TEST(CollectionTest, MergeOverlap) {
   std::string const l("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  std::string const r("{\"baz\":19,\"bark\":1,\"qux\":2,\"bar\":42,\"test\":9,\"foo\":12}");
+  std::string const r(
+      "{\"baz\":19,\"bark\":1,\"qux\":2,\"bar\":42,\"test\":9,\"foo\":12}");
 
   Builder p1 = Parser::fromJson(l);
   Slice s1(p1.start());
@@ -1212,8 +1274,12 @@ TEST(CollectionTest, MergeOverlap) {
 }
 
 TEST(CollectionTest, MergeSubAttributes) {
-  std::string const l("{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{},\"test\":1}");
-  std::string const r("{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{\"test\":1,\"bart\":2}}");
+  std::string const l(
+      "{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{},"
+      "\"test\":1}");
+  std::string const r(
+      "{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{"
+      "\"test\":1,\"bart\":2}}");
 
   Builder p1 = Parser::fromJson(l);
   Slice s1(p1.start());
@@ -1247,8 +1313,12 @@ TEST(CollectionTest, MergeSubAttributes) {
 }
 
 TEST(CollectionTest, MergeOverwriteSubAttributes) {
-  std::string const l("{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{\"bird\":9},\"test\":1}");
-  std::string const r("{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{\"test\":1,\"bart\":2}}");
+  std::string const l(
+      "{\"foo\":1,\"bar\":{\"one\":1,\"two\":2,\"three\":3},\"baz\":{\"bird\":"
+      "9},\"test\":1}");
+  std::string const r(
+      "{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{"
+      "\"test\":1,\"bart\":2}}");
 
   Builder p1 = Parser::fromJson(l);
   Slice s1(p1.start());
@@ -1281,9 +1351,8 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
   ASSERT_EQ(2UL, sub.get("bart").getUInt());
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

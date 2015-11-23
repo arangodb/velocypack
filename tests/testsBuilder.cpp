@@ -33,10 +33,14 @@ TEST(BuilderTest, BufferSharedPointerNoSharing) {
   Builder b;
   b.add(Value(ValueType::Array));
   // construct a long string that will exceed the Builder's initial buffer
-  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.add(Value(
+      "skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddd"
+      "dddddddjfkdfffffffffffffffffffffffff,"
+      "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
+      "mmmmmmmmmmmmmmmmdddddddfjf"));
   b.close();
 
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
 
   // only the Builder itself is using the Buffer
   ASSERT_EQ(1, builderBuffer.use_count());
@@ -44,11 +48,15 @@ TEST(BuilderTest, BufferSharedPointerNoSharing) {
 
 TEST(BuilderTest, BufferSharedPointerStealFromParser) {
   Parser parser;
-  parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
- 
-  Builder b = parser.steal();  
+  parser.parse(
+      "\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddd"
+      "dddddddddjfkdfffffffffffffffffffffffff,"
+      "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
+      "mmmmmmmmmmmmmmmmdddddddfjf\"");
+
+  Builder b = parser.steal();
   // only the Builder itself is using its Buffer
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
   ASSERT_EQ(1, builderBuffer.use_count());
 }
 
@@ -56,10 +64,14 @@ TEST(BuilderTest, BufferSharedPointerCopy) {
   Builder b;
   b.add(Value(ValueType::Array));
   // construct a long string that will exceed the Builder's initial buffer
-  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.add(Value(
+      "skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddd"
+      "dddddddjfkdfffffffffffffffffffffffff,"
+      "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
+      "mmmmmmmmmmmmmmmmdddddddfjf"));
   b.close();
 
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
   auto ptr = builderBuffer.get();
 
   // only the Builder itself is using its Buffer
@@ -68,7 +80,7 @@ TEST(BuilderTest, BufferSharedPointerCopy) {
   std::shared_ptr<Buffer<uint8_t>> copy = b.buffer();
   ASSERT_EQ(2, copy.use_count());
   ASSERT_EQ(2, builderBuffer.use_count());
- 
+
   copy.reset();
   ASSERT_EQ(1, builderBuffer.use_count());
   ASSERT_EQ(ptr, builderBuffer.get());
@@ -76,18 +88,22 @@ TEST(BuilderTest, BufferSharedPointerCopy) {
 
 TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
   Builder b;
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
   ASSERT_EQ(1, builderBuffer.use_count());
   auto ptr = builderBuffer.get();
 
   {
     Parser parser;
-    parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
-  
+    parser.parse(
+        "\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddd"
+        "dddddddddddjfkdfffffffffffffffffffffffff,"
+        "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmm"
+        "mmmmmmmmmmmmmmmmmmdddddddfjf\"");
+
     ASSERT_EQ(1, builderBuffer.use_count());
 
-    b = parser.steal();  
-    std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+    b = parser.steal();
+    std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
     ASSERT_NE(ptr, builderBuffer.get());
     ASSERT_EQ(1, builderBuffer.use_count());
 
@@ -99,25 +115,33 @@ TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
 }
 
 TEST(BuilderTest, BufferSharedPointerStealAndReturn) {
-  auto func = [] () -> Builder {
+  auto func = []() -> Builder {
     Parser parser;
-    parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
- 
+    parser.parse(
+        "\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddd"
+        "dddddddddddjfkdfffffffffffffffffffffffff,"
+        "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmm"
+        "mmmmmmmmmmmmmmmmmmdddddddfjf\"");
+
     return parser.steal();
   };
 
   Builder b = func();
   ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
-  ASSERT_EQ(217UL, b.buffer()->size()); 
+  ASSERT_EQ(217UL, b.buffer()->size());
 }
 
 TEST(BuilderTest, BufferSharedPointerStealMultiple) {
   Parser parser;
-  parser.parse("\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf\"");
- 
+  parser.parse(
+      "\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddd"
+      "dddddddddjfkdfffffffffffffffffffffffff,"
+      "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
+      "mmmmmmmmmmmmmmmmdddddddfjf\"");
+
   Builder b = parser.steal();
   ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
-  ASSERT_EQ(217UL, b.buffer()->size()); 
+  ASSERT_EQ(217UL, b.buffer()->size());
   ASSERT_EQ(1, b.buffer().use_count());
 
   // steal again
@@ -129,7 +153,7 @@ TEST(BuilderTest, BufferSharedPointerInject) {
   auto ptr = buffer.get();
 
   Builder b(buffer);
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer(); 
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
 
   ASSERT_EQ(2, buffer.use_count());
   ASSERT_EQ(2, builderBuffer.use_count());
@@ -137,7 +161,11 @@ TEST(BuilderTest, BufferSharedPointerInject) {
 
   b.add(Value(ValueType::Array));
   // construct a long string that will exceed the Builder's initial buffer
-  b.add(Value("skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddddddddddjfkdfffffffffffffffffffffffff,mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmmmmmmmmmmmmmmmmmmdddddddfjf"));
+  b.add(Value(
+      "skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddddddd"
+      "dddddddjfkdfffffffffffffffffffffffff,"
+      "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
+      "mmmmmmmmmmmmmmmmdddddddfjf"));
   b.close();
 
   std::shared_ptr<Buffer<uint8_t>> copy = b.buffer();
@@ -157,7 +185,8 @@ TEST(BuilderTest, BufferSharedPointerInject) {
 
 TEST(BuilderTest, None) {
   Builder b;
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)), Exception::BuilderUnexpectedType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)),
+                              Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, Null) {
@@ -166,7 +195,7 @@ TEST(BuilderTest, Null) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t const correctResult[] = { 0x18 };
+  static uint8_t const correctResult[] = {0x18};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -178,7 +207,7 @@ TEST(BuilderTest, False) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t const correctResult[] = { 0x19 };
+  static uint8_t const correctResult[] = {0x19};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -190,7 +219,7 @@ TEST(BuilderTest, True) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t const correctResult[] = { 0x1a };
+  static uint8_t const correctResult[] = {0x1a};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -203,7 +232,8 @@ TEST(BuilderTest, Int64) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[9] = { 0x27, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f };
+  static uint8_t correctResult[9] = {0x27, 0xff, 0xff, 0xff, 0xff,
+                                     0xff, 0xff, 0xff, 0x7f};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -216,7 +246,7 @@ TEST(BuilderTest, UInt64) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[3] = { 0x29, 0xd2, 0x04 };
+  static uint8_t correctResult[3] = {0x29, 0xd2, 0x04};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -229,7 +259,8 @@ TEST(BuilderTest, Double) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[9] = { 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  static uint8_t correctResult[9] = {0x1b, 0x00, 0x00, 0x00, 0x00,
+                                     0x00, 0x00, 0x00, 0x00};
   ASSERT_EQ(8ULL, sizeof(double));
   dumpDouble(value, correctResult + 1);
 
@@ -243,11 +274,10 @@ TEST(BuilderTest, String) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x5a, 
-        0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b,
-        0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76,
-        0x77, 0x78, 0x79, 0x7a };
+  static uint8_t correctResult[] = {0x5a, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
+                                    0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d,
+                                    0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74,
+                                    0x75, 0x76, 0x77, 0x78, 0x79, 0x7a};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -260,7 +290,7 @@ TEST(BuilderTest, ArrayEmpty) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] = { 0x01 };
+  static uint8_t correctResult[] = {0x01};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -275,43 +305,52 @@ TEST(BuilderTest, ArraySingleEntry) {
   ASSERT_EQ(0x02U, *result);
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] = { 0x02, 0x03, 0x31 };
+  static uint8_t correctResult[] = {0x02, 0x03, 0x31};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
 TEST(BuilderTest, ArraySingleEntryLong) {
-  std::string const value("ngdddddljjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjsdddffffffffffffmmmmmmmmmmmmmmmsfdlllllllllllllllllllllllllllllllllllllllllllllllllrjjjjjjsddddddddddddddddddhhhhhhkkkkkkkksssssssssssssssssssssssssssssssssdddddddddddddddddkkkkkkkkkkkkksddddddddddddssssssssssfvvvvvvvvvvvvvvvvvvvvvvvvvvvfvgfff");
+  std::string const value(
+      "ngdddddljjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjsdddffffffffffffmmmmmmmmmmmmmmmsf"
+      "dlllllllllllllllllllllllllllllllllllllllllllllllllrjjjjjjsdddddddddddddd"
+      "ddddhhhhhhkkkkkkkksssssssssssssssssssssssssssssssssdddddddddddddddddkkkk"
+      "kkkkkkkkksddddddddddddssssssssssfvvvvvvvvvvvvvvvvvvvvvvvvvvvfvgfff");
   Builder b;
   b.add(Value(ValueType::Array));
   b.add(Value(value));
   b.close();
   uint8_t* result = b.start();
   ASSERT_EQ(0x03U, *result);
-  ValueLength len = b.size(); 
+  ValueLength len = b.size();
 
   static uint8_t correctResult[] = {
-    0x03, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x1a, 0x01, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x6e, 0x67, 0x64, 0x64, 0x64, 0x64, 0x64, 0x6c, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 
-    0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 
-    0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x73, 0x64, 0x64, 0x64, 0x66, 0x66, 0x66, 
-    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 
-    0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x73, 0x66, 0x64, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 
-    0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 
-    0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 
-    0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x72, 0x6a, 0x6a, 0x6a, 
-    0x6a, 0x6a, 0x6a, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 
-    0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x68, 0x68, 0x68, 0x68, 0x68, 0x68, 0x6b, 0x6b, 0x6b, 0x6b, 
-    0x6b, 0x6b, 0x6b, 0x6b, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 
-    0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 
-    0x73, 0x73, 0x73, 0x73, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 
-    0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 
-    0x6b, 0x6b, 0x6b, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 
-    0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x66, 0x76, 0x76, 0x76, 0x76, 0x76, 
-    0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 
-    0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x66, 0x76, 0x67, 0x66, 0x66, 0x66     
-  };
+      0x03, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x1a, 0x01,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6e, 0x67, 0x64, 0x64, 0x64, 0x64,
+      0x64, 0x6c, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a,
+      0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a,
+      0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x6a, 0x73, 0x64, 0x64,
+      0x64, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+      0x66, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d, 0x6d,
+      0x6d, 0x6d, 0x6d, 0x6d, 0x73, 0x66, 0x64, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c,
+      0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c,
+      0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c,
+      0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c,
+      0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x6c, 0x72, 0x6a, 0x6a, 0x6a,
+      0x6a, 0x6a, 0x6a, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64,
+      0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x68, 0x68,
+      0x68, 0x68, 0x68, 0x68, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b,
+      0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73,
+      0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73,
+      0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x64, 0x64, 0x64,
+      0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64,
+      0x64, 0x64, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b,
+      0x6b, 0x6b, 0x6b, 0x73, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64, 0x64,
+      0x64, 0x64, 0x64, 0x64, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73, 0x73,
+      0x73, 0x73, 0x66, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76,
+      0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x76,
+      0x76, 0x76, 0x76, 0x76, 0x76, 0x76, 0x66, 0x76, 0x67, 0x66, 0x66, 0x66};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -327,7 +366,7 @@ TEST(BuilderTest, ArraySameSizeEntries) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] = { 0x02, 0x05, 0x31, 0x32, 0x33 };
+  static uint8_t correctResult[] = {0x02, 0x05, 0x31, 0x32, 0x33};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -346,13 +385,10 @@ TEST(BuilderTest, ArraySomeValues) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x06, 0x18, 0x04,
-        0x29, 0xb0, 0x04,   // uint(1200) = 0x4b0
-        0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   // double(2.3)
-        0x43, 0x61, 0x62, 0x63,
-        0x1a,
-        0x03, 0x06, 0x0f, 0x13};
+  static uint8_t correctResult[] = {
+      0x06, 0x18, 0x04, 0x29, 0xb0, 0x04,  // uint(1200) = 0x4b0
+      0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // double(2.3)
+      0x43, 0x61, 0x62, 0x63, 0x1a, 0x03, 0x06, 0x0f, 0x13};
   dumpDouble(value, correctResult + 7);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -372,14 +408,10 @@ TEST(BuilderTest, ArrayCompact) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x13, 0x14,
-        0x29, 0xb0, 0x04,
-        0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // double
-        0x43, 0x61, 0x62, 0x63,
-        0x1a,
-        0x04
-      };
+  static uint8_t correctResult[] = {0x13, 0x14, 0x29, 0xb0, 0x04, 0x1b,
+                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                    0x00, 0x00,  // double
+                                    0x43, 0x61, 0x62, 0x63, 0x1a, 0x04};
   dumpDouble(value, correctResult + 6);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -393,7 +425,7 @@ TEST(BuilderTest, ObjectEmpty) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] = { 0x0a };
+  static uint8_t correctResult[] = {0x0a};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -407,7 +439,7 @@ TEST(BuilderTest, ObjectEmptyCompact) {
   ValueLength len = b.size();
 
   // should still build the compact variant
-  static uint8_t correctResult[] = { 0x0a };
+  static uint8_t correctResult[] = {0x0a};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -429,15 +461,14 @@ TEST(BuilderTest, ObjectSorted) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x0b, 0x20, 0x04,
-        0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
-        0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
-                                             // "c": double(2.3)
-        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
-        0x41, 0x61, 0x1a,                    // "a": true
-        0x19, 0x13, 0x08, 0x03
-      };
+  static uint8_t correctResult[] = {
+      0x0b, 0x20, 0x04, 0x41, 0x64, 0x29, 0xb0, 0x04,  // "d": uint(1200) =
+                                                       // 0x4b0
+      0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // "c": double(2.3)
+      0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
+      0x41, 0x61, 0x1a,                    // "a": true
+      0x19, 0x13, 0x08, 0x03};
   dumpDouble(value, correctResult + 11);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -460,15 +491,14 @@ TEST(BuilderTest, ObjectUnsorted) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x0f, 0x20, 0x04,
-        0x41, 0x64, 0x29, 0xb0, 0x04,        // "d": uint(1200) = 0x4b0
-        0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,   
-                                             // "c": double(2.3)
-        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
-        0x41, 0x61, 0x1a,                    // "a": true
-        0x03, 0x08, 0x13, 0x19
-      };
+  static uint8_t correctResult[] = {
+      0x0f, 0x20, 0x04, 0x41, 0x64, 0x29, 0xb0, 0x04,  // "d": uint(1200) =
+                                                       // 0x4b0
+      0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // "c": double(2.3)
+      0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
+      0x41, 0x61, 0x1a,                    // "a": true
+      0x03, 0x08, 0x13, 0x19};
   dumpDouble(value, correctResult + 11);
 
   ASSERT_EQ(sizeof(correctResult), len);
@@ -488,14 +518,10 @@ TEST(BuilderTest, ObjectCompact) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] 
-    = { 0x14, 0x1c,
-        0x41, 0x64, 0x29, 0xb0, 0x04,
-        0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // double
-        0x41, 0x62, 0x43, 0x61, 0x62, 0x63,
-        0x41, 0x61, 0x1a,
-        0x04
-      };
+  static uint8_t correctResult[] = {
+      0x14, 0x1c, 0x41, 0x64, 0x29, 0xb0, 0x04, 0x41, 0x63, 0x1b,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // double
+      0x41, 0x62, 0x43, 0x61, 0x62, 0x63, 0x41, 0x61, 0x1a, 0x04};
 
   dumpDouble(value, correctResult + 10);
 
@@ -516,12 +542,12 @@ TEST(BuilderTest, ObjectCompactBytesizeBelowThreshold) {
 
   ASSERT_EQ(127UL, s.byteSize());
 
-  ASSERT_EQ(0x13, result[0]); 
-  ASSERT_EQ(0x7f, result[1]); 
+  ASSERT_EQ(0x13, result[0]);
+  ASSERT_EQ(0x7f, result[1]);
   for (size_t i = 0; i < 124; ++i) {
     ASSERT_EQ(0x30 + (i % 10), result[2 + i]);
   }
-  ASSERT_EQ(0x7c, result[126]); 
+  ASSERT_EQ(0x7c, result[126]);
 }
 
 TEST(BuilderTest, ObjectCompactBytesizeAboveThreshold) {
@@ -537,13 +563,13 @@ TEST(BuilderTest, ObjectCompactBytesizeAboveThreshold) {
 
   ASSERT_EQ(129UL, s.byteSize());
 
-  ASSERT_EQ(0x13, result[0]); 
-  ASSERT_EQ(0x81, result[1]); 
-  ASSERT_EQ(0x01, result[2]); 
+  ASSERT_EQ(0x13, result[0]);
+  ASSERT_EQ(0x81, result[1]);
+  ASSERT_EQ(0x01, result[2]);
   for (size_t i = 0; i < 125; ++i) {
     ASSERT_EQ(0x30 + (i % 10), result[3 + i]);
   }
-  ASSERT_EQ(0x7d, result[128]); 
+  ASSERT_EQ(0x7d, result[128]);
 }
 
 TEST(BuilderTest, ObjectCompactLengthBelowThreshold) {
@@ -559,9 +585,9 @@ TEST(BuilderTest, ObjectCompactLengthBelowThreshold) {
 
   ASSERT_EQ(512UL, s.byteSize());
 
-  ASSERT_EQ(0x13, result[0]); 
-  ASSERT_EQ(0x80, result[1]); 
-  ASSERT_EQ(0x04, result[2]); 
+  ASSERT_EQ(0x13, result[0]);
+  ASSERT_EQ(0x80, result[1]);
+  ASSERT_EQ(0x04, result[2]);
   for (size_t i = 0; i < 127; ++i) {
     ASSERT_EQ(0x43, result[3 + i * 4]);
   }
@@ -581,34 +607,37 @@ TEST(BuilderTest, ObjectCompactLengthAboveThreshold) {
 
   ASSERT_EQ(517UL, s.byteSize());
 
-  ASSERT_EQ(0x13, result[0]); 
-  ASSERT_EQ(0x85, result[1]); 
-  ASSERT_EQ(0x04, result[2]); 
+  ASSERT_EQ(0x13, result[0]);
+  ASSERT_EQ(0x85, result[1]);
+  ASSERT_EQ(0x04, result[2]);
   for (size_t i = 0; i < 128; ++i) {
     ASSERT_EQ(0x43, result[3 + i * 4]);
   }
   ASSERT_EQ(0x01, result[515]);
-  ASSERT_EQ(0x80, result[516]); 
+  ASSERT_EQ(0x80, result[516]);
 }
 
 TEST(BuilderTest, ExternalDisallowed) {
-  uint8_t externalStuff[] = { 0x01 };
+  uint8_t externalStuff[] = {0x01};
   Options options;
   options.disallowExternals = true;
 
   Builder b(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)), ValueType::External)), Exception::BuilderExternalsDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)),
+                  ValueType::External)),
+      Exception::BuilderExternalsDisallowed);
 }
 
 TEST(BuilderTest, External) {
-  uint8_t externalStuff[] = { 0x01 };
+  uint8_t externalStuff[] = {0x01};
   Builder b;
-  b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)), 
+  b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)),
               ValueType::External));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[1 + sizeof(char*)] = { 0x00 };
+  static uint8_t correctResult[1 + sizeof(char*)] = {0x00};
   correctResult[0] = 0x1d;
   uint8_t* p = externalStuff;
   memcpy(correctResult + 1, &p, sizeof(uint8_t*));
@@ -624,7 +653,7 @@ TEST(BuilderTest, ExternalUTCDate) {
 
   Builder b;
   b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
-  
+
   Slice s(b.start());
   ASSERT_EQ(ValueType::External, s.type());
 #ifdef VELOCYPACK_64BIT
@@ -645,14 +674,14 @@ TEST(BuilderTest, ExternalDouble) {
 
   Builder b;
   b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
-  
+
   Slice s(b.start());
   ASSERT_EQ(ValueType::External, s.type());
 #ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
-#endif 
+#endif
 
   Slice sExternal(s.getExternal());
   ASSERT_EQ(9ULL, sExternal.byteSize());
@@ -667,15 +696,15 @@ TEST(BuilderTest, ExternalBinary) {
 
   Builder b;
   b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
-  
+
   Slice s(b.start());
   ASSERT_EQ(ValueType::External, s.type());
 #ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
-#endif 
- 
+#endif
+
   Slice sExternal(s.getExternal());
   ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
   ASSERT_EQ(ValueType::Binary, sExternal.type());
@@ -692,15 +721,15 @@ TEST(BuilderTest, ExternalString) {
 
   Builder b;
   b.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
-  
+
   Slice s(b.start());
   ASSERT_EQ(ValueType::External, s.type());
 #ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, s.byteSize());
 #else
   ASSERT_EQ(5ULL, s.byteSize());
-#endif 
- 
+#endif
+
   Slice sExternal(s.getExternal());
   ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
   ASSERT_EQ(ValueType::String, sExternal.type());
@@ -716,12 +745,14 @@ TEST(BuilderTest, ExternalExternal) {
   bExternal.add(Value(std::string(p)));
 
   Builder bExExternal;
-  bExExternal.add(Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
+  bExExternal.add(
+      Value(const_cast<void const*>(static_cast<void*>(bExternal.start()))));
   bExExternal.add(Value(std::string(p)));
 
   Builder b;
-  b.add(Value(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
-  
+  b.add(
+      Value(const_cast<void const*>(static_cast<void*>(bExExternal.start()))));
+
   Slice s(b.start());
   ASSERT_EQ(ValueType::External, s.type());
 #ifdef VELOCYPACK_64BIT
@@ -736,7 +767,7 @@ TEST(BuilderTest, ExternalExternal) {
   ASSERT_EQ(9ULL, sExternal.byteSize());
 #else
   ASSERT_EQ(5ULL, sExternal.byteSize());
-#endif 
+#endif
 
   Slice sExExternal(sExternal.getExternal());
   ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
@@ -754,8 +785,8 @@ TEST(BuilderTest, UInt) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[]
-    = { 0x2e, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+  static uint8_t correctResult[] = {0x2e, 0xef, 0xcd, 0xab,
+                                    0x78, 0x56, 0x34, 0x12};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -768,8 +799,8 @@ TEST(BuilderTest, IntPos) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[]
-    = { 0x26, 0xef, 0xcd, 0xab, 0x78, 0x56, 0x34, 0x12 };
+  static uint8_t correctResult[] = {0x26, 0xef, 0xcd, 0xab,
+                                    0x78, 0x56, 0x34, 0x12};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -782,26 +813,23 @@ TEST(BuilderTest, IntNeg) {
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[]
-    = { 0x26, 0x11, 0x32, 0x54, 0x87, 0xa9, 0xcb, 0xed };
+  static uint8_t correctResult[] = {0x26, 0x11, 0x32, 0x54,
+                                    0x87, 0xa9, 0xcb, 0xed};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
 TEST(BuilderTest, Int1Limits) {
-  int64_t values[] = {-0x80LL, 0x7fLL, -0x81LL, 0x80LL,
-                      -0x8000LL, 0x7fffLL, -0x8001LL, 0x8000LL,
-                      -0x800000LL, 0x7fffffLL, -0x800001LL, 0x800000LL,
-                      -0x80000000LL, 0x7fffffffLL, -0x80000001LL, 0x80000000LL,
-                      -0x8000000000LL, 0x7fffffffffLL,
-                      -0x8000000001LL, 0x8000000000LL,
-                      -0x800000000000LL, 0x7fffffffffffLL, 
-                      -0x800000000001LL, 0x800000000000LL,
-                      -0x80000000000000LL, 0x7fffffffffffffLL, 
-                      -0x80000000000001LL, 0x80000000000000LL,
-                      arangodb::velocypack::toInt64(0x8000000000000000ULL),
-                      0x7fffffffffffffffLL};
+  int64_t values[] = {
+      -0x80LL, 0x7fLL, -0x81LL, 0x80LL, -0x8000LL, 0x7fffLL, -0x8001LL,
+      0x8000LL, -0x800000LL, 0x7fffffLL, -0x800001LL, 0x800000LL, -0x80000000LL,
+      0x7fffffffLL, -0x80000001LL, 0x80000000LL, -0x8000000000LL,
+      0x7fffffffffLL, -0x8000000001LL, 0x8000000000LL, -0x800000000000LL,
+      0x7fffffffffffLL, -0x800000000001LL, 0x800000000000LL,
+      -0x80000000000000LL, 0x7fffffffffffffLL, -0x80000000000001LL,
+      0x80000000000000LL, arangodb::velocypack::toInt64(0x8000000000000000ULL),
+      0x7fffffffffffffffLL};
   for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];
     Builder b;
@@ -821,7 +849,7 @@ TEST(BuilderTest, StringChar) {
 
   Slice slice = Slice(b.start());
   ASSERT_TRUE(slice.isString());
- 
+
   ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(valueLen, len);
@@ -839,7 +867,7 @@ TEST(BuilderTest, StringString) {
 
   Slice slice = Slice(b.start());
   ASSERT_TRUE(slice.isString());
- 
+
   ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(value.size(), len);
@@ -851,14 +879,14 @@ TEST(BuilderTest, StringString) {
 }
 
 TEST(BuilderTest, Binary) {
-  uint8_t binaryStuff[] = { 0x02, 0x03, 0x05, 0x08, 0x0d };
+  uint8_t binaryStuff[] = {0x02, 0x03, 0x05, 0x08, 0x0d};
 
   Builder b;
   b.add(ValuePair(binaryStuff, sizeof(binaryStuff)));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
-  static uint8_t correctResult[] = { 0xc0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d };
+  static uint8_t correctResult[] = {0xc0, 0x05, 0x02, 0x03, 0x05, 0x08, 0x0d};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -914,9 +942,8 @@ TEST(BuilderTest, UTCDateMax) {
 
 TEST(BuilderTest, CustomTypeID) {
   // This is somewhat tautological, nevertheless...
-  static uint8_t const correctResult[]
-    = { 0xf1, 0x2b, 0x78, 0x56, 0x34, 0x12,
-        0x45, 0x02, 0x03, 0x05, 0x08, 0x0d };
+  static uint8_t const correctResult[] = {0xf1, 0x2b, 0x78, 0x56, 0x34, 0x12,
+                                          0x45, 0x02, 0x03, 0x05, 0x08, 0x0d};
 
   Builder b;
   uint8_t* p = b.add(ValuePair(sizeof(correctResult), ValueType::Custom));
@@ -930,19 +957,22 @@ TEST(BuilderTest, CustomTypeID) {
 
 TEST(BuilderTest, AddBCD) {
   Builder b;
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::BCD)), Exception::NotImplemented);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::BCD)),
+                              Exception::NotImplemented);
 }
 
 TEST(BuilderTest, AddOnNonArray) {
   Builder b;
   b.add(Value(ValueType::Object));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true)), Exception::BuilderNeedOpenArray);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true)),
+                              Exception::BuilderNeedOpenArray);
 }
 
 TEST(BuilderTest, AddOnNonObject) {
   Builder b;
   b.add(Value(ValueType::Array));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add("foo", Value(true)), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add("foo", Value(true)),
+                              Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, StartCalledOnOpenObject) {
@@ -964,14 +994,16 @@ TEST(BuilderTest, StartCalledOnOpenObjectWithSubs) {
 TEST(BuilderTest, HasKeyNonObject) {
   Builder b;
   b.add(Value(1));
-  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"),
+                              Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, HasKeyArray) {
   Builder b;
   b.add(Value(ValueType::Array));
   b.add(Value(1));
-  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.hasKey("foo"),
+                              Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, HasKeyEmptyObject) {
@@ -1052,7 +1084,7 @@ TEST(BuilderTest, IsClosedMixed) {
 
   b.add(Value(ValueType::Array));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add(Value(true));
   ASSERT_FALSE(b.isClosed());
   b.add(Value(true));
@@ -1066,16 +1098,16 @@ TEST(BuilderTest, IsClosedMixed) {
 
   b.add("foo", Value(true));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add("bar", Value(true));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add("baz", Value(ValueType::Array));
   ASSERT_FALSE(b.isClosed());
 
   b.close();
   ASSERT_FALSE(b.isClosed());
-  
+
   b.close();
   ASSERT_TRUE(b.isClosed());
 }
@@ -1085,19 +1117,19 @@ TEST(BuilderTest, IsClosedObject) {
   ASSERT_TRUE(b.isClosed());
   b.add(Value(ValueType::Object));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add("foo", Value(true));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add("bar", Value(true));
   ASSERT_FALSE(b.isClosed());
-  
+
   b.add("baz", Value(ValueType::Object));
   ASSERT_FALSE(b.isClosed());
 
   b.close();
   ASSERT_FALSE(b.isClosed());
-  
+
   b.close();
   ASSERT_TRUE(b.isClosed());
 }
@@ -1108,7 +1140,7 @@ TEST(BuilderTest, CloseClosed) {
   b.add(Value(ValueType::Object));
   ASSERT_FALSE(b.isClosed());
   b.close();
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(b.close(), Exception::BuilderNeedOpenCompound);
 }
 
@@ -1143,7 +1175,7 @@ TEST(BuilderTest, Clone) {
 }
 
 TEST(BuilderTest, CloneDestroyOriginal) {
-  Builder clone; // empty
+  Builder clone;  // empty
   {
     Builder b;
     b.add(Value(ValueType::Object));
@@ -1174,12 +1206,14 @@ TEST(BuilderTest, RemoveLastNonObject) {
   Builder b;
   b.add(Value(true));
   b.add(Value(false));
-  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedOpenCompound);
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(),
+                              Exception::BuilderNeedOpenCompound);
 }
 
 TEST(BuilderTest, RemoveLastSealed) {
   Builder b;
-  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(), Exception::BuilderNeedOpenCompound);
+  ASSERT_VELOCYPACK_EXCEPTION(b.removeLast(),
+                              Exception::BuilderNeedOpenCompound);
 }
 
 TEST(BuilderTest, RemoveLastEmptyObject) {
@@ -1216,7 +1250,7 @@ TEST(BuilderTest, RemoveLastObject) {
 
 TEST(BuilderTest, AttributeTranslations) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -1228,7 +1262,7 @@ TEST(BuilderTest, AttributeTranslations) {
   Options options;
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
-  
+
   Builder b(&options);
   b.add(Value(ValueType::Object));
   b.add("foo", Value(true));
@@ -1245,17 +1279,11 @@ TEST(BuilderTest, AttributeTranslations) {
   ValueLength len = b.size();
 
   static uint8_t correctResult[] = {
-    0x0f, 0x35, 0x08, 
-    0x31, 0x1a, 
-    0x32, 0x19, 
-    0x33, 0x31, 
-    0x44, 0x62, 0x61, 0x72, 0x74, 0x32, 
-    0x34, 0x20, 0x2a, 
-    0x35, 0x20, 0x13, 
-    0x4b, 0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64, 0x20, 0x14, 
-    0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20, 0x15, 
-    0x03, 0x05, 0x07, 0x09, 0x0f, 0x12, 0x15, 0x23
-  };  
+      0x0f, 0x35, 0x08, 0x31, 0x1a, 0x32, 0x19, 0x33, 0x31, 0x44, 0x62,
+      0x61, 0x72, 0x74, 0x32, 0x34, 0x20, 0x2a, 0x35, 0x20, 0x13, 0x4b,
+      0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64,
+      0x20, 0x14, 0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20,
+      0x15, 0x03, 0x05, 0x07, 0x09, 0x0f, 0x12, 0x15, 0x23};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -1269,12 +1297,12 @@ TEST(BuilderTest, ToString) {
   b.add("test3", Value(true));
   b.close();
 
-  ASSERT_EQ("{\"test1\":123,\"test2\":\"foobar\",\"test3\":true}", b.toString());
+  ASSERT_EQ("{\"test1\":123,\"test2\":\"foobar\",\"test3\":true}",
+            b.toString());
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

@@ -4,7 +4,7 @@
 
 using namespace arangodb::velocypack;
 
-int main (int, char*[]) {
+int main(int, char* []) {
   // create an object with attributes "b", "a", "l" and "name"
   // note that the attribute names will be sorted in the target VPack object!
   Builder b;

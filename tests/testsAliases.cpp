@@ -28,25 +28,25 @@
 #include "velocypack/velocypack-aliases.h"
 
 // simply test if all the aliases work
-using VPackArrayIterator      = arangodb::velocypack::ArrayIterator;
-using VPackBuilder            = arangodb::velocypack::Builder;
-using VPackCharBuffer         = arangodb::velocypack::CharBuffer;
-using VPackCharBufferSink     = arangodb::velocypack::CharBufferSink;
-using VPackCollection         = arangodb::velocypack::Collection;
-using VPackDumper             = arangodb::velocypack::Dumper;
-using VPackException          = arangodb::velocypack::Exception;
-using VPackHexDump            = arangodb::velocypack::HexDump;
-using VPackObjectIterator     = arangodb::velocypack::ObjectIterator;
-using VPackOptions            = arangodb::velocypack::Options;
-using VPackParser             = arangodb::velocypack::Parser;
-using VPackSink               = arangodb::velocypack::Sink;
-using VPackSlice              = arangodb::velocypack::Slice;
-using VPackStringSink         = arangodb::velocypack::StringSink;
-using VPackStringStreamSink   = arangodb::velocypack::StringStreamSink;
-using VPackValue              = arangodb::velocypack::Value;
-using VPackValueLength        = arangodb::velocypack::ValueLength;
-using VPackValueType          = arangodb::velocypack::ValueType;
-using VPackVersion            = arangodb::velocypack::Version;
+using VPackArrayIterator = arangodb::velocypack::ArrayIterator;
+using VPackBuilder = arangodb::velocypack::Builder;
+using VPackCharBuffer = arangodb::velocypack::CharBuffer;
+using VPackCharBufferSink = arangodb::velocypack::CharBufferSink;
+using VPackCollection = arangodb::velocypack::Collection;
+using VPackDumper = arangodb::velocypack::Dumper;
+using VPackException = arangodb::velocypack::Exception;
+using VPackHexDump = arangodb::velocypack::HexDump;
+using VPackObjectIterator = arangodb::velocypack::ObjectIterator;
+using VPackOptions = arangodb::velocypack::Options;
+using VPackParser = arangodb::velocypack::Parser;
+using VPackSink = arangodb::velocypack::Sink;
+using VPackSlice = arangodb::velocypack::Slice;
+using VPackStringSink = arangodb::velocypack::StringSink;
+using VPackStringStreamSink = arangodb::velocypack::StringStreamSink;
+using VPackValue = arangodb::velocypack::Value;
+using VPackValueLength = arangodb::velocypack::ValueLength;
+using VPackValueType = arangodb::velocypack::ValueType;
+using VPackVersion = arangodb::velocypack::Version;
 
 TEST(AliasTest, TestAliases) {
   // will do nothing, but if this test compiles, then the using declarations
@@ -54,9 +54,8 @@ TEST(AliasTest, TestAliases) {
   EXPECT_TRUE(true);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

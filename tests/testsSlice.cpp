@@ -28,7 +28,7 @@
 #include <string>
 
 #include "tests-common.h"
-  
+
 static unsigned char LocalBuffer[4096];
 
 TEST(SliceTest, SliceStart) {
@@ -40,11 +40,11 @@ TEST(SliceTest, SliceStart) {
   Slice s(builder.start());
 
   ASSERT_EQ(0x18UL, s.head());
-  ASSERT_EQ(0x18UL, * s.start());
-  ASSERT_EQ('\x18', * s.startAs<char>());
-  ASSERT_EQ('\x18', * s.startAs<unsigned char>());
-  ASSERT_EQ(0x18UL, * s.startAs<uint8_t>());
-  
+  ASSERT_EQ(0x18UL, *s.start());
+  ASSERT_EQ('\x18', *s.startAs<char>());
+  ASSERT_EQ('\x18', *s.startAs<unsigned char>());
+  ASSERT_EQ(0x18UL, *s.startAs<uint8_t>());
+
   ASSERT_EQ(s.start(), s.begin());
   ASSERT_EQ(s.start() + 1, s.end());
 }
@@ -126,7 +126,7 @@ TEST(SliceTest, ToJsonArrayCompact) {
 
 TEST(SliceTest, ToJsonObject) {
   std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}");
-  
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -156,7 +156,7 @@ TEST(SliceTest, LengthNull) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
 }
 
@@ -167,7 +167,7 @@ TEST(SliceTest, LengthTrue) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
 }
 
@@ -178,7 +178,7 @@ TEST(SliceTest, LengthArrayEmpty) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0UL, s.length());
 }
 
@@ -189,7 +189,7 @@ TEST(SliceTest, LengthArray) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(10UL, s.length());
 }
 
@@ -203,7 +203,7 @@ TEST(SliceTest, LengthArrayCompact) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0x13, s.head());
   ASSERT_EQ(10UL, s.length());
 }
@@ -215,24 +215,28 @@ TEST(SliceTest, LengthObjectEmpty) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0UL, s.length());
 }
 
 TEST(SliceTest, LengthObject) {
-  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":\"foo\",\"j\":\"bar\"}");
+  std::string const value(
+      "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":"
+      "\"foo\",\"j\":\"bar\"}");
 
   Parser parser;
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(10UL, s.length());
 }
 
 TEST(SliceTest, LengthObjectCompact) {
-  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":\"foo\",\"j\":\"bar\"}");
-  
+  std::string const value(
+      "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6,\"g\":7,\"h\":8,\"i\":"
+      "\"foo\",\"j\":\"bar\"}");
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -240,7 +244,7 @@ TEST(SliceTest, LengthObjectCompact) {
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   ASSERT_EQ(0x14, s.head());
   ASSERT_EQ(10UL, s.length());
 }
@@ -326,7 +330,7 @@ TEST(SliceTest, DoubleNegative) {
 }
 
 TEST(SliceTest, SmallInt) {
-  int64_t expected[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -6, -5, -4, -3, -2, -1 };
+  int64_t expected[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -6, -5, -4, -3, -2, -1};
 
   for (int i = 0; i < 16; ++i) {
     LocalBuffer[0] = 0x30 + i;
@@ -337,13 +341,13 @@ TEST(SliceTest, SmallInt) {
     ASSERT_EQ(1ULL, slice.byteSize());
 
     ASSERT_EQ(expected[i], slice.getSmallInt());
-  } 
+  }
 }
 
 TEST(SliceTest, Int1) {
   LocalBuffer[0] = 0x20;
   uint8_t value = 0x33;
-  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*)&value, sizeof(value));
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
@@ -356,7 +360,7 @@ TEST(SliceTest, Int1) {
 
 TEST(SliceTest, Int2) {
   LocalBuffer[0] = 0x21;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
 
@@ -370,7 +374,7 @@ TEST(SliceTest, Int2) {
 
 TEST(SliceTest, Int3) {
   LocalBuffer[0] = 0x22;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -385,7 +389,7 @@ TEST(SliceTest, Int3) {
 
 TEST(SliceTest, Int4) {
   LocalBuffer[0] = 0x23;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -401,7 +405,7 @@ TEST(SliceTest, Int4) {
 
 TEST(SliceTest, Int5) {
   LocalBuffer[0] = 0x24;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -418,7 +422,7 @@ TEST(SliceTest, Int5) {
 
 TEST(SliceTest, Int6) {
   LocalBuffer[0] = 0x25;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -436,7 +440,7 @@ TEST(SliceTest, Int6) {
 
 TEST(SliceTest, Int7) {
   LocalBuffer[0] = 0x26;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -455,7 +459,7 @@ TEST(SliceTest, Int7) {
 
 TEST(SliceTest, Int8) {
   LocalBuffer[0] = 0x27;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -476,7 +480,7 @@ TEST(SliceTest, Int8) {
 TEST(SliceTest, NegInt1) {
   LocalBuffer[0] = 0x20;
   uint8_t value = 0xa3;
-  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*)&value, sizeof(value));
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
@@ -489,7 +493,7 @@ TEST(SliceTest, NegInt1) {
 
 TEST(SliceTest, NegInt2) {
   LocalBuffer[0] = 0x21;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0xe2;
 
@@ -503,7 +507,7 @@ TEST(SliceTest, NegInt2) {
 
 TEST(SliceTest, NegInt3) {
   LocalBuffer[0] = 0x22;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0xd6;
@@ -518,7 +522,7 @@ TEST(SliceTest, NegInt3) {
 
 TEST(SliceTest, NegInt4) {
   LocalBuffer[0] = 0x23;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -534,7 +538,7 @@ TEST(SliceTest, NegInt4) {
 
 TEST(SliceTest, NegInt5) {
   LocalBuffer[0] = 0x24;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -551,7 +555,7 @@ TEST(SliceTest, NegInt5) {
 
 TEST(SliceTest, NegInt6) {
   LocalBuffer[0] = 0x25;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -569,7 +573,7 @@ TEST(SliceTest, NegInt6) {
 
 TEST(SliceTest, NegInt7) {
   LocalBuffer[0] = 0x26;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -588,7 +592,7 @@ TEST(SliceTest, NegInt7) {
 
 TEST(SliceTest, NegInt8) {
   LocalBuffer[0] = 0x27;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -609,7 +613,7 @@ TEST(SliceTest, NegInt8) {
 TEST(SliceTest, UInt1) {
   LocalBuffer[0] = 0x28;
   uint8_t value = 0x33;
-  memcpy(&LocalBuffer[1], (void*) &value, sizeof(value));
+  memcpy(&LocalBuffer[1], (void*)&value, sizeof(value));
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
 
@@ -621,7 +625,7 @@ TEST(SliceTest, UInt1) {
 
 TEST(SliceTest, UInt2) {
   LocalBuffer[0] = 0x29;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
 
@@ -635,7 +639,7 @@ TEST(SliceTest, UInt2) {
 
 TEST(SliceTest, UInt3) {
   LocalBuffer[0] = 0x2a;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -650,7 +654,7 @@ TEST(SliceTest, UInt3) {
 
 TEST(SliceTest, UInt4) {
   LocalBuffer[0] = 0x2b;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -666,7 +670,7 @@ TEST(SliceTest, UInt4) {
 
 TEST(SliceTest, UInt5) {
   LocalBuffer[0] = 0x2c;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -683,7 +687,7 @@ TEST(SliceTest, UInt5) {
 
 TEST(SliceTest, UInt6) {
   LocalBuffer[0] = 0x2d;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -701,7 +705,7 @@ TEST(SliceTest, UInt6) {
 
 TEST(SliceTest, UInt7) {
   LocalBuffer[0] = 0x2e;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -720,7 +724,7 @@ TEST(SliceTest, UInt7) {
 
 TEST(SliceTest, UInt8) {
   LocalBuffer[0] = 0x2f;
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   *p++ = 0x23;
   *p++ = 0x42;
   *p++ = 0x66;
@@ -769,13 +773,13 @@ TEST(SliceTest, String1) {
   LocalBuffer[0] = 0x40 + static_cast<char>(strlen("foobar"));
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
-  *p++ = (uint8_t) 'f';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'b';
-  *p++ = (uint8_t) 'a';
-  *p++ = (uint8_t) 'r';
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
+  *p++ = (uint8_t)'f';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'b';
+  *p++ = (uint8_t)'a';
+  *p++ = (uint8_t)'r';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -792,15 +796,15 @@ TEST(SliceTest, String2) {
   LocalBuffer[0] = 0x48;
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
-  *p++ = (uint8_t) '1';
-  *p++ = (uint8_t) '2';
-  *p++ = (uint8_t) '3';
-  *p++ = (uint8_t) 'f';
-  *p++ = (uint8_t) '\r';
-  *p++ = (uint8_t) '\t';
-  *p++ = (uint8_t) '\n';
-  *p++ = (uint8_t) 'x';
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
+  *p++ = (uint8_t)'1';
+  *p++ = (uint8_t)'2';
+  *p++ = (uint8_t)'3';
+  *p++ = (uint8_t)'f';
+  *p++ = (uint8_t)'\r';
+  *p++ = (uint8_t)'\t';
+  *p++ = (uint8_t)'\n';
+  *p++ = (uint8_t)'x';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -817,15 +821,15 @@ TEST(SliceTest, StringNullBytes) {
   LocalBuffer[0] = 0x48;
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
-  *p++ = (uint8_t) '\0';
-  *p++ = (uint8_t) '1';
-  *p++ = (uint8_t) '2';
-  *p++ = (uint8_t) '\0';
-  *p++ = (uint8_t) '3';
-  *p++ = (uint8_t) '4';
-  *p++ = (uint8_t) '\0';
-  *p++ = (uint8_t) 'x';
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
+  *p++ = (uint8_t)'\0';
+  *p++ = (uint8_t)'1';
+  *p++ = (uint8_t)'2';
+  *p++ = (uint8_t)'\0';
+  *p++ = (uint8_t)'3';
+  *p++ = (uint8_t)'4';
+  *p++ = (uint8_t)'\0';
+  *p++ = (uint8_t)'x';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -850,23 +854,23 @@ TEST(SliceTest, StringLong1) {
   LocalBuffer[0] = 0xbf;
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
-  uint8_t* p = (uint8_t*) &LocalBuffer[1];
+  uint8_t* p = (uint8_t*)&LocalBuffer[1];
   // length
-  *p++ = (uint8_t) 6;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t)6;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
 
-  *p++ = (uint8_t) 'f';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'b';
-  *p++ = (uint8_t) 'a';
-  *p++ = (uint8_t) 'r';
+  *p++ = (uint8_t)'f';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'b';
+  *p++ = (uint8_t)'a';
+  *p++ = (uint8_t)'r';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -880,7 +884,7 @@ TEST(SliceTest, StringLong1) {
 }
 
 TEST(SliceTest, ArrayCases1) {
-  uint8_t buf[] = { 0x02, 0x05, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x02, 0x05, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -891,7 +895,7 @@ TEST(SliceTest, ArrayCases1) {
 }
 
 TEST(SliceTest, ArrayCases2) {
-  uint8_t buf[] = { 0x02, 0x06, 0x00, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x02, 0x06, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -902,7 +906,7 @@ TEST(SliceTest, ArrayCases2) {
 }
 
 TEST(SliceTest, ArrayCases3) {
-  uint8_t buf[] = { 0x02, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x02, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -913,8 +917,8 @@ TEST(SliceTest, ArrayCases3) {
 }
 
 TEST(SliceTest, ArrayCases4) {
-  uint8_t buf[] = { 0x02, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                    0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x02, 0x0c, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -925,7 +929,7 @@ TEST(SliceTest, ArrayCases4) {
 }
 
 TEST(SliceTest, ArrayCases5) {
-  uint8_t buf[] = { 0x03, 0x06, 0x00, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x03, 0x06, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -936,7 +940,7 @@ TEST(SliceTest, ArrayCases5) {
 }
 
 TEST(SliceTest, ArrayCases6) {
-  uint8_t buf[] = { 0x03, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x03, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -947,8 +951,8 @@ TEST(SliceTest, ArrayCases6) {
 }
 
 TEST(SliceTest, ArrayCases7) {
-  uint8_t buf[] = { 0x03, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x03, 0x0c, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -959,7 +963,7 @@ TEST(SliceTest, ArrayCases7) {
 }
 
 TEST(SliceTest, ArrayCases8) {
-  uint8_t buf[] = { 0x04, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x04, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -970,8 +974,8 @@ TEST(SliceTest, ArrayCases8) {
 }
 
 TEST(SliceTest, ArrayCases9) {
-  uint8_t buf[] = { 0x04, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x04, 0x0c, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -982,8 +986,8 @@ TEST(SliceTest, ArrayCases9) {
 }
 
 TEST(SliceTest, ArrayCases10) {
-  uint8_t buf[] = { 0x05, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x31, 0x32, 0x33};
+  uint8_t buf[] = {0x05, 0x0c, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -994,7 +998,7 @@ TEST(SliceTest, ArrayCases10) {
 }
 
 TEST(SliceTest, ArrayCases11) {
-  uint8_t buf[] = { 0x06, 0x09, 0x03, 0x31, 0x32, 0x33, 0x03, 0x04, 0x05};
+  uint8_t buf[] = {0x06, 0x09, 0x03, 0x31, 0x32, 0x33, 0x03, 0x04, 0x05};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1005,7 +1009,8 @@ TEST(SliceTest, ArrayCases11) {
 }
 
 TEST(SliceTest, ArrayCases12) {
-  uint8_t buf[] = { 0x06, 0x0b, 0x03, 0x00, 0x00, 0x31, 0x32, 0x33, 0x05, 0x06, 0x07};
+  uint8_t buf[] = {0x06, 0x0b, 0x03, 0x00, 0x00, 0x31,
+                   0x32, 0x33, 0x05, 0x06, 0x07};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1016,8 +1021,8 @@ TEST(SliceTest, ArrayCases12) {
 }
 
 TEST(SliceTest, ArrayCases13) {
-  uint8_t buf[] = { 0x06, 0x0f, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                    0x31, 0x32, 0x33, 0x09, 0x0a, 0x0b};
+  uint8_t buf[] = {0x06, 0x0f, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x31, 0x32, 0x33, 0x09, 0x0a, 0x0b};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1028,8 +1033,8 @@ TEST(SliceTest, ArrayCases13) {
 }
 
 TEST(SliceTest, ArrayCases14) {
-  uint8_t buf[] = { 0x07, 0x0e, 0x00, 0x03, 0x00, 0x31, 0x32, 0x33, 
-                    0x05, 0x00, 0x06, 0x00, 0x07, 0x00};
+  uint8_t buf[] = {0x07, 0x0e, 0x00, 0x03, 0x00, 0x31, 0x32,
+                   0x33, 0x05, 0x00, 0x06, 0x00, 0x07, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1040,8 +1045,8 @@ TEST(SliceTest, ArrayCases14) {
 }
 
 TEST(SliceTest, ArrayCases15) {
-  uint8_t buf[] = { 0x07, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                    0x31, 0x32, 0x33, 0x09, 0x00, 0x0a, 0x00, 0x0b, 0x00};
+  uint8_t buf[] = {0x07, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x31, 0x32, 0x33, 0x09, 0x00, 0x0a, 0x00, 0x0b, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1052,9 +1057,9 @@ TEST(SliceTest, ArrayCases15) {
 }
 
 TEST(SliceTest, ArrayCases16) {
-  uint8_t buf[] = { 0x08, 0x18, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 
-                    0x31, 0x32, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0a, 0x00, 
-                    0x00, 0x00, 0x0b, 0x00, 0x00, 0x00};
+  uint8_t buf[] = {0x08, 0x18, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+                   0x00, 0x31, 0x32, 0x33, 0x09, 0x00, 0x00, 0x00,
+                   0x0a, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1065,12 +1070,11 @@ TEST(SliceTest, ArrayCases16) {
 }
 
 TEST(SliceTest, ArrayCases17) {
-  uint8_t buf[] = { 0x09, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                    0x00, 0x31, 0x32, 0x33, 0x09, 0x00, 0x00, 0x00, 
-                    0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 
-                    0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00};
+  uint8_t buf[] = {0x09, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x31, 0x32, 0x33, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
   ASSERT_EQ(3ULL, s.length());
@@ -1081,7 +1085,7 @@ TEST(SliceTest, ArrayCases17) {
 }
 
 TEST(SliceTest, ArrayCasesCompact) {
-  uint8_t buf[] = { 0x13, 0x08, 0x30, 0x31, 0x32, 0x33, 0x34, 0x05 };
+  uint8_t buf[] = {0x13, 0x08, 0x30, 0x31, 0x32, 0x33, 0x34, 0x05};
 
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
@@ -1099,8 +1103,8 @@ TEST(SliceTest, ArrayCasesCompact) {
 }
 
 TEST(SliceTest, ObjectCases1) {
-  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
-                    0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
+  uint8_t buf[] = {0x0b, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1112,9 +1116,8 @@ TEST(SliceTest, ObjectCases1) {
 }
 
 TEST(SliceTest, ObjectCases2) {
-  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31,
-                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
-                    0x0b };
+  uint8_t buf[] = {0x0b, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31, 0x41,
+                   0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 0x0b};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1126,9 +1129,9 @@ TEST(SliceTest, ObjectCases2) {
 }
 
 TEST(SliceTest, ObjectCases3) {
-  uint8_t buf[] = { 0x0b, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
-                    0x63, 0x33, 0x09, 0x0c, 0x0f };
+  uint8_t buf[] = {0x0b, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x09, 0x0c, 0x0f};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1140,8 +1143,8 @@ TEST(SliceTest, ObjectCases3) {
 }
 
 TEST(SliceTest, ObjectCases4) {
-  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62, 
-                    0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09 };
+  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1153,9 +1156,8 @@ TEST(SliceTest, ObjectCases4) {
 }
 
 TEST(SliceTest, ObjectCases5) {
-  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31,
-                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 
-                    0x0b };
+  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31, 0x41,
+                   0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 0x0b};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1167,9 +1169,9 @@ TEST(SliceTest, ObjectCases5) {
 }
 
 TEST(SliceTest, ObjectCases6) {
-  uint8_t buf[] = { 0x0f, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 
-                    0x63, 0x33, 0x09, 0x0c, 0x0f };
+  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x09, 0x0c, 0x0f};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1181,9 +1183,8 @@ TEST(SliceTest, ObjectCases6) {
 }
 
 TEST(SliceTest, ObjectCases7) {
-  uint8_t buf[] = { 0x0c, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31,
-                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
-                    0x08, 0x00, 0x0b, 0x00 };
+  uint8_t buf[] = {0x0c, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x05, 0x00, 0x08, 0x00, 0x0b, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1195,9 +1196,9 @@ TEST(SliceTest, ObjectCases7) {
 }
 
 TEST(SliceTest, ObjectCases8) {
-  uint8_t buf[] = { 0x0c, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
+  uint8_t buf[] = {0x0c, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                   0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1209,9 +1210,8 @@ TEST(SliceTest, ObjectCases8) {
 }
 
 TEST(SliceTest, ObjectCases9) {
-  uint8_t buf[] = { 0x10, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31,
-                    0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x00,
-                    0x08, 0x00, 0x0b, 0x00 };
+  uint8_t buf[] = {0x10, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
+                   0x32, 0x41, 0x63, 0x33, 0x05, 0x00, 0x08, 0x00, 0x0b, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1223,9 +1223,9 @@ TEST(SliceTest, ObjectCases9) {
 }
 
 TEST(SliceTest, ObjectCases10) {
-  uint8_t buf[] = { 0x10, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00 };
+  uint8_t buf[] = {0x10, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
+                   0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1237,10 +1237,9 @@ TEST(SliceTest, ObjectCases10) {
 }
 
 TEST(SliceTest, ObjectCases11) {
-  uint8_t buf[] = { 0x0d, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
-                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
+  uint8_t buf[] = {0x0d, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x41,
+                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
+                   0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1252,10 +1251,9 @@ TEST(SliceTest, ObjectCases11) {
 }
 
 TEST(SliceTest, ObjectCases12) {
-  uint8_t buf[] = { 0x11, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x0c, 0x00,
-                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00 };
+  uint8_t buf[] = {0x11, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x41,
+                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
+                   0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1267,13 +1265,11 @@ TEST(SliceTest, ObjectCases12) {
 }
 
 TEST(SliceTest, ObjectCases13) {
-  uint8_t buf[] = { 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00};
+  uint8_t buf[] = {0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41,
+                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1285,13 +1281,11 @@ TEST(SliceTest, ObjectCases13) {
 }
 
 TEST(SliceTest, ObjectCases14) {
-  uint8_t buf[] = { 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                    0x63, 0x33, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00};
+  uint8_t buf[] = {0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41,
+                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
@@ -1303,8 +1297,8 @@ TEST(SliceTest, ObjectCases14) {
 }
 
 TEST(SliceTest, ObjectCompact) {
-  uint8_t const buf[] = { 0x14, 0x0f, 0x41, 0x61, 0x30, 0x41, 0x62, 0x31,
-                          0x41, 0x63, 0x32, 0x41, 0x64, 0x33, 0x04 };
+  uint8_t const buf[] = {0x14, 0x0f, 0x41, 0x61, 0x30, 0x41, 0x62, 0x31,
+                         0x41, 0x63, 0x32, 0x41, 0x64, 0x33, 0x04};
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(4ULL, s.length());
@@ -1394,11 +1388,12 @@ TEST(SliceTest, EqualToDuplicateValuesNumbers) {
     values.emplace(it);
   }
 
-  ASSERT_EQ(6UL, values.size()); // 1,2,3,4,5,9
+  ASSERT_EQ(6UL, values.size());  // 1,2,3,4,5,9
 }
 
 TEST(SliceTest, EqualToDuplicateValuesStrings) {
-  std::string const value("[\"foo\",\"bar\",\"baz\",\"bart\",\"foo\",\"bark\",\"qux\",\"foo\"]");
+  std::string const value(
+      "[\"foo\",\"bar\",\"baz\",\"bart\",\"foo\",\"bark\",\"qux\",\"foo\"]");
 
   Parser parser;
   parser.parse(value);
@@ -1408,7 +1403,7 @@ TEST(SliceTest, EqualToDuplicateValuesStrings) {
     values.emplace(it);
   }
 
-  ASSERT_EQ(6UL, values.size()); // "foo", "bar", "baz", "bart", "bark", "qux"
+  ASSERT_EQ(6UL, values.size());  // "foo", "bar", "baz", "bart", "bark", "qux"
 }
 
 TEST(SliceTest, EqualToNull) {
@@ -1499,7 +1494,9 @@ TEST(SliceTest, HashArray) {
 }
 
 TEST(SliceTest, HashObject) {
-  Builder b = Parser::fromJson("{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,\"seven\":7}");
+  Builder b = Parser::fromJson(
+      "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
+      "\"seven\":7}");
   Slice s = b.slice();
 
   ASSERT_EQ(6865527808070733846ULL, s.hash());
@@ -1526,14 +1523,16 @@ TEST(SliceTest, GetNumericValueIntNoLoss) {
   ASSERT_EQ(INT64_MAX, s.at(4).getNumber<int64_t>());
   ASSERT_EQ(-3453, s.at(5).getNumber<int64_t>());
   ASSERT_EQ(2343323453, s.at(6).getNumber<int64_t>());
-  
+
   ASSERT_EQ(1, s.at(0).getNumber<int16_t>());
   ASSERT_EQ(-1, s.at(1).getNumber<int16_t>());
   ASSERT_EQ(10, s.at(2).getNumber<int16_t>());
   ASSERT_EQ(-10, s.at(3).getNumber<int16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int16_t>(),
+                              Exception::NumberOutOfRange);
   ASSERT_EQ(-3453, s.at(5).getNumber<int16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<int16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<int16_t>(),
+                              Exception::NumberOutOfRange);
 }
 
 TEST(SliceTest, GetNumericValueUIntNoLoss) {
@@ -1551,20 +1550,28 @@ TEST(SliceTest, GetNumericValueUIntNoLoss) {
   Slice s = Slice(b.start());
 
   ASSERT_EQ(1ULL, s.at(0).getNumber<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(),
+                              Exception::NumberOutOfRange);
   ASSERT_EQ(10ULL, s.at(2).getNumber<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(),
+                              Exception::NumberOutOfRange);
   ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.at(4).getNumber<uint64_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint64_t>(),
+                              Exception::NumberOutOfRange);
   ASSERT_EQ(2343323453ULL, s.at(6).getNumber<uint64_t>());
- 
+
   ASSERT_EQ(1ULL, s.at(0).getNumber<uint16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint16_t>(),
+                              Exception::NumberOutOfRange);
   ASSERT_EQ(10ULL, s.at(2).getNumber<uint16_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint16_t>(), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<uint16_t>(), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint16_t>(),
+                              Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint16_t>(),
+                              Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getNumber<uint16_t>(),
+                              Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(6).getNumber<uint16_t>(),
+                              Exception::NumberOutOfRange);
 }
 
 TEST(SliceTest, GetNumericValueDoubleNoLoss) {
@@ -1580,7 +1587,7 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   b.close();
 
   Slice s = Slice(b.start());
-  
+
   ASSERT_DOUBLE_EQ(1., s.at(0).getNumber<double>());
   ASSERT_DOUBLE_EQ(-1., s.at(1).getNumber<double>());
   ASSERT_DOUBLE_EQ(10., s.at(2).getNumber<double>());
@@ -1604,27 +1611,42 @@ TEST(SliceTest, GetNumericValueWrongSource) {
   b.close();
 
   Slice s = Slice(b.start());
-  
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<double>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint64_t>(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<double>(), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<int64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<uint64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getNumber<double>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<int64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<uint64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getNumber<double>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<int64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<uint64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getNumber<double>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<int64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<uint64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getNumber<double>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<int64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<uint64_t>(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<double>(),
+                              Exception::InvalidValueType);
 }
 
 TEST(SliceTest, Translations) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -1668,7 +1690,7 @@ TEST(SliceTest, Translations) {
   ASSERT_EQ(20UL, s.get("mötörhead").getUInt());
   ASSERT_TRUE(s.hasKey("quetzal"));
   ASSERT_EQ(21UL, s.get("quetzal").getUInt());
-  
+
   ASSERT_EQ("foo", s.keyAt(0).copyString());
   ASSERT_EQ("bar", s.keyAt(1).copyString());
   ASSERT_EQ("baz", s.keyAt(2).copyString());
@@ -1681,7 +1703,7 @@ TEST(SliceTest, Translations) {
 
 TEST(SliceTest, TranslationsSubObjects) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -1714,17 +1736,19 @@ TEST(SliceTest, TranslationsSubObjects) {
   ASSERT_EQ(3UL, s.length());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_TRUE(s.get("foo").isObject());
-  ASSERT_FALSE(s.get(std::vector<std::string>({ "foo", "bar" })).getBoolean());
-  ASSERT_EQ(1UL, s.get(std::vector<std::string>({ "foo", "baz" })).getUInt());
-  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bark" })).isObject());
-  ASSERT_EQ(2UL, s.get(std::vector<std::string>({ "foo", "bark", "foo" })).getUInt());
-  ASSERT_EQ(3UL, s.get(std::vector<std::string>({ "foo", "bark", "bar" })).getUInt());
+  ASSERT_FALSE(s.get(std::vector<std::string>({"foo", "bar"})).getBoolean());
+  ASSERT_EQ(1UL, s.get(std::vector<std::string>({"foo", "baz"})).getUInt());
+  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "bark"})).isObject());
+  ASSERT_EQ(2UL,
+            s.get(std::vector<std::string>({"foo", "bark", "foo"})).getUInt());
+  ASSERT_EQ(3UL,
+            s.get(std::vector<std::string>({"foo", "bark", "bar"})).getUInt());
   ASSERT_TRUE(s.hasKey("bar"));
   ASSERT_EQ(4UL, s.get("bar").getUInt());
   ASSERT_TRUE(s.hasKey("bark"));
   ASSERT_TRUE(s.get("bark").isObject());
-  ASSERT_EQ(5UL, s.get(std::vector<std::string>({ "bark", "foo" })).getUInt());
-  ASSERT_EQ(6UL, s.get(std::vector<std::string>({ "bark", "bar" })).getUInt());
+  ASSERT_EQ(5UL, s.get(std::vector<std::string>({"bark", "foo"})).getUInt());
+  ASSERT_EQ(6UL, s.get(std::vector<std::string>({"bark", "bar"})).getUInt());
   ASSERT_EQ("foo", s.keyAt(0).copyString());
   ASSERT_EQ("bar", s.valueAt(0).keyAt(0).copyString());
   ASSERT_EQ("baz", s.valueAt(0).keyAt(1).copyString());
@@ -1737,7 +1761,7 @@ TEST(SliceTest, TranslationsSubObjects) {
 
 TEST(SliceTest, TranslatedObjectWithoutTranslator) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -1762,15 +1786,18 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
   ASSERT_EQ(6UL, s.length());
   ASSERT_EQ("mötör", s.keyAt(0).copyString());
   ASSERT_EQ("quetzal", s.keyAt(1).copyString());
-  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(2).copyString(), Exception::NeedAttributeTranslator);
-  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(3).copyString(), Exception::NeedAttributeTranslator);
-  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4).copyString(), Exception::NeedAttributeTranslator);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(2).copyString(),
+                              Exception::NeedAttributeTranslator);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(3).copyString(),
+                              Exception::NeedAttributeTranslator);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4).copyString(),
+                              Exception::NeedAttributeTranslator);
   ASSERT_EQ("bart", s.keyAt(5).copyString());
 }
 
 TEST(SliceTest, TranslatedWithCompactNotation) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -1805,7 +1832,7 @@ TEST(SliceTest, TranslatedWithCompactNotation) {
 
 TEST(SliceTest, TranslatedInvalidKey) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->seal();
 
@@ -1814,9 +1841,7 @@ TEST(SliceTest, TranslatedInvalidKey) {
   options.attributeTranslator = translator.get();
 
   // a compact object with a single member (key: 4, value: false)
-  uint8_t const data[] = {
-    0x14, 0x05, 0x34, 0x19, 0x01
-  };
+  uint8_t const data[] = {0x14, 0x05, 0x34, 0x19, 0x01};
 
   Slice s = Slice(data, &options);
 
@@ -1825,9 +1850,8 @@ TEST(SliceTest, TranslatedInvalidKey) {
   ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::KeyNotFound);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

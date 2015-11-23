@@ -50,7 +50,8 @@ TEST(TypesTest, TestNames) {
 }
 
 TEST(TypesTest, TestNamesArrays) {
-  uint8_t const arrays[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x9 };
+  uint8_t const arrays[] = {0x01, 0x02, 0x03, 0x04, 0x05,
+                            0x06, 0x07, 0x08, 0x9};
   ASSERT_STREQ("array", valueTypeName(Slice(&arrays[0]).type()));
   ASSERT_STREQ("array", valueTypeName(Slice(&arrays[1]).type()));
   ASSERT_STREQ("array", valueTypeName(Slice(&arrays[2]).type()));
@@ -62,7 +63,8 @@ TEST(TypesTest, TestNamesArrays) {
 }
 
 TEST(TypesTest, TestNamesObjects) {
-  uint8_t const objects[] = { 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12 };
+  uint8_t const objects[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+                             0x0f, 0x10, 0x11, 0x12};
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[0]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[1]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[2]).type()));
@@ -102,9 +104,8 @@ TEST(TypesTest, TestStringifyArray) {
   ASSERT_EQ("array", out.str());
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

@@ -38,7 +38,7 @@ TEST(VersionTest, TestCompare) {
   ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 0, 0)));
   ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 0, 1)));
   ASSERT_EQ(1, Version::compare(Version(1, 1, 1), Version(1, 1, 0)));
-  
+
   ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(2, 0, 0)));
   ASSERT_EQ(-1, Version::compare(Version(1, 0, 0), Version(1, 1, 0)));
   ASSERT_EQ(-1, Version::compare(Version(1, 0, 1), Version(1, 1, 0)));
@@ -89,9 +89,8 @@ TEST(VersionTest, TestFormat) {
   ASSERT_EQ('\0', *p);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

@@ -6,7 +6,7 @@
 #include "velocypack/ValueType.h"
 #include "velocypack/velocypack-aliases.h"
 
-int main (int, char*[]) {
+int main(int, char* []) {
   // create an array with 10 number members
   VPackBuilder b;
 
@@ -18,8 +18,8 @@ int main (int, char*[]) {
 
   // a Slice is a lightweight accessor for a VPack value
   VPackSlice s(b.start());
- 
-  // inspect the outermost value (should be an Array...) 
+
+  // inspect the outermost value (should be an Array...)
   std::cout << "Slice: " << s << std::endl;
   std::cout << "Type: " << s.type() << std::endl;
   std::cout << "Bytesize: " << s.byteSize() << std::endl;

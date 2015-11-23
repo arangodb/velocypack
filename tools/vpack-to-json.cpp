@@ -32,45 +32,42 @@
 
 using namespace arangodb::velocypack;
 
-static void usage (char* argv[]) {
+static void usage(char* argv[]) {
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
-  std::cout << "This program reads the VPack INFILE into a string and saves its" << std::endl;
-  std::cout << "JSON representation in file OUTFILE. Will work only for input" << std::endl;
+  std::cout << "This program reads the VPack INFILE into a string and saves its"
+            << std::endl;
+  std::cout << "JSON representation in file OUTFILE. Will work only for input"
+            << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
   std::cout << "Available options are:" << std::endl;
   std::cout << " --pretty        pretty-print JSON output" << std::endl;
   std::cout << " --no-pretty     don't pretty print JSON output" << std::endl;
 }
 
-static inline bool isOption (char const* arg, char const* expected) {
+static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
-  bool allowFlags  = true;
-  bool pretty      = true;
+  bool allowFlags = true;
+  bool pretty = true;
 
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
     if (allowFlags && isOption(p, "--pretty")) {
       pretty = true;
-    }
-    else if (allowFlags && isOption(p, "--no-pretty")) {
+    } else if (allowFlags && isOption(p, "--no-pretty")) {
       pretty = false;
-    }
-    else if (allowFlags && isOption(p, "--")) {
+    } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
-    }
-    else if (infileName == nullptr) {
+    } else if (infileName == nullptr) {
       infileName = p;
-    }
-    else if (outfileName == nullptr) {
+    } else if (outfileName == nullptr) {
       outfileName = p;
-    }
-    else {
+    } else {
       usage(argv);
       return EXIT_FAILURE;
     }
@@ -89,7 +86,7 @@ int main (int argc, char* argv[]) {
     outfileName = "/proc/self/fd/1";
     resetStream = false;
   }
-#else 
+#else
   bool const resetStream = true;
   if (outfileName == nullptr) {
     usage(argv);
@@ -108,7 +105,7 @@ int main (int argc, char* argv[]) {
   std::string s;
   std::ifstream ifs(infile, std::ifstream::in);
 
-  if (! ifs.is_open()) {
+  if (!ifs.is_open()) {
     std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
@@ -133,19 +130,19 @@ int main (int argc, char* argv[]) {
 
   try {
     dumper.dump(slice);
-  }
-  catch (Exception const& ex) {
-    std::cerr << "An exception occurred while processing infile '" << infile << "': " << ex.what() << std::endl;
+  } catch (Exception const& ex) {
+    std::cerr << "An exception occurred while processing infile '" << infile
+              << "': " << ex.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (...) {
+    std::cerr << "An unknown exception occurred while processing infile '"
+              << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
-  catch (...) {
-    std::cerr << "An unknown exception occurred while processing infile '" << infile << "'" << std::endl;
-    return EXIT_FAILURE;
-  }
-  
+
   std::ofstream ofs(outfileName, std::ofstream::out);
- 
-  if (! ofs.is_open()) {
+
+  if (!ofs.is_open()) {
     std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
     return EXIT_FAILURE;
   }
@@ -161,9 +158,10 @@ int main (int argc, char* argv[]) {
 
   ofs.close();
 
-  std::cout << "Successfully converted JSON infile '" << infile << "'" << std::endl;
+  std::cout << "Successfully converted JSON infile '" << infile << "'"
+            << std::endl;
   std::cout << "VPack Infile size: " << s.size() << std::endl;
   std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
-  
+
   return EXIT_SUCCESS;
 }

@@ -3,11 +3,11 @@
 
 using namespace arangodb::velocypack;
 
-static void printObject (Builder const& b) {
+static void printObject(Builder const& b) {
   // a Slice is a lightweight accessor for a VPack value
   Slice s(b.start(), b.options);
- 
-  // inspect the outermost value (should be an Object...) 
+
+  // inspect the outermost value (should be an Object...)
   std::cout << "Slice: " << s << std::endl;
   std::cout << "Type: " << s.type() << std::endl;
   std::cout << "Bytesize: " << s.byteSize() << std::endl;
@@ -17,24 +17,24 @@ static void printObject (Builder const& b) {
   // the attribute name translator works transparently
   std::cout << "Iterating Object members:" << std::endl;
   for (auto const& it : ObjectIterator(s)) {
-    std::cout << "key: " << it.key.copyString() 
+    std::cout << "key: " << it.key.copyString()
               << ", value: " << it.value.toJson() << std::endl;
   }
 }
 
-static Builder buildObject (Options const* options) {
+static Builder buildObject(Options const* options) {
   Builder b(options);
 
   b(Value(ValueType::Object));
-  b.add("foo", Value(42)); 
-  b.add("bar", Value("some string value")); 
+  b.add("foo", Value(42));
+  b.add("bar", Value("some string value"));
   b.add("baz", Value(true));
   b.close();
 
   return b;
 }
 
-int main (int, char*[]) {
+int main(int, char* []) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
   // these attribute names will be translated into short integer values
   translator->add("foo", 1);
