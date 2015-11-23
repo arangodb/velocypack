@@ -310,6 +310,46 @@ TEST(BuilderTest, DoubleWithOtherTypes) {
   ASSERT_EQ("[1.2,-1.2,-1,1]", s.toJson());
 }
 
+TEST(BuilderTest, AddAndOpenArray) {
+  Builder b1;
+  ASSERT_TRUE(b1.isClosed());
+  b1.addArray();
+  ASSERT_FALSE(b1.isClosed());
+  b1.add(Value("bar"));
+  b1.close();
+  ASSERT_TRUE(b1.isClosed());
+  ASSERT_EQ(0x02, b1.slice().head());
+
+  Builder b2;
+  ASSERT_TRUE(b2.isClosed());
+  b2.openArray();
+  ASSERT_FALSE(b2.isClosed());
+  b2.add(Value("bar"));
+  b2.close();
+  ASSERT_TRUE(b2.isClosed());
+  ASSERT_EQ(0x02, b2.slice().head());
+}
+
+TEST(BuilderTest, AddAndOpenObject) {
+  Builder b1;
+  ASSERT_TRUE(b1.isClosed());
+  b1.addObject();
+  ASSERT_FALSE(b1.isClosed());
+  b1.add("foo", Value("bar"));
+  b1.close();
+  ASSERT_TRUE(b1.isClosed());
+  ASSERT_EQ(0x0b, b1.slice().head());
+
+  Builder b2;
+  ASSERT_TRUE(b2.isClosed());
+  b2.openObject();
+  ASSERT_FALSE(b2.isClosed());
+  b2.add("foo", Value("bar"));
+  b2.close();
+  ASSERT_TRUE(b2.isClosed());
+  ASSERT_EQ(0x0b, b2.slice().head());
+}
+
 TEST(BuilderTest, None) {
   Builder b;
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None)),

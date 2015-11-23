@@ -427,7 +427,17 @@ class Builder {
     addCompoundValue(unindexed ? 0x13 : 0x06);
   }
 
+  // this is an alias for addArray()
+  inline void openArray(bool unindexed = false) {
+    addCompoundValue(unindexed ? 0x13 : 0x06);
+  }
+
   inline void addObject(bool unindexed = false) {
+    addCompoundValue(unindexed ? 0x14 : 0x0b);
+  }
+
+  // this is an alias for addObject()
+  inline void openObject(bool unindexed = false) {
     addCompoundValue(unindexed ? 0x14 : 0x0b);
   }
 
