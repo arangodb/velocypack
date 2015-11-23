@@ -13,6 +13,8 @@ Please follow these guidelines if you want to contribute to VelocyPack:
   develop and test the feature locally first and then send us a pull request.
   Please note that we require you to sign the [Contributor Agreement](https://www.arangodb.com/documents/cla.pdf)
   before we can accept your pull requests.
+  Code changes in the VelocyPack library should use the "Google" style and
+  conventions as used by *clang-format*. 
 
 * Please let us know if you plan to work on a ticket. This way we can make sure
   redundant work is avoided.
