@@ -64,6 +64,7 @@ struct Exception : std::exception {
     BuilderUnexpectedType = 34,
     BuilderUnexpectedValue = 35,
     BuilderNeedSubvalue = 36,
+    BuilderExternalsDisallowed = 37,
 
     UnknownError = 999
   };
@@ -130,6 +131,8 @@ struct Exception : std::exception {
         return "Unexpected type";
       case BuilderUnexpectedValue:
         return "Unexpected value";
+      case BuilderExternalsDisallowed:
+        return "Externals are not allowed in this configuration";
 
       case UnknownError:
       default:

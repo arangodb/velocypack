@@ -101,6 +101,10 @@ struct Options {
   // JSON with a Dumper
   bool escapeForwardSlashes = false;
 
+  // disallow using type External (to prevent injection of arbitrary pointer
+  // values as a security precaution)
+  bool disallowExternals = false;
+
   // default options with the above settings
   static Options Defaults;
 };

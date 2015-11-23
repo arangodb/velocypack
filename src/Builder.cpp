@@ -461,6 +461,11 @@ uint8_t* Builder::set(Value const& item) {
       break;
     }
     case ValueType::External: {
+      if (options->disallowExternals) {
+        // External values explicitly disallowed as a security
+        // precaution
+        throw Exception(Exception::BuilderExternalsDisallowed);
+      }
       if (ctype != Value::CType::VoidPtr) {
         throw Exception(Exception::BuilderUnexpectedValue,
                         "Must give void pointer for ValueType::External");

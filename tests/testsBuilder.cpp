@@ -591,6 +591,15 @@ TEST(BuilderTest, ObjectCompactLengthAboveThreshold) {
   ASSERT_EQ(0x80, result[516]); 
 }
 
+TEST(BuilderTest, ExternalDisallowed) {
+  uint8_t externalStuff[] = { 0x01 };
+  Options options;
+  options.disallowExternals = true;
+
+  Builder b(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)), ValueType::External)), Exception::BuilderExternalsDisallowed);
+}
+
 TEST(BuilderTest, External) {
   uint8_t externalStuff[] = { 0x01 };
   Builder b;
