@@ -1252,6 +1252,17 @@ TEST(BuilderTest, AttributeTranslations) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
+TEST(BuilderTest, ToString) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("test1", Value(123));
+  b.add("test2", Value("foobar"));
+  b.add("test3", Value(true));
+  b.close();
+
+  ASSERT_EQ("{\"test1\":123,\"test2\":\"foobar\",\"test3\":true}", b.toString());
+}
+
 int main (int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
