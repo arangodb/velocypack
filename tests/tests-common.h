@@ -73,6 +73,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::None:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -91,6 +93,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Null:
       ASSERT_TRUE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -110,6 +114,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Bool:
       ASSERT_FALSE(s.isNull());
       ASSERT_TRUE(s.isBool());
+      ASSERT_TRUE(s.isFalse() || s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -129,6 +134,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Double:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_TRUE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -148,6 +155,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Array:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_TRUE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -167,6 +176,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Object:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_TRUE(s.isObject());
@@ -186,6 +197,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::External:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -205,6 +218,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::UTCDate:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -224,6 +239,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Int:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -243,6 +260,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::UInt:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -262,6 +281,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::SmallInt:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -281,6 +302,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::String:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -300,6 +323,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Binary:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -319,6 +344,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::BCD:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -338,6 +365,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::MinKey:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -357,6 +386,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::MaxKey:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());
@@ -376,6 +407,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
     case ValueType::Custom:
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
       ASSERT_FALSE(s.isDouble());
       ASSERT_FALSE(s.isArray());
       ASSERT_FALSE(s.isObject());

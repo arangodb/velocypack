@@ -128,10 +128,11 @@ class Builder {
   explicit Builder(std::shared_ptr<Buffer<uint8_t>>& buffer,
                    Options const* options = &Options::Defaults)
       : _buffer(buffer), _pos(0), options(options) {
+    if (_buffer.get() == nullptr) {
+      throw Exception(Exception::InternalError, "Buffer cannot be a nullptr");
+    }
     _start = _buffer->data();
     _size = _buffer->size();
-
-    VELOCYPACK_ASSERT(options != nullptr);
 
     if (options == nullptr) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
@@ -142,8 +143,6 @@ class Builder {
       : _buffer(new Buffer<uint8_t>()), _pos(0), options(options) {
     _start = _buffer->data();
     _size = _buffer->size();
-
-    VELOCYPACK_ASSERT(options != nullptr);
 
     if (options == nullptr) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
@@ -162,7 +161,6 @@ class Builder {
         _stack(that._stack),
         _index(that._index),
         options(that.options) {
-    VELOCYPACK_ASSERT(options != nullptr);
     if (that._buffer == nullptr) {
       throw Exception(Exception::InternalError,
                       "Buffer of Builder is already gone");
@@ -181,7 +179,6 @@ class Builder {
     _stack = that._stack;
     _index = that._index;
     options = that.options;
-    VELOCYPACK_ASSERT(options != nullptr);
     return *this;
   }
 
@@ -200,7 +197,6 @@ class Builder {
     _index.clear();
     _index.swap(that._index);
     options = that.options;
-    VELOCYPACK_ASSERT(options != nullptr);
     that._start = nullptr;
     that._size = 0;
     that._pos = 0;
@@ -221,7 +217,6 @@ class Builder {
     _index.clear();
     _index.swap(that._index);
     options = that.options;
-    VELOCYPACK_ASSERT(options != nullptr);
     that._start = nullptr;
     that._size = 0;
     that._pos = 0;
@@ -247,7 +242,9 @@ class Builder {
 
   static Builder clone(Slice const& slice,
                        Options const* options = &Options::Defaults) {
-    VELOCYPACK_ASSERT(options != nullptr);
+    if (options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+    }
 
     Builder b(options);
     b.add(slice);
@@ -437,40 +434,62 @@ class Builder {
  private:
   template <typename T>
   uint8_t* addInternal(T const& sub) {
+    bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
       if (_start[tos] != 0x06 && _start[tos] != 0x13) {
         throw Exception(Exception::BuilderNeedOpenArray);
       }
       reportAdd(tos);
+      haveReported = true;
     }
-    return set(sub);
+    try {
+      return set(sub);
+    }
+    catch (...) {
+      // clean up in case of an exception
+      if (haveReported) {
+        cleanupAdd();
+      }
+      throw;
+    }
   }
 
   template <typename T>
   uint8_t* addInternal(std::string const& attrName, T const& sub) {
+    bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
       if (_start[tos] != 0x0b && _start[tos] != 0x14) {
         throw Exception(Exception::BuilderNeedOpenObject);
       }
       reportAdd(tos);
+      haveReported = true;
     }
 
-    if (options->attributeTranslator != nullptr) {
-      // check if a translation for the attribute name exists
-      uint8_t const* translated =
-          options->attributeTranslator->translate(attrName);
+    try {
+      if (options->attributeTranslator != nullptr) {
+        // check if a translation for the attribute name exists
+        uint8_t const* translated =
+            options->attributeTranslator->translate(attrName);
 
-      if (translated != nullptr) {
-        set(Slice(options->attributeTranslator->translate(attrName), options));
-        return set(sub);
+        if (translated != nullptr) {
+          set(Slice(options->attributeTranslator->translate(attrName), options));
+          return set(sub);
+        }
+        // otherwise fall through to regular behavior
       }
-      // otherwise fall through to regular behavior
-    }
 
-    set(Value(attrName, ValueType::String));
-    return set(sub);
+      set(Value(attrName, ValueType::String));
+      return set(sub);
+    }
+    catch (...) {
+      // clean up in case of an exception
+      if (haveReported) {
+        cleanupAdd();
+      }
+      throw;
+    }
   }
 
   void addCompoundValue(uint8_t type) {
@@ -491,6 +510,11 @@ class Builder {
   uint8_t* set(ValuePair const& pair);
 
   uint8_t* set(Slice const& item);
+
+  void cleanupAdd() {
+    size_t depth = _stack.size() - 1;
+    _index[depth].pop_back();
+  }
 
   void reportAdd(ValueLength base) {
     size_t depth = _stack.size() - 1;

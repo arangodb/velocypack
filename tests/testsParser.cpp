@@ -589,8 +589,14 @@ TEST(ParserTest, DoubleNeg) {
   ASSERT_DOUBLE_EQ(-184467440737095516161., s.getDouble());
 }
 
-TEST(ParserTest, DoubleBroken) {
+TEST(ParserTest, DoubleBroken1) {
   std::string const value("1234.");
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBroken2) {
+  std::string const value("1234.a");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
@@ -866,6 +872,48 @@ TEST(ParserTest, StringLiteralEmpty) {
   ASSERT_EQ(empty, out);
 
   checkDump(s, value);
+}
+
+TEST(ParserTest, StringTwoByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xc2\xa2\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
+}
+
+TEST(ParserTest, StringThreeByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xe2\x82\xac\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
+}
+
+TEST(ParserTest, StringFourByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xf0\xa4\xad\xa2\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
 }
 
 TEST(ParserTest, StringLiteralInvalidUtfValue1) {

@@ -182,7 +182,8 @@ void Dumper::dumpInteger(Slice const* slice) {
     }
     _sink->push_back('0' + static_cast<char>(v));
   } else {
-    throw Exception(Exception::InternalError, "Unexpected number type");
+    // we should never get here
+    throw Exception(Exception::InvalidValueType, "Unexpected number type");
   }
 }
 

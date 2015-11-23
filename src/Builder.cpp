@@ -383,7 +383,7 @@ bool Builder::hasKey(std::string const& key) const {
   return false;
 }
 
-// return an attribute from an Object value
+// return the value for a specific key of an Object value
 Slice Builder::getKey(std::string const& key) const {
   if (_stack.empty()) {
     throw Exception(Exception::BuilderNeedOpenObject);
@@ -398,8 +398,11 @@ Slice Builder::getKey(std::string const& key) const {
   }
   for (size_t i = 0; i < index.size(); ++i) {
     Slice s(_start + tos + index[i], options);
+    if (!s.isString()) {
+      s = s.makeKey();
+    }
     if (s.isString() && s.isEqualString(key)) {
-      return s;
+      return Slice(s.start() + s.byteSize(), options);
     }
   }
   return Slice();

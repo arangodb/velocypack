@@ -26,8 +26,36 @@
 
 #include <ostream>
 #include <string>
+#include <iostream>
 
 #include "tests-common.h"
+
+TEST(BuilderTest, CreateWithoutOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
+
+  std::shared_ptr<Buffer<uint8_t>> buffer;
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr), Exception::InternalError);
+
+  buffer.reset(new Buffer<uint8_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr), Exception::InternalError);
+
+  Builder b;
+  b.add(Value(123));
+  Slice s = b.slice();
+
+  ASSERT_VELOCYPACK_EXCEPTION(b.clone(s, nullptr), Exception::InternalError);
+}
+
+TEST(BuilderTest, SizeWithOpenObject) {
+  Builder b;
+  ASSERT_EQ(0UL, b.size());
+
+  b.add(Value(ValueType::Object));
+  ASSERT_VELOCYPACK_EXCEPTION(b.size(), Exception::BuilderNotSealed);
+
+  b.close();
+  ASSERT_EQ(1UL, b.size());
+}
 
 TEST(BuilderTest, BufferSharedPointerNoSharing) {
   Builder b;
@@ -181,6 +209,105 @@ TEST(BuilderTest, BufferSharedPointerInject) {
   b.buffer().reset();
   ASSERT_EQ(1, buffer.use_count());
   ASSERT_EQ(ptr, buffer.get());
+}
+
+TEST(BuilderTest, AddNonCompoundTypeAllowUnindexed) {
+  Builder b;
+  b.add(Value(ValueType::Array, true));
+  b.add(Value(ValueType::Object, true));
+
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Null, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Bool, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Double, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UTCDate, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::External, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MinKey, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MaxKey, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Int, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UInt, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::SmallInt, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::String, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Binary, true)), Exception::InvalidValueType);
+}
+
+TEST(BuilderTest, BoolWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::Bool)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::Bool)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)), Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, StringWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::String)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::String)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false, ValueType::String)), Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, SmallIntWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::SmallInt));
+  b.add(Value(-1, ValueType::SmallInt));
+  b.add(Value(1UL, ValueType::SmallInt));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::SmallInt)), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::SmallInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::SmallInt)), Exception::BuilderUnexpectedValue);
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_EQ("[1,-1,1]", s.toJson());
+}
+
+TEST(BuilderTest, IntWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::Int));
+  b.add(Value(-1, ValueType::Int));
+  b.add(Value(1UL, ValueType::Int));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Int)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Int)), Exception::BuilderUnexpectedValue);
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_EQ("[1,-1,1]", s.toJson());
+}
+
+TEST(BuilderTest, UIntWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::UInt));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1.2, ValueType::UInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1, ValueType::UInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::UInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UInt)), Exception::BuilderUnexpectedValue);
+  b.add(Value(42UL, ValueType::UInt));
+  b.add(Value(static_cast<int64_t>(23), ValueType::UInt));
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_EQ("[1,42,23]", s.toJson());
+}
+
+TEST(BuilderTest, DoubleWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::Double));
+  b.add(Value(-1.2, ValueType::Double));
+  b.add(Value(-1, ValueType::Double));
+  b.add(Value(1UL, ValueType::Double));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Double)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Double)), Exception::BuilderUnexpectedValue);
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_EQ("[1.2,-1.2,-1,1]", s.toJson());
 }
 
 TEST(BuilderTest, None) {
@@ -1071,6 +1198,90 @@ TEST(BuilderTest, HasKeyCompact) {
   ASSERT_TRUE(b.hasKey("bar"));
   ASSERT_TRUE(b.hasKey("bark"));
   ASSERT_TRUE(b.hasKey("baz"));
+  b.close();
+}
+
+TEST(BuilderTest, GetKeyNonObject) {
+  Builder b;
+  b.add(Value(1));
+  ASSERT_VELOCYPACK_EXCEPTION(b.getKey("foo"),
+                              Exception::BuilderNeedOpenObject);
+}
+
+TEST(BuilderTest, GetKeyArray) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1));
+  ASSERT_VELOCYPACK_EXCEPTION(b.getKey("foo"),
+                              Exception::BuilderNeedOpenObject);
+}
+
+TEST(BuilderTest, GetKeyEmptyObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  ASSERT_TRUE(b.getKey("foo").isNone());
+  ASSERT_TRUE(b.getKey("bar").isNone());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+  ASSERT_TRUE(b.getKey("quetzalcoatl").isNone());
+  b.close();
+}
+
+TEST(BuilderTest, GetKeySubObject) {
+  Builder b;
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(1));
+  b.add("bar", Value(true));
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+
+  b.add("bark", Value(ValueType::Object));
+  ASSERT_TRUE(b.getKey("bark").isNone());
+  ASSERT_TRUE(b.getKey("foo").isNone());
+  ASSERT_TRUE(b.getKey("bar").isNone());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+  b.close();
+
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+  ASSERT_TRUE(b.getKey("bark").isObject());
+
+  b.add("baz", Value(42));
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_EQ(42UL, b.getKey("baz").getUInt());
+  ASSERT_TRUE(b.getKey("bark").isObject());
+  b.close();
+}
+
+TEST(BuilderTest, GetKeyCompact) {
+  Builder b;
+  b.add(Value(ValueType::Object, true));
+  b.add("foo", Value(1));
+  b.add("bar", Value(true));
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+
+  b.add("bark", Value(ValueType::Object, true));
+  ASSERT_FALSE(b.getKey("bark").isObject());
+  ASSERT_TRUE(b.getKey("foo").isNone());
+  ASSERT_TRUE(b.getKey("bar").isNone());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+  ASSERT_TRUE(b.getKey("bark").isNone());
+  b.close();
+
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_TRUE(b.getKey("bark").isObject());
+  ASSERT_TRUE(b.getKey("baz").isNone());
+
+  b.add("baz", Value(42));
+  ASSERT_EQ(1UL, b.getKey("foo").getUInt());
+  ASSERT_TRUE(b.getKey("bar").getBool());
+  ASSERT_TRUE(b.getKey("bark").isObject());
+  ASSERT_EQ(42UL, b.getKey("baz").getUInt());
   b.close();
 }
 

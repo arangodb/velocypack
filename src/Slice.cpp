@@ -269,11 +269,7 @@ Slice Slice::get(std::string const& attribute) const {
 
   // read number of items
   ValueLength n;
-  if (h <= 0x05) {  // No offset table or length, need to compute:
-    dataOffset = findDataOffset(h);
-    Slice first(_start + dataOffset, options);
-    n = (end - dataOffset) / first.byteSize();
-  } else if (offsetSize < 8) {
+  if (offsetSize < 8) {
     n = readInteger<ValueLength>(_start + 1 + offsetSize, offsetSize);
   } else {
     n = readInteger<ValueLength>(_start + end - offsetSize, offsetSize);

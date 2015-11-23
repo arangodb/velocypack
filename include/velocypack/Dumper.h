@@ -48,6 +48,9 @@ class Dumper {
 
   Dumper(Sink* sink, Options const* options = &Options::Defaults)
       : options(options), _sink(sink), _indentation(0) {
+    if (sink == nullptr) {
+      throw Exception(Exception::InternalError, "Sink cannot be a nullptr");
+    }
     if (options == nullptr) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }

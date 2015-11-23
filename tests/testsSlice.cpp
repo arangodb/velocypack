@@ -149,6 +149,86 @@ TEST(SliceTest, ToJsonObjectCompact) {
   ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
 }
 
+TEST(SliceTest, InvalidGetters) {
+  std::string const value("[null,true,1,\"foo\",[],{}]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  ValueLength len;
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getBool(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getUInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getDouble(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getString(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).length(), Exception::InvalidValueType);
+  
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getUInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getDouble(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getString(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).length(), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBool(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).length(), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getBool(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getUInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getDouble(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).length(), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getBool(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getUInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getDouble(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getBool(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getUInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getDouble(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getExternal(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getString(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyString(), Exception::InvalidValueType);
+}
+
 TEST(SliceTest, LengthNull) {
   std::string const value("null");
 
@@ -266,6 +346,8 @@ TEST(SliceTest, False) {
 
   ASSERT_EQ(ValueType::Bool, slice.type());
   ASSERT_TRUE(slice.isBool());
+  ASSERT_TRUE(slice.isFalse());
+  ASSERT_FALSE(slice.isTrue());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_FALSE(slice.getBool());
 }
@@ -277,6 +359,8 @@ TEST(SliceTest, True) {
 
   ASSERT_EQ(ValueType::Bool, slice.type());
   ASSERT_TRUE(slice.isBool());
+  ASSERT_FALSE(slice.isFalse());
+  ASSERT_TRUE(slice.isTrue());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_TRUE(slice.getBool());
 }
@@ -341,6 +425,7 @@ TEST(SliceTest, SmallInt) {
     ASSERT_EQ(1ULL, slice.byteSize());
 
     ASSERT_EQ(expected[i], slice.getSmallInt());
+    ASSERT_EQ(expected[i], slice.getInt());
   }
 }
 
@@ -356,6 +441,7 @@ TEST(SliceTest, Int1) {
   ASSERT_EQ(2ULL, slice.byteSize());
 
   ASSERT_EQ(value, slice.getInt());
+  ASSERT_EQ(value, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int2) {
@@ -370,6 +456,7 @@ TEST(SliceTest, Int2) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(3ULL, slice.byteSize());
   ASSERT_EQ(0x4223LL, slice.getInt());
+  ASSERT_EQ(0x4223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int3) {
@@ -385,6 +472,7 @@ TEST(SliceTest, Int3) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(4ULL, slice.byteSize());
   ASSERT_EQ(0x664223LL, slice.getInt());
+  ASSERT_EQ(0x664223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int4) {
@@ -401,6 +489,7 @@ TEST(SliceTest, Int4) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(5ULL, slice.byteSize());
   ASSERT_EQ(0x7c664223LL, slice.getInt());
+  ASSERT_EQ(0x7c664223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int5) {
@@ -418,6 +507,7 @@ TEST(SliceTest, Int5) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(6ULL, slice.byteSize());
   ASSERT_EQ(0x6fac664223LL, slice.getInt());
+  ASSERT_EQ(0x6fac664223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int6) {
@@ -436,6 +526,7 @@ TEST(SliceTest, Int6) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(7ULL, slice.byteSize());
   ASSERT_EQ(0x3fffac664223LL, slice.getInt());
+  ASSERT_EQ(0x3fffac664223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int7) {
@@ -455,6 +546,7 @@ TEST(SliceTest, Int7) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(8ULL, slice.byteSize());
   ASSERT_EQ(0x5a3fffac664223LL, slice.getInt());
+  ASSERT_EQ(0x5a3fffac664223LL, slice.getSmallInt());
 }
 
 TEST(SliceTest, Int8) {
@@ -475,6 +567,19 @@ TEST(SliceTest, Int8) {
   ASSERT_TRUE(slice.isInt());
   ASSERT_EQ(9ULL, slice.byteSize());
   ASSERT_EQ(0x6ffa3fffac664223LL, slice.getInt());
+  ASSERT_EQ(0x6ffa3fffac664223LL, slice.getSmallInt());
+}
+
+TEST(SliceTest, IntMax) {
+  Builder b;
+  b.add(Value(INT64_MAX));
+  
+  Slice slice(b.slice());
+
+  ASSERT_EQ(ValueType::Int, slice.type());
+  ASSERT_TRUE(slice.isInt());
+  ASSERT_EQ(9ULL, slice.byteSize());
+  ASSERT_EQ(INT64_MAX, slice.getInt());
 }
 
 TEST(SliceTest, NegInt1) {
@@ -610,6 +715,19 @@ TEST(SliceTest, NegInt8) {
   ASSERT_EQ(static_cast<int64_t>(0x8efaefffac664223ULL), slice.getInt());
 }
 
+TEST(SliceTest, IntMin) {
+  Builder b;
+  b.add(Value(INT64_MIN));
+  
+  Slice slice(b.slice());
+
+  ASSERT_EQ(ValueType::Int, slice.type());
+  ASSERT_TRUE(slice.isInt());
+  ASSERT_EQ(9ULL, slice.byteSize());
+  ASSERT_EQ(INT64_MIN, slice.getInt());
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getUInt(), Exception::NumberOutOfRange);
+}
+
 TEST(SliceTest, UInt1) {
   LocalBuffer[0] = 0x28;
   uint8_t value = 0x33;
@@ -742,6 +860,19 @@ TEST(SliceTest, UInt8) {
   ASSERT_EQ(0xab59eeffac664223ULL, slice.getUInt());
 }
 
+TEST(SliceTest, UIntMax) {
+  Builder b;
+  b.add(Value(UINT64_MAX));
+  
+  Slice slice(b.slice());
+
+  ASSERT_EQ(ValueType::UInt, slice.type());
+  ASSERT_TRUE(slice.isUInt());
+  ASSERT_EQ(9ULL, slice.byteSize());
+  ASSERT_EQ(UINT64_MAX, slice.getUInt());
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getInt(), Exception::NumberOutOfRange);
+}
+
 TEST(SliceTest, ArrayEmpty) {
   LocalBuffer[0] = 0x01;
 
@@ -751,6 +882,15 @@ TEST(SliceTest, ArrayEmpty) {
   ASSERT_TRUE(slice.isArray());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_EQ(0ULL, slice.length());
+}
+
+TEST(SliceTest, StringNoString) {
+  Slice slice;
+
+  ASSERT_FALSE(slice.isString());
+  ValueLength length;
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.copyString(), Exception::InvalidValueType);
 }
 
 TEST(SliceTest, StringEmpty) {
@@ -850,7 +990,7 @@ TEST(SliceTest, StringNullBytes) {
   ASSERT_EQ('x', s[7]);
 }
 
-TEST(SliceTest, StringLong1) {
+TEST(SliceTest, StringLong) {
   LocalBuffer[0] = 0xbf;
 
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
@@ -881,6 +1021,64 @@ TEST(SliceTest, StringLong1) {
   ASSERT_EQ(0, strncmp(s, "foobar", len));
 
   ASSERT_EQ("foobar", slice.copyString());
+}
+
+TEST(SliceTest, BinaryEmpty) {
+  uint8_t buf[] = {0xc0};
+  Slice slice(&buf[0]);
+
+  ASSERT_TRUE(slice.isBinary());
+  ValueLength len;
+  slice.getBinary(len);
+  ASSERT_EQ(0ULL, len);
+  auto result = slice.copyBinary();
+  ASSERT_EQ(0UL, result.size());
+}
+
+TEST(SliceTest, BinarySomeValue) {
+  uint8_t buf[] = {0xc0, 0x05, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa};
+  Slice slice(&buf[0]);
+
+  ASSERT_TRUE(slice.isBinary());
+  ValueLength len;
+  uint8_t const* s = slice.getBinary(len);
+  ASSERT_EQ(5ULL, len);
+  ASSERT_EQ(0, memcmp(s, &buf[2], len));
+
+  auto result = slice.copyBinary();
+  ASSERT_EQ(5UL, result.size());
+  ASSERT_EQ(0xfe, result[0]);
+  ASSERT_EQ(0xfd, result[1]);
+  ASSERT_EQ(0xfc, result[2]);
+  ASSERT_EQ(0xfb, result[3]);
+  ASSERT_EQ(0xfa, result[4]);
+}
+
+TEST(SliceTest, BinaryWithNullBytes) {
+  uint8_t buf[] = {0xc0, 0x05, 0x01, 0x02, 0x00, 0x03, 0x00};
+  Slice slice(&buf[0]);
+
+  ASSERT_TRUE(slice.isBinary());
+  ValueLength len;
+  uint8_t const* s = slice.getBinary(len);
+  ASSERT_EQ(5ULL, len);
+  ASSERT_EQ(0, memcmp(s, &buf[2], len));
+  
+  auto result = slice.copyBinary();
+  ASSERT_EQ(5UL, result.size());
+  ASSERT_EQ(0x01, result[0]);
+  ASSERT_EQ(0x02, result[1]);
+  ASSERT_EQ(0x00, result[2]);
+  ASSERT_EQ(0x03, result[3]);
+  ASSERT_EQ(0x00, result[4]);
+}
+ 
+TEST(SliceTest, BinaryNonBinary) {
+  Slice slice;
+
+  ValueLength len;
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.copyBinary(), Exception::InvalidValueType);
 }
 
 TEST(SliceTest, ArrayCases1) {
@@ -1391,6 +1589,20 @@ TEST(SliceTest, EqualToDuplicateValuesNumbers) {
   ASSERT_EQ(6UL, values.size());  // 1,2,3,4,5,9
 }
 
+TEST(SliceTest, EqualToBiggerNumbers) {
+  std::string const value("[1024,1025,1031,1024,1029,1025]");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::unordered_set<Slice> values;
+  for (auto it : ArrayIterator(Slice(parser.start()))) {
+    values.emplace(it);
+  }
+
+  ASSERT_EQ(4UL, values.size());  // 1024, 1025, 1029, 1031
+}
+
 TEST(SliceTest, EqualToDuplicateValuesStrings) {
   std::string const value(
       "[\"foo\",\"bar\",\"baz\",\"bart\",\"foo\",\"bark\",\"qux\",\"foo\"]");
@@ -1449,6 +1661,63 @@ TEST(SliceTest, EqualToString) {
   Slice s2 = b2.slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+}
+
+TEST(SliceTest, EqualToDirectInvocation) {
+  std::string const value("[1024,1025,1026,1027,1028]");
+
+  Parser parser;
+  parser.parse(value);
+
+  int comparisons;
+  std::equal_to<Slice> comparer;
+  ArrayIterator it(Slice(parser.start()));
+  while (it.valid()) {
+    ArrayIterator it2(Slice(parser.start()));
+    while (it2.valid()) {
+      if (it.index() != it2.index()) {
+        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ++comparisons;
+      }
+      it2.next();
+    }
+    it.next();
+  }
+  ASSERT_EQ(20, comparisons);
+}
+
+TEST(SliceTest, EqualToDirectInvocationSmallInts) {
+  std::string const value("[1,2,3,4,5]");
+
+  Parser parser;
+  parser.parse(value);
+
+  int comparisons;
+  std::equal_to<Slice> comparer;
+  ArrayIterator it(Slice(parser.start()));
+  while (it.valid()) {
+    ArrayIterator it2(Slice(parser.start()));
+    while (it2.valid()) {
+      if (it.index() != it2.index()) {
+        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ++comparisons; 
+      }
+      it2.next();
+    }
+    it.next();
+  }
+  ASSERT_EQ(20, comparisons);
+}
+
+TEST(SliceTest, EqualToDirectInvocationLongStrings) {
+  Builder b1 = Parser::fromJson("\"thisisalongstring.dddddddddddddddddddddddddddds............................................................................longerthan127chars\"");
+  Builder b2 = Parser::fromJson("\"thisisalongstring.dddddddddddddddddddddddddddds.................eek!...........................................................longerthan127chars\"");
+
+  std::equal_to<Slice> comparer;
+  ASSERT_TRUE(comparer(b1.slice(), b1.slice()));
+  ASSERT_TRUE(comparer(b2.slice(), b2.slice()));
+  ASSERT_FALSE(comparer(b1.slice(), b2.slice()));
+  ASSERT_FALSE(comparer(b2.slice(), b1.slice()));
 }
 
 TEST(SliceTest, HashNull) {
@@ -1699,6 +1968,30 @@ TEST(SliceTest, Translations) {
   ASSERT_EQ("mötör", s.keyAt(5).copyString());
   ASSERT_EQ("mötörhead", s.keyAt(6).copyString());
   ASSERT_EQ("quetzal", s.keyAt(7).copyString());
+}
+
+TEST(SliceTest, TranslationsSingleMemberObject) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->seal();
+
+  Options options;
+  Builder b(&options);
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.close();
+
+  Slice s = Slice(b.start(), &options);
+
+  ASSERT_EQ(1UL, s.length());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.get("foo").getBoolean());
+
+  ASSERT_FALSE(s.hasKey("bar"));
+  ASSERT_TRUE(s.get("bar").isNone());
 }
 
 TEST(SliceTest, TranslationsSubObjects) {

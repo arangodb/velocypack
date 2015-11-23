@@ -24,6 +24,7 @@ if(BuildTests)
           testsCollection
           testsCommon
           testsDumper
+          testsException
           testsFiles
           testsHexDump
           testsIterator

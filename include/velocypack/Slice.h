@@ -141,6 +141,12 @@ class Slice {
   // check if slice is a Bool object - this is an alias for isBool()
   bool isBoolean() const { return isBool(); }
 
+  // check if slice is the Boolean value true
+  bool isTrue() const { return head() == 0x1a; }
+
+  // check if slice is the Boolean value false
+  bool isFalse() const { return head() == 0x19; }
+
   // check if slice is an Array object
   bool isArray() const { return isType(ValueType::Array); }
 
@@ -199,7 +205,9 @@ class Slice {
 
   // return the value for a Bool object
   bool getBool() const {
-    assertType(ValueType::Bool);
+    if (type() != ValueType::Bool) {
+      throw Exception(Exception::InvalidValueType, "Expecting type Bool");
+    }
     return (head() == 0x1a);  // 0x19 == false, 0x1a == true
   }
 
@@ -208,7 +216,9 @@ class Slice {
 
   // return the value for a Double object
   double getDouble() const {
-    assertType(ValueType::Double);
+    if (type() != ValueType::Double) {
+      throw Exception(Exception::InvalidValueType, "Expecting type Double");
+    }
     union {
       uint64_t dv;
       double d;
@@ -232,7 +242,7 @@ class Slice {
   // - 0x09      : array with 8-byte index table entries
   Slice at(ValueLength index) const {
     if (!isType(ValueType::Array)) {
-      throw Exception(Exception::InvalidValueType, "Expecting Array");
+      throw Exception(Exception::InvalidValueType, "Expecting type Array");
     }
 
     return getNth(index);
@@ -243,7 +253,7 @@ class Slice {
   // return the number of members for an Array or Object object
   ValueLength length() const {
     if (type() != ValueType::Array && type() != ValueType::Object) {
-      throw Exception(Exception::InvalidValueType, "Expecting Array or Object");
+      throw Exception(Exception::InvalidValueType, "Expecting type Array or Object");
     }
 
     auto const h = head();
@@ -293,7 +303,7 @@ class Slice {
   // attribute name
   Slice keyAt(ValueLength index) const {
     if (!isType(ValueType::Object)) {
-      throw Exception(Exception::InvalidValueType, "Expecting Object");
+      throw Exception(Exception::InvalidValueType, "Expecting type Object");
     }
 
     return getNthKey(index, true);
@@ -301,7 +311,7 @@ class Slice {
 
   Slice valueAt(ValueLength index) const {
     if (!isType(ValueType::Object)) {
-      throw Exception(Exception::InvalidValueType, "Expecting Object");
+      throw Exception(Exception::InvalidValueType, "Expecting type Object");
     }
 
     Slice key = getNthKey(index, false);
@@ -351,7 +361,9 @@ class Slice {
 
   // return the pointer to the data for an External object
   char const* getExternal() const {
-    assertType(ValueType::External);
+    if (type() != ValueType::External) {
+      throw Exception(Exception::InvalidValueType, "Expecting type External");
+    }
     return extractValue<char const*>();
   }
 
@@ -429,6 +441,9 @@ class Slice {
 
   // return the value for a UTCDate object
   int64_t getUTCDate() const {
+    if (type() != ValueType::UTCDate) {
+      throw Exception(Exception::InvalidValueType, "Expecting type UTCDate");
+    }
     assertType(ValueType::UTCDate);
     uint64_t v = readInteger<uint64_t>(_start + 1, sizeof(uint64_t));
     return toInt64(v);
@@ -474,7 +489,9 @@ class Slice {
 
   // return the value for a Binary object
   uint8_t const* getBinary(ValueLength& length) const {
-    assertType(ValueType::Binary);
+    if (type() != ValueType::Binary) {
+      throw Exception(Exception::InvalidValueType, "Expecting type Binary");
+    }
     uint8_t const h = head();
 
     if (h >= 0xc0 && h <= 0xc7) {
@@ -488,7 +505,9 @@ class Slice {
 
   // return a copy of the value for a Binary object
   std::vector<uint8_t> copyBinary() const {
-    assertType(ValueType::Binary);
+    if (type() != ValueType::Binary) {
+      throw Exception(Exception::InvalidValueType, "Expecting type Binary");
+    }
     uint8_t const h = head();
 
     if (h >= 0xc0 && h <= 0xc7) {
@@ -498,7 +517,7 @@ class Slice {
       out.reserve(static_cast<size_t>(length));
       out.insert(out.end(), _start + 1 + h - 0xbf,
                  _start + 1 + h - 0xbf + length);
-      return out;
+      return std::move(out);
     }
 
     throw Exception(Exception::InvalidValueType, "Expecting type Binary");

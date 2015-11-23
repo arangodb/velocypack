@@ -31,6 +31,16 @@
 
 static unsigned char LocalBuffer[4096];
 
+TEST(DumperTest, CreateWithoutOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(nullptr), Exception::InternalError);
+
+  std::string result;
+  StringSink sink(&result);
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(&sink, nullptr), Exception::InternalError);
+
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(nullptr, nullptr), Exception::InternalError);
+}
+
 TEST(DumperTest, InvokeOnSlice) {
   LocalBuffer[0] = 0x18;
 
