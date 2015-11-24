@@ -20,18 +20,20 @@ addons:
     packages:
     - g++-4.9
     - clang
-    - gdb
-    - lcov
-
-before_install:
-- pip install --user cpp-coveralls
 
 install:
+- wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
+- tar xf lcov_1.11.orig.tar.gz
+- sudo make -C lcov-1.11/ install
+- gem install coveralls-lcov
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 - cmake --version
 - $CXX --version
 - lcov --version
 
+before_script:
+- lcov --directory . --zerocounters
+ 
 script: 
 - ulimit -c unlimited -S # enable core files
 - mkdir -p build
@@ -40,9 +42,12 @@ script:
 - (cd build/tests && ctest -V)
 
 after_success:
-- coveralls --include "include/velocypack" --include "src" --gcov-options '\-lp' --repo-token ${COVERALLS_TOKEN}
+- lcov --directory . --capture --output-file coverage.info # capture coverage info
+- lcov --remove coverage.info 'tests/*' '/usr/*' 'examples/*' 'tools/*' --output-file coverage.info # filter out system and test code
+- lcov --list coverage.info # debug before upload
+- coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info # uploads to coveralls
 
 after_failure:
 - COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1)
-- if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" bin/arangod -ex "thread apply all bt" -ex "set pagination 0" -batch; fi 
+- echo; # if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" bin/arangod -ex "thread apply all bt" -ex "set pagination 0" -batch; fi 
 
