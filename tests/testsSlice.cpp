@@ -1064,7 +1064,7 @@ TEST(SliceTest, StringLong) {
 }
 
 TEST(SliceTest, BinaryEmpty) {
-  uint8_t buf[] = {0xc0};
+  uint8_t buf[] = {0xc0, 0x00};
   Slice slice(&buf[0]);
 
   ASSERT_TRUE(slice.isBinary());
