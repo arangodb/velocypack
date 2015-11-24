@@ -126,4 +126,4 @@ Contributing
 
 We welcome bug fixes and patches from 3rd party contributors!
 
-Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want to contribute to VelocyPack. Have a look into the issues list for the tag [HELP_WANTED](labels/help%20wanted).
+Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want to contribute to VelocyPack. Have a look into the issues list for the tag HELP_WANTED.
