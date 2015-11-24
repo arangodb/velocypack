@@ -1710,7 +1710,7 @@ TEST(SliceTest, EqualToDirectInvocation) {
   Parser parser;
   parser.parse(value);
 
-  int comparisons;
+  int comparisons = 0;
   std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {
@@ -1733,7 +1733,7 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
   Parser parser;
   parser.parse(value);
 
-  int comparisons;
+  int comparisons = 0;
   std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {

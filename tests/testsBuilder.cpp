@@ -253,7 +253,7 @@ TEST(BuilderTest, BoolWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::Bool)),
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
@@ -266,7 +266,7 @@ TEST(BuilderTest, StringWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::String)),
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::String)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
@@ -279,7 +279,7 @@ TEST(BuilderTest, SmallIntWithOtherTypes) {
   b.add(Value(ValueType::Array));
   b.add(Value(1.2, ValueType::SmallInt));
   b.add(Value(-1, ValueType::SmallInt));
-  b.add(Value(1UL, ValueType::SmallInt));
+  b.add(Value(static_cast<uint64_t>(1UL), ValueType::SmallInt));
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::SmallInt)),
                               Exception::NumberOutOfRange);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::SmallInt)),
@@ -297,7 +297,7 @@ TEST(BuilderTest, IntWithOtherTypes) {
   b.add(Value(ValueType::Array));
   b.add(Value(1.2, ValueType::Int));
   b.add(Value(-1, ValueType::Int));
-  b.add(Value(1UL, ValueType::Int));
+  b.add(Value(static_cast<uint64_t>(1UL), ValueType::Int));
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Int)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Int)),
@@ -320,7 +320,7 @@ TEST(BuilderTest, UIntWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UInt)),
                               Exception::BuilderUnexpectedValue);
-  b.add(Value(42UL, ValueType::UInt));
+  b.add(Value(static_cast<uint64_t>(42UL), ValueType::UInt));
   b.add(Value(static_cast<int64_t>(23), ValueType::UInt));
   b.close();
 
@@ -334,7 +334,7 @@ TEST(BuilderTest, DoubleWithOtherTypes) {
   b.add(Value(1.2, ValueType::Double));
   b.add(Value(-1.2, ValueType::Double));
   b.add(Value(-1, ValueType::Double));
-  b.add(Value(1UL, ValueType::Double));
+  b.add(Value(static_cast<uint64_t>(1UL), ValueType::Double));
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Double)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Double)),
