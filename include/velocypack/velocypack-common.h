@@ -75,7 +75,7 @@ typedef uint64_t ValueLength;
 
 #ifndef VELOCYPACK_64BIT
 // check if the length is beyond the size of a SIZE_MAX on this platform
-static void checkValueLength(ValueLength);
+void checkValueLength(ValueLength);
 #else
 static inline void checkValueLength(ValueLength) {
   // do nothing on a 64 bit platform
