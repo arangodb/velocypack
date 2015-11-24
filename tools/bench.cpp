@@ -38,26 +38,31 @@
 #include "rapidjson/stringbuffer.h"
 
 using namespace arangodb::velocypack;
-  
-static void usage (char* argv[]) {
-  std::cout << "Usage: " << argv[0] << " FILENAME.json RUNTIME_IN_SECONDS COPIES TYPE" << std::endl;
-  std::cout << "This program reads the file into a string, makes COPIES copies" << std::endl;
-  std::cout << "and then parses the copies in a round-robin fashion to VPack." << std::endl;
-  std::cout << "1 copy means its running in cache, more copies make it run" << std::endl;
-  std::cout << "out of cache. The target areas are also in a different memory" << std::endl;
+
+static void usage(char* argv[]) {
+  std::cout << "Usage: " << argv[0]
+            << " FILENAME.json RUNTIME_IN_SECONDS COPIES TYPE" << std::endl;
+  std::cout << "This program reads the file into a string, makes COPIES copies"
+            << std::endl;
+  std::cout << "and then parses the copies in a round-robin fashion to VPack."
+            << std::endl;
+  std::cout << "1 copy means its running in cache, more copies make it run"
+            << std::endl;
+  std::cout << "out of cache. The target areas are also in a different memory"
+            << std::endl;
   std::cout << "area for each copy." << std::endl;
   std::cout << "TYPE must be either 'vpack' or 'rapidjson'." << std::endl;
 }
 
-static std::string tryReadFile (std::string const& filename) {
+static std::string tryReadFile(std::string const& filename) {
   std::string s;
   std::ifstream ifs(filename.c_str(), std::ifstream::in);
 
-  if (! ifs.is_open()) {
+  if (!ifs.is_open()) {
     std::cerr << "Cannot open input file '" << filename << "'" << std::endl;
     ::exit(EXIT_FAILURE);
   }
-  
+
   char buffer[4096];
   while (ifs.good()) {
     ifs.read(&buffer[0], sizeof(buffer));
@@ -68,7 +73,7 @@ static std::string tryReadFile (std::string const& filename) {
   return s;
 }
 
-static std::string readFile (std::string filename) {
+static std::string readFile(std::string filename) {
 #ifdef _WIN32
   std::string const separator("\\");
 #else
@@ -79,15 +84,15 @@ static std::string readFile (std::string filename) {
   for (size_t i = 0; i < 3; ++i) {
     try {
       return tryReadFile(filename);
-    }
-    catch (...) {
+    } catch (...) {
       filename = ".." + separator + filename;
     }
   }
   throw "cannot open input file";
 }
 
-static void run (std::string& data, int runTime, size_t copies, bool useVPack, bool fullOutput) {
+static void run(std::string& data, int runTime, size_t copies, bool useVPack,
+                bool fullOutput) {
   Options options;
   options.sortAttributeNames = false;
 
@@ -115,8 +120,7 @@ static void run (std::string& data, int runTime, size_t copies, bool useVPack, b
         if (useVPack) {
           outputs[count]->clear();
           outputs[count]->parse(inputs[count]);
-        }
-        else {
+        } else {
           rapidjson::Document d;
           d.Parse(inputs[count].c_str());
         }
@@ -127,31 +131,37 @@ static void run (std::string& data, int runTime, size_t copies, bool useVPack, b
         total++;
       }
       now = std::chrono::high_resolution_clock::now();
-    } 
-    while (std::chrono::duration_cast<std::chrono::duration<int>>(now - start).count() < runTime);
+    } while (std::chrono::duration_cast<std::chrono::duration<int>>(now - start)
+                 .count() < runTime);
 
-    std::chrono::duration<double> totalTime = std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
+    std::chrono::duration<double> totalTime =
+        std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
 
     if (fullOutput) {
       std::cout << "Total runtime: " << totalTime.count() << " s" << std::endl;
-      std::cout << "Have parsed " << total << " times with " << (useVPack ? "vpack" : "rapidjson") << " using " << copies
-                << " copies of JSON data, each of size " << inputs[0].size() << "." << std::endl;
-      std::cout << "Parsed " << inputs[0].size() * total << " bytes in total." << std::endl;
+      std::cout << "Have parsed " << total << " times with "
+                << (useVPack ? "vpack" : "rapidjson") << " using " << copies
+                << " copies of JSON data, each of size " << inputs[0].size()
+                << "." << std::endl;
+      std::cout << "Parsed " << inputs[0].size() * total << " bytes in total."
+                << std::endl;
     }
-    std::cout << "This is " << static_cast<double>(inputs[0].size() * total) / totalTime.count() << " bytes/s"
-              << " or " << total / totalTime.count() 
-              << " JSON docs per second." << std::endl;
-  }
-  catch (Exception const& ex) {
-    std::cerr << "An exception occurred while running bench: " << ex.what() << std::endl;
+    std::cout << "This is "
+              << static_cast<double>(inputs[0].size() * total) /
+                     totalTime.count() << " bytes/s"
+              << " or " << total / totalTime.count() << " JSON docs per second."
+              << std::endl;
+  } catch (Exception const& ex) {
+    std::cerr << "An exception occurred while running bench: " << ex.what()
+              << std::endl;
     ::exit(EXIT_FAILURE);
-  }
-  catch (std::exception const& ex) {
-    std::cerr << "An exception occurred while running bench: " << ex.what() << std::endl;
+  } catch (std::exception const& ex) {
+    std::cerr << "An exception occurred while running bench: " << ex.what()
+              << std::endl;
     ::exit(EXIT_FAILURE);
-  }
-  catch (...) {
-    std::cerr << "An unknown exception occurred while running bench" << std::endl;
+  } catch (...) {
+    std::cerr << "An unknown exception occurred while running bench"
+              << std::endl;
     ::exit(EXIT_FAILURE);
   }
 
@@ -160,8 +170,8 @@ static void run (std::string& data, int runTime, size_t copies, bool useVPack, b
   }
 }
 
-static void runDefaultBench () {
-  auto runComparison = [] (std::string const& filename) {
+static void runDefaultBench() {
+  auto runComparison = [](std::string const& filename) {
     std::string data = std::move(readFile(filename));
 
     std::cout << std::endl;
@@ -182,9 +192,9 @@ static void runDefaultBench () {
   runComparison("sample.json");
   runComparison("sampleNoWhite.json");
   runComparison("commits.json");
-} 
+}
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   if (argc == 1) {
     runDefaultBench();
     return EXIT_FAILURE;
@@ -198,15 +208,12 @@ int main (int argc, char* argv[]) {
   bool useVPack;
   if (::strcmp(argv[4], "vpack") == 0) {
     useVPack = true;
-  }
-  else if (::strcmp(argv[4], "rapidjson") == 0) {
+  } else if (::strcmp(argv[4], "rapidjson") == 0) {
     useVPack = false;
-  }
-  else {
+  } else {
     usage(argv);
     return EXIT_FAILURE;
   }
-    
 
   size_t copies = std::stoul(argv[3]);
   int runTime = std::stoi(argv[2]);

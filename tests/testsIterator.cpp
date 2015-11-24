@@ -27,7 +27,7 @@
 #include <string>
 
 #include "tests-common.h"
-  
+
 TEST(IteratorTest, IterateNonArray1) {
   std::string const value("null");
   Parser parser;
@@ -82,9 +82,9 @@ TEST(IteratorTest, IterateArrayEmpty) {
 
   ArrayIterator it(s);
   ASSERT_FALSE(it.valid());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
-  
+
   ASSERT_FALSE(it.next());
 }
 
@@ -99,57 +99,57 @@ TEST(IteratorTest, IterateArray) {
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNull());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
-  
+
   ASSERT_FALSE(it.next());
   ASSERT_FALSE(it.valid());
 
@@ -167,7 +167,7 @@ TEST(IteratorTest, IterateSubArray) {
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
-  ASSERT_TRUE(current.isArray());  
+  ASSERT_TRUE(current.isArray());
 
   ArrayIterator it2(current);
   ASSERT_TRUE(it2.valid());
@@ -176,28 +176,28 @@ TEST(IteratorTest, IterateSubArray) {
   ASSERT_EQ(1UL, sub.getUInt());
 
   ASSERT_TRUE(it2.next());
-  
+
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  ASSERT_TRUE(sub.isNumber());  
+  ASSERT_TRUE(sub.isNumber());
   ASSERT_EQ(2UL, sub.getUInt());
-  
+
   ASSERT_TRUE(it2.next());
-  
+
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
-  ASSERT_TRUE(sub.isNumber());  
+  ASSERT_TRUE(sub.isNumber());
   ASSERT_EQ(3UL, sub.getUInt());
-  
+
   ASSERT_FALSE(it2.next());
   ASSERT_FALSE(it2.valid());
   ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
-  
+
   ASSERT_TRUE(it.next());
 
   ASSERT_TRUE(it.valid());
   current = it.value();
-  ASSERT_TRUE(current.isArray());  
+  ASSERT_TRUE(current.isArray());
 
   it2 = ArrayIterator(current);
 
@@ -207,12 +207,12 @@ TEST(IteratorTest, IterateSubArray) {
   ASSERT_EQ("foo", sub.copyString());
 
   ASSERT_TRUE(it2.next());
-  
+
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
   ASSERT_TRUE(sub.isString());
   ASSERT_EQ("bar", sub.copyString());
-  
+
   ASSERT_FALSE(it2.next());
   ASSERT_FALSE(it2.valid());
   ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
@@ -276,10 +276,10 @@ TEST(IteratorTest, IterateObjectEmpty) {
 
   ObjectIterator it(s);
   ASSERT_FALSE(it.valid());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
-  
+
   ASSERT_FALSE(it.next());
 }
 
@@ -287,7 +287,9 @@ TEST(IteratorTest, IterateObject) {
   Options options;
   options.sortAttributeNames = false;
 
-  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\",\"h\":\"bar\"}");
+  std::string const value(
+      "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\","
+      "\"h\":\"bar\"}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -299,71 +301,71 @@ TEST(IteratorTest, IterateObject) {
   Slice key = it.key();
   Slice current = it.value();
   ASSERT_EQ("a", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("b", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("c", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("d", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("e", key.copyString());
   ASSERT_TRUE(current.isNull());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("f", key.copyString());
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("g", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("h", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
-  
+
   ASSERT_FALSE(it.next());
   ASSERT_FALSE(it.valid());
 
@@ -376,7 +378,9 @@ TEST(IteratorTest, IterateObjectCompact) {
   options.sortAttributeNames = false;
   options.buildUnindexedObjects = true;
 
-  std::string const value("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\",\"h\":\"bar\"}");
+  std::string const value(
+      "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":null,\"f\":true,\"g\":\"foo\","
+      "\"h\":\"bar\"}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -390,71 +394,71 @@ TEST(IteratorTest, IterateObjectCompact) {
   Slice key = it.key();
   Slice current = it.value();
   ASSERT_EQ("a", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("b", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("c", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("d", key.copyString());
-  ASSERT_TRUE(current.isNumber());  
+  ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("e", key.copyString());
   ASSERT_TRUE(current.isNull());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("f", key.copyString());
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("g", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
-  
+
   ASSERT_TRUE(it.next());
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
   ASSERT_EQ("h", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
-  
+
   ASSERT_FALSE(it.next());
   ASSERT_FALSE(it.valid());
 
@@ -463,7 +467,9 @@ TEST(IteratorTest, IterateObjectCompact) {
 }
 
 TEST(IteratorTest, IterateObjectKeys) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
@@ -509,7 +515,9 @@ TEST(IteratorTest, IterateObjectKeys) {
 }
 
 TEST(IteratorTest, IterateObjectKeysCompact) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Options options;
   options.buildUnindexedObjects = true;
@@ -560,7 +568,9 @@ TEST(IteratorTest, IterateObjectKeysCompact) {
 }
 
 TEST(IteratorTest, IterateObjectValues) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Parser parser;
   parser.parse(value);
@@ -581,9 +591,11 @@ TEST(IteratorTest, IterateObjectValues) {
   ASSERT_EQ("4boolean", seenKeys[3]);
   ASSERT_EQ("5empty", seenKeys[4]);
 }
-  
+
 TEST(IteratorTest, IterateObjectValuesCompact) {
-  std::string const value("{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,\"5empty\":null}");
+  std::string const value(
+      "{\"1foo\":\"bar\",\"2baz\":\"quux\",\"3number\":1,\"4boolean\":true,"
+      "\"5empty\":null}");
 
   Options options;
   options.buildUnindexedObjects = true;
@@ -620,7 +632,7 @@ TEST(IteratorTest, EmptyArrayIteratorRangeBasedFor) {
   size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(false);
-    ASSERT_FALSE(it.isNumber()); // only in here to please the compiler
+    ASSERT_FALSE(it.isNumber());  // only in here to please the compiler
   }
   ASSERT_EQ(0UL, seen);
 }
@@ -675,7 +687,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
 
 TEST(IteratorTest, ArrayIteratorRangeBasedForCompact) {
   std::string const value("[1,2,3,4,5]");
-  
+
   Options options;
   options.buildUnindexedArrays = true;
 
@@ -704,7 +716,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForEmpty) {
   size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
     ASSERT_TRUE(false);
-    ASSERT_FALSE(it.value.isNumber()); // only in here to please the compiler
+    ASSERT_FALSE(it.value.isNumber());  // only in here to please the compiler
   }
   ASSERT_EQ(0UL, seen);
 }
@@ -721,11 +733,9 @@ TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
-    }
-    else if (seen == 1) {
+    } else if (seen == 1) {
       ASSERT_EQ("2bar", it.key.copyString());
-    }
-    else if (seen == 2) {
+    } else if (seen == 2) {
       ASSERT_EQ("3qux", it.key.copyString());
     }
     ASSERT_TRUE(it.value.isNumber());
@@ -747,11 +757,9 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
-    }
-    else if (seen == 1) {
+    } else if (seen == 1) {
       ASSERT_EQ("2bar", it.key.copyString());
-    }
-    else if (seen == 2) {
+    } else if (seen == 2) {
       ASSERT_EQ("3qux", it.key.copyString());
     }
     ASSERT_TRUE(it.value.isNumber());
@@ -773,11 +781,9 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
-    }
-    else if (seen == 1) {
+    } else if (seen == 1) {
       ASSERT_EQ("2bar", it.key.copyString());
-    }
-    else if (seen == 2) {
+    } else if (seen == 2) {
       ASSERT_EQ("3qux", it.key.copyString());
     }
     ASSERT_TRUE(it.value.isNumber());
@@ -789,7 +795,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
 
 TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
   std::string const value("{\"1foo\":1,\"2bar\":2,\"3qux\":3}");
-  
+
   Options options;
   options.buildUnindexedObjects = true;
 
@@ -804,11 +810,9 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
-    }
-    else if (seen == 1) {
+    } else if (seen == 1) {
       ASSERT_EQ("2bar", it.key.copyString());
-    }
-    else if (seen == 2) {
+    } else if (seen == 2) {
       ASSERT_EQ("3qux", it.key.copyString());
     }
     ASSERT_TRUE(it.value.isNumber());
@@ -820,7 +824,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
 
 TEST(IteratorTest, ObjectIteratorTranslations) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -832,7 +836,8 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
-  std::string const value("{\"foo\":1,\"bar\":2,\"qux\":3,\"baz\":4,\"bark\":5,\"bart\":6}");
+  std::string const value(
+      "{\"foo\":1,\"bar\":2,\"qux\":3,\"baz\":4,\"bark\":5,\"bart\":6}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -961,9 +966,8 @@ TEST(IteratorTest, ObjectIteratorToStream) {
   }
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

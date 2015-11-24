@@ -29,13 +29,15 @@
 
 #include "tests-common.h"
 
-extern size_t JSONStringCopyC (uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t JSONStringCopyCheckUtf8C (uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t JSONSkipWhiteSpaceC (uint8_t const* ptr, size_t limit);
+extern size_t JSONStringCopyC(uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t JSONStringCopyCheckUtf8C(uint8_t* dst, uint8_t const* src,
+                                       size_t limit);
+extern size_t JSONSkipWhiteSpaceC(uint8_t const* ptr, size_t limit);
 
-extern size_t (*JSONStringCopy) (uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t (*JSONStringCopyCheckUtf8) (uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t (*JSONSkipWhiteSpace) (uint8_t const* ptr, size_t limit);
+extern size_t (*JSONStringCopy)(uint8_t* dst, uint8_t const* src, size_t limit);
+extern size_t (*JSONStringCopyCheckUtf8)(uint8_t* dst, uint8_t const* src,
+                                         size_t limit);
+extern size_t (*JSONSkipWhiteSpace)(uint8_t const* ptr, size_t limit);
 
 TEST(ParserTest, GarbageCatchVelocyPackException) {
   std::string const value("z");
@@ -44,8 +46,7 @@ TEST(ParserTest, GarbageCatchVelocyPackException) {
   try {
     parser.parse(value);
     ASSERT_TRUE(false);
-  }
-  catch (Exception const& ex) {
+  } catch (Exception const& ex) {
     ASSERT_STREQ("Expecting digit", ex.what());
   }
 }
@@ -57,8 +58,7 @@ TEST(ParserTest, GarbageCatchStdException) {
   try {
     parser.parse(value);
     ASSERT_TRUE(false);
-  }
-  catch (std::exception const& ex) {
+  } catch (std::exception const& ex) {
     ASSERT_STREQ("Expecting digit", ex.what());
   }
 }
@@ -365,7 +365,7 @@ TEST(ParserTest, IntMin) {
 }
 
 TEST(ParserTest, IntMinMinusOne) {
-  std::string const value("-9223372036854775809"); // INT64_MIN - 1
+  std::string const value("-9223372036854775809");  // INT64_MIN - 1
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -393,7 +393,7 @@ TEST(ParserTest, IntMax) {
 }
 
 TEST(ParserTest, IntMaxPlusOne) {
-  std::string const value("9223372036854775808"); // INT64_MAX + 1
+  std::string const value("9223372036854775808");  // INT64_MAX + 1
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -423,7 +423,7 @@ TEST(ParserTest, UIntMax) {
 }
 
 TEST(ParserTest, UIntMaxPlusOne) {
-  std::string const value("18446744073709551616"); // UINT64_MAX + 1
+  std::string const value("18446744073709551616");  // UINT64_MAX + 1
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -577,7 +577,7 @@ TEST(ParserTest, DoubleScientific5) {
 }
 
 TEST(ParserTest, DoubleNeg) {
-  std::string const value("-184467440737095516161"); 
+  std::string const value("-184467440737095516161");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -589,51 +589,87 @@ TEST(ParserTest, DoubleNeg) {
   ASSERT_DOUBLE_EQ(-184467440737095516161., s.getDouble());
 }
 
-TEST(ParserTest, DoubleBroken) {
-  std::string const value("1234."); 
+TEST(ParserTest, DoubleBroken1) {
+  std::string const value("1234.");
+
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
+}
+
+TEST(ParserTest, DoubleBroken2) {
+  std::string const value("1234.a");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DoubleBrokenExponent) {
-  std::string const value("1234.33e"); 
+  std::string const value("1234.33e");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DoubleBrokenExponent2) {
-  std::string const value("1234.33e-"); 
+  std::string const value("1234.33e-");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DoubleBrokenExponent3) {
-  std::string const value("1234.33e+"); 
+  std::string const value("1234.33e+");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DoubleBrokenExponent4) {
-  std::string const value("1234.33ea"); 
+  std::string const value("1234.33ea");
 
   ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::ParseError);
 }
 
 TEST(ParserTest, DoubleBrokenExponent5) {
-  std::string const value("1e22222222222222222222222222222222222222222222222222222222222222"); 
+  std::string const value(
+      "1e22222222222222222222222222222222222222222222222222222222222222");
 
-  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value), Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson(value),
+                              Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, IntMinusInf) {
-  std::string const value("-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+  std::string const value(
+      "-99999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "9999999999999999999999999999999999999999999999999999999999999999");
 
   Parser parser;
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
 }
 
 TEST(ParserTest, IntPlusInf) {
-  std::string const value("999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+  std::string const value(
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "999999999999999999999999999999999999999999999999999999999999999");
 
   Parser parser;
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::NumberOutOfRange);
@@ -838,6 +874,48 @@ TEST(ParserTest, StringLiteralEmpty) {
   checkDump(s, value);
 }
 
+TEST(ParserTest, StringTwoByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xc2\xa2\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
+}
+
+TEST(ParserTest, StringThreeByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xe2\x82\xac\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
+}
+
+TEST(ParserTest, StringFourByteUTF8) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  std::string const value("\"\xf0\xa4\xad\xa2\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  Builder b = parser.steal();
+  Slice s(b.slice());
+  ASSERT_EQ(value, s.toJson());
+}
+
 TEST(ParserTest, StringLiteralInvalidUtfValue1) {
   Options options;
   options.validateUtf8Strings = true;
@@ -848,7 +926,8 @@ TEST(ParserTest, StringLiteralInvalidUtfValue1) {
   value.push_back('"');
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
 
   options.validateUtf8Strings = false;
@@ -866,7 +945,8 @@ TEST(ParserTest, StringLiteralInvalidUtfValue2) {
   value.push_back('"');
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
   options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -884,7 +964,8 @@ TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
   value.push_back('"');
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
   options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -898,7 +979,8 @@ TEST(ParserTest, StringLiteralControlCharacter) {
     value.push_back('"');
 
     Parser parser;
-    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::UnexpectedControlCharacter);
+    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                                Exception::UnexpectedControlCharacter);
     ASSERT_EQ(1U, parser.errorPos());
   }
 }
@@ -997,7 +1079,8 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
 }
 
 TEST(ParserTest, StringLiteralWithSpecials) {
-  std::string const value("  \"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"  ");
+  std::string const value(
+      "  \"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"  ");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1013,7 +1096,8 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   std::string out = s.copyString();
   ASSERT_EQ(correct, out);
 
-  std::string const valueOut("\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
+  std::string const valueOut(
+      "\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
   checkDump(s, valueOut);
 }
 
@@ -1034,7 +1118,8 @@ TEST(ParserTest, StringLiteralWithSurrogatePairs) {
   std::string out = s.copyString();
   ASSERT_EQ(correct, out);
 
-  std::string const valueOut("\"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85\"");
+  std::string const valueOut(
+      "\"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85\"");
   checkDump(s, valueOut);
 }
 
@@ -1144,7 +1229,8 @@ TEST(ParserTest, Array3) {
 }
 
 TEST(ParserTest, Array4) {
-  std::string const value("[\"foo\", \"bar\", \"baz\", null, true, false, -42.23 ]");
+  std::string const value(
+      "[\"foo\", \"bar\", \"baz\", null, true, false, -42.23 ]");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1185,7 +1271,8 @@ TEST(ParserTest, Array4) {
   checkBuild(ss, ValueType::Double, 9);
   ASSERT_EQ(-42.23, ss.getDouble());
 
-  std::string const valueOut = "[\"foo\",\"bar\",\"baz\",null,true,false,-42.23]";
+  std::string const valueOut =
+      "[\"foo\",\"bar\",\"baz\",null,true,false,-42.23]";
   checkDump(s, valueOut);
 }
 
@@ -1273,7 +1360,8 @@ TEST(ParserTest, NestedArray2) {
 }
 
 TEST(ParserTest, NestedArray3) {
-  std::string const value("[ [ \"foo\", [ \"bar\", \"baz\", null ], true, false ], -42.23 ]");
+  std::string const value(
+      "[ [ \"foo\", [ \"bar\", \"baz\", null ], true, false ], -42.23 ]");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1322,7 +1410,8 @@ TEST(ParserTest, NestedArray3) {
   checkBuild(ss, ValueType::Double, 9);
   ASSERT_EQ(-42.23, ss.getDouble());
 
-  std::string const valueOut = "[[\"foo\",[\"bar\",\"baz\",null],true,false],-42.23]";
+  std::string const valueOut =
+      "[[\"foo\",[\"bar\",\"baz\",null],true,false],-42.23]";
   checkDump(s, valueOut);
 }
 
@@ -1390,16 +1479,15 @@ TEST(ParserTest, ShortArrayMembers) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  ASSERT_EQ(7ULL, s.head()); 
+  ASSERT_EQ(7ULL, s.head());
   checkBuild(s, ValueType::Array, 1019);
   ASSERT_EQ(255ULL, s.length());
-  
+
   for (size_t i = 0; i < 255; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
-    }
-    else {
+    } else {
       checkBuild(ss, ValueType::UInt, 2);
     }
     ASSERT_EQ(i, ss.getUInt());
@@ -1413,7 +1501,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   single.append(single);
   single.append(single);
   single.append(single);
-  single.append(single); // 1024 bytes
+  single.append(single);  // 1024 bytes
 
   std::string value("[");
   for (size_t i = 0; i < 65; ++i) {
@@ -1435,7 +1523,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   ASSERT_EQ(4ULL, s.head());
   checkBuild(s, ValueType::Array, 67154);
   ASSERT_EQ(65ULL, s.length());
-  
+
   for (size_t i = 0; i < 65; ++i) {
     Slice ss = s[i];
     checkBuild(ss, ValueType::String, 1033);
@@ -1462,16 +1550,15 @@ TEST(ParserTest, LongArrayManyMembers) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  ASSERT_EQ(7ULL, s.head()); 
+  ASSERT_EQ(7ULL, s.head());
   checkBuild(s, ValueType::Array, 1023);
   ASSERT_EQ(256ULL, s.length());
-  
+
   for (size_t i = 0; i < 256; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
-    }
-    else {
+    } else {
       checkBuild(ss, ValueType::UInt, 2);
     }
     ASSERT_EQ(i, ss.getUInt());
@@ -1673,7 +1760,8 @@ TEST(ParserTest, ObjectDenseNotation) {
 }
 
 TEST(ParserTest, ObjectReservedKeys) {
-  std::string const value("{ \"null\" : \"true\", \"false\":\"bar\", \"true\":\"foo\"}");
+  std::string const value(
+      "{ \"null\" : \"true\", \"false\":\"bar\", \"true\":\"foo\"}");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1711,12 +1799,14 @@ TEST(ParserTest, ObjectReservedKeys) {
   correct = "foo";
   ASSERT_EQ(correct, ss.copyString());
 
-  std::string const valueOut = "{\"false\":\"bar\",\"null\":\"true\",\"true\":\"foo\"}";
+  std::string const valueOut =
+      "{\"false\":\"bar\",\"null\":\"true\",\"true\":\"foo\"}";
   checkDump(s, valueOut);
 }
 
 TEST(ParserTest, ObjectMixed) {
-  std::string const value("{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
+  std::string const value(
+      "{\"foo\":null,\"bar\":true,\"baz\":13.53,\"qux\":[1],\"quz\":{}}");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1769,7 +1859,8 @@ TEST(ParserTest, ObjectMixed) {
   checkBuild(ss, ValueType::Object, 1);
   ASSERT_EQ(0ULL, ss.length());
 
-  std::string const valueOut("{\"bar\":true,\"baz\":13.53,\"foo\":null,\"qux\":[1],\"quz\":{}}");
+  std::string const valueOut(
+      "{\"bar\":true,\"baz\":13.53,\"foo\":null,\"qux\":[1],\"quz\":{}}");
   checkDump(s, valueOut);
 }
 
@@ -1812,10 +1903,10 @@ TEST(ParserTest, ShortObjectMembers) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  ASSERT_EQ(0xcULL, s.head()); 
+  ASSERT_EQ(0xcULL, s.head());
   checkBuild(s, ValueType::Object, 3059);
   ASSERT_EQ(255ULL, s.length());
-  
+
   for (size_t i = 0; i < 255; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
@@ -1834,8 +1925,7 @@ TEST(ParserTest, ShortObjectMembers) {
     Slice sv = s.valueAt(i);
     if (i <= 9) {
       checkBuild(sv, ValueType::SmallInt, 1);
-    }
-    else {
+    } else {
       checkBuild(sv, ValueType::UInt, 2);
     }
     ASSERT_EQ(i, sv.getUInt());
@@ -1849,7 +1939,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   single.append(single);
   single.append(single);
   single.append(single);
-  single.append(single); // 1024 bytes
+  single.append(single);  // 1024 bytes
 
   std::string value("{");
   for (size_t i = 0; i < 64; ++i) {
@@ -1876,10 +1966,10 @@ TEST(ParserTest, LongObjectFewMembers) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  ASSERT_EQ(0x0dULL, s.head()); // object with offset size 4
+  ASSERT_EQ(0x0dULL, s.head());  // object with offset size 4
   checkBuild(s, ValueType::Object, 66889);
   ASSERT_EQ(64ULL, s.length());
-  
+
   for (size_t i = 0; i < 64; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
@@ -1927,10 +2017,10 @@ TEST(ParserTest, LongObjectManyMembers) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  ASSERT_EQ(0x0cULL, s.head()); // long object
+  ASSERT_EQ(0x0cULL, s.head());  // long object
   checkBuild(s, ValueType::Object, 3071);
   ASSERT_EQ(256ULL, s.length());
-  
+
   for (size_t i = 0; i < 256; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
@@ -1949,8 +2039,7 @@ TEST(ParserTest, LongObjectManyMembers) {
     Slice sv = s.valueAt(i);
     if (i <= 9) {
       checkBuild(sv, ValueType::SmallInt, 1);
-    }
-    else {
+    } else {
       checkBuild(sv, ValueType::UInt, 2);
     }
     ASSERT_EQ(i, sv.getUInt());
@@ -2008,7 +2097,8 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
   std::string const value("{\"foo\":1,\"foo\":2}");
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
@@ -2019,20 +2109,23 @@ TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
   std::string const value("{\"foo\":1,\"bar\":3,\"foo\":2}");
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, DuplicateSubAttributesAllowed) {
   Options options;
   options.checkAttributeUniqueness = true;
 
-  std::string const value("{\"foo\":{\"bar\":1},\"baz\":{\"bar\":2},\"bar\":{\"foo\":23,\"baz\":9}}");
+  std::string const value(
+      "{\"foo\":{\"bar\":1},\"baz\":{\"bar\":2},\"bar\":{\"foo\":23,\"baz\":9}"
+      "}");
 
   Parser parser(&options);
   parser.parse(value);
   Builder builder = parser.steal();
   Slice s(builder.start());
-  Slice v = s.get(std::vector<std::string>({ "foo", "bar" })); 
+  Slice v = s.get(std::vector<std::string>({"foo", "bar"}));
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1ULL, v.getUInt());
 }
@@ -2041,10 +2134,12 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
   Options options;
   options.checkAttributeUniqueness = true;
 
-  std::string const value("{\"roo\":{\"bar\":1,\"abc\":true,\"def\":7,\"abc\":2}}");
+  std::string const value(
+      "{\"roo\":{\"bar\":1,\"abc\":true,\"def\":7,\"abc\":2}}");
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::DuplicateAttributeName);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::DuplicateAttributeName);
 }
 
 TEST(ParserTest, FromJson) {
@@ -2095,19 +2190,20 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
 }
 
 TEST(ParserTest, ExcludeAttributesTopLevel) {
-  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":7}");
+  std::string const value(
+      "{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":"
+      "7}");
 
   struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
-    bool shouldExclude (Slice const& key, int nesting) override final {
+    bool shouldExclude(Slice const& key, int nesting) override final {
       EXPECT_EQ(1, nesting);
 
       ValueLength keyLength;
       char const* p = key.getString(keyLength);
 
-      if (keyLength == 3 && 
-          (strncmp(p, "foo", keyLength) == 0 ||
-           strncmp(p, "bar", keyLength) == 0 ||
-           strncmp(p, "qux", keyLength) == 0)) {
+      if (keyLength == 3 && (strncmp(p, "foo", keyLength) == 0 ||
+                             strncmp(p, "bar", keyLength) == 0 ||
+                             strncmp(p, "qux", keyLength) == 0)) {
         // exclude attribute
         return true;
       }
@@ -2141,17 +2237,18 @@ TEST(ParserTest, ExcludeAttributesTopLevel) {
 }
 
 TEST(ParserTest, ExcludeAttributesSubLevel) {
-  std::string const value("{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},\"qux\":5}");
+  std::string const value(
+      "{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},"
+      "\"qux\":5}");
 
   struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
-    bool shouldExclude (Slice const& key, int nesting) override final {
+    bool shouldExclude(Slice const& key, int nesting) override final {
       if (nesting == 3) {
         ValueLength keyLength;
         char const* p = key.getString(keyLength);
 
-        if (keyLength == 3 && 
-            (strncmp(p, "baz", keyLength) == 0 ||
-             strncmp(p, "qux", keyLength) == 0)) {
+        if (keyLength == 3 && (strncmp(p, "baz", keyLength) == 0 ||
+                               strncmp(p, "qux", keyLength) == 0)) {
           // exclude attribute
           return true;
         }
@@ -2176,12 +2273,12 @@ TEST(ParserTest, ExcludeAttributesSubLevel) {
   ASSERT_TRUE(s.get("foo").isObject());
   ASSERT_EQ(2UL, s.get("foo").length());
   ASSERT_TRUE(s.get("foo").hasKey("bar"));
-  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bar" })).isObject());
-  ASSERT_EQ(1UL, s.get(std::vector<std::string>({ "foo", "bar" })).length());
-  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "bar" })).hasKey("bart"));
+  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "bar"})).isObject());
+  ASSERT_EQ(1UL, s.get(std::vector<std::string>({"foo", "bar"})).length());
+  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "bar"})).hasKey("bart"));
   ASSERT_TRUE(s.get("foo").hasKey("qux"));
-  ASSERT_TRUE(s.get(std::vector<std::string>({ "foo", "qux" })).isObject());
-  ASSERT_EQ(0UL, s.get(std::vector<std::string>({ "foo", "qux" })).length());
+  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "qux"})).isObject());
+  ASSERT_EQ(0UL, s.get(std::vector<std::string>({"foo", "qux"})).length());
   ASSERT_TRUE(s.hasKey("qux"));
   ASSERT_EQ(5UL, s.get("qux").getUInt());
 }
@@ -2190,8 +2287,9 @@ TEST(ParserTest, UseNonSSEStringCopy) {
   // modify global function pointer!
   JSONStringCopy = JSONStringCopyC;
 
-  std::string const value("\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
-  
+  std::string const value(
+      "\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
+
   Parser parser;
   parser.parse(value);
 
@@ -2216,7 +2314,8 @@ TEST(ParserTest, UseNonSSEUtf8Check) {
   value.push_back('"');
 
   Parser parser(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                              Exception::InvalidUtf8Sequence);
   ASSERT_EQ(1U, parser.errorPos());
   options.validateUtf8Strings = false;
   ASSERT_EQ(1ULL, parser.parse(value));
@@ -2227,20 +2326,22 @@ TEST(ParserTest, UseNonSSEWhitespaceCheck) {
 
   // modify global function pointer!
   std::string const value("\"foo                 bar\"");
-  std::string const all("                                                                                  " + value + "                            ");
+  std::string const all(
+      "                                                                        "
+      "          " +
+      value + "                            ");
 
   Parser parser;
   parser.parse(all);
   Builder builder = parser.steal();
-  
+
   Slice s(builder.slice());
 
   ASSERT_EQ(value.substr(1, value.size() - 2), s.copyString());
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

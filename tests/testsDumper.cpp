@@ -31,6 +31,18 @@
 
 static unsigned char LocalBuffer[4096];
 
+TEST(DumperTest, CreateWithoutOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(nullptr), Exception::InternalError);
+
+  std::string result;
+  StringSink sink(&result);
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(&sink, nullptr),
+                              Exception::InternalError);
+
+  ASSERT_VELOCYPACK_EXCEPTION(new Dumper(nullptr, nullptr),
+                              Exception::InternalError);
+}
+
 TEST(DumperTest, InvokeOnSlice) {
   LocalBuffer[0] = 0x18;
 
@@ -61,22 +73,24 @@ TEST(SinkTest, CharBufferAppenders) {
   sink.push_back('1');
   ASSERT_EQ(1UL, buffer.length());
   ASSERT_EQ(0, memcmp("1", buffer.data(), buffer.length()));
-  
+
   sink.append(std::string("abcdef"));
   ASSERT_EQ(7UL, buffer.length());
   ASSERT_EQ(0, memcmp("1abcdef", buffer.data(), buffer.length()));
-  
+
   sink.append("foobar", strlen("foobar"));
   ASSERT_EQ(13UL, buffer.length());
   ASSERT_EQ(0, memcmp("1abcdeffoobar", buffer.data(), buffer.length()));
-  
+
   sink.append("quetzalcoatl");
   ASSERT_EQ(25UL, buffer.length());
-  ASSERT_EQ(0, memcmp("1abcdeffoobarquetzalcoatl", buffer.data(), buffer.length()));
-  
+  ASSERT_EQ(
+      0, memcmp("1abcdeffoobarquetzalcoatl", buffer.data(), buffer.length()));
+
   sink.push_back('*');
   ASSERT_EQ(26UL, buffer.length());
-  ASSERT_EQ(0, memcmp("1abcdeffoobarquetzalcoatl*", buffer.data(), buffer.length()));
+  ASSERT_EQ(
+      0, memcmp("1abcdeffoobarquetzalcoatl*", buffer.data(), buffer.length()));
 }
 
 TEST(SinkTest, StringAppenders) {
@@ -84,16 +98,16 @@ TEST(SinkTest, StringAppenders) {
   StringSink sink(&buffer);
   sink.push_back('1');
   ASSERT_EQ("1", buffer);
-  
+
   sink.append(std::string("abcdef"));
   ASSERT_EQ("1abcdef", buffer);
-  
+
   sink.append("foobar", strlen("foobar"));
   ASSERT_EQ("1abcdeffoobar", buffer);
-  
+
   sink.append("quetzalcoatl");
   ASSERT_EQ("1abcdeffoobarquetzalcoatl", buffer);
-  
+
   sink.push_back('*');
   ASSERT_EQ("1abcdeffoobarquetzalcoatl*", buffer);
 }
@@ -104,16 +118,16 @@ TEST(SinkTest, OStreamAppenders) {
   StringStreamSink sink(&result);
   sink.push_back('1');
   ASSERT_EQ("1", result.str());
-  
+
   sink.append(std::string("abcdef"));
   ASSERT_EQ("1abcdef", result.str());
-  
+
   sink.append("foobar", strlen("foobar"));
   ASSERT_EQ("1abcdeffoobar", result.str());
-  
+
   sink.append("quetzalcoatl");
   ASSERT_EQ("1abcdeffoobarquetzalcoatl", result.str());
-  
+
   sink.push_back('*');
   ASSERT_EQ("1abcdeffoobarquetzalcoatl*", result.str());
 }
@@ -122,7 +136,9 @@ TEST(OutStreamTest, StringifyComplexObject) {
   Options options;
   options.sortAttributeNames = false;
 
-  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -134,11 +150,17 @@ TEST(OutStreamTest, StringifyComplexObject) {
   result << s;
 
   ASSERT_EQ("[Slice object (0x0f), byteSize: 107]", result.str());
- 
+
   Options dumperOptions;
-  dumperOptions.prettyPrint = true; 
+  dumperOptions.prettyPrint = true;
   std::string prettyResult = Dumper::toString(s, &dumperOptions);
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), prettyResult);
+  ASSERT_EQ(std::string(
+                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
+                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
+                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
+                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
+                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
+            prettyResult);
 }
 
 TEST(PrettyDumperTest, SimpleObject) {
@@ -149,14 +171,14 @@ TEST(PrettyDumperTest, SimpleObject) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   std::ostringstream result;
   result << s;
 
   ASSERT_EQ("[Slice object (0x0b), byteSize: 11]", result.str());
 
   Options dumperOptions;
-  dumperOptions.prettyPrint = true; 
+  dumperOptions.prettyPrint = true;
   std::string prettyResult = Dumper::toString(s, &dumperOptions);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
@@ -165,7 +187,9 @@ TEST(PrettyDumperTest, ComplexObject) {
   Options options;
   options.sortAttributeNames = false;
 
-  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -174,9 +198,15 @@ TEST(PrettyDumperTest, ComplexObject) {
   Slice s(builder.start());
 
   Options dumperOptions;
-  dumperOptions.prettyPrint = true; 
+  dumperOptions.prettyPrint = true;
   std::string result = Dumper::toString(s, &dumperOptions);
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result);
+  ASSERT_EQ(std::string(
+                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
+                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
+                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
+                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
+                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
+            result);
 }
 
 TEST(StreamDumperTest, SimpleObject) {
@@ -187,9 +217,9 @@ TEST(StreamDumperTest, SimpleObject) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   Options options;
-  options.prettyPrint = true; 
+  options.prettyPrint = true;
   std::ostringstream result;
   StringStreamSink sink(&result);
   Dumper dumper(&sink, &options);
@@ -205,9 +235,9 @@ TEST(StreamDumperTest, UseStringStreamTypedef) {
 
   Builder builder = parser.steal();
   Slice s(builder.start());
-  
+
   Options options;
-  options.prettyPrint = true; 
+  options.prettyPrint = true;
   std::ostringstream result;
   StringStreamSink sink(&result);
   Dumper dumper(&sink, &options);
@@ -219,7 +249,9 @@ TEST(StreamDumperTest, ComplexObject) {
   Options options;
   options.sortAttributeNames = false;
 
-  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -228,12 +260,18 @@ TEST(StreamDumperTest, ComplexObject) {
   Slice s(builder.start());
 
   Options dumperOptions;
-  dumperOptions.prettyPrint = true; 
+  dumperOptions.prettyPrint = true;
   std::ostringstream result;
   StringStreamSink sink(&result);
   Dumper dumper(&sink, &dumperOptions);
   dumper.dump(s);
-  ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      \"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n        3.4,\n        -42.5,\n        true,\n        false,\n        null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"), result.str());
+  ASSERT_EQ(std::string(
+                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
+                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
+                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
+                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
+                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
+            result.str());
 }
 
 TEST(BufferDumperTest, Null) {
@@ -265,7 +303,7 @@ TEST(StringDumperTest, Numbers) {
   for (int p = 1; p <= 62; p++) {
     int64_t i;
 
-    auto check = [&] () -> void {
+    auto check = [&]() -> void {
       Builder b;
       b.add(Value(i));
       Slice s(b.start());
@@ -277,12 +315,18 @@ TEST(StringDumperTest, Numbers) {
       ASSERT_EQ(std::to_string(i), buffer);
     };
 
-    i = pp; check();
-    i = pp + 1; check();
-    i = pp - 1; check();
-    i = -pp; check();
-    i = -pp + 1; check();
-    i = -pp - 1; check();
+    i = pp;
+    check();
+    i = pp + 1;
+    check();
+    i = pp - 1;
+    check();
+    i = -pp;
+    check();
+    i = -pp + 1;
+    check();
+    i = -pp - 1;
+    check();
 
     pp *= 2;
   }
@@ -349,7 +393,8 @@ TEST(StringDumperTest, StringSpecialChars) {
   b.add(Value("\"fo\r \n \\to''\\ \\bar\""));
 
   Slice slice = b.slice();
-  ASSERT_EQ(std::string("\"\\\"fo\\r \\n \\\\to''\\\\ \\\\bar\\\"\""), Dumper::toString(slice));
+  ASSERT_EQ(std::string("\"\\\"fo\\r \\n \\\\to''\\\\ \\\\bar\\\"\""),
+            Dumper::toString(slice));
 }
 
 TEST(StringDumperTest, StringControlChars) {
@@ -357,7 +402,8 @@ TEST(StringDumperTest, StringControlChars) {
   b.add(Value(std::string("\x00\x01\x02 baz \x03", 9)));
 
   Slice slice = b.slice();
-  ASSERT_EQ(std::string("\"\\u0000\\u0001\\u0002 baz \\u0003\""), Dumper::toString(slice));
+  ASSERT_EQ(std::string("\"\\u0000\\u0001\\u0002 baz \\u0003\""),
+            Dumper::toString(slice));
 }
 
 TEST(StringDumperTest, StringUTF8) {
@@ -413,7 +459,8 @@ TEST(StringDumperTest, CustomWithoutHandler) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
-  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NeedCustomTypeHandler);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice),
+                              Exception::NeedCustomTypeHandler);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {
@@ -424,12 +471,12 @@ TEST(StringDumperTest, CustomWithCallback) {
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Dumper*, Slice const&) {
+    void toJson(Slice const& value, Dumper*, Slice const&) {
       ASSERT_EQ(ValueType::Custom, value.type());
       ASSERT_EQ(0xf0UL, value.head());
       sawCustom = true;
     }
-    ValueLength byteSize (Slice const&) {
+    ValueLength byteSize(Slice const&) {
       EXPECT_TRUE(false);
       return 0;
     }
@@ -458,7 +505,7 @@ TEST(StringDumperTest, CustomStringWithCallback) {
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Dumper* dumper, Slice const&) {
+    void toJson(Slice const& value, Dumper* dumper, Slice const&) {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
       ASSERT_EQ(0xf1UL, value.head());
@@ -468,7 +515,7 @@ TEST(StringDumperTest, CustomStringWithCallback) {
       sink->push_back('"');
       sawCustom = true;
     }
-    ValueLength byteSize (Slice const&) {
+    ValueLength byteSize(Slice const&) {
       EXPECT_TRUE(false);
       return 0;
     }
@@ -483,13 +530,13 @@ TEST(StringDumperTest, CustomStringWithCallback) {
   Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.sawCustom);
-  
+
   ASSERT_EQ(std::string("{\"foo\":\"bar\"}"), buffer);
 }
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson (Slice const& value, Dumper* dumper, Slice const& base) {
+    void toJson(Slice const& value, Dumper* dumper, Slice const& base) {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
@@ -500,15 +547,13 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
       sink->append(key.copyString());
       sink->push_back('"');
     }
-    ValueLength byteSize (Slice const&) {
-      return 1;
-    }
+    ValueLength byteSize(Slice const&) { return 1; }
   };
 
   MyCustomTypeHandler handler;
   Options options;
   options.customTypeHandler = &handler;
-  
+
   Builder b(&options);
   b.add(Value(ValueType::Object));
   uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
@@ -521,34 +566,33 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
   Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
 
-  ASSERT_EQ(std::string("{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"), buffer);
+  ASSERT_EQ(
+      std::string(
+          "{\"_id\":\"foobar/this is a key\",\"_key\":\"this is a key\"}"),
+      buffer);
 }
 
 TEST(StringDumperTest, ArrayWithCustom) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
     int byteSizeCalled = 0;
-    void toJson (Slice const& value, Dumper* dumper, Slice const& base) {
+    void toJson(Slice const& value, Dumper* dumper, Slice const& base) {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
       EXPECT_TRUE(base.isArray());
       if (value.head() == 0xf0) {
         sink->append("\"foobar\"");
-      }
-      else if (value.head() == 0xf1) {
+      } else if (value.head() == 0xf1) {
         sink->append("1234");
-      }
-      else if (value.head() == 0xf2) {
+      } else if (value.head() == 0xf2) {
         sink->append("[]");
-      }
-      else if (value.head() == 0xf3) {
+      } else if (value.head() == 0xf3) {
         sink->append("{\"qux\":2}");
-      }
-      else {
+      } else {
         EXPECT_TRUE(false);
       }
     }
-    ValueLength byteSize (Slice const& value) {
+    ValueLength byteSize(Slice const& value) {
       EXPECT_EQ(ValueType::Custom, value.type());
       ++byteSizeCalled;
       return 1;
@@ -572,7 +616,7 @@ TEST(StringDumperTest, ArrayWithCustom) {
   p = b.add(ValuePair(1ULL, ValueType::Custom));
   *p = 0xf3;
   b.close();
- 
+
   // array with same sizes
   ASSERT_EQ(0x02, b.slice().head());
 
@@ -610,9 +654,13 @@ TEST(StringDumperTest, AppendCharTestSpecialChars1) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
-  dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
+  dumper.appendString(std::string(
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars \\/ \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendCharTestSpecialChars2) {
@@ -622,9 +670,13 @@ TEST(StringDumperTest, AppendCharTestSpecialChars2) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
-  dumper.appendString(std::string("this is a string with special chars / \" \\ ' foo\n\r\t baz"));
+  dumper.appendString(std::string(
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz"));
 
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars / \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringTestSpecialChars1) {
@@ -634,9 +686,13 @@ TEST(StringDumperTest, AppendStringTestSpecialChars1) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
-  dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
+  dumper.appendString(
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars \\/ \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringTestSpecialChars2) {
@@ -646,9 +702,13 @@ TEST(StringDumperTest, AppendStringTestSpecialChars2) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
-  dumper.appendString("this is a string with special chars / \" \\ ' foo\n\r\t baz");
+  dumper.appendString(
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz");
 
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars / \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringSlice1) {
@@ -659,13 +719,17 @@ TEST(StringDumperTest, AppendStringSlice1) {
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
 
-  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  std::string const s =
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
   dumper.append(slice);
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars \\/ \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringSlice2) {
@@ -676,13 +740,17 @@ TEST(StringDumperTest, AppendStringSlice2) {
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
 
-  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  std::string const s =
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
 
   dumper.append(slice);
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars / \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringSliceRef1) {
@@ -693,13 +761,17 @@ TEST(StringDumperTest, AppendStringSliceRef1) {
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
 
-  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  std::string const s =
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
   dumper.append(&slice);
 
-  ASSERT_EQ(std::string("\"this is a string with special chars \\/ \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars \\/ \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, AppendStringSliceRef2) {
@@ -710,12 +782,16 @@ TEST(StringDumperTest, AppendStringSliceRef2) {
   StringSink sink(&buffer);
   Dumper dumper(&sink, &options);
 
-  std::string const s = "this is a string with special chars / \" \\ ' foo\n\r\t baz";
+  std::string const s =
+      "this is a string with special chars / \" \\ ' foo\n\r\t baz";
   Builder b;
   b.add(Value(s));
   Slice slice(b.start());
   dumper.append(&slice);
-  ASSERT_EQ(std::string("\"this is a string with special chars / \\\" \\\\ ' foo\\n\\r\\t baz\""), buffer);
+  ASSERT_EQ(std::string(
+                "\"this is a string with special chars / \\\" \\\\ ' "
+                "foo\\n\\r\\t baz\""),
+            buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
@@ -868,14 +944,15 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
 }
 
 TEST(StringDumperTest, UnsupportedTypeNone) {
-  static uint8_t const b[] = { 0x00 }; 
+  static uint8_t const b[] = {0x00};
   Slice slice(&b[0]);
 
-  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeNull) {
-  static uint8_t const b[] = { 0x00 }; 
+  static uint8_t const b[] = {0x00};
   Slice slice(&b[0]);
 
   Options options;
@@ -888,14 +965,15 @@ TEST(StringDumperTest, ConvertTypeNull) {
 }
 
 TEST(StringDumperTest, UnsupportedTypeMinKey) {
-  static uint8_t const b[] = { 0x1e }; 
+  static uint8_t const b[] = {0x1e};
   Slice slice(&b[0]);
 
-  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeMinKey) {
-  static uint8_t const b[] = { 0x1e }; 
+  static uint8_t const b[] = {0x1e};
   Slice slice(&b[0]);
 
   Options options;
@@ -908,14 +986,15 @@ TEST(StringDumperTest, ConvertTypeMinKey) {
 }
 
 TEST(StringDumperTest, UnsupportedTypeMaxKey) {
-  static uint8_t const b[] = { 0x1f }; 
+  static uint8_t const b[] = {0x1f};
   Slice slice(&b[0]);
 
-  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NoJsonEquivalent);
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NoJsonEquivalent);
 }
 
 TEST(StringDumperTest, ConvertTypeMaxKey) {
-  static uint8_t const b[] = { 0x1f }; 
+  static uint8_t const b[] = {0x1f};
   Slice slice(&b[0]);
 
   Options options;
@@ -928,15 +1007,16 @@ TEST(StringDumperTest, ConvertTypeMaxKey) {
 }
 
 TEST(StringDumperTest, BCD) {
-  static uint8_t const b[] = { 0xc8, 0x00, 0x00, 0x00 }; // fake BCD value
+  static uint8_t const b[] = {0xc8, 0x00, 0x00, 0x00};  // fake BCD value
   Slice slice(&b[0]);
 
-  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice), Exception::NotImplemented);
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NotImplemented);
 }
 
 TEST(StringDumperTest, AttributeTranslationsNotSet) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  // intentionally don't add any translations 
+  // intentionally don't add any translations
   translator->seal();
 
   Options options;
@@ -957,7 +1037,7 @@ TEST(StringDumperTest, AttributeTranslationsNotSet) {
 
 TEST(StringDumperTest, AttributeTranslations) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -970,7 +1050,9 @@ TEST(StringDumperTest, AttributeTranslations) {
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
-  std::string const value("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -984,7 +1066,7 @@ TEST(StringDumperTest, AttributeTranslations) {
 
 TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
-  
+
   translator->add("foo", 1);
   translator->add("bar", 2);
   translator->add("baz", 3);
@@ -995,7 +1077,9 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
-  std::string const value("{\"foo\":{\"bar\":{\"baz\":\"baz\"},\"bark\":3,\"foo\":true},\"bar\":1}");
+  std::string const value(
+      "{\"foo\":{\"bar\":{\"baz\":\"baz\"},\"bark\":3,\"foo\":true},\"bar\":"
+      "1}");
 
   Parser parser(&options);
   parser.parse(value);
@@ -1007,9 +1091,8 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   ASSERT_EQ(value, result);
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-

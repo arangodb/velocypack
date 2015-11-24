@@ -31,23 +31,21 @@
 
 TEST(BuilderTest, FixedArraysSizes) {
   ValueLength const kB = 1024;
-  ValueLength const GB = 1024*1024*1024;
-  ValueLength const nrs[] = {1,               // bytelen < 256
-                             2,               // 256 <= bytelen < 64k
-                             (64*kB)/127 - 1, // 256 <= bytelen < 64k
-                             (64*kB)/127,     // 64k <= bytelen < 4G
-                             (4*GB)/127,      // 64k <= bytelen < 4G
-                             (4*GB)/127+1};   // 4G <= bytelen
-  ValueLength const byteSizes[] = {1 + 1 + 1 * 127,
-                                   1 + 8 + 2 * 127,
-                                   1 + 8 + ((64 * kB) / 127 - 1) * 127,
-                                   1 + 8 + ((64 * kB) / 127) * 127,
-                                   1 + 8 + ((4 * GB) / 127) * 127,
-                                   1 + 8 + ((4 * GB) / 127 + 1) * 127};
+  ValueLength const GB = 1024 * 1024 * 1024;
+  ValueLength const nrs[] = {1,                    // bytelen < 256
+                             2,                    // 256 <= bytelen < 64k
+                             (64 * kB) / 127 - 1,  // 256 <= bytelen < 64k
+                             (64 * kB) / 127,      // 64k <= bytelen < 4G
+                             (4 * GB) / 127,       // 64k <= bytelen < 4G
+                             (4 * GB) / 127 + 1};  // 4G <= bytelen
+  ValueLength const byteSizes[] = {
+      1 + 1 + 1 * 127,                     1 + 8 + 2 * 127,
+      1 + 8 + ((64 * kB) / 127 - 1) * 127, 1 + 8 + ((64 * kB) / 127) * 127,
+      1 + 8 + ((4 * GB) / 127) * 127,      1 + 8 + ((4 * GB) / 127 + 1) * 127};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 128-2; i++) {
+  for (size_t i = 0; i < 128 - 2; i++) {
     x.push_back('x');
   }
   // Now x has length 128-2 and thus will use 127 bytes as an entry in an array
@@ -77,13 +75,13 @@ TEST(BuilderTest, FixedArraysSizes) {
 
 TEST(BuilderTest, ArraysSizes) {
   ValueLength const kB = 1024;
-  ValueLength const GB = 1024*1024*1024;
-  ValueLength const nrs[] = {1,               // bytelen < 256
-                             2,               // 256 <= bytelen < 64k
-                             (64*kB)/129 - 1, // 256 <= bytelen < 64k
-                             (64*kB)/129,     // 64k <= bytelen < 4G
-                             (4*GB)/131,      // 64k <= bytelen < 4G
-                             (4*GB)/131+1};   // 4G <= bytelen
+  ValueLength const GB = 1024 * 1024 * 1024;
+  ValueLength const nrs[] = {1,                    // bytelen < 256
+                             2,                    // 256 <= bytelen < 64k
+                             (64 * kB) / 129 - 1,  // 256 <= bytelen < 64k
+                             (64 * kB) / 129,      // 64k <= bytelen < 4G
+                             (4 * GB) / 131,       // 64k <= bytelen < 4G
+                             (4 * GB) / 131 + 1};  // 4G <= bytelen
   ValueLength const byteSizes[] = {1 + 1 + 1 + 2 + 1 * 128,
                                    1 + 8 + 3 + 2 * 129,
                                    1 + 8 + 3 + ((64 * kB) / 129 - 1) * 129,
@@ -93,7 +91,7 @@ TEST(BuilderTest, ArraysSizes) {
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 128-2; i++) {
+  for (size_t i = 0; i < 128 - 2; i++) {
     x.push_back('x');
   }
   // Now x has length 128-2 and thus will use 127 bytes as an entry in an array
@@ -113,7 +111,7 @@ TEST(BuilderTest, ArraysSizes) {
     checkBuild(s, ValueType::Array, byteSizes[i]);
     ASSERT_TRUE(0x06 <= *start && *start <= 0x09);  // Array without index tab
     ASSERT_TRUE(s.isArray());
-    ASSERT_EQ(nrs[i]+1, s.length());
+    ASSERT_EQ(nrs[i] + 1, s.length());
     ASSERT_TRUE(s[0].isSmallInt());
     ASSERT_EQ(1LL, s[0].getInt());
     ASSERT_TRUE(s[1].isString());
@@ -126,23 +124,21 @@ TEST(BuilderTest, ArraysSizes) {
 
 TEST(BuilderTest, ObjectsSizesSorted) {
   ValueLength const kB = 1024;
-  ValueLength const GB = 1024*1024*1024;
-  ValueLength const nrs[] = {1,               // bytelen < 256
-                             2,               // 256 <= bytelen < 64k
-                             (64*kB)/130,     // 256 <= bytelen < 64k
-                             (64*kB)/130+1,   // 64k <= bytelen < 4G
-                             (4*GB)/132-1,    // 64k <= bytelen < 4G
-                             (4*GB)/132};     // 4G <= bytelen
-  ValueLength const byteSizes[] = {1 + 1 + 1 + 1 * 128,
-                                   1 + 8 + 2 * 130,
-                                   1 + 8 + ((64 * kB) / 130) * 130,
-                                   1 + 8 + ((64 * kB) / 130 + 1) * 132,
-                                   1 + 8 + ((4 * GB) / 132 - 1) * 132,
-                                   1 + 8 + ((4 * GB) / 132) * 136 + 8};
+  ValueLength const GB = 1024 * 1024 * 1024;
+  ValueLength const nrs[] = {1,                    // bytelen < 256
+                             2,                    // 256 <= bytelen < 64k
+                             (64 * kB) / 130,      // 256 <= bytelen < 64k
+                             (64 * kB) / 130 + 1,  // 64k <= bytelen < 4G
+                             (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
+                             (4 * GB) / 132};      // 4G <= bytelen
+  ValueLength const byteSizes[] = {
+      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
+      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
+      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 118-1; i++) {
+  for (size_t i = 0; i < 118 - 1; i++) {
     x.push_back('x');
   }
   // Now x has length 118-1 and thus will use 118 bytes as an entry in an object
@@ -182,23 +178,21 @@ TEST(BuilderTest, ObjectsSizesSorted) {
 
 TEST(BuilderTest, ObjectsSizesUnsorted) {
   ValueLength const kB = 1024;
-  ValueLength const GB = 1024*1024*1024;
-  ValueLength const nrs[] = {1,               // bytelen < 256
-                             2,               // 256 <= bytelen < 64k
-                             (64*kB)/130,     // 256 <= bytelen < 64k
-                             (64*kB)/130+1,   // 64k <= bytelen < 4G
-                             (4*GB)/132-1,    // 64k <= bytelen < 4G
-                             (4*GB)/132};     // 4G <= bytelen
-  ValueLength const byteSizes[] = {1 + 1 + 1 + 1 * 128,
-                                   1 + 8 + 2 * 130,
-                                   1 + 8 + ((64 * kB) / 130) * 130,
-                                   1 + 8 + ((64 * kB) / 130 + 1) * 132,
-                                   1 + 8 + ((4 * GB) / 132 - 1) * 132,
-                                   1 + 8 + ((4 * GB) / 132) * 136 + 8};
+  ValueLength const GB = 1024 * 1024 * 1024;
+  ValueLength const nrs[] = {1,                    // bytelen < 256
+                             2,                    // 256 <= bytelen < 64k
+                             (64 * kB) / 130,      // 256 <= bytelen < 64k
+                             (64 * kB) / 130 + 1,  // 64k <= bytelen < 4G
+                             (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
+                             (4 * GB) / 132};      // 4G <= bytelen
+  ValueLength const byteSizes[] = {
+      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
+      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
+      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 118-1; i++) {
+  for (size_t i = 0; i < 118 - 1; i++) {
     x.push_back('x');
   }
   // Now x has length 118-1 and thus will use 118 bytes as an entry in an object
@@ -227,8 +221,7 @@ TEST(BuilderTest, ObjectsSizesUnsorted) {
     checkBuild(s, ValueType::Object, byteSizes[i]);
     if (nrs[i] == 1) {
       ASSERT_TRUE(0x0b <= *start && *start <= 0x0e);  // Object sorted
-    }
-    else {
+    } else {
       ASSERT_TRUE(0x0f <= *start && *start <= 0x12);  // Object unsorted
     }
     ASSERT_TRUE(s.isObject());
@@ -241,9 +234,8 @@ TEST(BuilderTest, ObjectsSizesUnsorted) {
   }
 }
 
-int main (int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();
 }
-
