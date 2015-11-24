@@ -121,3 +121,9 @@ Please consult the file [examples/API.md](examples/API.md) for usage examples,
 and the file [examples/Embedding.md](examples/Embedding.md) for information
 about how to embed the library into client applications.
 
+Contributing
+------------
+
+We welcome bug fixes and patches from 3rd party contributors!
+
+Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want to contribute to VelocyPack. Have a look into the issues list for the tag [HELP_WANTED](labels/help%20wanted).
