@@ -1,3 +1,7 @@
+env:
+  global:
+    secure: "ezPy+HAzbKeRPRlaO7F/WPTV7y+BGEjMUCBJuyYeCrcoD+Kz9a5yEWxPpwBeF0OURZtSf6R3dWSt0BhA7sdz79Sudc1sz/vGtFWX5aFqm1zWy3IlYEndce+KjGNsgtQ36W6NohzXWggr9pQmllV5bXFgTnJcnGEyUkw8zJzqfsZcjrV4wm2h9+uxkQVVAFRt2nHnrb5UHsdQHlAsMfwe44KSe+aRn3WtkkZS/azYV+5n0HllhWeriBOMrGq1orCc528/+4VAytRspBZ8vGYtP+0uSrPLtlSkOww7OjFcsrKsN/AMgXjEaXYwicVAo/u6LmaynAMHujDOiR5ZvIRRqILjUu1vs86zRUD3ivKp5hSgr3WiCcFbk9oDKYTLnhoN43LHXnHneuLE0CiFMcZSeXgHwKN+RaAJaVxegnZ4gO5+J6ijdiVPceSLmnhoqHxJl9pNOnwiY67pwKrVpuZ+ca62ij6W3h2qOE9WtZfpMCqsyHYm6IZ1/Y7XK8H5/jFEFDSecZWAqv8qv3BZik90xja8ll0ATExVuSD49iPecpXCQOknnUnTOymr/Z4QxYSFW/CmkJfjs+AXhzt8Duz4yxtA5ZjIoLtd3OIORahGd8A2q+UQDS/2jZwdJ8i+euKypUtqhtkXG1xgmk0+c4GdVs81BDXNeDF1nRwKaP2UjOQ="
+
 branches:
   only:
     - master
@@ -16,9 +20,30 @@ addons:
     packages:
     - g++-4.9
     - clang
+    - gdb
+    - lcov
+
+before_install:
+- pip install --user cpp-coveralls
 
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
+- echo "Installed tools:"
+- cmake --version
+- $CXX --version
+- lcov --version
 
-script: "which $CXX; mkdir -p build; (cd build && cmake -DBuildTests=ON -DBuildLargeTests=OFF -DBuildExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX .. && make && (cd tests && ctest -V))"
+script: 
+- ulimit -c unlimited -S # enable core files
+- mkdir -p build
+- (cd build && cmake -DCoverage=ON -DBuildTests=ON -DBuildLargeTests=OFF -DBuildExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX ..)
+- (cd build && make)
+- (cd build/tests && ctest -V)"
+
+after_success:
+- coveralls --include "include/velocypack" --include "src" --gcov-options '\-lp' --repo-token ${COVERALLS_TOKEN}
+
+after_failure:
+- COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1)
+- if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" bin/arangod -ex "thread apply all bt" -ex "set pagination 0" -batch; fi 
 
