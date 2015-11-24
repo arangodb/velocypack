@@ -320,22 +320,22 @@ TEST(CollectionTest, ForEachArray) {
   size_t seen = 0;
   Collection::forEach(s,
                       [&seen](Slice const& slice, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
+                        EXPECT_EQ(seen, index);
 
-    switch (seen) {
-      case 0:
-      case 1:
-      case 2:
-        EXPECT_TRUE(slice.isNumber());
-        break;
-      case 3:
-      case 4:
-        EXPECT_TRUE(slice.isString());
-    }
+                        switch (seen) {
+                          case 0:
+                          case 1:
+                          case 2:
+                            EXPECT_TRUE(slice.isNumber());
+                            break;
+                          case 3:
+                          case 4:
+                            EXPECT_TRUE(slice.isString());
+                        }
 
-    ++seen;
-    return true;
-  });
+                        ++seen;
+                        return true;
+                      });
 
   ASSERT_EQ(5UL, seen);
 }

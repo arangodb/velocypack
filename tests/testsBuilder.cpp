@@ -253,8 +253,9 @@ TEST(BuilderTest, BoolWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::Bool)),
-                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(100UL), ValueType::Bool)),
+      Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
 }
@@ -266,8 +267,9 @@ TEST(BuilderTest, StringWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::String)),
-                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(100UL), ValueType::String)),
+      Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false, ValueType::String)),
@@ -343,6 +345,55 @@ TEST(BuilderTest, DoubleWithOtherTypes) {
 
   Slice s = b.slice();
   ASSERT_EQ("[1.2,-1.2,-1,1]", s.toJson());
+}
+
+TEST(BuilderTest, UTCDateWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::UTCDate));
+  b.add(Value(static_cast<int64_t>(1), ValueType::UTCDate));
+  b.add(Value(static_cast<uint64_t>(1UL), ValueType::UTCDate));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UTCDate)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::UTCDate)),
+                              Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, BinaryWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value("foobar", ValueType::Binary));
+  b.add(Value(std::string("foobar"), ValueType::Binary));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::Binary)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<int64_t>(1), ValueType::Binary)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(1), ValueType::Binary)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Binary)),
+                              Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, ExternalWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(std::string("foobar"), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<int64_t>(1), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(1), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
 }
 
 TEST(BuilderTest, AddAndOpenArray) {
@@ -1023,36 +1074,15 @@ TEST(BuilderTest, IntNeg) {
 }
 
 TEST(BuilderTest, Int1Limits) {
-  int64_t values[] = {-0x80LL,
-                      0x7fLL,
-                      -0x81LL,
-                      0x80LL,
-                      -0x8000LL,
-                      0x7fffLL,
-                      -0x8001LL,
-                      0x8000LL,
-                      -0x800000LL,
-                      0x7fffffLL,
-                      -0x800001LL,
-                      0x800000LL,
-                      -0x80000000LL,
-                      0x7fffffffLL,
-                      -0x80000001LL,
-                      0x80000000LL,
-                      -0x8000000000LL,
-                      0x7fffffffffLL,
-                      -0x8000000001LL,
-                      0x8000000000LL,
-                      -0x800000000000LL,
-                      0x7fffffffffffLL,
-                      -0x800000000001LL,
-                      0x800000000000LL,
-                      -0x80000000000000LL,
-                      0x7fffffffffffffLL,
-                      -0x80000000000001LL,
-                      0x80000000000000LL,
-                      arangodb::velocypack::toInt64(0x8000000000000000ULL),
-                      0x7fffffffffffffffLL};
+  int64_t values[] = {
+      -0x80LL, 0x7fLL, -0x81LL, 0x80LL, -0x8000LL, 0x7fffLL, -0x8001LL,
+      0x8000LL, -0x800000LL, 0x7fffffLL, -0x800001LL, 0x800000LL, -0x80000000LL,
+      0x7fffffffLL, -0x80000001LL, 0x80000000LL, -0x8000000000LL,
+      0x7fffffffffLL, -0x8000000001LL, 0x8000000000LL, -0x800000000000LL,
+      0x7fffffffffffLL, -0x800000000001LL, 0x800000000000LL,
+      -0x80000000000000LL, 0x7fffffffffffffLL, -0x80000000000001LL,
+      0x80000000000000LL, arangodb::velocypack::toInt64(0x8000000000000000ULL),
+      0x7fffffffffffffffLL};
   for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];
     Builder b;
@@ -1594,6 +1624,69 @@ TEST(BuilderTest, AttributeTranslations) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_TRUE(s.hasKey("mötör"));
+  ASSERT_TRUE(s.hasKey("mötörhead"));
+  ASSERT_TRUE(s.hasKey("quetzal"));
+}
+
+TEST(BuilderTest, AttributeTranslationsSorted) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = true;
+  options.attributeTranslator = translator.get();
+
+  Builder b(&options);
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bart", Value(2));
+  b.add("bark", Value(42));
+  b.add("mötör", Value(19));
+  b.add("mötörhead", Value(20));
+  b.add("quetzal", Value(21));
+  b.close();
+
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+      0x0b, 0x35, 0x08, 0x31, 0x1a, 0x32, 0x19, 0x33, 0x31, 0x44, 0x62,
+      0x61, 0x72, 0x74, 0x32, 0x34, 0x20, 0x2a, 0x35, 0x20, 0x13, 0x4b,
+      0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64,
+      0x20, 0x14, 0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20,
+      0x15, 0x05, 0x0f, 0x09, 0x07, 0x03, 0x12, 0x15, 0x23};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_TRUE(s.hasKey("mötör"));
+  ASSERT_TRUE(s.hasKey("mötörhead"));
+  ASSERT_TRUE(s.hasKey("quetzal"));
 }
 
 TEST(BuilderTest, ToString) {
