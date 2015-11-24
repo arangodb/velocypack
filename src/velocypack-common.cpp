@@ -33,7 +33,7 @@ using namespace arangodb::velocypack;
 
 #ifndef VELOCYPACK_64BIT
 // check if the length is beyond the size of a SIZE_MAX on this platform
-void checkValueLength(ValueLength length) {
+void arangodb::velocypack::checkValueLength(ValueLength length) {
   if (length > static_cast<ValueLength>(SIZE_MAX)) {
     throw Exception(Exception::NumberOutOfRange);
   }
