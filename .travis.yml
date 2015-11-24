@@ -27,12 +27,11 @@ install:
 - make -C lcov-1.11/ install PREFIX=~/lcov
 - gem install coveralls-lcov
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
-- cmake --version
-- $CXX --version
-- lcov --version
 
 before_script:
-- lcov --directory . --zerocounters
+- cmake --version
+- $CXX --version
+- ~/lcov/usr/bin/lcov --directory . --zerocounters
  
 script: 
 - ulimit -c unlimited -S # enable core files
