@@ -42,8 +42,8 @@ std::string Builder::toString() const {
 
 void Builder::doActualSort(std::vector<SortEntry>& entries) {
   VELOCYPACK_ASSERT(entries.size() > 1);
-  std::sort(entries.begin(), entries.end(), [](SortEntry const& a,
-                                               SortEntry const& b) {
+  std::sort(entries.begin(), entries.end(),
+            [](SortEntry const& a, SortEntry const& b) {
     // return true iff a < b:
     uint8_t const* pa = a.nameStart;
     uint64_t sizea = a.nameSize;

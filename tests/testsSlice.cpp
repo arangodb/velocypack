@@ -162,71 +162,110 @@ TEST(SliceTest, InvalidGetters) {
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getBool(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getInt(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getUInt(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getSmallInt(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getDouble(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyString(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyBinary(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getString(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getBinary(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyString(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).copyBinary(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getString(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0).getUTCDate(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0).length(), Exception::InvalidValueType);
-  
+
   ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getInt(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getUInt(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getSmallInt(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getDouble(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyString(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyBinary(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getString(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getBinary(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyString(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).copyBinary(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getString(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1).getUTCDate(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(1).length(), Exception::InvalidValueType);
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBool(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyString(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyBinary(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getUTCDate(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyString(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).copyBinary(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getUTCDate(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(2).length(), Exception::InvalidValueType);
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getBool(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getInt(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getUInt(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getSmallInt(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getDouble(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getUTCDate(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getBinary(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).copyBinary(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getUTCDate(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(3).copyBinary(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(3).length(), Exception::InvalidValueType);
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getBool(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getInt(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getUInt(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getSmallInt(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getDouble(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getUTCDate(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyBinary(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyString(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getUTCDate(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyBinary(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(4).copyString(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getString(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(2).getBinary(len),
+                              Exception::InvalidValueType);
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getBool(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getInt(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getUInt(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getSmallInt(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getSmallInt(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getDouble(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getExternal(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getUTCDate(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getString(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getBinary(len), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyBinary(), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getExternal(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getUTCDate(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getString(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyBinary(),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(5).copyString(),
+                              Exception::InvalidValueType);
 }
 
 TEST(SliceTest, LengthNull) {
@@ -573,7 +612,7 @@ TEST(SliceTest, Int8) {
 TEST(SliceTest, IntMax) {
   Builder b;
   b.add(Value(INT64_MAX));
-  
+
   Slice slice(b.slice());
 
   ASSERT_EQ(ValueType::Int, slice.type());
@@ -718,7 +757,7 @@ TEST(SliceTest, NegInt8) {
 TEST(SliceTest, IntMin) {
   Builder b;
   b.add(Value(INT64_MIN));
-  
+
   Slice slice(b.slice());
 
   ASSERT_EQ(ValueType::Int, slice.type());
@@ -863,7 +902,7 @@ TEST(SliceTest, UInt8) {
 TEST(SliceTest, UIntMax) {
   Builder b;
   b.add(Value(UINT64_MAX));
-  
+
   Slice slice(b.slice());
 
   ASSERT_EQ(ValueType::UInt, slice.type());
@@ -889,7 +928,8 @@ TEST(SliceTest, StringNoString) {
 
   ASSERT_FALSE(slice.isString());
   ValueLength length;
-  ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyString(), Exception::InvalidValueType);
 }
 
@@ -1063,7 +1103,7 @@ TEST(SliceTest, BinaryWithNullBytes) {
   uint8_t const* s = slice.getBinary(len);
   ASSERT_EQ(5ULL, len);
   ASSERT_EQ(0, memcmp(s, &buf[2], len));
-  
+
   auto result = slice.copyBinary();
   ASSERT_EQ(5UL, result.size());
   ASSERT_EQ(0x01, result[0]);
@@ -1072,12 +1112,13 @@ TEST(SliceTest, BinaryWithNullBytes) {
   ASSERT_EQ(0x03, result[3]);
   ASSERT_EQ(0x00, result[4]);
 }
- 
+
 TEST(SliceTest, BinaryNonBinary) {
   Slice slice;
 
   ValueLength len;
-  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyBinary(), Exception::InvalidValueType);
 }
 
@@ -1700,7 +1741,7 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
     while (it2.valid()) {
       if (it.index() != it2.index()) {
         ASSERT_FALSE(comparer(it.value(), it2.value()));
-        ++comparisons; 
+        ++comparisons;
       }
       it2.next();
     }
@@ -1710,8 +1751,14 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
 }
 
 TEST(SliceTest, EqualToDirectInvocationLongStrings) {
-  Builder b1 = Parser::fromJson("\"thisisalongstring.dddddddddddddddddddddddddddds............................................................................longerthan127chars\"");
-  Builder b2 = Parser::fromJson("\"thisisalongstring.dddddddddddddddddddddddddddds.................eek!...........................................................longerthan127chars\"");
+  Builder b1 = Parser::fromJson(
+      "\"thisisalongstring.dddddddddddddddddddddddddddds......................."
+      "....................................................."
+      "longerthan127chars\"");
+  Builder b2 = Parser::fromJson(
+      "\"thisisalongstring.dddddddddddddddddddddddddddds.................eek!.."
+      "........................................................."
+      "longerthan127chars\"");
 
   std::equal_to<Slice> comparer;
   ASSERT_TRUE(comparer(b1.slice(), b1.slice()));

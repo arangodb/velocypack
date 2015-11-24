@@ -253,7 +253,8 @@ class Slice {
   // return the number of members for an Array or Object object
   ValueLength length() const {
     if (type() != ValueType::Array && type() != ValueType::Object) {
-      throw Exception(Exception::InvalidValueType, "Expecting type Array or Object");
+      throw Exception(Exception::InvalidValueType,
+                      "Expecting type Array or Object");
     }
 
     auto const h = head();

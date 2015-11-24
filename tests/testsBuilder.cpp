@@ -34,10 +34,12 @@ TEST(BuilderTest, CreateWithoutOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
 
   std::shared_ptr<Buffer<uint8_t>> buffer;
-  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr), Exception::InternalError);
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr),
+                              Exception::InternalError);
 
   buffer.reset(new Buffer<uint8_t>());
-  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr), Exception::InternalError);
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buffer, nullptr),
+                              Exception::InternalError);
 
   Builder b;
   b.add(Value(123));
@@ -216,38 +218,60 @@ TEST(BuilderTest, AddNonCompoundTypeAllowUnindexed) {
   b.add(Value(ValueType::Array, true));
   b.add(Value(ValueType::Object, true));
 
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Null, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Bool, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Double, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UTCDate, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::External, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MinKey, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MaxKey, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Int, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UInt, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::SmallInt, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::String, true)), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Binary, true)), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::None, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Null, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Bool, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Double, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UTCDate, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::External, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MinKey, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MaxKey, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Int, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::UInt, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::SmallInt, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::String, true)),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Binary, true)),
+                              Exception::InvalidValueType);
 }
 
 TEST(BuilderTest, BoolWithOtherTypes) {
   Builder b;
   b.add(Value(ValueType::Array));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::Bool)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::Bool)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::Bool)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::Bool)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)),
+                              Exception::BuilderUnexpectedValue);
 }
 
 TEST(BuilderTest, StringWithOtherTypes) {
   Builder b;
   b.add(Value(ValueType::Array));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::String)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::String)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false, ValueType::String)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::String)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(100UL, ValueType::String)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false, ValueType::String)),
+                              Exception::BuilderUnexpectedValue);
 }
 
 TEST(BuilderTest, SmallIntWithOtherTypes) {
@@ -256,9 +280,12 @@ TEST(BuilderTest, SmallIntWithOtherTypes) {
   b.add(Value(1.2, ValueType::SmallInt));
   b.add(Value(-1, ValueType::SmallInt));
   b.add(Value(1UL, ValueType::SmallInt));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::SmallInt)), Exception::NumberOutOfRange);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::SmallInt)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::SmallInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::SmallInt)),
+                              Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::SmallInt)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::SmallInt)),
+                              Exception::BuilderUnexpectedValue);
   b.close();
 
   Slice s = b.slice();
@@ -271,8 +298,10 @@ TEST(BuilderTest, IntWithOtherTypes) {
   b.add(Value(1.2, ValueType::Int));
   b.add(Value(-1, ValueType::Int));
   b.add(Value(1UL, ValueType::Int));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Int)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Int)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Int)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Int)),
+                              Exception::BuilderUnexpectedValue);
   b.close();
 
   Slice s = b.slice();
@@ -283,10 +312,14 @@ TEST(BuilderTest, UIntWithOtherTypes) {
   Builder b;
   b.add(Value(ValueType::Array));
   b.add(Value(1.2, ValueType::UInt));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1.2, ValueType::UInt)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1, ValueType::UInt)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::UInt)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UInt)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1.2, ValueType::UInt)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-1, ValueType::UInt)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::UInt)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UInt)),
+                              Exception::BuilderUnexpectedValue);
   b.add(Value(42UL, ValueType::UInt));
   b.add(Value(static_cast<int64_t>(23), ValueType::UInt));
   b.close();
@@ -302,8 +335,10 @@ TEST(BuilderTest, DoubleWithOtherTypes) {
   b.add(Value(-1.2, ValueType::Double));
   b.add(Value(-1, ValueType::Double));
   b.add(Value(1UL, ValueType::Double));
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Double)), Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Double)), Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Double)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Double)),
+                              Exception::BuilderUnexpectedValue);
   b.close();
 
   Slice s = b.slice();
@@ -988,15 +1023,36 @@ TEST(BuilderTest, IntNeg) {
 }
 
 TEST(BuilderTest, Int1Limits) {
-  int64_t values[] = {
-      -0x80LL, 0x7fLL, -0x81LL, 0x80LL, -0x8000LL, 0x7fffLL, -0x8001LL,
-      0x8000LL, -0x800000LL, 0x7fffffLL, -0x800001LL, 0x800000LL, -0x80000000LL,
-      0x7fffffffLL, -0x80000001LL, 0x80000000LL, -0x8000000000LL,
-      0x7fffffffffLL, -0x8000000001LL, 0x8000000000LL, -0x800000000000LL,
-      0x7fffffffffffLL, -0x800000000001LL, 0x800000000000LL,
-      -0x80000000000000LL, 0x7fffffffffffffLL, -0x80000000000001LL,
-      0x80000000000000LL, arangodb::velocypack::toInt64(0x8000000000000000ULL),
-      0x7fffffffffffffffLL};
+  int64_t values[] = {-0x80LL,
+                      0x7fLL,
+                      -0x81LL,
+                      0x80LL,
+                      -0x8000LL,
+                      0x7fffLL,
+                      -0x8001LL,
+                      0x8000LL,
+                      -0x800000LL,
+                      0x7fffffLL,
+                      -0x800001LL,
+                      0x800000LL,
+                      -0x80000000LL,
+                      0x7fffffffLL,
+                      -0x80000001LL,
+                      0x80000000LL,
+                      -0x8000000000LL,
+                      0x7fffffffffLL,
+                      -0x8000000001LL,
+                      0x8000000000LL,
+                      -0x800000000000LL,
+                      0x7fffffffffffLL,
+                      -0x800000000001LL,
+                      0x800000000000LL,
+                      -0x80000000000000LL,
+                      0x7fffffffffffffLL,
+                      -0x80000000000001LL,
+                      0x80000000000000LL,
+                      arangodb::velocypack::toInt64(0x8000000000000000ULL),
+                      0x7fffffffffffffffLL};
   for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];
     Builder b;

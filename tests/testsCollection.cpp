@@ -320,22 +320,22 @@ TEST(CollectionTest, ForEachArray) {
   size_t seen = 0;
   Collection::forEach(s,
                       [&seen](Slice const& slice, ValueLength index) -> bool {
-                        EXPECT_EQ(seen, index);
+    EXPECT_EQ(seen, index);
 
-                        switch (seen) {
-                          case 0:
-                          case 1:
-                          case 2:
-                            EXPECT_TRUE(slice.isNumber());
-                            break;
-                          case 3:
-                          case 4:
-                            EXPECT_TRUE(slice.isString());
-                        }
+    switch (seen) {
+      case 0:
+      case 1:
+      case 2:
+        EXPECT_TRUE(slice.isNumber());
+        break;
+      case 3:
+      case 4:
+        EXPECT_TRUE(slice.isString());
+    }
 
-                        ++seen;
-                        return true;
-                      });
+    ++seen;
+    return true;
+  });
 
   ASSERT_EQ(5UL, seen);
 }
@@ -1353,78 +1353,98 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
 
 TEST(CollectionTest, VisitRecursiveNonCompound) {
   std::string const value("[1,null,true,\"foo\"]");
- 
+
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::visitRecursive(s.at(0), Collection::PreOrder, [] (Slice const&, Slice const&) -> bool { return true; }), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::visitRecursive(s.at(1), Collection::PreOrder, [] (Slice const&, Slice const&) -> bool { return true; }), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::visitRecursive(s.at(2), Collection::PreOrder, [] (Slice const&, Slice const&) -> bool { return true; }), Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::visitRecursive(s.at(3), Collection::PreOrder, [] (Slice const&, Slice const&) -> bool { return true; }), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::visitRecursive(
+          s.at(0), Collection::PreOrder,
+          [](Slice const&, Slice const&) -> bool { return true; }),
+      Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::visitRecursive(
+          s.at(1), Collection::PreOrder,
+          [](Slice const&, Slice const&) -> bool { return true; }),
+      Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::visitRecursive(
+          s.at(2), Collection::PreOrder,
+          [](Slice const&, Slice const&) -> bool { return true; }),
+      Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::visitRecursive(
+          s.at(3), Collection::PreOrder,
+          [](Slice const&, Slice const&) -> bool { return true; }),
+      Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, VisitRecursiveArrayPreOrderAbort) {
   std::string const value("[true, false, 1]");
- 
+
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PreOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_TRUE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 1:
-        EXPECT_TRUE(value.isFalse());
-        return false;
-      default:
-        throw "invalid state";
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PreOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_TRUE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 1:
+            EXPECT_TRUE(value.isFalse());
+            return false;
+          default:
+            throw "invalid state";
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(1, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveArrayPostOrderAbort) {
   std::string const value("[true, [null], false, 1]");
- 
+
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PostOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_TRUE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 1:
-        EXPECT_TRUE(value.isArray());
-        EXPECT_EQ(1UL, value.length());
-        break;
-      case 2:
-        EXPECT_TRUE(value.isNull());
-        return false;
-      default:
-        throw "invalid state";
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PostOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_TRUE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 1:
+            EXPECT_TRUE(value.isArray());
+            EXPECT_EQ(1UL, value.length());
+            break;
+          case 2:
+            EXPECT_TRUE(value.isNull());
+            return false;
+          default:
+            throw "invalid state";
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(2, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
   std::string const value("{\"foo\":true,\"bar\":false,\"baz\":1}");
- 
+
   Options options;
   options.sortAttributeNames = false;
   Parser parser(&options);
@@ -1432,30 +1452,32 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PreOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_FALSE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_EQ("foo", key.copyString());
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 1:
-        EXPECT_EQ("bar", key.copyString());
-        EXPECT_TRUE(value.isFalse());
-        return false;
-      default:
-        throw "invalid state";
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PreOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_FALSE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 1:
+            EXPECT_EQ("bar", key.copyString());
+            EXPECT_TRUE(value.isFalse());
+            return false;
+          default:
+            throw "invalid state";
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(1, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveObjectPostOrderAbort) {
   std::string const value("{\"foo\":{\"baz\":1,\"bar\":2},\"bark\":3}");
- 
+
   Options options;
   options.sortAttributeNames = false;
   Parser parser(&options);
@@ -1463,135 +1485,143 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrderAbort) {
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PostOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_FALSE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_EQ("foo", key.copyString());
-        EXPECT_TRUE(value.isObject());
-        break;
-      case 1:
-        EXPECT_EQ("baz", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1UL, value.getUInt());
-        return false;
-      default:
-        throw "invalid state";
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PostOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_FALSE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isObject());
+            break;
+          case 1:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
+            return false;
+          default:
+            throw "invalid state";
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(1, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveArrayPreOrder) {
   std::string const value("[1,null,true,\"foo\",[23,42],false,[]]");
- 
+
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PreOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_TRUE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1UL, value.getUInt());
-        break;
-      case 1:
-        EXPECT_TRUE(value.isNull());
-        break;
-      case 2:
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 3:
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("foo", value.copyString());
-        break;
-      case 4:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(23UL, value.getUInt());
-        break;
-      case 5:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(42UL, value.getUInt());
-        break;
-      case 6:
-        EXPECT_TRUE(value.isArray());
-        EXPECT_EQ(2UL, value.length());
-        break;
-      case 7:
-        EXPECT_TRUE(value.isFalse());
-        break;
-      case 8:
-        EXPECT_TRUE(value.isArray());
-        EXPECT_EQ(0UL, value.length());
-        break;
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PreOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_TRUE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
+            break;
+          case 1:
+            EXPECT_TRUE(value.isNull());
+            break;
+          case 2:
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 3:
+            EXPECT_TRUE(value.isString());
+            EXPECT_EQ("foo", value.copyString());
+            break;
+          case 4:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(23UL, value.getUInt());
+            break;
+          case 5:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(42UL, value.getUInt());
+            break;
+          case 6:
+            EXPECT_TRUE(value.isArray());
+            EXPECT_EQ(2UL, value.length());
+            break;
+          case 7:
+            EXPECT_TRUE(value.isFalse());
+            break;
+          case 8:
+            EXPECT_TRUE(value.isArray());
+            EXPECT_EQ(0UL, value.length());
+            break;
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(9, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveArrayPostOrder) {
   std::string const value("[1,null,true,\"foo\",[23,42],false,[]]");
- 
+
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PostOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_TRUE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1UL, value.getUInt());
-        break;
-      case 1:
-        EXPECT_TRUE(value.isNull());
-        break;
-      case 2:
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 3:
-        EXPECT_TRUE(value.isString());
-        EXPECT_EQ("foo", value.copyString());
-        break;
-      case 4:
-        EXPECT_TRUE(value.isArray());
-        EXPECT_EQ(2UL, value.length());
-        break;
-      case 5:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(23UL, value.getUInt());
-        break;
-      case 6:
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(42UL, value.getUInt());
-        break;
-      case 7:
-        EXPECT_TRUE(value.isFalse());
-        break;
-      case 8:
-        EXPECT_TRUE(value.isArray());
-        EXPECT_EQ(0UL, value.length());
-        break;
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PostOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_TRUE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
+            break;
+          case 1:
+            EXPECT_TRUE(value.isNull());
+            break;
+          case 2:
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 3:
+            EXPECT_TRUE(value.isString());
+            EXPECT_EQ("foo", value.copyString());
+            break;
+          case 4:
+            EXPECT_TRUE(value.isArray());
+            EXPECT_EQ(2UL, value.length());
+            break;
+          case 5:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(23UL, value.getUInt());
+            break;
+          case 6:
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(42UL, value.getUInt());
+            break;
+          case 7:
+            EXPECT_TRUE(value.isFalse());
+            break;
+          case 8:
+            EXPECT_TRUE(value.isArray());
+            EXPECT_EQ(0UL, value.length());
+            break;
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(9, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveObjectPreOrder) {
-  std::string const value("{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":42},\"quux\":{}}");
- 
+  std::string const value(
+      "{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":"
+      "42},\"quux\":{}}");
+
   Options options;
   options.sortAttributeNames = false;
   Parser parser(&options);
@@ -1599,53 +1629,57 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrder) {
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PreOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_FALSE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_EQ("foo", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1UL, value.getUInt());
-        break;
-      case 1:
-        EXPECT_EQ("bar", key.copyString());
-        EXPECT_TRUE(value.isNull());
-        break;
-      case 2:
-        EXPECT_EQ("baz", key.copyString());
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 3:
-        EXPECT_EQ("qux", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(23UL, value.getUInt());
-        break;
-      case 4:
-        EXPECT_EQ("quetzal", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(42UL, value.getUInt());
-        break;
-      case 5:
-        EXPECT_EQ("bark", key.copyString());
-        EXPECT_TRUE(value.isObject());
-        EXPECT_EQ(2UL, value.length());
-        break;
-      case 6:
-        EXPECT_EQ("quux", key.copyString());
-        EXPECT_TRUE(value.isObject());
-        EXPECT_EQ(0UL, value.length());
-        break;
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PreOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_FALSE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
+            break;
+          case 1:
+            EXPECT_EQ("bar", key.copyString());
+            EXPECT_TRUE(value.isNull());
+            break;
+          case 2:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 3:
+            EXPECT_EQ("qux", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(23UL, value.getUInt());
+            break;
+          case 4:
+            EXPECT_EQ("quetzal", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(42UL, value.getUInt());
+            break;
+          case 5:
+            EXPECT_EQ("bark", key.copyString());
+            EXPECT_TRUE(value.isObject());
+            EXPECT_EQ(2UL, value.length());
+            break;
+          case 6:
+            EXPECT_EQ("quux", key.copyString());
+            EXPECT_TRUE(value.isObject());
+            EXPECT_EQ(0UL, value.length());
+            break;
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(7, seen);
 }
 
 TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
-  std::string const value("{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":42},\"quux\":{}}");
- 
+  std::string const value(
+      "{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":"
+      "42},\"quux\":{}}");
+
   Options options;
   options.sortAttributeNames = false;
   Parser parser(&options);
@@ -1653,46 +1687,48 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
   Slice s(parser.start());
 
   int seen = 0;
-  Collection::visitRecursive(s, Collection::PostOrder, [&seen] (Slice const& key, Slice const& value) -> bool {
-    EXPECT_FALSE(key.isNone()); 
-    switch (seen) {
-      case 0:
-        EXPECT_EQ("foo", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(1UL, value.getUInt());
-        break;
-      case 1:
-        EXPECT_EQ("bar", key.copyString());
-        EXPECT_TRUE(value.isNull());
-        break;
-      case 2:
-        EXPECT_EQ("baz", key.copyString());
-        EXPECT_TRUE(value.isTrue());
-        break;
-      case 3:
-        EXPECT_EQ("bark", key.copyString());
-        EXPECT_TRUE(value.isObject());
-        EXPECT_EQ(2UL, value.length());
-        break;
-      case 4:
-        EXPECT_EQ("qux", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(23UL, value.getUInt());
-        break;
-      case 5:
-        EXPECT_EQ("quetzal", key.copyString());
-        EXPECT_TRUE(value.isNumber());
-        EXPECT_EQ(42UL, value.getUInt());
-        break;
-      case 6:
-        EXPECT_EQ("quux", key.copyString());
-        EXPECT_TRUE(value.isObject());
-        EXPECT_EQ(0UL, value.length());
-        break;
-    }
-    ++seen;
-    return true; 
-  });
+  Collection::visitRecursive(
+      s, Collection::PostOrder,
+      [&seen](Slice const& key, Slice const& value) -> bool {
+        EXPECT_FALSE(key.isNone());
+        switch (seen) {
+          case 0:
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
+            break;
+          case 1:
+            EXPECT_EQ("bar", key.copyString());
+            EXPECT_TRUE(value.isNull());
+            break;
+          case 2:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 3:
+            EXPECT_EQ("bark", key.copyString());
+            EXPECT_TRUE(value.isObject());
+            EXPECT_EQ(2UL, value.length());
+            break;
+          case 4:
+            EXPECT_EQ("qux", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(23UL, value.getUInt());
+            break;
+          case 5:
+            EXPECT_EQ("quetzal", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(42UL, value.getUInt());
+            break;
+          case 6:
+            EXPECT_EQ("quux", key.copyString());
+            EXPECT_TRUE(value.isObject());
+            EXPECT_EQ(0UL, value.length());
+            break;
+        }
+        ++seen;
+        return true;
+      });
 
   ASSERT_EQ(7, seen);
 }

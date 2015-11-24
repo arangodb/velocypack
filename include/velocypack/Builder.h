@@ -455,8 +455,7 @@ class Builder {
     }
     try {
       return set(sub);
-    }
-    catch (...) {
+    } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
         cleanupAdd();
@@ -484,7 +483,8 @@ class Builder {
             options->attributeTranslator->translate(attrName);
 
         if (translated != nullptr) {
-          set(Slice(options->attributeTranslator->translate(attrName), options));
+          set(Slice(options->attributeTranslator->translate(attrName),
+                    options));
           return set(sub);
         }
         // otherwise fall through to regular behavior
@@ -492,8 +492,7 @@ class Builder {
 
       set(Value(attrName, ValueType::String));
       return set(sub);
-    }
-    catch (...) {
+    } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
         cleanupAdd();
