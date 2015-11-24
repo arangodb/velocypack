@@ -34,12 +34,20 @@
 using namespace arangodb::velocypack;
 
 static void usage(char* argv[]) {
+#ifdef __linux__
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]" << std::endl;
+#else
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
+#endif
   std::cout << "This program reads the JSON INFILE into a string and saves its"
             << std::endl;
   std::cout << "VPack representation in file OUTFILE. Will work only for input"
             << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
+#ifdef __linux__
+  std::cout << "If no OUTFILE is specified, the generated VPack value be" << std::endl;
+  std::cout << "printed to stdout. Note: this will be binary content." << std::endl;
+#endif
   std::cout << "Available options are:" << std::endl;
   std::cout
       << " --compact       store Array and Object types without index tables"
@@ -48,6 +56,7 @@ static void usage(char* argv[]) {
             << std::endl;
   std::cout << " --compress      compress Object keys" << std::endl;
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
+  std::cout << " --hex           print a hex dump of the generated VPack value" << std::endl;
 }
 
 static inline bool isOption(char const* arg, char const* expected) {
@@ -84,11 +93,15 @@ int main(int argc, char* argv[]) {
   bool allowFlags = true;
   bool compact = true;
   bool compress = false;
+  bool hexDump = false;
 
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
-    if (allowFlags && isOption(p, "--compact")) {
+    if (allowFlags && isOption(p, "--help")) {
+      usage(argv);
+      return EXIT_SUCCESS;
+    } else if (allowFlags && isOption(p, "--compact")) {
       compact = true;
     } else if (allowFlags && isOption(p, "--no-compact")) {
       compact = false;
@@ -96,6 +109,8 @@ int main(int argc, char* argv[]) {
       compress = true;
     } else if (allowFlags && isOption(p, "--no-compress")) {
       compress = false;
+    } else if (allowFlags && isOption(p, "--hex")) {
+      hexDump = true;
     } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
     } else if (infileName == nullptr) {
@@ -116,13 +131,13 @@ int main(int argc, char* argv[]) {
 
 #ifdef __linux__
   // treat missing outfile as stdout
-  bool resetStream = true;
+  bool toStdOut = false;
   if (outfileName == nullptr) {
     outfileName = "/proc/self/fd/1";
-    resetStream = false;
+    toStdOut = true;
   }
 #else
-  bool const resetStream = true;
+  bool const toStdOut = false;
   if (outfileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
@@ -223,30 +238,36 @@ int main(int argc, char* argv[]) {
   }
 
   // reset stream
-  if (resetStream) {
+  if (! toStdOut) {
     ofs.seekp(0);
   }
 
   // write into stream
   Builder builder = parser.steal();
-  uint8_t const* start = builder.start();
-  ofs.write(reinterpret_cast<char const*>(start), builder.size());
+  if (hexDump) {
+    ofs << HexDump(builder.slice()) << std::endl;
+  } else {
+    uint8_t const* start = builder.start();
+    ofs.write(reinterpret_cast<char const*>(start), builder.size());
+  }
 
   ofs.close();
 
-  std::cout << "Successfully converted JSON infile '" << infile << "'"
-            << std::endl;
-  std::cout << "JSON Infile size:    " << s.size() << std::endl;
-  std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
+  if (! toStdOut) {
+    std::cout << "Successfully converted JSON infile '" << infile << "'"
+              << std::endl;
+    std::cout << "JSON Infile size:    " << s.size() << std::endl;
+    std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
 
-  if (compress) {
-    if (translator.get()->count() > 0) {
-      std::cout << "Key dictionary size: "
-                << Slice(translator.get()->builder()->data(), &options)
-                       .byteSize() << std::endl;
-    } else {
-      std::cout << "Key dictionary size: 0 (no benefit from compression)"
-                << std::endl;
+    if (compress) {
+      if (translator.get()->count() > 0) {
+        std::cout << "Key dictionary size: "
+                  << Slice(translator.get()->builder()->data(), &options)
+                        .byteSize() << std::endl;
+      } else {
+        std::cout << "Key dictionary size: 0 (no benefit from compression)"
+                  << std::endl;
+      }
     }
   }
 
