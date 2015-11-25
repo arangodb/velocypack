@@ -52,8 +52,8 @@ the desired target directory when invoking `make install`, e.g.:
 To create the Visual Studio project files for *Visual Studio for Windows*, 
 execute the appropriate command in the `build` subdirectory:
 
-* 32 bit: `cmake -G "Visual Studio 12 2013" -DCMAKE_TYPE=Release ..`
-* 64 bit: `cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_TYPE=Release ..`
+* 32 bit: `cmake -G "Visual Studio 12 2013" -DCMAKE_BUILD_TYPE=Release ..`
+* 64 bit: `cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=Release ..`
 
 After that, open the generated file `velocypack.sln` from the `build`
 subdirectory with Visual Studio.
