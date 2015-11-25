@@ -11,7 +11,6 @@
 * ideas: unique/distinct/sort for Arrays
 * test equal_to with custom types
 * optionally validate Slice bounds
-* Collection: switch to predicate functions
 * change from assertions to exceptions in Slice constructors
 * add test for 32 bit Windows builds
 * add test for OSX build

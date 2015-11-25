@@ -727,11 +727,9 @@ void Builder::checkAttributeUniqueness(Slice const& obj) const {
 
     // compare each two adjacent attribute names
     for (ValueLength i = 1; i < n; ++i) {
-      Slice current = obj.keyAt(i);
-      if (!current.isString()) {
-        throw Exception(Exception::BuilderUnexpectedType,
-                        "Expecting String key");
-      }
+      Slice current = obj.keyAt(i); 
+      // keyAt() guarantees a string as returned type
+      VELOCYPACK_ASSERT(current.isString());
 
       ValueLength len2;
       char const* q = current.getString(len2);
@@ -747,13 +745,11 @@ void Builder::checkAttributeUniqueness(Slice const& obj) const {
   } else {
     std::unordered_set<std::string> keys;
 
-    for (size_t i = 0; i < n; ++i) {
+    for (ValueLength i = 0; i < n; ++i) {
       // note: keyAt() already translates integer attributes
       Slice key = obj.keyAt(i);
-      if (!key.isString()) {
-        throw Exception(Exception::BuilderUnexpectedType,
-                        "Expecting String key");
-      }
+      // keyAt() guarantees a string as returned type
+      VELOCYPACK_ASSERT(key.isString());
 
       if (!keys.emplace(key.copyString()).second) {
         throw Exception(Exception::DuplicateAttributeName);

@@ -47,6 +47,8 @@ namespace velocypack {
 // forward for fasthash64 function declared elsewhere
 uint64_t fasthash64(void const*, size_t, uint64_t);
 
+class SliceScope;
+
 class Slice {
   // This class provides read only access to a VPack value, it is
   // intentionally light-weight (only one pointer value), such that
@@ -94,6 +96,9 @@ class Slice {
     VELOCYPACK_ASSERT(options != nullptr);
     return *this;
   }
+
+  // creates a Slice from Json and adds it to a scope
+  static Slice fromJson(SliceScope& scope, std::string const& json, Options const* options = &Options::Defaults);
 
   uint8_t const* begin() { return _start; }
 
@@ -616,6 +621,9 @@ class Slice {
   int compareString(std::string const& attribute) const;
   bool isEqualString(std::string const& attribute) const;
 
+  // check if two Slices are equal on the binary level
+  bool equals(Slice const& other) const;
+
   std::string toJson() const;
   std::string toString() const;
   std::string hexType() const;
@@ -692,10 +700,25 @@ class Slice {
   static unsigned int const FirstSubMap[32];
 };
 
+// a class for keeping Slice allocations in scope
+class SliceScope {
+  public:
+   SliceScope(SliceScope const&) = delete;
+   SliceScope& operator=(SliceScope const&) = delete;
+   SliceScope ();
+   ~SliceScope ();
+
+   Slice add(uint8_t const* data, ValueLength size, Options const* options = &Options::Defaults);
+
+  private:
+   std::vector<uint8_t*> _allocations;
+};
+
 }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
 namespace std {
+// implementation of std::hash for a Slice object
 template <>
 struct hash<arangodb::velocypack::Slice> {
   size_t operator()(arangodb::velocypack::Slice const& slice) const {
@@ -711,22 +734,12 @@ struct hash<arangodb::velocypack::Slice> {
   }
 };
 
+// implementation of std::equal_to for two Slice objects
 template <>
 struct equal_to<arangodb::velocypack::Slice> {
-  bool operator()(arangodb::velocypack::Slice const& a,
-                  arangodb::velocypack::Slice const& b) const {
-    if (*a.start() != *b.start()) {
-      return false;
-    }
-
-    auto const aSize = a.byteSize();
-    auto const bSize = b.byteSize();
-
-    if (aSize != bSize) {
-      return false;
-    }
-
-    return (memcmp(a.start(), b.start(), arangodb::velocypack::checkOverflow(aSize)) == 0);
+  bool operator()(arangodb::velocypack::Slice const& left,
+                  arangodb::velocypack::Slice const& right) const {
+    return left.equals(right);
   }
 };
 }

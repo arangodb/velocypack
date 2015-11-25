@@ -32,6 +32,7 @@
 #include "velocypack/Dumper.h"
 #include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
+#include "velocypack/Parser.h"
 #include "velocypack/Slice.h"
 #include "velocypack/ValueType.h"
 
@@ -212,6 +213,15 @@ unsigned int const Slice::FirstSubMap[32] = {
     8,  // 0x12, object with unsorted index table
     0};
 
+// creates a Slice from Json and adds it to a scope
+Slice Slice::fromJson(SliceScope& scope, std::string const& json, Options const* options) {
+  Parser parser(options);
+  parser.parse(json);
+
+  Builder& b = parser.builder(); // don't copy Builder contents here
+  return scope.add(b.start(), b.size(), options);
+}
+
 // translates an integer key into a string
 Slice Slice::translate() const {
   if (!isSmallInt() && !isUInt()) {
@@ -224,6 +234,21 @@ Slice Slice::translate() const {
   }
 
   return Slice(options->attributeTranslator->translate(id), options);
+}
+
+// check if two Slices are equal on the binary level
+bool Slice::equals(Slice const& other) const {
+  if (head() != other.head()) {
+    return false;
+  }
+
+  ValueLength const size = byteSize();
+
+  if (size != other.byteSize()) {
+    return false;
+  }
+
+  return (memcmp(start(), other.start(), arangodb::velocypack::checkOverflow(size)) == 0);
 }
 
 std::string Slice::toJson() const {
@@ -626,6 +651,25 @@ Slice Slice::searchObjectKeyBinary(std::string const& attribute,
       return Slice();
     }
   }
+}
+
+SliceScope::SliceScope () : _allocations() {
+}
+
+SliceScope::~SliceScope () {
+  for (auto& it : _allocations) {
+    delete[] it;
+  }
+}
+
+Slice SliceScope::add(uint8_t const* data, ValueLength size, Options const* options) {
+  size_t const s = checkOverflow(size);
+  std::unique_ptr<uint8_t[]> copy(new uint8_t[s]);
+  memcpy(copy.get(), data, s);
+  _allocations.push_back(copy.get());
+  uint8_t const* start = copy.release();
+
+  return Slice(start, options);
 }
 
 std::ostream& operator<<(std::ostream& stream, Slice const* slice) {
