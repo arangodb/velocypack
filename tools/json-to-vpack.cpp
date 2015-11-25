@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
 #ifdef __linux__
   // treat missing outfile as stdout
   bool toStdOut = false;
-  if (outfileName == nullptr) {
+  if (outfileName == nullptr || strcmp(outfileName, "+") == 0) {
     outfileName = "/proc/self/fd/1";
     toStdOut = true;
   }
@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
     options.attributeTranslator = translator.get();
 
     // print statistics
-    if (compressedOccurrences > 0) {
+    if (! toStdOut && compressedOccurrences > 0) {
       std::cout << compressedOccurrences
                 << " occurrences of Object keys will be stored compressed:"
                 << std::endl;

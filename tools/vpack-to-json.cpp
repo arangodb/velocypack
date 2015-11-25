@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 #ifdef __linux__
   // treat missing outfile as stdout
   bool toStdOut = false;
-  if (outfileName == nullptr) {
+  if (outfileName == nullptr || strcmp(outfileName, "+") == 0) {
     outfileName = "/proc/self/fd/1";
     toStdOut = true;
   }
