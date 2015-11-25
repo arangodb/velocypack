@@ -18,5 +18,5 @@ if [ "$CXX" = "g++-4.9" ]; then
   ~/bin/lcov/usr/bin/lcov --remove build/coverage.info 'tests/*' '/usr/*' --output-file build/coverage.info --gcov-tool=gcov-4.9
   ~/bin/lcov/usr/bin/lcov --list build/coverage.info --gcov-tool=gcov-4.9
   # upload coverage info
-  coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
+  coveralls-lcov --repo-token ${COVERALLS_TOKEN} build/coverage.info
 fi
