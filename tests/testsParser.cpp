@@ -711,7 +711,8 @@ TEST(ParserTest, WhitespaceOnly) {
 
 TEST(ParserTest, LongerString1) {
   std::string const value("\"01234567890123456789012345678901\"");
-  ASSERT_EQ(0U, (value.size() - 2) % 16); // string payload should be a multiple of 16
+  ASSERT_EQ(0U, (value.size() - 2) %
+                    16);  // string payload should be a multiple of 16
 
   Options options;
   options.validateUtf8Strings = true;
@@ -719,7 +720,7 @@ TEST(ParserTest, LongerString1) {
   Parser parser(&options);
   parser.parse(value);
   Slice s(parser.steal().slice());
-  
+
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
 }
@@ -730,7 +731,7 @@ TEST(ParserTest, LongerString2) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.steal().slice());
-  
+
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
 }
@@ -2343,7 +2344,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
   Slice s(parser.steal().slice());
 
   std::string parsed = s.copyString();
-  ASSERT_EQ(value.substr(1, value.size() - 2), parsed); // strip quotes
+  ASSERT_EQ(value.substr(1, value.size() - 2), parsed);  // strip quotes
 }
 
 TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
@@ -2353,7 +2354,8 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
   // modify global function pointer!
   JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
 
-  std::string const value("\"the quick brown\\tfox\\r\\njumped \\\"over\\\" the lazy dog\"");
+  std::string const value(
+      "\"the quick brown\\tfox\\r\\njumped \\\"over\\\" the lazy dog\"");
 
   Parser parser(&options);
   parser.parse(value);

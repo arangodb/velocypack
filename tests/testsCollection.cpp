@@ -320,22 +320,22 @@ TEST(CollectionTest, ForEachArray) {
   size_t seen = 0;
   Collection::forEach(s,
                       [&seen](Slice const& slice, ValueLength index) -> bool {
-                        EXPECT_EQ(seen, index);
+    EXPECT_EQ(seen, index);
 
-                        switch (seen) {
-                          case 0:
-                          case 1:
-                          case 2:
-                            EXPECT_TRUE(slice.isNumber());
-                            break;
-                          case 3:
-                          case 4:
-                            EXPECT_TRUE(slice.isString());
-                        }
+    switch (seen) {
+      case 0:
+      case 1:
+      case 2:
+        EXPECT_TRUE(slice.isNumber());
+        break;
+      case 3:
+      case 4:
+        EXPECT_TRUE(slice.isString());
+    }
 
-                        ++seen;
-                        return true;
-                      });
+    ++seen;
+    return true;
+  });
 
   ASSERT_EQ(5UL, seen);
 }
@@ -640,18 +640,19 @@ TEST(CollectionTest, ContainsArrayUsingIsEqualPredicateNotFound) {
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
+
   Builder b = Parser::fromJson("-2");
   IsEqualPredicate predicate(Slice(b.start()));
   ASSERT_FALSE(Collection::contains(s, predicate));
 }
 
 TEST(CollectionTest, ContainsArrayUsingSlice) {
-  std::string const value("[1,2,3,4,5,6,7,8,9,\"foobar\",10,11,12,13,129,\"bazz!!\",141]");
+  std::string const value(
+      "[1,2,3,4,5,6,7,8,9,\"foobar\",10,11,12,13,129,\"bazz!!\",141]");
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
-  
+
   Builder b1 = Parser::fromJson("\"bazz!!\"");
   ASSERT_TRUE(Collection::contains(s, Slice(b1.start())));
   Builder b2 = Parser::fromJson("\"bark\"");
@@ -662,12 +663,13 @@ TEST(CollectionTest, ContainsArrayUsingSlice) {
 }
 
 TEST(CollectionTest, IndexOfArray) {
-  std::string const value("[1,2,3,4,5,6,7,8,9,\"foobar\",10,11,12,13,129,\"bazz!!\",141]");
+  std::string const value(
+      "[1,2,3,4,5,6,7,8,9,\"foobar\",10,11,12,13,129,\"bazz!!\",141]");
   Parser parser;
   parser.parse(value);
   Slice s(parser.start());
- 
-  SliceScope scope; 
+
+  SliceScope scope;
 
   ASSERT_EQ(0U, Collection::indexOf(s, Slice::fromJson(scope, ("1"))));
   ASSERT_EQ(1U, Collection::indexOf(s, Slice::fromJson(scope, ("2"))));
@@ -676,19 +678,30 @@ TEST(CollectionTest, IndexOfArray) {
   ASSERT_EQ(9U, Collection::indexOf(s, Slice::fromJson(scope, ("\"foobar\""))));
   ASSERT_EQ(13U, Collection::indexOf(s, Slice::fromJson(scope, ("13"))));
   ASSERT_EQ(14U, Collection::indexOf(s, Slice::fromJson(scope, ("129"))));
-  ASSERT_EQ(15U, Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!!\""))));
+  ASSERT_EQ(15U,
+            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!!\""))));
   ASSERT_EQ(16U, Collection::indexOf(s, Slice::fromJson(scope, ("141"))));
 
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz\""))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!\""))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("\"bart\""))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("99"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("true"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("false"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("null"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("-1"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("[]"))));
-  ASSERT_EQ(Collection::NotFound, Collection::indexOf(s, Slice::fromJson(scope, ("{}"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz\""))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!\""))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("\"bart\""))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("99"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("true"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("false"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("null"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("-1"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("[]"))));
+  ASSERT_EQ(Collection::NotFound,
+            Collection::indexOf(s, Slice::fromJson(scope, ("{}"))));
 }
 
 TEST(CollectionTest, AllNonArray) {

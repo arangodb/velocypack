@@ -42,7 +42,8 @@ std::size_t arangodb::velocypack::checkOverflow(ValueLength length) {
 #else
 // 64 bit platform
 static_assert(sizeof(std::size_t) == 8, "unexpected size_t size");
-static_assert(sizeof(std::size_t) == sizeof(uint64_t), "unexpected size_t size");
+static_assert(sizeof(std::size_t) == sizeof(uint64_t),
+              "unexpected size_t size");
 #endif
 
 int64_t arangodb::velocypack::currentUTCDateValue() {

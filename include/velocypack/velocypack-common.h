@@ -80,7 +80,9 @@ typedef uint64_t ValueLength;
 std::size_t checkOverflow(ValueLength);
 #else
 // on a 64 bit platform, the following function is probably a no-op
-static inline std::size_t checkOverflow(ValueLength length) { return static_cast<std::size_t>(length); } 
+static inline std::size_t checkOverflow(ValueLength length) {
+  return static_cast<std::size_t>(length);
+}
 #endif
 
 // calculate the length of a variable length integer in unsigned LEB128 format

@@ -98,7 +98,8 @@ class Slice {
   }
 
   // creates a Slice from Json and adds it to a scope
-  static Slice fromJson(SliceScope& scope, std::string const& json, Options const* options = &Options::Defaults);
+  static Slice fromJson(SliceScope& scope, std::string const& json,
+                        Options const* options = &Options::Defaults);
 
   uint8_t const* begin() { return _start; }
 
@@ -486,7 +487,8 @@ class Slice {
 
     if (h == 0xbf) {
       ValueLength length = readInteger<ValueLength>(_start + 1, 8);
-      return std::string(reinterpret_cast<char const*>(_start + 1 + 8), checkOverflow(length));
+      return std::string(reinterpret_cast<char const*>(_start + 1 + 8),
+                         checkOverflow(length));
     }
 
     throw Exception(Exception::InvalidValueType, "Expecting type String");
@@ -511,7 +513,7 @@ class Slice {
     if (type() != ValueType::Binary) {
       throw Exception(Exception::InvalidValueType, "Expecting type Binary");
     }
-    
+
     uint8_t const h = head();
     VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
 
@@ -520,7 +522,7 @@ class Slice {
     checkOverflow(length);
     out.reserve(static_cast<size_t>(length));
     out.insert(out.end(), _start + 1 + h - 0xbf,
-                 _start + 1 + h - 0xbf + length);
+               _start + 1 + h - 0xbf + length);
     return std::move(out);
   }
 
@@ -702,16 +704,17 @@ class Slice {
 
 // a class for keeping Slice allocations in scope
 class SliceScope {
-  public:
-   SliceScope(SliceScope const&) = delete;
-   SliceScope& operator=(SliceScope const&) = delete;
-   SliceScope ();
-   ~SliceScope ();
+ public:
+  SliceScope(SliceScope const&) = delete;
+  SliceScope& operator=(SliceScope const&) = delete;
+  SliceScope();
+  ~SliceScope();
 
-   Slice add(uint8_t const* data, ValueLength size, Options const* options = &Options::Defaults);
+  Slice add(uint8_t const* data, ValueLength size,
+            Options const* options = &Options::Defaults);
 
-  private:
-   std::vector<uint8_t*> _allocations;
+ private:
+  std::vector<uint8_t*> _allocations;
 };
 
 }  // namespace arangodb::velocypack
@@ -723,14 +726,14 @@ template <>
 struct hash<arangodb::velocypack::Slice> {
   size_t operator()(arangodb::velocypack::Slice const& slice) const {
 #ifdef VELOCYPACK_32BIT
-    // size_t is only 32 bits wide here... so don't simply truncate the 
+    // size_t is only 32 bits wide here... so don't simply truncate the
     // 64 bit hash value but convert it into a 32 bit value using data
     // from low and high bytes
     uint64_t const hash = slice.hash();
     return static_cast<uint32_t>(hash >> 32) ^ static_cast<uint32_t>(hash);
 #else
     return static_cast<size_t>(slice.hash());
-#endif    
+#endif
   }
 };
 

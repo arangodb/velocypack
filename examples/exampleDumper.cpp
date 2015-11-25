@@ -29,6 +29,5 @@ int main(int, char* []) {
   dumper.dump(s);
 
   // and print it
-  std::cout << "Resulting VPack:" << std::endl
-            << buffer << std::endl;
+  std::cout << "Resulting VPack:" << std::endl << buffer << std::endl;
 }

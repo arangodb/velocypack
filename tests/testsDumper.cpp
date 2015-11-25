@@ -860,21 +860,24 @@ TEST(StringDumperTest, AppendStringTestTruncatedTwoByteUtf8) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
-  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xc2"), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xc2"),
+                              Exception::InvalidUtf8Sequence);
 }
 
 TEST(StringDumperTest, AppendStringTestTruncatedThreeByteUtf8) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
-  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xe2\x82"), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xe2\x82"),
+                              Exception::InvalidUtf8Sequence);
 }
 
 TEST(StringDumperTest, AppendStringTestTruncatedFourByteUtf8) {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
-  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xf0\xa4\xad"), Exception::InvalidUtf8Sequence);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xf0\xa4\xad"),
+                              Exception::InvalidUtf8Sequence);
 }
 
 TEST(StringDumperTest, AppendStringSlice1) {
@@ -991,7 +994,6 @@ TEST(StringDumperTest, AppendDoublePlusInf) {
   dumper.appendDouble(v);
   ASSERT_EQ(std::string("inf"), buffer);
 }
-
 
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;

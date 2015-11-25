@@ -34,7 +34,8 @@ using namespace arangodb::velocypack;
 
 static void usage(char* argv[]) {
 #ifdef __linux__
-  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]" << std::endl;
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]"
+            << std::endl;
 #else
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
 #endif
@@ -44,7 +45,8 @@ static void usage(char* argv[]) {
             << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
 #ifdef __linux__
-  std::cout << "If no OUTFILE is specified, the generated JSON value be" << std::endl;
+  std::cout << "If no OUTFILE is specified, the generated JSON value be"
+            << std::endl;
   std::cout << "printed to stdout." << std::endl;
 #endif
   std::cout << "Available options are:" << std::endl;
@@ -159,7 +161,7 @@ int main(int argc, char* argv[]) {
   }
 
   // reset stream
-  if (! toStdOut) {
+  if (!toStdOut) {
     ofs.seekp(0);
   }
 
@@ -169,7 +171,7 @@ int main(int argc, char* argv[]) {
 
   ofs.close();
 
-  if (! toStdOut) {
+  if (!toStdOut) {
     std::cout << "Successfully converted JSON infile '" << infile << "'"
               << std::endl;
     std::cout << "VPack Infile size: " << s.size() << std::endl;

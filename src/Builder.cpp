@@ -42,8 +42,8 @@ std::string Builder::toString() const {
 
 void Builder::doActualSort(std::vector<SortEntry>& entries) {
   VELOCYPACK_ASSERT(entries.size() > 1);
-  std::sort(entries.begin(), entries.end(), [](SortEntry const& a,
-                                               SortEntry const& b) {
+  std::sort(entries.begin(), entries.end(),
+            [](SortEntry const& a, SortEntry const& b) {
     // return true iff a < b:
     uint8_t const* pa = a.nameStart;
     uint64_t sizea = a.nameSize;
@@ -165,7 +165,8 @@ void Builder::close() {
   ValueLength& tos = _stack.back();
   uint8_t const head = _start[tos];
 
-  VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 || head == 0x14);
+  VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 ||
+                    head == 0x14);
 
   bool const isArray = (head == 0x06 || head == 0x13);
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
@@ -672,7 +673,7 @@ uint8_t* Builder::set(Slice const& item) {
 uint8_t* Builder::set(ValuePair const& pair) {
   // This method builds a single further VPack item at the current
   // append position. This is the case for ValueType::String,
-  // ValueType::Binary, or ValueType::Custom, which can be built 
+  // ValueType::Binary, or ValueType::Custom, which can be built
   // with two pieces of information
   if (pair.valueType() == ValueType::Binary) {
     uint64_t v = pair.getSize();
@@ -727,7 +728,7 @@ void Builder::checkAttributeUniqueness(Slice const& obj) const {
 
     // compare each two adjacent attribute names
     for (ValueLength i = 1; i < n; ++i) {
-      Slice current = obj.keyAt(i); 
+      Slice current = obj.keyAt(i);
       // keyAt() guarantees a string as returned type
       VELOCYPACK_ASSERT(current.isString());
 

@@ -35,7 +35,7 @@
 
 using namespace arangodb::velocypack;
 
-// indicator for "element not found" in indexOf() method 
+// indicator for "element not found" in indexOf() method
 ValueLength const Collection::NotFound = UINT64_MAX;
 
 // convert a vector of strings into an unordered_set of strings
@@ -47,10 +47,8 @@ static inline std::unordered_set<std::string> makeSet(
   }
   return s;
 }
-  
-void Collection::forEach(
-    Slice const& slice,
-    Predicate const& predicate) {
+
+void Collection::forEach(Slice const& slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -64,9 +62,7 @@ void Collection::forEach(
   }
 }
 
-Builder Collection::filter(
-    Slice const& slice,
-    Predicate const& predicate) {
+Builder Collection::filter(Slice const& slice, Predicate const& predicate) {
   // construct a new Array
   Builder b;
   b.add(Value(ValueType::Array));
@@ -86,9 +82,7 @@ Builder Collection::filter(
   return b;
 }
 
-Slice Collection::find(
-    Slice const& slice,
-    Predicate const& predicate) {
+Slice Collection::find(Slice const& slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -104,9 +98,7 @@ Slice Collection::find(
   return Slice();
 }
 
-bool Collection::contains(
-    Slice const& slice,
-    Predicate const& predicate) {
+bool Collection::contains(Slice const& slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -122,9 +114,7 @@ bool Collection::contains(
   return false;
 }
 
-bool Collection::contains(
-    Slice const& slice,
-    Slice const& other) {
+bool Collection::contains(Slice const& slice, Slice const& other) {
   ArrayIterator it(slice);
 
   while (it.valid()) {
@@ -137,9 +127,7 @@ bool Collection::contains(
   return false;
 }
 
-ValueLength Collection::indexOf(
-    Slice const& slice,
-    Slice const& other) {
+ValueLength Collection::indexOf(Slice const& slice, Slice const& other) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -154,8 +142,7 @@ ValueLength Collection::indexOf(
   return Collection::NotFound;
 }
 
-bool Collection::all(Slice const& slice,
-                     Predicate const& predicate) {
+bool Collection::all(Slice const& slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -171,8 +158,7 @@ bool Collection::all(Slice const& slice,
   return true;
 }
 
-bool Collection::any(Slice const& slice,
-                     Predicate const& predicate) {
+bool Collection::any(Slice const& slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -470,4 +456,3 @@ void Collection::visitRecursive(
     doVisit<Collection::PostOrder>(slice, func);
   }
 }
-

@@ -214,18 +214,20 @@ unsigned int const Slice::FirstSubMap[32] = {
     0};
 
 // creates a Slice from Json and adds it to a scope
-Slice Slice::fromJson(SliceScope& scope, std::string const& json, Options const* options) {
+Slice Slice::fromJson(SliceScope& scope, std::string const& json,
+                      Options const* options) {
   Parser parser(options);
   parser.parse(json);
 
-  Builder& b = parser.builder(); // don't copy Builder contents here
+  Builder& b = parser.builder();  // don't copy Builder contents here
   return scope.add(b.start(), b.size(), options);
 }
 
 // translates an integer key into a string
 Slice Slice::translate() const {
   if (!isSmallInt() && !isUInt()) {
-    throw Exception(Exception::InvalidValueType, "Cannot translate key of this type");
+    throw Exception(Exception::InvalidValueType,
+                    "Cannot translate key of this type");
   }
   uint64_t id = getUInt();
 
@@ -248,7 +250,8 @@ bool Slice::equals(Slice const& other) const {
     return false;
   }
 
-  return (memcmp(start(), other.start(), arangodb::velocypack::checkOverflow(size)) == 0);
+  return (memcmp(start(), other.start(),
+                 arangodb::velocypack::checkOverflow(size)) == 0);
 }
 
 std::string Slice::toJson() const {
@@ -317,10 +320,10 @@ Slice Slice::get(std::string const& attribute) const {
     if (key.isSmallInt() || key.isUInt()) {
       // translate key
       if (key.translate().isEqualString(attribute)) {
-         return Slice(key.start() + key.byteSize(), options);
+        return Slice(key.start() + key.byteSize(), options);
       }
     }
- 
+
     // no match or invalid key type
     return Slice();
   }
@@ -548,7 +551,8 @@ Slice Slice::makeKey() const {
     return translate();
   }
 
-  throw Exception(Exception::InvalidValueType, "Cannot translate key of this type");
+  throw Exception(Exception::InvalidValueType,
+                  "Cannot translate key of this type");
 }
 
 // get the offset for the nth member from a compact Array or Object type
@@ -653,16 +657,16 @@ Slice Slice::searchObjectKeyBinary(std::string const& attribute,
   }
 }
 
-SliceScope::SliceScope () : _allocations() {
-}
+SliceScope::SliceScope() : _allocations() {}
 
-SliceScope::~SliceScope () {
+SliceScope::~SliceScope() {
   for (auto& it : _allocations) {
     delete[] it;
   }
 }
 
-Slice SliceScope::add(uint8_t const* data, ValueLength size, Options const* options) {
+Slice SliceScope::add(uint8_t const* data, ValueLength size,
+                      Options const* options) {
   size_t const s = checkOverflow(size);
   std::unique_ptr<uint8_t[]> copy(new uint8_t[s]);
   memcpy(copy.get(), data, s);

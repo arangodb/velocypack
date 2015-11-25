@@ -99,13 +99,9 @@ class Parser {
     _b.options = options;
   }
 
-  Builder& builder () {
-    return _b;
-  }
+  Builder& builder() { return _b; }
 
-  Builder const& builder () const {
-    return _b;
-  }
+  Builder const& builder() const { return _b; }
 
   static Builder fromJson(std::string const& json,
                           Options const* options = &Options::Defaults) {

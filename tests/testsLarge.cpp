@@ -39,9 +39,9 @@ TEST(BuilderTest, FixedArraysSizes) {
                              (4 * GB) / 127,       // 64k <= bytelen < 4G
                              (4 * GB) / 127 + 1};  // 4G <= bytelen
   ValueLength const byteSizes[] = {
-      1 + 1 + 1 * 127, 1 + 8 + 2 * 127, 1 + 8 + ((64 * kB) / 127 - 1) * 127,
-      1 + 8 + ((64 * kB) / 127) * 127, 1 + 8 + ((4 * GB) / 127) * 127,
-      1 + 8 + ((4 * GB) / 127 + 1) * 127};
+      1 + 1 + 1 * 127,                     1 + 8 + 2 * 127,
+      1 + 8 + ((64 * kB) / 127 - 1) * 127, 1 + 8 + ((64 * kB) / 127) * 127,
+      1 + 8 + ((4 * GB) / 127) * 127,      1 + 8 + ((4 * GB) / 127 + 1) * 127};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
@@ -82,7 +82,8 @@ TEST(BuilderTest, ArraysSizes) {
                              (64 * kB) / 129,      // 64k <= bytelen < 4G
                              (4 * GB) / 131,       // 64k <= bytelen < 4G
                              (4 * GB) / 131 + 1};  // 4G <= bytelen
-  ValueLength const byteSizes[] = {1 + 1 + 1 + 2 + 1 * 128, 1 + 8 + 3 + 2 * 129,
+  ValueLength const byteSizes[] = {1 + 1 + 1 + 2 + 1 * 128,
+                                   1 + 8 + 3 + 2 * 129,
                                    1 + 8 + 3 + ((64 * kB) / 129 - 1) * 129,
                                    1 + 8 + 5 + ((64 * kB) / 129) * 131,
                                    1 + 8 + 5 + ((4 * GB) / 131) * 131,
@@ -131,9 +132,9 @@ TEST(BuilderTest, ObjectsSizesSorted) {
                              (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
                              (4 * GB) / 132};      // 4G <= bytelen
   ValueLength const byteSizes[] = {
-      1 + 1 + 1 + 1 * 128, 1 + 8 + 2 * 130, 1 + 8 + ((64 * kB) / 130) * 130,
-      1 + 8 + ((64 * kB) / 130 + 1) * 132, 1 + 8 + ((4 * GB) / 132 - 1) * 132,
-      1 + 8 + ((4 * GB) / 132) * 136 + 8};
+      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
+      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
+      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
@@ -185,9 +186,9 @@ TEST(BuilderTest, ObjectsSizesUnsorted) {
                              (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
                              (4 * GB) / 132};      // 4G <= bytelen
   ValueLength const byteSizes[] = {
-      1 + 1 + 1 + 1 * 128, 1 + 8 + 2 * 130, 1 + 8 + ((64 * kB) / 130) * 130,
-      1 + 8 + ((64 * kB) / 130 + 1) * 132, 1 + 8 + ((4 * GB) / 132 - 1) * 132,
-      1 + 8 + ((4 * GB) / 132) * 136 + 8};
+      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
+      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
+      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;

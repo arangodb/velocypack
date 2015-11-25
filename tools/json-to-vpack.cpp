@@ -35,7 +35,8 @@ using namespace arangodb::velocypack;
 
 static void usage(char* argv[]) {
 #ifdef __linux__
-  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]" << std::endl;
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]"
+            << std::endl;
 #else
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
 #endif
@@ -45,8 +46,10 @@ static void usage(char* argv[]) {
             << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
 #ifdef __linux__
-  std::cout << "If no OUTFILE is specified, the generated VPack value be" << std::endl;
-  std::cout << "printed to stdout. Note: this will be binary content." << std::endl;
+  std::cout << "If no OUTFILE is specified, the generated VPack value be"
+            << std::endl;
+  std::cout << "printed to stdout. Note: this will be binary content."
+            << std::endl;
 #endif
   std::cout << "Available options are:" << std::endl;
   std::cout
@@ -56,7 +59,8 @@ static void usage(char* argv[]) {
             << std::endl;
   std::cout << " --compress      compress Object keys" << std::endl;
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
-  std::cout << " --hex           print a hex dump of the generated VPack value" << std::endl;
+  std::cout << " --hex           print a hex dump of the generated VPack value"
+            << std::endl;
 }
 
 static inline bool isOption(char const* arg, char const* expected) {
@@ -198,7 +202,7 @@ int main(int argc, char* argv[]) {
     options.attributeTranslator = translator.get();
 
     // print statistics
-    if (! toStdOut && compressedOccurrences > 0) {
+    if (!toStdOut && compressedOccurrences > 0) {
       std::cout << compressedOccurrences
                 << " occurrences of Object keys will be stored compressed:"
                 << std::endl;
@@ -238,7 +242,7 @@ int main(int argc, char* argv[]) {
   }
 
   // reset stream
-  if (! toStdOut) {
+  if (!toStdOut) {
     ofs.seekp(0);
   }
 
@@ -253,7 +257,7 @@ int main(int argc, char* argv[]) {
 
   ofs.close();
 
-  if (! toStdOut) {
+  if (!toStdOut) {
     std::cout << "Successfully converted JSON infile '" << infile << "'"
               << std::endl;
     std::cout << "JSON Infile size:    " << s.size() << std::endl;
@@ -263,7 +267,7 @@ int main(int argc, char* argv[]) {
       if (translator.get()->count() > 0) {
         std::cout << "Key dictionary size: "
                   << Slice(translator.get()->builder()->data(), &options)
-                        .byteSize() << std::endl;
+                         .byteSize() << std::endl;
       } else {
         std::cout << "Key dictionary size: 0 (no benefit from compression)"
                   << std::endl;

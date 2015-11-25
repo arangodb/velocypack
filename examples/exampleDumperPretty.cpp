@@ -30,6 +30,5 @@ int main(int, char* []) {
   Dumper::dump(s, &sink, &dumperOptions);
 
   // and print it
-  std::cout << "Resulting JSON:" << std::endl
-            << buffer << std::endl;
+  std::cout << "Resulting JSON:" << std::endl << buffer << std::endl;
 }
