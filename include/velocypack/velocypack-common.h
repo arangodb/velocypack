@@ -27,7 +27,6 @@
 #ifndef VELOCYPACK_COMMON_H
 #define VELOCYPACK_COMMON_H 1
 
-#include <cstddef>
 #include <cstdint>
 
 // debug mode

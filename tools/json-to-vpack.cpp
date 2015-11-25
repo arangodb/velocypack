@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, size_t> keysFound;
     buildCompressedKeys(s, keysFound);
 
-    std::vector<std::tuple<size_t, std::string, size_t>> stats;
+    std::vector<std::tuple<uint64_t, std::string, size_t>> stats;
     size_t requiredLength = 2;
     uint64_t nextId = 0;
     for (auto const& it : keysFound) {

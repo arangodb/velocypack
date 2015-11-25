@@ -118,18 +118,19 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
   entries.clear();
 #endif
 
-  entries.reserve(offsets.size());
-  for (ValueLength i = 0; i < offsets.size(); i++) {
+  size_t const n = offsets.size();
+  entries.reserve(n);
+  for (size_t i = 0; i < n; i++) {
     SortEntry e;
     e.offset = offsets[i];
     e.nameStart = findAttrName(objBase + e.offset, e.nameSize, options);
     entries.push_back(e);
   }
-  VELOCYPACK_ASSERT(entries.size() == offsets.size());
+  VELOCYPACK_ASSERT(entries.size() == n);
   doActualSort(entries);
 
   // copy back the sorted offsets
-  for (ValueLength i = 0; i < offsets.size(); i++) {
+  for (size_t i = 0; i < n; i++) {
     offsets[i] = entries[i].offset;
   }
 }
