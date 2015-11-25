@@ -49,39 +49,14 @@ the desired target directory when invoking `make install`, e.g.:
 (cd build && cmake .. && sudo make DESTDIR=/usr install)
 ```
 
+To create the Visual Studio project files for *Visual Studio for Windows*, 
+execute the appropriate command in the `build` subdirectory:
 
-Running the tests
------------------
+* 32 bit: `cmake -G "Visual Studio 12 2013" -DCMAKE_TYPE=Release ..`
+* 64 bit: `cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_TYPE=Release ..`
 
-Building VPack's own test suite requires the [googletest framework](https://github.com/google/googletest)
-to be built. To build the tests, run cmake with the option `-DBuildTests=ON`:
-
-```bash
-mkdir -p build
-(cd build && cmake -DBuildTests=ON .. && make)
-```
-
-Afterwards you can run all tests via:
-
-```bash
-(cd build/tests && ctest -V)
-```
-
-Running coverage tests
-----------------------
-
-Running the test suite with coverage collection requires g++ and *lcov* to be
-installed. To run the coverage tests, a debug build needs to be created as
-follows:
-
-```bash
-(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF -DBuildTools=OFF .. && make)
-(cd build && lcov --zerocounters --directory . && lcov --capture --initial --directory . --output-file app)
-(cd build/tests && ctest)
-(cd build && lcov --no-checksum --directory . --capture --output-file app.info && genhtml app.info)
-```
-
-This will create coverage info and HTML coverage reports in the `build` subdirectory.
+After that, open the generated file `velocypack.sln` from the `build`
+subdirectory with Visual Studio.
 
 
 Build Options
@@ -116,4 +91,38 @@ The following options can be set when building VPack:
 * `-DCoverage`: needs to be set to `ON` for coverage tests. Setting this option
   will automatically turn the build into a debug build. The option is currently
   supported for g++ only.
+
+
+Running the tests
+-----------------
+
+Building VPack's own test suite requires the [googletest framework](https://github.com/google/googletest)
+to be built. To build the tests, run cmake with the option `-DBuildTests=ON`:
+
+```bash
+mkdir -p build
+(cd build && cmake -DBuildTests=ON .. && make)
+```
+
+Afterwards you can run all tests via:
+
+```bash
+(cd build/tests && ctest -V)
+```
+
+Running coverage tests
+----------------------
+
+Running the test suite with coverage collection requires g++ and *lcov* to be
+installed. To run the coverage tests, a debug build needs to be created as
+follows:
+
+```bash
+(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF -DBuildTools=OFF .. && make)
+(cd build && lcov --zerocounters --directory . && lcov --capture --initial --directory . --output-file app)
+(cd build/tests && ctest)
+(cd build && lcov --no-checksum --directory . --capture --output-file app.info && genhtml app.info)
+```
+
+This will create coverage info and HTML coverage reports in the `build` subdirectory.
 
