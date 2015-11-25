@@ -8,6 +8,7 @@ if [ "$CXX" = "g++-4.9" ]; then
   rm -Rf build/*
   # build again
   (cd build && cmake -DCoverage=ON -DBuildTests=ON -DBuildLargeTests=OFF -DBuildExamples=OFF -DBuildTools=OFF -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX ..)
+  (cd build && make)
   # clear counters
   ~/bin/lcov/usr/bin/lcov --directory build --zerocounters --gcov-tool=gcov-4.9
   # run tests
