@@ -28,6 +28,8 @@
 #define VELOCYPACK_COMMON_H 1
 
 #include <cstdint>
+// for size_t:
+#include <cstring>
 
 // debug mode
 #ifdef VELOCYPACK_DEBUG
