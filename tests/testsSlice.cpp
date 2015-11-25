@@ -1900,6 +1900,7 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   b.add(Value(INT64_MAX));
   b.add(Value(-3453.32));
   b.add(Value(2343323453.3232235));
+  b.add(Value(static_cast<uint64_t>(10000)));
   b.close();
 
   Slice s = Slice(b.start());
@@ -1911,6 +1912,7 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumber<double>());
   ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumber<double>());
   ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumber<double>());
+  ASSERT_DOUBLE_EQ(10000., s.at(7).getNumber<double>());
 }
 
 TEST(SliceTest, GetNumericValueWrongSource) {

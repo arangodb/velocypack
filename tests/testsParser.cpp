@@ -39,6 +39,10 @@ extern size_t (*JSONStringCopyCheckUtf8)(uint8_t* dst, uint8_t const* src,
                                          size_t limit);
 extern size_t (*JSONSkipWhiteSpace)(uint8_t const* ptr, size_t limit);
 
+TEST(ParserTest, CreateWithoutOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(new Parser(nullptr), Exception::InternalError);
+}
+
 TEST(ParserTest, GarbageCatchVelocyPackException) {
   std::string const value("z");
 

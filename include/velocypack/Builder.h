@@ -96,7 +96,7 @@ class Builder {
     if (_pos + len <= _size) {
       return;  // All OK, we can just increase tos->pos by len
     }
-    checkValueLength(_pos + len);
+    checkOverflow(_pos + len);
 
     _buffer->prealloc(len);
     _start = _buffer->data();
@@ -159,8 +159,8 @@ class Builder {
 
   Builder(Builder const& that)
       : _buffer(that._buffer),
-        _start(_buffer->data()),
-        _size(_buffer->size()),
+        _start(_buffer ? _buffer->data() : nullptr),
+        _size(_buffer ? _buffer->size() : 0),
         _pos(that._pos),
         _stack(that._stack),
         _index(that._index),
@@ -169,12 +169,18 @@ class Builder {
       throw Exception(Exception::InternalError,
                       "Buffer of Builder is already gone");
     }
+    if (options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+    }
   }
 
   Builder& operator=(Builder const& that) {
     if (that._buffer == nullptr) {
       throw Exception(Exception::InternalError,
                       "Buffer of Builder is already gone");
+    }
+    if (that.options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
     _buffer = that._buffer;
     _start = _buffer->data();
@@ -190,6 +196,9 @@ class Builder {
     if (that._buffer == nullptr) {
       throw Exception(Exception::InternalError,
                       "Buffer of Builder is already gone");
+    }
+    if (that.options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
     _buffer = that._buffer;
     that._buffer.reset();
@@ -210,6 +219,9 @@ class Builder {
     if (that._buffer == nullptr) {
       throw Exception(Exception::InternalError,
                       "Buffer of Builder is already gone");
+    }
+    if (that.options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
     _buffer = that._buffer;
     that._buffer.reset();

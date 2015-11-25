@@ -215,7 +215,7 @@ unsigned int const Slice::FirstSubMap[32] = {
 // translates an integer key into a string
 Slice Slice::translate() const {
   if (!isSmallInt() && !isUInt()) {
-    throw Exception(Exception::NeedAttributeTranslator);
+    throw Exception(Exception::InvalidValueType, "Cannot translate key of this type");
   }
   uint64_t id = getUInt();
 
@@ -401,7 +401,7 @@ int64_t Slice::getSmallInt() const {
     return getInt();
   }
 
-  throw Exception(Exception::InvalidValueType, "Expecting type Smallint");
+  throw Exception(Exception::InvalidValueType, "Expecting type SmallInt");
 }
 
 int Slice::compareString(std::string const& attribute) const {
@@ -542,7 +542,7 @@ Slice Slice::makeKey() const {
     return translate();
   }
 
-  throw Exception(Exception::InternalError, "Cannot translate key");
+  throw Exception(Exception::InvalidValueType, "Cannot translate key of this type");
 }
 
 // get the offset for the nth member from a compact Array or Object type

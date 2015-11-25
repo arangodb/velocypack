@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
     char buffer[4096];
     while (ifs.good()) {
       ifs.read(&buffer[0], sizeof(buffer));
-      s.append(buffer, ifs.gcount());
+      s.append(buffer, checkOverflow(ifs.gcount()));
     }
   }
   ifs.close();

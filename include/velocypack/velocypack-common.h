@@ -27,6 +27,7 @@
 #ifndef VELOCYPACK_COMMON_H
 #define VELOCYPACK_COMMON_H 1
 
+#include <cstddef>
 #include <cstdint>
 
 // debug mode
@@ -75,11 +76,10 @@ typedef uint64_t ValueLength;
 
 #ifndef VELOCYPACK_64BIT
 // check if the length is beyond the size of a SIZE_MAX on this platform
-void checkValueLength(ValueLength);
+std::size_t checkOverflow(ValueLength);
 #else
-static inline void checkValueLength(ValueLength) {
-  // do nothing on a 64 bit platform
-}
+// on a 64 bit platform, the following function is probably a no-op
+static inline std::size_t checkOverflow(ValueLength length) { return static_cast<std::size_t>(length); } 
 #endif
 
 // calculate the length of a variable length integer in unsigned LEB128 format

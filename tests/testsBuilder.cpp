@@ -30,7 +30,7 @@
 
 #include "tests-common.h"
 
-TEST(BuilderTest, CreateWithoutOptions) {
+TEST(BuilderTest, CreateWithoutBufferOrOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
 
   std::shared_ptr<Buffer<uint8_t>> buffer;
@@ -46,6 +46,143 @@ TEST(BuilderTest, CreateWithoutOptions) {
   Slice s = b.slice();
 
   ASSERT_VELOCYPACK_EXCEPTION(b.clone(s, nullptr), Exception::InternalError);
+}
+
+TEST(BuilderTest, Copy) {
+  Builder b;
+
+  Builder a(b);
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+
+TEST(BuilderTest, CopyWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  try {
+    Builder a(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  try {
+    Builder a(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyAssign) {
+  Builder b;
+
+  Builder a;
+  a = b;
+  
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+TEST(BuilderTest, CopyAssignWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  Builder a;
+  try {
+    a = b;
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyAssignWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  Builder a;
+  try {
+    a = b;
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, Move) {
+  Builder b;
+
+  Builder a(std::move(b));
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() == nullptr);
+}
+
+TEST(BuilderTest, MoveWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  try {
+    Builder a(std::move(b));
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  try {
+    Builder a(std::move(b));
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveAssign) {
+  Builder b;
+
+  Builder a = std::move(b);
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() == nullptr);
+}
+
+TEST(BuilderTest, MoveAssignWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  Builder a;
+  try {
+    a = std::move(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveAssignWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  Builder a;
+  try {
+    a = std::move(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
 }
 
 TEST(BuilderTest, SizeWithOpenObject) {
@@ -434,6 +571,35 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.close();
   ASSERT_TRUE(b2.isClosed());
   ASSERT_EQ(0x0b, b2.slice().head());
+}
+
+TEST(BuilderTest, MinKey) {
+  Builder b;
+  b.add(Value(ValueType::MinKey));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t const correctResult[] = {0x1e};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, MaxKey) {
+  Builder b;
+  b.add(Value(ValueType::MaxKey));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t const correctResult[] = {0x1f};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, Custom) {
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Custom)), Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, None) {

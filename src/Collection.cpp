@@ -163,7 +163,7 @@ std::vector<std::string> Collection::keys(Slice const& slice) {
 
 void Collection::keys(Slice const& slice, std::vector<std::string>& result) {
   // pre-allocate result vector
-  result.reserve(slice.length());
+  result.reserve(checkOverflow(slice.length()));
 
   ObjectIterator it(slice);
 

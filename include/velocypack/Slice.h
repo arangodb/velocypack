@@ -123,7 +123,7 @@ class Slice {
   inline uint8_t head() const { return *_start; }
 
   inline uint64_t hash() const {
-    return fasthash64(start(), byteSize(), 0xdeadbeef);
+    return fasthash64(start(), checkOverflow(byteSize()), 0xdeadbeef);
   }
 
   // check if slice is of the specified type
@@ -462,7 +462,7 @@ class Slice {
     if (h == 0xbf) {
       // long UTF-8 String
       length = readInteger<ValueLength>(_start + 1, 8);
-      checkValueLength(length);
+      checkOverflow(length);
       return reinterpret_cast<char const*>(_start + 1 + 8);
     }
 
@@ -481,8 +481,7 @@ class Slice {
 
     if (h == 0xbf) {
       ValueLength length = readInteger<ValueLength>(_start + 1, 8);
-      checkValueLength(length);
-      return std::string(reinterpret_cast<char const*>(_start + 1 + 8), length);
+      return std::string(reinterpret_cast<char const*>(_start + 1 + 8), checkOverflow(length));
     }
 
     throw Exception(Exception::InvalidValueType, "Expecting type String");
@@ -493,15 +492,13 @@ class Slice {
     if (type() != ValueType::Binary) {
       throw Exception(Exception::InvalidValueType, "Expecting type Binary");
     }
+
     uint8_t const h = head();
+    VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
 
-    if (h >= 0xc0 && h <= 0xc7) {
-      length = readInteger<ValueLength>(_start + 1, h - 0xbf);
-      checkValueLength(length);
-      return _start + 1 + h - 0xbf;
-    }
-
-    throw Exception(Exception::InvalidValueType, "Expecting type Binary");
+    length = readInteger<ValueLength>(_start + 1, h - 0xbf);
+    checkOverflow(length);
+    return _start + 1 + h - 0xbf;
   }
 
   // return a copy of the value for a Binary object
@@ -509,19 +506,17 @@ class Slice {
     if (type() != ValueType::Binary) {
       throw Exception(Exception::InvalidValueType, "Expecting type Binary");
     }
+    
     uint8_t const h = head();
+    VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
 
-    if (h >= 0xc0 && h <= 0xc7) {
-      std::vector<uint8_t> out;
-      ValueLength length = readInteger<ValueLength>(_start + 1, h - 0xbf);
-      checkValueLength(length);
-      out.reserve(static_cast<size_t>(length));
-      out.insert(out.end(), _start + 1 + h - 0xbf,
+    std::vector<uint8_t> out;
+    ValueLength length = readInteger<ValueLength>(_start + 1, h - 0xbf);
+    checkOverflow(length);
+    out.reserve(static_cast<size_t>(length));
+    out.insert(out.end(), _start + 1 + h - 0xbf,
                  _start + 1 + h - 0xbf + length);
-      return std::move(out);
-    }
-
-    throw Exception(Exception::InvalidValueType, "Expecting type Binary");
+    return std::move(out);
   }
 
   // get the total byte size for the slice, including the head byte
@@ -613,8 +608,7 @@ class Slice {
       }
     }
 
-    VELOCYPACK_ASSERT(false);
-    return 0;
+    throw Exception(Exception::InternalError);
   }
 
   Slice makeKey() const;
@@ -713,7 +707,15 @@ namespace std {
 template <>
 struct hash<arangodb::velocypack::Slice> {
   size_t operator()(arangodb::velocypack::Slice const& slice) const {
-    return slice.hash();
+#ifdef VELOCYPACK_32BIT
+    // size_t is only 32 bits wide here... so don't simply truncate the 
+    // 64 bit hash value but convert it into a 32 bit value using data
+    // from low and high bytes
+    uint64_t const hash = slice.hash();
+    return static_cast<uint32_t>(hash >> 32) ^ static_cast<uint32_t>(hash);
+#else
+    return static_cast<size_t>(slice.hash());
+#endif    
   }
 };
 
@@ -732,7 +734,7 @@ struct equal_to<arangodb::velocypack::Slice> {
       return false;
     }
 
-    return (memcmp(a.start(), b.start(), aSize) == 0);
+    return (memcmp(a.start(), b.start(), arangodb::velocypack::checkOverflow(aSize)) == 0);
   }
 };
 }

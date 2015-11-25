@@ -93,8 +93,6 @@ class Parser {
 
   Parser(Options const* options = &Options::Defaults)
       : _start(nullptr), _size(0), _pos(0), _nesting(0), options(options) {
-    VELOCYPACK_ASSERT(options != nullptr);
-
     if (options == nullptr) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
