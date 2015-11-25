@@ -17,5 +17,4 @@
 * add inspect tool (tools/) for binary vpack values
 * add optional saving of dictionaries from json-to-vpack
 * add optional reading of dictionaries in vpack-to-json
-* add documentation for json-to-vpack and vpack-to-json
 * automate sizes tests
