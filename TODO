@@ -10,3 +10,13 @@
 
 * ideas: unique/distinct/sort for Arrays
 * test equal_to with custom types
+* optionally validate Slice bounds
+* Collection: switch to predicate functions
+* change from assertions to exceptions in Slice constructors
+* add test for 32 bit Windows builds
+* add test for OSX build
+* add inspect tool (tools/) for binary vpack values
+* add optional saving of dictionaries from json-to-vpack
+* add optional reading of dictionaries in vpack-to-json
+* add documentation for json-to-vpack and vpack-to-json
+* automate sizes tests
