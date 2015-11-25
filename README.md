@@ -1,9 +1,7 @@
 VelocyPack (VPack) - a fast and compact format for serialization and storage
 ============================================================================
 
-TravisCI: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?branch=master)](http://travis-ci.org/arangodb/velocypack)   
-AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/pkbl4t7vey88bqud?svg=true)](https://ci.appveyor.com/project/jsteemann/velocypack)
-Coveralls: [![Coverage Status](https://coveralls.io/repos/arangodb/velocypack/badge.svg?branch=master&service=github)](https://coveralls.io/github/arangodb/velocypack?branch=master)
+TravisCI: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?branch=master)](http://travis-ci.org/arangodb/velocypack)   AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/pkbl4t7vey88bqud?svg=true)](https://ci.appveyor.com/project/jsteemann/velocypack)   Coveralls: [![Coverage Status](https://coveralls.io/repos/arangodb/velocypack/badge.svg?branch=master&service=github)](https://coveralls.io/github/arangodb/velocypack?branch=master)
 
 Motivation
 ----------
@@ -87,7 +85,7 @@ experiments and usage attempts are very encouraging.
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the 
 VelocyPack format*. The library is written in good old C++11 so it
-should compile on modern systems.
+should compile on most systems.
 
 
 Specification
