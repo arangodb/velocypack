@@ -165,9 +165,8 @@ void Builder::close() {
   ValueLength& tos = _stack.back();
   uint8_t const head = _start[tos];
 
-  if (head != 0x06 && head != 0x0b && head != 0x13 && head != 0x14) {
-    throw Exception(Exception::BuilderNeedOpenObject);
-  }
+  VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 || head == 0x14);
+
   bool const isArray = (head == 0x06 || head == 0x13);
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
 
@@ -672,9 +671,9 @@ uint8_t* Builder::set(Slice const& item) {
 
 uint8_t* Builder::set(ValuePair const& pair) {
   // This method builds a single further VPack item at the current
-  // append position. This is the case for ValueType::ID or
-  // ValueType::Binary, which both need two pieces of information
-  // to build.
+  // append position. This is the case for ValueType::String,
+  // ValueType::Binary, or ValueType::Custom, which can be built 
+  // with two pieces of information
   if (pair.valueType() == ValueType::Binary) {
     uint64_t v = pair.getSize();
     appendUInt(v, 0xbf);

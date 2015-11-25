@@ -285,21 +285,19 @@ Slice Slice::get(std::string const& attribute) const {
 
     Slice key = Slice(_start + dataOffset, options);
 
-    if (key.isString()) {
-      if (!key.isEqualString(attribute)) {
-        return Slice();
-      }
-    } else if (key.isSmallInt() || key.isUInt()) {
-      // translate key
-      if (!key.translate().isEqualString(attribute)) {
-        return Slice();
-      }
-    } else {
-      // invalid key
-      return Slice();
+    if (key.isString() && key.isEqualString(attribute)) {
+      return Slice(key.start() + key.byteSize(), options);
     }
 
-    return Slice(key.start() + key.byteSize(), options);
+    if (key.isSmallInt() || key.isUInt()) {
+      // translate key
+      if (key.translate().isEqualString(attribute)) {
+         return Slice(key.start() + key.byteSize(), options);
+      }
+    }
+ 
+    // no match or invalid key type
+    return Slice();
   }
 
   ValueLength const ieBase =
@@ -433,14 +431,8 @@ Slice Slice::getFromCompactObject(std::string const& attribute) const {
   ObjectIterator it(*this);
   while (it.valid()) {
     Slice key = it.key();
-    if (key.isString()) {
-      if (key.isEqualString(attribute)) {
-        return Slice(key.start() + key.byteSize(), options);
-      }
-    } else if (key.isSmallInt() || key.isUInt()) {
-      if (key.translate().isEqualString(attribute)) {
-        return Slice(key.start() + key.byteSize(), options);
-      }
+    if (key.makeKey().isEqualString(attribute)) {
+      return Slice(key.start() + key.byteSize(), options);
     }
 
     it.next();
@@ -454,8 +446,9 @@ ValueLength Slice::getNthOffset(ValueLength index) const {
   VELOCYPACK_ASSERT(type() == ValueType::Array || type() == ValueType::Object);
 
   auto const h = head();
+
   if (h == 0x01 || h == 0x0a) {
-    // special case. empty array or object
+    // special case: empty Array or empty Object
     throw Exception(Exception::IndexOutOfBounds);
   }
 
@@ -506,24 +499,12 @@ ValueLength Slice::getNthOffset(ValueLength index) const {
 Slice Slice::getNth(ValueLength index) const {
   VELOCYPACK_ASSERT(type() == ValueType::Array);
 
-  auto const h = head();
-  if (h == 0x01) {
-    // special case. empty Array
-    throw Exception(Exception::IndexOutOfBounds);
-  }
-
   return Slice(_start + getNthOffset(index), options);
 }
 
 // extract the nth member from an Object
 Slice Slice::getNthKey(ValueLength index, bool translate) const {
   VELOCYPACK_ASSERT(type() == ValueType::Object);
-
-  auto const h = head();
-  if (h == 0x01) {
-    // special case. empty Object
-    throw Exception(Exception::IndexOutOfBounds);
-  }
 
   Slice s(_start + getNthOffset(index), options);
 

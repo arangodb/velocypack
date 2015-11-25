@@ -499,8 +499,7 @@ class Builder {
             options->attributeTranslator->translate(attrName);
 
         if (translated != nullptr) {
-          set(Slice(options->attributeTranslator->translate(attrName),
-                    options));
+          set(Slice(translated, options));
           return set(sub);
         }
         // otherwise fall through to regular behavior

@@ -639,14 +639,6 @@ class Slice {
     return 9;
   }
 
-  ValueLength valueOffset(ValueLength index) const {
-    if (type() != ValueType::Array && type() != ValueType::Object) {
-      throw Exception(Exception::InvalidValueType, "Expecting Array or Object");
-    }
-
-    return getNthOffset(index);
-  }
-
   // get the offset for the nth member from an Array type
   ValueLength getNthOffset(ValueLength index) const;
 
