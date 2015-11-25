@@ -630,7 +630,6 @@ TEST(CollectionTest, ContainsArrayUsingIsEqualPredicate) {
   parser.parse(value);
   Slice s(parser.start());
 
-  
   Builder b = Parser::fromJson("129");
   IsEqualPredicate predicate(Slice(b.start()));
   ASSERT_TRUE(Collection::contains(s, predicate));

@@ -204,7 +204,7 @@ struct IsEqualPredicate {
     return value.equals(current);
   }
   // compare value
-  Slice const& value;
+  Slice const value;
 };
 
 }  // namespace arangodb::velocypack
