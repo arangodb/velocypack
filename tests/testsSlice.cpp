@@ -930,6 +930,7 @@ TEST(SliceTest, StringNoString) {
   ValueLength length;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length),
                               Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getStringLength(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyString(), Exception::InvalidValueType);
 }
 
@@ -946,6 +947,7 @@ TEST(SliceTest, StringEmpty) {
   ASSERT_EQ(0ULL, len);
   ASSERT_EQ(0, strncmp(s, "", len));
 
+  ASSERT_EQ(0U, slice.getStringLength());
   ASSERT_EQ("", slice.copyString());
 }
 
@@ -969,6 +971,7 @@ TEST(SliceTest, String1) {
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
 
+  ASSERT_EQ(strlen("foobar"), slice.getStringLength());
   ASSERT_EQ("foobar", slice.copyString());
 }
 
@@ -993,6 +996,7 @@ TEST(SliceTest, String2) {
   char const* s = slice.getString(len);
   ASSERT_EQ(8ULL, len);
   ASSERT_EQ(0, strncmp(s, "123f\r\t\nx", len));
+  ASSERT_EQ(8U, slice.getStringLength());
 
   ASSERT_EQ("123f\r\t\nx", slice.copyString());
 }
@@ -1017,6 +1021,7 @@ TEST(SliceTest, StringNullBytes) {
   ValueLength len;
   slice.getString(len);
   ASSERT_EQ(8ULL, len);
+  ASSERT_EQ(8U, slice.getStringLength());
 
   std::string s(slice.copyString());
   ASSERT_EQ(8ULL, s.size());
@@ -1036,21 +1041,21 @@ TEST(SliceTest, StringLong) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
   uint8_t* p = (uint8_t*)&LocalBuffer[1];
   // length
-  *p++ = (uint8_t)6;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
-  *p++ = (uint8_t)0;
+  *p++ = (uint8_t) 6;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t) 0;
 
-  *p++ = (uint8_t)'f';
-  *p++ = (uint8_t)'o';
-  *p++ = (uint8_t)'o';
-  *p++ = (uint8_t)'b';
-  *p++ = (uint8_t)'a';
-  *p++ = (uint8_t)'r';
+  *p++ = (uint8_t) 'f';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'o';
+  *p++ = (uint8_t) 'b';
+  *p++ = (uint8_t) 'a';
+  *p++ = (uint8_t) 'r';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -1059,6 +1064,7 @@ TEST(SliceTest, StringLong) {
   char const* s = slice.getString(len);
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
+  ASSERT_EQ(6U, slice.getStringLength());
 
   ASSERT_EQ("foobar", slice.copyString());
 }
@@ -1071,6 +1077,7 @@ TEST(SliceTest, BinaryEmpty) {
   ValueLength len;
   slice.getBinary(len);
   ASSERT_EQ(0ULL, len);
+  ASSERT_EQ(0U, slice.getBinaryLength());
   auto result = slice.copyBinary();
   ASSERT_EQ(0UL, result.size());
 }
@@ -1084,6 +1091,7 @@ TEST(SliceTest, BinarySomeValue) {
   uint8_t const* s = slice.getBinary(len);
   ASSERT_EQ(5ULL, len);
   ASSERT_EQ(0, memcmp(s, &buf[2], len));
+  ASSERT_EQ(5U, slice.getBinaryLength());
 
   auto result = slice.copyBinary();
   ASSERT_EQ(5UL, result.size());
@@ -1103,6 +1111,7 @@ TEST(SliceTest, BinaryWithNullBytes) {
   uint8_t const* s = slice.getBinary(len);
   ASSERT_EQ(5ULL, len);
   ASSERT_EQ(0, memcmp(s, &buf[2], len));
+  ASSERT_EQ(5U, slice.getBinaryLength());
 
   auto result = slice.copyBinary();
   ASSERT_EQ(5UL, result.size());
@@ -1119,6 +1128,7 @@ TEST(SliceTest, BinaryNonBinary) {
   ValueLength len;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len),
                               Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinaryLength(), Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyBinary(), Exception::InvalidValueType);
 }
 

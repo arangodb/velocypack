@@ -475,6 +475,23 @@ class Slice {
     throw Exception(Exception::InvalidValueType, "Expecting type String");
   }
 
+  // return the length of the String slice
+  ValueLength getStringLength() const {
+    uint8_t const h = head();
+
+    if (h >= 0x40 && h <= 0xbe) {
+      // short UTF-8 String
+      return h - 0x40;
+    }
+
+    if (h == 0xbf) {
+      // long UTF-8 String
+      return readInteger<ValueLength>(_start + 1, 8);
+    }
+
+    throw Exception(Exception::InvalidValueType, "Expecting type String");
+  }
+
   // return a copy of the value for a String object
   std::string copyString() const {
     uint8_t h = head();
@@ -506,6 +523,18 @@ class Slice {
     length = readInteger<ValueLength>(_start + 1, h - 0xbf);
     checkOverflow(length);
     return _start + 1 + h - 0xbf;
+  }
+
+  // return the length of the Binary slice
+  ValueLength getBinaryLength() const {
+    if (type() != ValueType::Binary) {
+      throw Exception(Exception::InvalidValueType, "Expecting type Binary");
+    }
+
+    uint8_t const h = head();
+    VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
+
+    return readInteger<ValueLength>(_start + 1, h - 0xbf);
   }
 
   // return a copy of the value for a Binary object
