@@ -620,8 +620,8 @@ int main(int argc, char* argv[]) {
 
   uint8_t* src = new uint8_t[size + 17];
   uint8_t* dst = new uint8_t[size + 17];
-  std::cout << "Src pointer: " << (void*) src << std::endl;
-  std::cout << "Dst pointer: " << (void*) dst << std::endl;
+  std::cout << "Src pointer: " << (void*)src << std::endl;
+  std::cout << "Dst pointer: " << (void*)dst << std::endl;
   for (size_t i = 0; i < size + 16; i++) {
     src[i] = 'a' + (i % 26);
   }

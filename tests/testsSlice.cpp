@@ -930,7 +930,8 @@ TEST(SliceTest, StringNoString) {
   ValueLength length;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length),
                               Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(slice.getStringLength(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getStringLength(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyString(), Exception::InvalidValueType);
 }
 
@@ -1041,21 +1042,21 @@ TEST(SliceTest, StringLong) {
   Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
   uint8_t* p = (uint8_t*)&LocalBuffer[1];
   // length
-  *p++ = (uint8_t) 6;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
-  *p++ = (uint8_t) 0;
+  *p++ = (uint8_t)6;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
+  *p++ = (uint8_t)0;
 
-  *p++ = (uint8_t) 'f';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'o';
-  *p++ = (uint8_t) 'b';
-  *p++ = (uint8_t) 'a';
-  *p++ = (uint8_t) 'r';
+  *p++ = (uint8_t)'f';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'o';
+  *p++ = (uint8_t)'b';
+  *p++ = (uint8_t)'a';
+  *p++ = (uint8_t)'r';
 
   ASSERT_EQ(ValueType::String, slice.type());
   ASSERT_TRUE(slice.isString());
@@ -1128,7 +1129,8 @@ TEST(SliceTest, BinaryNonBinary) {
   ValueLength len;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len),
                               Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinaryLength(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinaryLength(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyBinary(), Exception::InvalidValueType);
 }
 

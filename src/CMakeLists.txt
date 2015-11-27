@@ -23,3 +23,4 @@ add_library(
 )
 
 install(TARGETS velocypack DESTINATION lib)
+
