@@ -76,8 +76,6 @@ static size_t JSONStringCopySSE42(uint8_t* dst, uint8_t const* src,
                          _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     if (x < 16) {
       memcpy(dst, src, x);
-      dst += x;
-      src += x;
       count += x;
       return count;
     }
@@ -98,8 +96,6 @@ static size_t JSONStringCopySSE42(uint8_t* dst, uint8_t const* src,
     x = static_cast<int>(limit);
   }
   memcpy(dst, src, x);
-  dst += x;
-  src += x;
   count += x;
   return count;
 }
@@ -128,8 +124,6 @@ static size_t JSONStringCopyCheckUtf8SSE42(uint8_t* dst, uint8_t const* src,
                          _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     if (x < 16) {
       memcpy(dst, src, x);
-      dst += x;
-      src += x;
       count += x;
       return count;
     }
@@ -150,8 +144,6 @@ static size_t JSONStringCopyCheckUtf8SSE42(uint8_t* dst, uint8_t const* src,
     x = static_cast<int>(limit);
   }
   memcpy(dst, src, x);
-  dst += x;
-  src += x;
   count += x;
   return count;
 }
@@ -177,7 +169,6 @@ static size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, size_t limit) {
                      _SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_ANY |
                          _SIDD_NEGATIVE_POLARITY | _SIDD_LEAST_SIGNIFICANT);
     if (x < 16) {
-      ptr += x;
       count += x;
       return count;
     }
@@ -195,7 +186,6 @@ static size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, size_t limit) {
   if (static_cast<size_t>(x) > limit) {
     x = static_cast<int>(limit);
   }
-  ptr += x;
   count += x;
   return count;
 }
@@ -481,7 +471,6 @@ void RaceStringCopy(uint8_t* dst, uint8_t* src, size_t size, int repeat,
     akku = akku * 13 + copied;
   }
   now = std::chrono::high_resolution_clock::now();
-  dst--;
 
   totalTime =
       std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
@@ -631,8 +620,8 @@ int main(int argc, char* argv[]) {
 
   uint8_t* src = new uint8_t[size + 17];
   uint8_t* dst = new uint8_t[size + 17];
-  std::cout << "Src pointer: " << (void*)src << std::endl;
-  std::cout << "Dst pointer: " << (void*)dst << std::endl;
+  std::cout << "Src pointer: " << (void*) src << std::endl;
+  std::cout << "Dst pointer: " << (void*) dst << std::endl;
   for (size_t i = 0; i < size + 16; i++) {
     src[i] = 'a' + (i % 26);
   }
