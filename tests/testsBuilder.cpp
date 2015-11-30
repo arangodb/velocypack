@@ -30,7 +30,7 @@
 
 #include "tests-common.h"
 
-TEST(BuilderTest, CreateWithoutOptions) {
+TEST(BuilderTest, CreateWithoutBufferOrOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
 
   std::shared_ptr<Buffer<uint8_t>> buffer;
@@ -46,6 +46,142 @@ TEST(BuilderTest, CreateWithoutOptions) {
   Slice s = b.slice();
 
   ASSERT_VELOCYPACK_EXCEPTION(b.clone(s, nullptr), Exception::InternalError);
+}
+
+TEST(BuilderTest, Copy) {
+  Builder b;
+
+  Builder a(b);
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+TEST(BuilderTest, CopyWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  try {
+    Builder a(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  try {
+    Builder a(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyAssign) {
+  Builder b;
+
+  Builder a;
+  a = b;
+
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+TEST(BuilderTest, CopyAssignWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  Builder a;
+  try {
+    a = b;
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, CopyAssignWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  Builder a;
+  try {
+    a = b;
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, Move) {
+  Builder b;
+
+  Builder a(std::move(b));
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() == nullptr);
+}
+
+TEST(BuilderTest, MoveWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  try {
+    Builder a(std::move(b));
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  try {
+    Builder a(std::move(b));
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveAssign) {
+  Builder b;
+
+  Builder a = std::move(b);
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() == nullptr);
+}
+
+TEST(BuilderTest, MoveAssignWithoutOptions) {
+  Builder b;
+  b.options = nullptr;
+
+  Builder a;
+  try {
+    a = std::move(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
+}
+
+TEST(BuilderTest, MoveAssignWithoutBuffer) {
+  Builder b;
+  b.buffer().reset();
+
+  Builder a;
+  try {
+    a = std::move(b);
+    ASSERT_FALSE(true);
+  } catch (Exception const& ex) {
+    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  }
 }
 
 TEST(BuilderTest, SizeWithOpenObject) {
@@ -253,8 +389,9 @@ TEST(BuilderTest, BoolWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::Bool)),
-                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(100UL), ValueType::Bool)),
+      Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::Bool)),
                               Exception::BuilderUnexpectedValue);
 }
@@ -266,8 +403,9 @@ TEST(BuilderTest, StringWithOtherTypes) {
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-100, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(static_cast<uint64_t>(100UL), ValueType::String)),
-                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(100UL), ValueType::String)),
+      Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::String)),
                               Exception::BuilderUnexpectedValue);
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false, ValueType::String)),
@@ -345,6 +483,55 @@ TEST(BuilderTest, DoubleWithOtherTypes) {
   ASSERT_EQ("[1.2,-1.2,-1,1]", s.toJson());
 }
 
+TEST(BuilderTest, UTCDateWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value(1.2, ValueType::UTCDate));
+  b.add(Value(static_cast<int64_t>(1), ValueType::UTCDate));
+  b.add(Value(static_cast<uint64_t>(1UL), ValueType::UTCDate));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::UTCDate)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::UTCDate)),
+                              Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, BinaryWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  b.add(Value("foobar", ValueType::Binary));
+  b.add(Value(std::string("foobar"), ValueType::Binary));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::Binary)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<int64_t>(1), ValueType::Binary)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(1), ValueType::Binary)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::Binary)),
+                              Exception::BuilderUnexpectedValue);
+}
+
+TEST(BuilderTest, ExternalWithOtherTypes) {
+  Builder b;
+  b.add(Value(ValueType::Array));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value("foobar", ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(std::string("foobar"), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.5, ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<int64_t>(1), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(static_cast<uint64_t>(1), ValueType::External)),
+      Exception::BuilderUnexpectedValue);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true, ValueType::External)),
+                              Exception::BuilderUnexpectedValue);
+}
+
 TEST(BuilderTest, AddAndOpenArray) {
   Builder b1;
   ASSERT_TRUE(b1.isClosed());
@@ -383,6 +570,36 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.close();
   ASSERT_TRUE(b2.isClosed());
   ASSERT_EQ(0x0b, b2.slice().head());
+}
+
+TEST(BuilderTest, MinKey) {
+  Builder b;
+  b.add(Value(ValueType::MinKey));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t const correctResult[] = {0x1e};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, MaxKey) {
+  Builder b;
+  b.add(Value(ValueType::MaxKey));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t const correctResult[] = {0x1f};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, Custom) {
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Custom)),
+                              Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, None) {
@@ -1101,7 +1318,7 @@ TEST(BuilderTest, StringString) {
   ASSERT_EQ(value, c);
 }
 
-TEST(BuilderTest, Binary) {
+TEST(BuilderTest, BinaryViaValuePair) {
   uint8_t binaryStuff[] = {0x02, 0x03, 0x05, 0x08, 0x0d};
 
   Builder b;
@@ -1113,6 +1330,86 @@ TEST(BuilderTest, Binary) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, ShortStringViaValuePair) {
+  char const* p = "the quick brown fox jumped over the lazy dog";
+
+  Builder b;
+  uint8_t* dst = b.add(ValuePair(p, strlen(p), ValueType::String));
+  memcpy(dst, p, strlen(p));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+      0x6c, 0x74, 0x68, 0x65, 0x20, 0x71, 0x75, 0x69, 0x63, 0x6b, 0x20, 0x62,
+      0x72, 0x6f, 0x77, 0x6e, 0x20, 0x66, 0x6f, 0x78, 0x20, 0x6a, 0x75, 0x6d,
+      0x70, 0x65, 0x64, 0x20, 0x6f, 0x76, 0x65, 0x72, 0x20, 0x74, 0x68, 0x65,
+      0x20, 0x6c, 0x61, 0x7a, 0x79, 0x20, 0x64, 0x6f, 0x67};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, LongStringViaValuePair) {
+  char const* p =
+      "the quick brown fox jumped over the lazy dog, and it jumped and jumped "
+      "and jumped and went on. But then, the String needed to get even longer "
+      "and longer until the test finally worked.";
+
+  Builder b;
+  uint8_t* dst = b.add(ValuePair(p, strlen(p), ValueType::String));
+  memcpy(dst, p, strlen(p));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+      0xbf, 0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x74, 0x68, 0x65,
+      0x20, 0x71, 0x75, 0x69, 0x63, 0x6b, 0x20, 0x62, 0x72, 0x6f, 0x77, 0x6e,
+      0x20, 0x66, 0x6f, 0x78, 0x20, 0x6a, 0x75, 0x6d, 0x70, 0x65, 0x64, 0x20,
+      0x6f, 0x76, 0x65, 0x72, 0x20, 0x74, 0x68, 0x65, 0x20, 0x6c, 0x61, 0x7a,
+      0x79, 0x20, 0x64, 0x6f, 0x67, 0x2c, 0x20, 0x61, 0x6e, 0x64, 0x20, 0x69,
+      0x74, 0x20, 0x6a, 0x75, 0x6d, 0x70, 0x65, 0x64, 0x20, 0x61, 0x6e, 0x64,
+      0x20, 0x6a, 0x75, 0x6d, 0x70, 0x65, 0x64, 0x20, 0x61, 0x6e, 0x64, 0x20,
+      0x6a, 0x75, 0x6d, 0x70, 0x65, 0x64, 0x20, 0x61, 0x6e, 0x64, 0x20, 0x77,
+      0x65, 0x6e, 0x74, 0x20, 0x6f, 0x6e, 0x2e, 0x20, 0x42, 0x75, 0x74, 0x20,
+      0x74, 0x68, 0x65, 0x6e, 0x2c, 0x20, 0x74, 0x68, 0x65, 0x20, 0x53, 0x74,
+      0x72, 0x69, 0x6e, 0x67, 0x20, 0x6e, 0x65, 0x65, 0x64, 0x65, 0x64, 0x20,
+      0x74, 0x6f, 0x20, 0x67, 0x65, 0x74, 0x20, 0x65, 0x76, 0x65, 0x6e, 0x20,
+      0x6c, 0x6f, 0x6e, 0x67, 0x65, 0x72, 0x20, 0x61, 0x6e, 0x64, 0x20, 0x6c,
+      0x6f, 0x6e, 0x67, 0x65, 0x72, 0x20, 0x75, 0x6e, 0x74, 0x69, 0x6c, 0x20,
+      0x74, 0x68, 0x65, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20, 0x66, 0x69, 0x6e,
+      0x61, 0x6c, 0x6c, 0x79, 0x20, 0x77, 0x6f, 0x72, 0x6b, 0x65, 0x64, 0x2e};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, CustomViaValuePair) {
+  char const* p = "\xf0the quick brown fox jumped over the lazy dog";
+
+  Builder b;
+  b.add(ValuePair(p, strlen(p), ValueType::Custom));
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+      0xf0, 0x74, 0x68, 0x65, 0x20, 0x71, 0x75, 0x69, 0x63, 0x6b, 0x20, 0x62,
+      0x72, 0x6f, 0x77, 0x6e, 0x20, 0x66, 0x6f, 0x78, 0x20, 0x6a, 0x75, 0x6d,
+      0x70, 0x65, 0x64, 0x20, 0x6f, 0x76, 0x65, 0x72, 0x20, 0x74, 0x68, 0x65,
+      0x20, 0x6c, 0x61, 0x7a, 0x79, 0x20, 0x64, 0x6f, 0x67};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+}
+
+TEST(BuilderTest, InvalidTypeViaValuePair) {
+  char const* p = "fail";
+
+  Builder b;
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(ValuePair(p, strlen(p), ValueType::UTCDate)),
+      Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, UTCDate) {
@@ -1594,6 +1891,86 @@ TEST(BuilderTest, AttributeTranslations) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_TRUE(s.hasKey("mötör"));
+  ASSERT_TRUE(s.hasKey("mötörhead"));
+  ASSERT_TRUE(s.hasKey("quetzal"));
+}
+
+TEST(BuilderTest, AttributeTranslationsSorted) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  Options options;
+  options.sortAttributeNames = true;
+  options.attributeTranslator = translator.get();
+
+  Builder b(&options);
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bart", Value(2));
+  b.add("bark", Value(42));
+  b.add("mötör", Value(19));
+  b.add("mötörhead", Value(20));
+  b.add("quetzal", Value(21));
+  b.close();
+
+  uint8_t* result = b.start();
+  ValueLength len = b.size();
+
+  static uint8_t correctResult[] = {
+      0x0b, 0x35, 0x08, 0x31, 0x1a, 0x32, 0x19, 0x33, 0x31, 0x44, 0x62,
+      0x61, 0x72, 0x74, 0x32, 0x34, 0x20, 0x2a, 0x35, 0x20, 0x13, 0x4b,
+      0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64,
+      0x20, 0x14, 0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20,
+      0x15, 0x05, 0x0f, 0x09, 0x07, 0x03, 0x12, 0x15, 0x23};
+
+  ASSERT_EQ(sizeof(correctResult), len);
+
+  ASSERT_EQ(0, memcmp(result, correctResult, len));
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_TRUE(s.hasKey("mötör"));
+  ASSERT_TRUE(s.hasKey("mötörhead"));
+  ASSERT_TRUE(s.hasKey("quetzal"));
+}
+
+TEST(BuilderTest, AttributeTranslationsRollbackSet) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->seal();
+
+  Options options;
+  options.attributeTranslator = translator.get();
+
+  Builder b(&options);
+  b.add(Value(ValueType::Object));
+  ASSERT_VELOCYPACK_EXCEPTION(b.add("foo", Value(ValueType::Custom)),
+                              Exception::BuilderUnexpectedType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add("FOOBAR", Value(ValueType::Custom)),
+                              Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, ToString) {

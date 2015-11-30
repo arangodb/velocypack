@@ -222,7 +222,8 @@ void Parser::parseString() {
     if (!large && _b._pos - (base + 1) > 126) {
       large = true;
       _b.reserveSpace(8);
-      memmove(_b._start + base + 9, _b._start + base + 1, _b._pos - (base + 1));
+      ValueLength len = _b._pos - (base + 1);
+      memmove(_b._start + base + 9, _b._start + base + 1, checkOverflow(len));
       _b._pos += 8;
     }
     switch (i) {

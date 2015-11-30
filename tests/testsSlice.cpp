@@ -930,6 +930,8 @@ TEST(SliceTest, StringNoString) {
   ValueLength length;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getString(length),
                               Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getStringLength(),
+                              Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyString(), Exception::InvalidValueType);
 }
 
@@ -946,6 +948,7 @@ TEST(SliceTest, StringEmpty) {
   ASSERT_EQ(0ULL, len);
   ASSERT_EQ(0, strncmp(s, "", len));
 
+  ASSERT_EQ(0U, slice.getStringLength());
   ASSERT_EQ("", slice.copyString());
 }
 
@@ -969,6 +972,7 @@ TEST(SliceTest, String1) {
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
 
+  ASSERT_EQ(strlen("foobar"), slice.getStringLength());
   ASSERT_EQ("foobar", slice.copyString());
 }
 
@@ -993,6 +997,7 @@ TEST(SliceTest, String2) {
   char const* s = slice.getString(len);
   ASSERT_EQ(8ULL, len);
   ASSERT_EQ(0, strncmp(s, "123f\r\t\nx", len));
+  ASSERT_EQ(8U, slice.getStringLength());
 
   ASSERT_EQ("123f\r\t\nx", slice.copyString());
 }
@@ -1017,6 +1022,7 @@ TEST(SliceTest, StringNullBytes) {
   ValueLength len;
   slice.getString(len);
   ASSERT_EQ(8ULL, len);
+  ASSERT_EQ(8U, slice.getStringLength());
 
   std::string s(slice.copyString());
   ASSERT_EQ(8ULL, s.size());
@@ -1059,6 +1065,7 @@ TEST(SliceTest, StringLong) {
   char const* s = slice.getString(len);
   ASSERT_EQ(6ULL, len);
   ASSERT_EQ(0, strncmp(s, "foobar", len));
+  ASSERT_EQ(6U, slice.getStringLength());
 
   ASSERT_EQ("foobar", slice.copyString());
 }
@@ -1071,6 +1078,7 @@ TEST(SliceTest, BinaryEmpty) {
   ValueLength len;
   slice.getBinary(len);
   ASSERT_EQ(0ULL, len);
+  ASSERT_EQ(0U, slice.getBinaryLength());
   auto result = slice.copyBinary();
   ASSERT_EQ(0UL, result.size());
 }
@@ -1084,6 +1092,7 @@ TEST(SliceTest, BinarySomeValue) {
   uint8_t const* s = slice.getBinary(len);
   ASSERT_EQ(5ULL, len);
   ASSERT_EQ(0, memcmp(s, &buf[2], len));
+  ASSERT_EQ(5U, slice.getBinaryLength());
 
   auto result = slice.copyBinary();
   ASSERT_EQ(5UL, result.size());
@@ -1103,6 +1112,7 @@ TEST(SliceTest, BinaryWithNullBytes) {
   uint8_t const* s = slice.getBinary(len);
   ASSERT_EQ(5ULL, len);
   ASSERT_EQ(0, memcmp(s, &buf[2], len));
+  ASSERT_EQ(5U, slice.getBinaryLength());
 
   auto result = slice.copyBinary();
   ASSERT_EQ(5UL, result.size());
@@ -1118,6 +1128,8 @@ TEST(SliceTest, BinaryNonBinary) {
 
   ValueLength len;
   ASSERT_VELOCYPACK_EXCEPTION(slice.getBinary(len),
+                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(slice.getBinaryLength(),
                               Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(slice.copyBinary(), Exception::InvalidValueType);
 }
@@ -1900,6 +1912,7 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   b.add(Value(INT64_MAX));
   b.add(Value(-3453.32));
   b.add(Value(2343323453.3232235));
+  b.add(Value(static_cast<uint64_t>(10000)));
   b.close();
 
   Slice s = Slice(b.start());
@@ -1911,6 +1924,7 @@ TEST(SliceTest, GetNumericValueDoubleNoLoss) {
   ASSERT_DOUBLE_EQ(static_cast<double>(INT64_MAX), s.at(4).getNumber<double>());
   ASSERT_DOUBLE_EQ(-3453.32, s.at(5).getNumber<double>());
   ASSERT_DOUBLE_EQ(2343323453.3232235, s.at(6).getNumber<double>());
+  ASSERT_DOUBLE_EQ(10000., s.at(7).getNumber<double>());
 }
 
 TEST(SliceTest, GetNumericValueWrongSource) {
@@ -2188,6 +2202,38 @@ TEST(SliceTest, TranslatedInvalidKey) {
   ASSERT_EQ(1UL, s.length());
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(), Exception::KeyNotFound);
   ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::KeyNotFound);
+}
+
+TEST(SliceTest, SliceScope) {
+  SliceScope scope;
+
+  Slice a;
+  Slice b;
+  {
+    a = Slice::fromJson(scope, "\"foobarbazsomevalue\"");
+    {
+      b = Slice::fromJson(scope,
+                          "\"some longer string that hopefully requires a "
+                          "dynamic memory allocation and that hopefully "
+                          "survives even if the Slice object itself goes out "
+                          "of scope - if it does not survive, this test will "
+                          "reveal it. ready? let's check it!\"");
+    }
+    // overwrite stack
+    Slice c(Slice::fromJson(
+        scope, "\"012345678901234567890123456789012345678901234567\""));
+  }
+
+  ASSERT_TRUE(a.isString());
+  ASSERT_EQ("foobarbazsomevalue", a.copyString());
+
+  ASSERT_TRUE(b.isString());
+  ASSERT_EQ(
+      "some longer string that hopefully requires a dynamic memory allocation "
+      "and that hopefully survives even if the Slice object itself goes out of "
+      "scope - if it does not survive, this test will reveal it. ready? let's "
+      "check it!",
+      b.copyString());
 }
 
 int main(int argc, char* argv[]) {

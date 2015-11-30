@@ -31,6 +31,7 @@ int main(int, char* []) {
   if (sss.isString()) {
     ValueLength len;
     char const* st = sss.getString(len);
-    std::cout << "Name in .name: " << std::string(st, len) << std::endl;
+    std::cout << "Name in .name: " << std::string(st, checkOverflow(len))
+              << std::endl;
   }
 }

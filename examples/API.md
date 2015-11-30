@@ -371,7 +371,10 @@ members. The `Collection` class provides several static helper methods for this:
   function for each. Returns the member for which the predicate function returned 
   true, and a Slice of type None in case the predicate was always false. 
 
-* `contains()`: same as find, but returns a boolean value and not the sought Slice.
+* `contains()`: same as find, but returns a boolean value and not the found Slice.
+
+* `indexOf()`: same as find, but returns the index of the found Slice and 
+  `Collection::NotFound` in case the sought Slice is not contained in the array.
 
 * `all()`: walks the Array's members one by one and calls a user-defined predicate 
   function for each. Returns true if the predicate function returned true for all

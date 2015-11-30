@@ -438,6 +438,150 @@ TEST(StringDumperTest, StringFourByteUTF8) {
   ASSERT_EQ(std::string("\"\xf0\xa4\xad\xa2\""), Dumper::toString(slice));
 }
 
+TEST(StringDumperTest, NumberDoubleZero) {
+  Builder b;
+  b.add(Value(0.0));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("0"), buffer);
+}
+
+TEST(StringDumperTest, NumberDouble1) {
+  Builder b;
+  b.add(Value(123456.67));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("123456.67"), buffer);
+}
+
+TEST(StringDumperTest, NumberDouble2) {
+  Builder b;
+  b.add(Value(-123456.67));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("-123456.67"), buffer);
+}
+
+TEST(StringDumperTest, NumberDouble3) {
+  Builder b;
+  b.add(Value(-0.000442));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("-0.000442"), buffer);
+}
+
+TEST(StringDumperTest, NumberDouble4) {
+  Builder b;
+  b.add(Value(0.1));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("0.1"), buffer);
+}
+
+TEST(StringDumperTest, NumberDoubleScientific1) {
+  Builder b;
+  b.add(Value(2.41e-109));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("2.41e-109"), buffer);
+}
+
+TEST(StringDumperTest, NumberDoubleScientific2) {
+  Builder b;
+  b.add(Value(-3.423e78));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("-3.423e+78"), buffer);
+}
+
+TEST(StringDumperTest, NumberDoubleScientific3) {
+  Builder b;
+  b.add(Value(3.423e123));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("3.423e+123"), buffer);
+}
+
+TEST(StringDumperTest, NumberDoubleScientific4) {
+  Builder b;
+  b.add(Value(3.4239493e104));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("3.4239493e+104"), buffer);
+}
+
+TEST(StringDumperTest, NumberInt1) {
+  Builder b;
+  b.add(Value(static_cast<int64_t>(123456789)));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("123456789"), buffer);
+}
+
+TEST(StringDumperTest, NumberInt2) {
+  Builder b;
+  b.add(Value(static_cast<int64_t>(-123456789)));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("-123456789"), buffer);
+}
+
+TEST(StringDumperTest, NumberZero) {
+  Builder b;
+  b.add(Value(static_cast<int64_t>(0)));
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("0"), buffer);
+}
+
 TEST(StringDumperTest, External) {
   Builder b1;
   b1.add(Value("this is a test string"));
@@ -630,10 +774,11 @@ TEST(StringDumperTest, ArrayWithCustom) {
 }
 
 TEST(StringDumperTest, AppendCharTest) {
+  char const* p = "this is a simple string";
   std::string buffer;
   StringSink sink(&buffer);
   Dumper dumper(&sink);
-  dumper.appendString(std::string("this is a simple string"));
+  dumper.appendString(p, strlen(p));
 
   ASSERT_EQ(std::string("\"this is a simple string\""), buffer);
 }
@@ -709,6 +854,30 @@ TEST(StringDumperTest, AppendStringTestSpecialChars2) {
                 "\"this is a string with special chars / \\\" \\\\ ' "
                 "foo\\n\\r\\t baz\""),
             buffer);
+}
+
+TEST(StringDumperTest, AppendStringTestTruncatedTwoByteUtf8) {
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xc2"),
+                              Exception::InvalidUtf8Sequence);
+}
+
+TEST(StringDumperTest, AppendStringTestTruncatedThreeByteUtf8) {
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xe2\x82"),
+                              Exception::InvalidUtf8Sequence);
+}
+
+TEST(StringDumperTest, AppendStringTestTruncatedFourByteUtf8) {
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.appendString("\xf0\xa4\xad"),
+                              Exception::InvalidUtf8Sequence);
 }
 
 TEST(StringDumperTest, AppendStringSlice1) {
@@ -794,9 +963,42 @@ TEST(StringDumperTest, AppendStringSliceRef2) {
             buffer);
 }
 
+TEST(StringDumperTest, AppendDoubleNan) {
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.appendDouble(std::nan("1"));
+  ASSERT_EQ(std::string("NaN"), buffer);
+}
+
+TEST(StringDumperTest, AppendDoubleMinusInf) {
+  double v = -3.33e307;
+  // go to -inf
+  v *= 3.1e90;
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.appendDouble(v);
+  ASSERT_EQ(std::string("-inf"), buffer);
+}
+
+TEST(StringDumperTest, AppendDoublePlusInf) {
+  double v = 3.33e307;
+  // go to +inf
+  v *= v;
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.appendDouble(v);
+  ASSERT_EQ(std::string("inf"), buffer);
+}
+
 TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
   double v = -3.33e307;
-  v *= -v;
+  // go to -inf
+  v *= 3.1e90;
   Builder b;
   b.add(Value(v));
 
@@ -810,7 +1012,8 @@ TEST(StringDumperTest, UnsupportedTypeDoubleMinusInf) {
 
 TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
   double v = -3.33e307;
-  v *= -v;
+  // go to -inf
+  v *= 3.1e90;
   Builder b;
   b.add(Value(v));
 
@@ -827,6 +1030,7 @@ TEST(StringDumperTest, ConvertTypeDoubleMinusInf) {
 
 TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
   double v = 3.33e307;
+  // go to +inf
   v *= v;
   Builder b;
   b.add(Value(v));
@@ -841,6 +1045,7 @@ TEST(StringDumperTest, UnsupportedTypeDoublePlusInf) {
 
 TEST(StringDumperTest, ConvertTypeDoublePlusInf) {
   double v = 3.33e307;
+  // go to +inf
   v *= v;
   Builder b;
   b.add(Value(v));

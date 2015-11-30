@@ -1,12 +1,31 @@
+Documentation
+-------------
 * write Performance.md section for speed tests
-
 * documentation of C++ classes (// ...) (MN)
 
-* test on MacOS and ARM
+Testing
+-------
+* automate tests on MacOS and ARM
+* automate tests for 32 bit Windows builds
+* test equal_to with custom types
 
-* implement type BCD in Builder, Slice, Parser and Dumper
+Features
+--------
+* implement missing type BCD in Builder, Slice, Parser and Dumper
+* unique/distinct/sort for Arrays
+* optionally validate Slice bounds (framing)
 
+APIs
+----
 * SWIG support (MN)
 
-* ideas: unique/distinct/sort for Arrays
-* test equal_to with custom types
+Tools
+-----
+* add inspect tool (tools/) for binary vpack values
+* add optional saving of dictionaries from json-to-vpack
+* add optional reading of dictionaries in vpack-to-json
+* automate sizes table generation, add comparison for BSON & MessagePack
+
+Internals
+---------
+* change from assertions to exceptions in Slice constructors

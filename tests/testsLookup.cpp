@@ -871,6 +871,18 @@ TEST(LookupTest, AtArrayCompact) {
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4), Exception::IndexOutOfBounds);
 }
 
+TEST(LookupTest, AtArrayEmpty) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.at(1), Exception::IndexOutOfBounds);
+}
+
 TEST(LookupTest, KeyAtArray) {
   std::string const value("[]");
 
@@ -953,6 +965,18 @@ TEST(LookupTest, KeyAtObjectCompact) {
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4), Exception::IndexOutOfBounds);
 }
 
+TEST(LookupTest, KeyAtObjectEmpty) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(1), Exception::IndexOutOfBounds);
+}
+
 TEST(LookupTest, ValueAtArray) {
   std::string const value("[]");
 
@@ -1033,6 +1057,18 @@ TEST(LookupTest, ValueAtObjectCompact) {
   ASSERT_EQ(4, s.valueAt(3).getInt());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(4), Exception::IndexOutOfBounds);
+}
+
+TEST(LookupTest, ValueAtObjectEmpty) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+  Builder builder = parser.steal();
+  Slice s(builder.start());
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(1), Exception::IndexOutOfBounds);
 }
 
 int main(int argc, char* argv[]) {

@@ -32,6 +32,7 @@ if(BuildExamples)
       velocypack
     )
 
+    add_dependencies(${exampleName} velocypack) 
   endforeach()
 endif()
 

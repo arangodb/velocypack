@@ -1,7 +1,7 @@
 VelocyPack (VPack) - a fast and compact format for serialization and storage
 ============================================================================
 
-TravisCI: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?branch=master)](http://travis-ci.org/arangodb/velocypack)   AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/pkbl4t7vey88bqud?svg=true)](https://ci.appveyor.com/project/jsteemann/velocypack)
+TravisCI: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?branch=master)](http://travis-ci.org/arangodb/velocypack)   AppVeyor: [![Build status](https://ci.appveyor.com/api/projects/status/pkbl4t7vey88bqud?svg=true)](https://ci.appveyor.com/project/jsteemann/velocypack)   Coveralls: [![Coverage Status](https://coveralls.io/repos/arangodb/velocypack/badge.svg?branch=master&service=github)](https://coveralls.io/github/arangodb/velocypack?branch=master)
 
 Motivation
 ----------
@@ -85,7 +85,7 @@ experiments and usage attempts are very encouraging.
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the 
 VelocyPack format*. The library is written in good old C++11 so it
-should compile on modern systems.
+should compile on most systems.
 
 
 Specification
@@ -121,3 +121,12 @@ Please consult the file [examples/API.md](examples/API.md) for usage examples,
 and the file [examples/Embedding.md](examples/Embedding.md) for information
 about how to embed the library into client applications.
 
+
+Contributing
+------------
+
+We welcome bug fixes and patches from 3rd party contributors!
+
+Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want 
+to contribute to VelocyPack. Have a look for the tag HELP_WANTED in the issue
+tracker!

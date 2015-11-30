@@ -19,6 +19,7 @@ if(BuildTools)
     velocypack
   )
 
+  add_dependencies("json-to-vpack" velocypack)
   install(TARGETS "json-to-vpack" DESTINATION bin)
 
   # build vpack-to-json.cpp
@@ -31,7 +32,8 @@ if(BuildTools)
     "vpack-to-json"
     velocypack
   )
-  
+
+  add_dependencies("vpack-to-json" velocypack)
   install(TARGETS "vpack-to-json" DESTINATION bin)
 endif()
 
@@ -52,6 +54,7 @@ if(BuildBench)
     bench
     velocypack
   )
+  add_dependencies(bench velocypack)
 
   if(EnableSSE)
     set_target_properties(bench PROPERTIES COMPILE_DEFINITIONS RAPIDJSON_SSE42)

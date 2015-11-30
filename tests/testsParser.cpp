@@ -39,6 +39,10 @@ extern size_t (*JSONStringCopyCheckUtf8)(uint8_t* dst, uint8_t const* src,
                                          size_t limit);
 extern size_t (*JSONSkipWhiteSpace)(uint8_t const* ptr, size_t limit);
 
+TEST(ParserTest, CreateWithoutOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(new Parser(nullptr), Exception::InternalError);
+}
+
 TEST(ParserTest, GarbageCatchVelocyPackException) {
   std::string const value("z");
 
@@ -703,6 +707,33 @@ TEST(ParserTest, WhitespaceOnly) {
   Parser parser;
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::ParseError);
   ASSERT_EQ(1U, parser.errorPos());
+}
+
+TEST(ParserTest, LongerString1) {
+  std::string const value("\"01234567890123456789012345678901\"");
+  ASSERT_EQ(0U, (value.size() - 2) %
+                    16);  // string payload should be a multiple of 16
+
+  Options options;
+  options.validateUtf8Strings = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.steal().slice());
+
+  std::string parsed = s.copyString();
+  ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
+}
+
+TEST(ParserTest, LongerString2) {
+  std::string const value("\"this is a long string (longer than 16 bytes)\"");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.steal().slice());
+
+  std::string parsed = s.copyString();
+  ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
 }
 
 TEST(ParserTest, UnterminatedStringLiteral) {
@@ -2299,7 +2330,42 @@ TEST(ParserTest, UseNonSSEStringCopy) {
   ASSERT_EQ("der\thund\nging\rin\fden\\wald\"und\b\nden'fux", s.copyString());
 }
 
-TEST(ParserTest, UseNonSSEUtf8Check) {
+TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  // modify global function pointer!
+  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+
+  std::string const value("\"the quick brown fox jumped over the lazy dog\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.steal().slice());
+
+  std::string parsed = s.copyString();
+  ASSERT_EQ(value.substr(1, value.size() - 2), parsed);  // strip quotes
+}
+
+TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
+  Options options;
+  options.validateUtf8Strings = true;
+
+  // modify global function pointer!
+  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+
+  std::string const value(
+      "\"the quick brown\\tfox\\r\\njumped \\\"over\\\" the lazy dog\"");
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.steal().slice());
+
+  std::string parsed = s.copyString();
+  ASSERT_EQ("the quick brown\tfox\r\njumped \"over\" the lazy dog", parsed);
+}
+
+TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
   Options options;
   options.validateUtf8Strings = true;
 

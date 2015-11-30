@@ -141,3 +141,6 @@ To convert the input file `input.json` to a VPack value file `output.vpack` whil
 compact format and the object key compression, use this command:
 
 `json-to-vpack --compact --compress input.json output.vpack`
+
+Please have a look at the [tools README](tools/README.md) for further details on the tools
+shipped with the VPack library.

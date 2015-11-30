@@ -11,7 +11,7 @@ int main(int, char* []) {
 
   Parser parser;
   try {
-    size_t nr = parser.parse(json);
+    ValueLength nr = parser.parse(json);
     std::cout << "Number of values: " << nr << std::endl;
   } catch (std::bad_alloc const&) {
     std::cout << "Out of memory!" << std::endl;

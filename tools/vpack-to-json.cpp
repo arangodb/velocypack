@@ -33,12 +33,22 @@
 using namespace arangodb::velocypack;
 
 static void usage(char* argv[]) {
+#ifdef __linux__
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE [OUTFILE]"
+            << std::endl;
+#else
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE OUTFILE" << std::endl;
+#endif
   std::cout << "This program reads the VPack INFILE into a string and saves its"
             << std::endl;
   std::cout << "JSON representation in file OUTFILE. Will work only for input"
             << std::endl;
   std::cout << "files up to 2 GB size." << std::endl;
+#ifdef __linux__
+  std::cout << "If no OUTFILE is specified, the generated JSON value be"
+            << std::endl;
+  std::cout << "printed to stdout." << std::endl;
+#endif
   std::cout << "Available options are:" << std::endl;
   std::cout << " --pretty        pretty-print JSON output" << std::endl;
   std::cout << " --no-pretty     don't pretty print JSON output" << std::endl;
@@ -57,7 +67,10 @@ int main(int argc, char* argv[]) {
   int i = 1;
   while (i < argc) {
     char const* p = argv[i];
-    if (allowFlags && isOption(p, "--pretty")) {
+    if (allowFlags && isOption(p, "--help")) {
+      usage(argv);
+      return EXIT_SUCCESS;
+    } else if (allowFlags && isOption(p, "--pretty")) {
       pretty = true;
     } else if (allowFlags && isOption(p, "--no-pretty")) {
       pretty = false;
@@ -81,13 +94,13 @@ int main(int argc, char* argv[]) {
 
 #ifdef __linux__
   // treat missing outfile as stdout
-  bool resetStream = true;
-  if (outfileName == nullptr) {
+  bool toStdOut = false;
+  if (outfileName == nullptr || strcmp(outfileName, "+") == 0) {
     outfileName = "/proc/self/fd/1";
-    resetStream = false;
+    toStdOut = true;
   }
 #else
-  bool const resetStream = true;
+  bool const toStdOut = false;
   if (outfileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
@@ -114,7 +127,7 @@ int main(int argc, char* argv[]) {
     char buffer[4096];
     while (ifs.good()) {
       ifs.read(&buffer[0], sizeof(buffer));
-      s.append(buffer, ifs.gcount());
+      s.append(buffer, checkOverflow(ifs.gcount()));
     }
   }
   ifs.close();
@@ -148,7 +161,7 @@ int main(int argc, char* argv[]) {
   }
 
   // reset stream
-  if (resetStream) {
+  if (!toStdOut) {
     ofs.seekp(0);
   }
 
@@ -158,10 +171,12 @@ int main(int argc, char* argv[]) {
 
   ofs.close();
 
-  std::cout << "Successfully converted JSON infile '" << infile << "'"
-            << std::endl;
-  std::cout << "VPack Infile size: " << s.size() << std::endl;
-  std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
+  if (!toStdOut) {
+    std::cout << "Successfully converted JSON infile '" << infile << "'"
+              << std::endl;
+    std::cout << "VPack Infile size: " << s.size() << std::endl;
+    std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
+  }
 
   return EXIT_SUCCESS;
 }
