@@ -2406,6 +2406,20 @@ TEST(ParserTest, UseNonSSEWhitespaceCheck) {
   ASSERT_EQ(value.substr(1, value.size() - 2), s.copyString());
 }
 
+TEST(ParserTest, ClearBuilderOption) {
+  Options options;
+  options.clearBuilderBeforeParse = false;
+  Parser parser(&options);
+  parser.parse(std::string("0"));
+  parser.parse(std::string("1"));
+  std::shared_ptr<Builder> builder = parser.steal();
+
+  ASSERT_EQ(builder->buffer()->size(), 2UL);
+  uint8_t* p = builder->start();
+  ASSERT_EQ(p[0], 0x30);
+  ASSERT_EQ(p[1], 0x31);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
