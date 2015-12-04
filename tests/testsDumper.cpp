@@ -143,8 +143,8 @@ TEST(OutStreamTest, StringifyComplexObject) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   std::ostringstream result;
   result << s;
@@ -169,8 +169,8 @@ TEST(PrettyDumperTest, SimpleObject) {
   Parser parser;
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   std::ostringstream result;
   result << s;
@@ -194,8 +194,8 @@ TEST(PrettyDumperTest, ComplexObject) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
@@ -215,8 +215,8 @@ TEST(StreamDumperTest, SimpleObject) {
   Parser parser;
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Options options;
   options.prettyPrint = true;
@@ -233,8 +233,8 @@ TEST(StreamDumperTest, UseStringStreamTypedef) {
   Parser parser;
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Options options;
   options.prettyPrint = true;
@@ -256,8 +256,8 @@ TEST(StreamDumperTest, ComplexObject) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
@@ -1219,6 +1219,14 @@ TEST(StringDumperTest, BCD) {
                               Exception::NotImplemented);
 }
 
+TEST(StringDumperTest, BCDNeg) {
+  static uint8_t const b[] = {0xd0, 0x00, 0x00, 0x00};  // fake BCD value
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NotImplemented);
+}
+
 TEST(StringDumperTest, AttributeTranslationsNotSet) {
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
   // intentionally don't add any translations
@@ -1233,8 +1241,8 @@ TEST(StringDumperTest, AttributeTranslationsNotSet) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   std::string result = Dumper::toString(s, &options);
   ASSERT_EQ(value, result);
@@ -1262,8 +1270,8 @@ TEST(StringDumperTest, AttributeTranslations) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start(), &options);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start(), &options);
 
   std::string result = Dumper::toString(s, &options);
   ASSERT_EQ(value, result);
@@ -1289,8 +1297,8 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start(), &options);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start(), &options);
 
   std::string result = Dumper::toString(s, &options);
   ASSERT_EQ(value, result);

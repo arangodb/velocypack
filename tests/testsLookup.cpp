@@ -36,8 +36,8 @@ TEST(LookupTest, HasKeyShortObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_TRUE(s.hasKey("bar"));
@@ -62,8 +62,8 @@ TEST(LookupTest, HasKeyShortObjectCompact) {
   Parser parser(&options);
 
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -95,8 +95,8 @@ TEST(LookupTest, HasKeyLongObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_TRUE(s.hasKey("test4"));
   ASSERT_TRUE(s.hasKey("test10"));
@@ -130,8 +130,8 @@ TEST(LookupTest, HasKeyLongObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -155,8 +155,8 @@ TEST(LookupTest, HasKeySubattributes) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()),
                               Exception::InvalidAttributePath);
@@ -185,8 +185,8 @@ TEST(LookupTest, HasKeySubattributesCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x0b, s.head());
 
@@ -214,8 +214,8 @@ TEST(LookupTest, EmptyObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("foo");
@@ -233,8 +233,8 @@ TEST(LookupTest, AlmostEmptyObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("foo");
@@ -254,8 +254,8 @@ TEST(LookupTest, LookupShortObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("foo");
@@ -305,8 +305,8 @@ TEST(LookupTest, LookupShortObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -355,8 +355,8 @@ TEST(LookupTest, LookupSubattributes) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()),
                               Exception::InvalidAttributePath);
@@ -406,8 +406,8 @@ TEST(LookupTest, LookupSubattributesCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x0b, s.head());
 
@@ -466,8 +466,8 @@ TEST(LookupTest, LookupLongObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("test4");
@@ -527,8 +527,8 @@ TEST(LookupTest, LookupLongObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -590,8 +590,8 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("test4");
@@ -648,8 +648,8 @@ TEST(LookupTest, LookupLinear) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v;
   v = s.get("test0");
@@ -684,8 +684,8 @@ TEST(LookupTest, LookupBinary) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   for (size_t i = 0; i < 128; ++i) {
     std::string key = "test";
@@ -715,8 +715,8 @@ TEST(LookupTest, LookupBinaryCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -747,8 +747,8 @@ TEST(LookupTest, LookupBinarySamePrefix) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   for (size_t i = 0; i < 128; ++i) {
     std::string key = "test";
@@ -777,8 +777,8 @@ TEST(LookupTest, LookupBinaryLongObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   for (size_t i = 0; i < 1127; ++i) {
     std::string key = "test";
@@ -795,8 +795,8 @@ TEST(LookupTest, LookupInvalidTypeNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
 }
@@ -806,8 +806,8 @@ TEST(LookupTest, LookupInvalidTypeArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.get("test"), Exception::InvalidValueType);
 }
@@ -817,8 +817,8 @@ TEST(LookupTest, AtNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
 }
@@ -828,8 +828,8 @@ TEST(LookupTest, AtObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::InvalidValueType);
 }
@@ -839,8 +839,8 @@ TEST(LookupTest, AtArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(1, s.at(0).getInt());
   ASSERT_EQ(2, s.at(1).getInt());
@@ -858,8 +858,8 @@ TEST(LookupTest, AtArrayCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x13, s.head());
 
@@ -876,8 +876,8 @@ TEST(LookupTest, AtArrayEmpty) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.at(0), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(1), Exception::IndexOutOfBounds);
@@ -888,8 +888,8 @@ TEST(LookupTest, KeyAtArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
 }
@@ -899,8 +899,8 @@ TEST(LookupTest, KeyAtNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::InvalidValueType);
 }
@@ -913,8 +913,8 @@ TEST(LookupTest, KeyAtObject) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ("foo", s.keyAt(0).copyString());
   ASSERT_EQ("bar", s.keyAt(1).copyString());
@@ -932,8 +932,8 @@ TEST(LookupTest, KeyAtObjectSorted) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ("bar", s.keyAt(0).copyString());
   ASSERT_EQ("baz", s.keyAt(1).copyString());
@@ -952,8 +952,8 @@ TEST(LookupTest, KeyAtObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -970,8 +970,8 @@ TEST(LookupTest, KeyAtObjectEmpty) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(1), Exception::IndexOutOfBounds);
@@ -982,8 +982,8 @@ TEST(LookupTest, ValueAtArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::InvalidValueType);
 }
@@ -993,8 +993,8 @@ TEST(LookupTest, ValueAtNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::InvalidValueType);
 }
@@ -1007,8 +1007,8 @@ TEST(LookupTest, ValueAtObject) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(1, s.valueAt(0).getInt());
   ASSERT_EQ(2, s.valueAt(1).getInt());
@@ -1026,8 +1026,8 @@ TEST(LookupTest, ValueAtObjectSorted) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(2, s.valueAt(0).getInt());
   ASSERT_EQ(3, s.valueAt(1).getInt());
@@ -1046,8 +1046,8 @@ TEST(LookupTest, ValueAtObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
 
@@ -1064,8 +1064,8 @@ TEST(LookupTest, ValueAtObjectEmpty) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(1), Exception::IndexOutOfBounds);

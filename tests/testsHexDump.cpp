@@ -30,33 +30,33 @@
 #include "tests-common.h"
 
 TEST(HexDumpTest, TestNull) {
-  Builder b = Parser::fromJson("null");
+  std::shared_ptr<Builder> b = Parser::fromJson("null");
   std::ostringstream out;
-  out << HexDump(b.slice());
+  out << HexDump(b->slice());
 
   ASSERT_EQ("0x18", out.str());
 }
 
 TEST(HexDumpTest, TestTrue) {
-  Builder b = Parser::fromJson("true");
+  std::shared_ptr<Builder> b = Parser::fromJson("true");
   std::ostringstream out;
-  out << HexDump(b.slice());
+  out << HexDump(b->slice());
 
   ASSERT_EQ("0x1a", out.str());
 }
 
 TEST(HexDumpTest, TestFalse) {
-  Builder b = Parser::fromJson("false");
+  std::shared_ptr<Builder> b = Parser::fromJson("false");
   std::ostringstream out;
-  out << HexDump(b.slice());
+  out << HexDump(b->slice());
 
   ASSERT_EQ("0x19", out.str());
 }
 
 TEST(HexDumpTest, TestArray) {
-  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
   std::ostringstream out;
-  out << HexDump(b.slice());
+  out << HexDump(b->slice());
 
   ASSERT_EQ(
       "0x06 0x18 0x0a 0x31 0x32 0x33 0x34 0x35 0x36 0x37 0x38 0x39 0x28 0x0a "
@@ -65,9 +65,9 @@ TEST(HexDumpTest, TestArray) {
 }
 
 TEST(HexDumpTest, TestValuesPerLine) {
-  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
   std::ostringstream out;
-  out << HexDump(b.slice(), 4, " ");
+  out << HexDump(b->slice(), 4, " ");
 
   ASSERT_EQ(
       "0x06 0x18 0x0a 0x31 \n0x32 0x33 0x34 0x35 \n0x36 0x37 0x38 0x39 \n0x28 "
@@ -76,9 +76,9 @@ TEST(HexDumpTest, TestValuesPerLine) {
 }
 
 TEST(HexDumpTest, TestSeparator) {
-  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
   std::ostringstream out;
-  out << HexDump(b.slice(), 16, ", ");
+  out << HexDump(b->slice(), 16, ", ");
 
   ASSERT_EQ(
       "0x06, 0x18, 0x0a, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, "
@@ -88,9 +88,9 @@ TEST(HexDumpTest, TestSeparator) {
 }
 
 TEST(HexDumpTest, TestEmptySeparator) {
-  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
   std::ostringstream out;
-  out << HexDump(b.slice(), 16, "");
+  out << HexDump(b->slice(), 16, "");
 
   ASSERT_EQ(
       "0x060x180x0a0x310x320x330x340x350x360x370x380x390x280x0a0x030x04\n0x050x"

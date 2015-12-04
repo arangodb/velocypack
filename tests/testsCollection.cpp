@@ -630,8 +630,8 @@ TEST(CollectionTest, ContainsArrayUsingIsEqualPredicate) {
   parser.parse(value);
   Slice s(parser.start());
 
-  Builder b = Parser::fromJson("129");
-  IsEqualPredicate predicate(Slice(b.start()));
+  std::shared_ptr<Builder> b = Parser::fromJson("129");
+  IsEqualPredicate predicate(Slice(b->start()));
   ASSERT_TRUE(Collection::contains(s, predicate));
 }
 
@@ -641,8 +641,8 @@ TEST(CollectionTest, ContainsArrayUsingIsEqualPredicateNotFound) {
   parser.parse(value);
   Slice s(parser.start());
 
-  Builder b = Parser::fromJson("-2");
-  IsEqualPredicate predicate(Slice(b.start()));
+  std::shared_ptr<Builder> b = Parser::fromJson("-2");
+  IsEqualPredicate predicate(Slice(b->start()));
   ASSERT_FALSE(Collection::contains(s, predicate));
 }
 
@@ -653,12 +653,12 @@ TEST(CollectionTest, ContainsArrayUsingSlice) {
   parser.parse(value);
   Slice s(parser.start());
 
-  Builder b1 = Parser::fromJson("\"bazz!!\"");
-  ASSERT_TRUE(Collection::contains(s, Slice(b1.start())));
-  Builder b2 = Parser::fromJson("\"bark\"");
-  ASSERT_FALSE(Collection::contains(s, Slice(b2.start())));
-  Builder b3 = Parser::fromJson("141");
-  ASSERT_TRUE(Collection::contains(s, Slice(b3.start())));
+  std::shared_ptr<Builder> b1 = Parser::fromJson("\"bazz!!\"");
+  ASSERT_TRUE(Collection::contains(s, Slice(b1->start())));
+  std::shared_ptr<Builder> b2 = Parser::fromJson("\"bark\"");
+  ASSERT_FALSE(Collection::contains(s, Slice(b2->start())));
+  std::shared_ptr<Builder> b3 = Parser::fromJson("141");
+  ASSERT_TRUE(Collection::contains(s, Slice(b3->start())));
   ASSERT_FALSE(Collection::contains(s, Slice()));
 }
 
@@ -1021,8 +1021,8 @@ TEST(CollectionTest, KeepManyAttributes) {
   }
   value.push_back('}');
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b(Parser::fromJson(value));
+  Slice s(b->start());
 
   std::vector<std::string> toKeep;
   for (size_t i = 0; i < 30; ++i) {
@@ -1030,8 +1030,8 @@ TEST(CollectionTest, KeepManyAttributes) {
     toKeep.push_back(key);
   }
 
-  b = Collection::keep(s, toKeep);
-  s = b.slice();
+  *b = Collection::keep(s, toKeep);
+  s = b->slice();
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(30U, s.length());
 
@@ -1163,8 +1163,8 @@ TEST(CollectionTest, RemoveManyAttributes) {
   }
   value.push_back('}');
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value);
+  Slice s(b->start());
 
   std::vector<std::string> toRemove;
   for (size_t i = 0; i < 30; ++i) {
@@ -1172,8 +1172,8 @@ TEST(CollectionTest, RemoveManyAttributes) {
     toRemove.push_back(key);
   }
 
-  b = Collection::remove(s, toRemove);
-  s = b.slice();
+  *b = Collection::remove(s, toRemove);
+  s = b->slice();
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(70U, s.length());
 
@@ -1264,11 +1264,11 @@ TEST(CollectionTest, MergeEmptyLeft) {
   std::string const l("{}");
   std::string const r("{\"bark\":1,\"qux\":2,\"bart\":3}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
@@ -1284,11 +1284,11 @@ TEST(CollectionTest, MergeEmptyRight) {
   std::string const l("{\"bark\":1,\"qux\":2,\"bart\":3}");
   std::string const r("{}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
@@ -1304,11 +1304,11 @@ TEST(CollectionTest, MergeDistinct) {
   std::string const l("{\"foo\":1,\"bar\":2,\"baz\":3}");
   std::string const r("{\"bark\":1,\"qux\":2,\"bart\":3}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
@@ -1331,11 +1331,11 @@ TEST(CollectionTest, MergeOverlap) {
   std::string const r(
       "{\"baz\":19,\"bark\":1,\"qux\":2,\"bar\":42,\"test\":9,\"foo\":12}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
@@ -1361,11 +1361,11 @@ TEST(CollectionTest, MergeSubAttributes) {
       "{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{"
       "\"test\":1,\"bart\":2}}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, true);
   Slice s(b.start());
@@ -1400,11 +1400,11 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
       "{\"foo\":2,\"bar\":{\"one\":23,\"two\":42,\"four\":99},\"baz\":{"
       "\"test\":1,\"bart\":2}}");
 
-  Builder p1 = Parser::fromJson(l);
-  Slice s1(p1.start());
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
 
-  Builder p2 = Parser::fromJson(r);
-  Slice s2(p2.start());
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
 
   Builder b = Collection::merge(s1, s2, false);
   Slice s(b.start());

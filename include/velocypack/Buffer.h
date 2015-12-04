@@ -139,14 +139,8 @@ class Buffer {
 
     VELOCYPACK_ASSERT(_pos + len >= sizeof(_local));
 
-    static ValueLength const MinLength = sizeof(_local);
-
     // need reallocation
     ValueLength newLen = _pos + len;
-    if (newLen < MinLength) {
-      // ensure we don't alloc too small blocks
-      newLen = MinLength;
-    }
     static double const GrowthFactor = 1.25;
     if (_pos > 0 && newLen < GrowthFactor * _pos) {
       // ensure the buffer grows sensibly and not by 1 byte only

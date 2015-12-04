@@ -36,8 +36,8 @@ TEST(SliceTest, SliceStart) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x18UL, s.head());
   ASSERT_EQ(0x18UL, *s.start());
@@ -54,8 +54,8 @@ TEST(SliceTest, ToJsonNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("null", s.toJson());
 }
 
@@ -64,8 +64,8 @@ TEST(SliceTest, ToJsonFalse) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("false", s.toJson());
 }
 
@@ -74,8 +74,8 @@ TEST(SliceTest, ToJsonTrue) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("true", s.toJson());
 }
 
@@ -84,8 +84,8 @@ TEST(SliceTest, ToJsonNumber) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("-12345", s.toJson());
 }
 
@@ -94,8 +94,8 @@ TEST(SliceTest, ToJsonString) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("\"foobarbaz\"", s.toJson());
 }
 
@@ -104,8 +104,8 @@ TEST(SliceTest, ToJsonArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
 }
 
@@ -117,8 +117,8 @@ TEST(SliceTest, ToJsonArrayCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(0x13, s.head());
 
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
@@ -132,8 +132,8 @@ TEST(SliceTest, ToJsonObject) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(0x14, s.head());
 
   ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
@@ -144,8 +144,8 @@ TEST(SliceTest, ToJsonObjectCompact) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
 }
 
@@ -154,8 +154,8 @@ TEST(SliceTest, InvalidGetters) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ValueLength len;
 
@@ -273,8 +273,8 @@ TEST(SliceTest, LengthNull) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
 }
@@ -284,8 +284,8 @@ TEST(SliceTest, LengthTrue) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.length(), Exception::InvalidValueType);
 }
@@ -295,8 +295,8 @@ TEST(SliceTest, LengthArrayEmpty) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0UL, s.length());
 }
@@ -306,8 +306,8 @@ TEST(SliceTest, LengthArray) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(10UL, s.length());
 }
@@ -320,8 +320,8 @@ TEST(SliceTest, LengthArrayCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x13, s.head());
   ASSERT_EQ(10UL, s.length());
@@ -332,8 +332,8 @@ TEST(SliceTest, LengthObjectEmpty) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0UL, s.length());
 }
@@ -345,8 +345,8 @@ TEST(SliceTest, LengthObject) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(10UL, s.length());
 }
@@ -361,8 +361,8 @@ TEST(SliceTest, LengthObjectCompact) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   ASSERT_EQ(0x14, s.head());
   ASSERT_EQ(10UL, s.length());
@@ -1568,8 +1568,8 @@ TEST(SliceTest, ObjectCompact) {
 TEST(SliceTest, ToStringNull) {
   std::string const value("null");
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value);
+  Slice s(b->start());
 
   ASSERT_EQ("null", s.toString());
 }
@@ -1577,8 +1577,8 @@ TEST(SliceTest, ToStringNull) {
 TEST(SliceTest, ToStringArray) {
   std::string const value("[1,2,3,4,5]");
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value);
+  Slice s(b->start());
 
   ASSERT_EQ("[\n  1,\n  2,\n  3,\n  4,\n  5\n]", s.toString());
 }
@@ -1589,8 +1589,8 @@ TEST(SliceTest, ToStringArrayCompact) {
 
   std::string const value("[1,2,3,4,5]");
 
-  Builder b = Parser::fromJson(value, &options);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value, &options);
+  Slice s(b->start());
 
   ASSERT_EQ(0x13, s.head());
   ASSERT_EQ("[\n  1,\n  2,\n  3,\n  4,\n  5\n]", s.toString());
@@ -1599,8 +1599,8 @@ TEST(SliceTest, ToStringArrayCompact) {
 TEST(SliceTest, ToStringArrayEmpty) {
   std::string const value("[]");
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value);
+  Slice s(b->start());
 
   ASSERT_EQ("[\n]", s.toString());
 }
@@ -1608,8 +1608,8 @@ TEST(SliceTest, ToStringArrayEmpty) {
 TEST(SliceTest, ToStringObjectEmpty) {
   std::string const value("{ }");
 
-  Builder b = Parser::fromJson(value);
-  Slice s(b.start());
+  std::shared_ptr<Builder> b = Parser::fromJson(value);
+  Slice s(b->start());
 
   ASSERT_EQ("{\n}", s.toString());
 }
@@ -1672,46 +1672,46 @@ TEST(SliceTest, EqualToDuplicateValuesStrings) {
 }
 
 TEST(SliceTest, EqualToNull) {
-  Builder b1 = Parser::fromJson("null");
-  Slice s1 = b1.slice();
-  Builder b2 = Parser::fromJson("null");
-  Slice s2 = b2.slice();
+  std::shared_ptr<Builder> b1 = Parser::fromJson("null");
+  Slice s1 = b1->slice();
+  std::shared_ptr<Builder> b2 = Parser::fromJson("null");
+  Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
 }
 
 TEST(SliceTest, EqualToInt) {
-  Builder b1 = Parser::fromJson("-128885355");
-  Slice s1 = b1.slice();
-  Builder b2 = Parser::fromJson("-128885355");
-  Slice s2 = b2.slice();
+  std::shared_ptr<Builder> b1 = Parser::fromJson("-128885355");
+  Slice s1 = b1->slice();
+  std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355");
+  Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
 }
 
 TEST(SliceTest, EqualToUInt) {
-  Builder b1 = Parser::fromJson("128885355");
-  Slice s1 = b1.slice();
-  Builder b2 = Parser::fromJson("128885355");
-  Slice s2 = b2.slice();
+  std::shared_ptr<Builder> b1 = Parser::fromJson("128885355");
+  Slice s1 = b1->slice();
+  std::shared_ptr<Builder> b2 = Parser::fromJson("128885355");
+  Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
 }
 
 TEST(SliceTest, EqualToDouble) {
-  Builder b1 = Parser::fromJson("-128885355.353");
-  Slice s1 = b1.slice();
-  Builder b2 = Parser::fromJson("-128885355.353");
-  Slice s2 = b2.slice();
+  std::shared_ptr<Builder> b1 = Parser::fromJson("-128885355.353");
+  Slice s1 = b1->slice();
+  std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355.353");
+  Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
 }
 
 TEST(SliceTest, EqualToString) {
-  Builder b1 = Parser::fromJson("\"this is a test string\"");
-  Slice s1 = b1.slice();
-  Builder b2 = Parser::fromJson("\"this is a test string\"");
-  Slice s2 = b2.slice();
+  std::shared_ptr<Builder> b1 = Parser::fromJson("\"this is a test string\"");
+  Slice s1 = b1->slice();
+  std::shared_ptr<Builder> b2 = Parser::fromJson("\"this is a test string\"");
+  Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
 }
@@ -1763,69 +1763,69 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
 }
 
 TEST(SliceTest, EqualToDirectInvocationLongStrings) {
-  Builder b1 = Parser::fromJson(
+  std::shared_ptr<Builder> b1 = Parser::fromJson(
       "\"thisisalongstring.dddddddddddddddddddddddddddds......................."
       "....................................................."
       "longerthan127chars\"");
-  Builder b2 = Parser::fromJson(
+  std::shared_ptr<Builder> b2 = Parser::fromJson(
       "\"thisisalongstring.dddddddddddddddddddddddddddds.................eek!.."
       "........................................................."
       "longerthan127chars\"");
 
   std::equal_to<Slice> comparer;
-  ASSERT_TRUE(comparer(b1.slice(), b1.slice()));
-  ASSERT_TRUE(comparer(b2.slice(), b2.slice()));
-  ASSERT_FALSE(comparer(b1.slice(), b2.slice()));
-  ASSERT_FALSE(comparer(b2.slice(), b1.slice()));
+  ASSERT_TRUE(comparer(b1->slice(), b1->slice()));
+  ASSERT_TRUE(comparer(b2->slice(), b2->slice()));
+  ASSERT_FALSE(comparer(b1->slice(), b2->slice()));
+  ASSERT_FALSE(comparer(b2->slice(), b1->slice()));
 }
 
 TEST(SliceTest, HashNull) {
-  Builder b = Parser::fromJson("null");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("null");
+  Slice s = b->slice();
 
   ASSERT_EQ(15292542490648858194ULL, s.hash());
 }
 
 TEST(SliceTest, HashDouble) {
-  Builder b = Parser::fromJson("-345354.35532352");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("-345354.35532352");
+  Slice s = b->slice();
 
   ASSERT_EQ(8711156443018077288ULL, s.hash());
 }
 
 TEST(SliceTest, HashString) {
-  Builder b = Parser::fromJson("\"this is a test string\"");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("\"this is a test string\"");
+  Slice s = b->slice();
 
   ASSERT_EQ(16298643255475496611ULL, s.hash());
 }
 
 TEST(SliceTest, HashStringEmpty) {
-  Builder b = Parser::fromJson("\"\"");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("\"\"");
+  Slice s = b->slice();
 
   ASSERT_EQ(5324680019219065241ULL, s.hash());
 }
 
 TEST(SliceTest, HashStringShort) {
-  Builder b = Parser::fromJson("\"123456\"");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("\"123456\"");
+  Slice s = b->slice();
 
   ASSERT_EQ(13345050106135537218ULL, s.hash());
 }
 
 TEST(SliceTest, HashArray) {
-  Builder b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
-  Slice s = b.slice();
+  std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
+  Slice s = b->slice();
 
   ASSERT_EQ(1515761289406454211ULL, s.hash());
 }
 
 TEST(SliceTest, HashObject) {
-  Builder b = Parser::fromJson(
+  std::shared_ptr<Builder> b = Parser::fromJson(
       "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
       "\"seven\":7}");
-  Slice s = b.slice();
+  Slice s = b->slice();
 
   ASSERT_EQ(6865527808070733846ULL, s.hash());
 }

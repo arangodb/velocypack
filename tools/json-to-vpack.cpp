@@ -73,10 +73,10 @@ static bool buildCompressedKeys(
   Parser parser(&options);
   try {
     parser.parse(s);
-    Builder builder = parser.steal();
+    std::shared_ptr<Builder> builder = parser.steal();
 
     Collection::visitRecursive(
-        builder.slice(), Collection::PreOrder,
+        builder->slice(), Collection::PreOrder,
         [&keysFound](Slice const& key, Slice const&) -> bool {
           if (key.isString()) {
             keysFound[key.copyString()]++;
@@ -247,12 +247,12 @@ int main(int argc, char* argv[]) {
   }
 
   // write into stream
-  Builder builder = parser.steal();
+  std::shared_ptr<Builder> builder = parser.steal();
   if (hexDump) {
-    ofs << HexDump(builder.slice()) << std::endl;
+    ofs << HexDump(builder->slice()) << std::endl;
   } else {
-    uint8_t const* start = builder.start();
-    ofs.write(reinterpret_cast<char const*>(start), builder.size());
+    uint8_t const* start = builder->start();
+    ofs.write(reinterpret_cast<char const*>(start), builder->size());
   }
 
   ofs.close();
@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Successfully converted JSON infile '" << infile << "'"
               << std::endl;
     std::cout << "JSON Infile size:    " << s.size() << std::endl;
-    std::cout << "VPack Outfile size:  " << builder.size() << std::endl;
+    std::cout << "VPack Outfile size:  " << builder->size() << std::endl;
 
     if (compress) {
       if (translator.get()->count() > 0) {

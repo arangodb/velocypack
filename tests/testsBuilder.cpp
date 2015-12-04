@@ -198,9 +198,9 @@ TEST(BuilderTest, BufferSharedPointerStealFromParser) {
       "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
       "mmmmmmmmmmmmmmmmdddddddfjf\"");
 
-  Builder b = parser.steal();
+  std::shared_ptr<Builder> b = parser.steal();
   // only the Builder itself is using its Buffer
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
+  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b->buffer();
   ASSERT_EQ(1, builderBuffer.use_count());
 }
 
@@ -231,9 +231,9 @@ TEST(BuilderTest, BufferSharedPointerCopy) {
 }
 
 TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
-  Builder b;
-  std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
-  ASSERT_EQ(1, builderBuffer.use_count());
+  std::shared_ptr<Builder> b(new Builder());
+  std::shared_ptr<Buffer<uint8_t>> builderBuffer = b->buffer();
+  ASSERT_EQ(2, builderBuffer.use_count());
   auto ptr = builderBuffer.get();
 
   {
@@ -244,14 +244,13 @@ TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
         "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmm"
         "mmmmmmmmmmmmmmmmmmdddddddfjf\"");
 
-    ASSERT_EQ(1, builderBuffer.use_count());
+    ASSERT_EQ(2, builderBuffer.use_count());
 
     b = parser.steal();
-    std::shared_ptr<Buffer<uint8_t>> const& builderBuffer = b.buffer();
-    ASSERT_NE(ptr, builderBuffer.get());
     ASSERT_EQ(1, builderBuffer.use_count());
-
-    ptr = builderBuffer.get();
+    std::shared_ptr<Buffer<uint8_t>> const& builderBuffer2 = b->buffer();
+    ASSERT_NE(ptr, builderBuffer2.get());
+    ASSERT_EQ(1, builderBuffer2.use_count());
   }
 
   ASSERT_EQ(1, builderBuffer.use_count());
@@ -259,7 +258,7 @@ TEST(BuilderTest, BufferSharedPointerStealFromParserExitScope) {
 }
 
 TEST(BuilderTest, BufferSharedPointerStealAndReturn) {
-  auto func = []() -> Builder {
+  auto func = []() -> std::shared_ptr<Builder> {
     Parser parser;
     parser.parse(
         "\"skjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjddddddddddddddddddddddddddddddd"
@@ -270,9 +269,9 @@ TEST(BuilderTest, BufferSharedPointerStealAndReturn) {
     return parser.steal();
   };
 
-  Builder b = func();
-  ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
-  ASSERT_EQ(217UL, b.buffer()->size());
+  std::shared_ptr<Builder> b = func();
+  ASSERT_EQ(0xbf, *(b->buffer()->data()));  // long UTF-8 string...
+  ASSERT_EQ(217UL, b->buffer()->size());
 }
 
 TEST(BuilderTest, BufferSharedPointerStealMultiple) {
@@ -283,13 +282,14 @@ TEST(BuilderTest, BufferSharedPointerStealMultiple) {
       "mmmmmmmmmmmmmmmmmmmmmmmmddddddddddddddddddddddddddddddddddddmmmmmmmmmmmm"
       "mmmmmmmmmmmmmmmmdddddddfjf\"");
 
-  Builder b = parser.steal();
-  ASSERT_EQ(0xbf, *b.buffer()->data());  // long UTF-8 string...
-  ASSERT_EQ(217UL, b.buffer()->size());
-  ASSERT_EQ(1, b.buffer().use_count());
+  std::shared_ptr<Builder> b = parser.steal();
+  ASSERT_EQ(0xbf, *(b->buffer()->data()));  // long UTF-8 string...
+  ASSERT_EQ(217UL, b->buffer()->size());
+  ASSERT_EQ(1, b->buffer().use_count());
 
-  // steal again
-  Builder b2 = parser.steal();
+  // steal again, should work, but Builder should be empty:
+  std::shared_ptr<Builder> b2 = parser.steal();
+  ASSERT_EQ(b2->buffer()->size(), 0UL);
 }
 
 TEST(BuilderTest, BufferSharedPointerInject) {

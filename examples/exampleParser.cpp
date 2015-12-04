@@ -23,9 +23,9 @@ int main(int, char* []) {
   }
 
   // get a pointer to the start of the data
-  Builder b = parser.steal();
+  std::shared_ptr<Builder> b = parser.steal();
 
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
-  std::cout << HexDump(b.slice()) << std::endl;
+  std::cout << HexDump(b->slice()) << std::endl;
 }

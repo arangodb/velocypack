@@ -226,9 +226,6 @@ class Builder {
   // get a const reference to the Builder's Buffer object
   std::shared_ptr<Buffer<uint8_t>> const& buffer() const { return _buffer; }
 
-  // get a non-const reference to the Builder's Buffer object
-  //std::shared_ptr<Buffer<uint8_t>>& buffer() { return _buffer; }
-
   std::shared_ptr<Buffer<uint8_t>> steal() {
     std::shared_ptr<Buffer<uint8_t>> res = std::move(_buffer);
     _buffer.reset(new Buffer<uint8_t>());

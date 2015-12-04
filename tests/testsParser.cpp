@@ -194,8 +194,8 @@ TEST(ParserTest, Null) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Null, 1ULL);
 
   checkDump(s, value);
@@ -216,8 +216,8 @@ TEST(ParserTest, False) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Bool, 1ULL);
   ASSERT_FALSE(s.getBool());
 
@@ -239,8 +239,8 @@ TEST(ParserTest, True) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Bool, 1ULL);
   ASSERT_TRUE(s.getBool());
 
@@ -254,8 +254,8 @@ TEST(ParserTest, Zero) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::SmallInt, 1ULL);
   ASSERT_EQ(0, s.getSmallInt());
 
@@ -285,8 +285,8 @@ TEST(ParserTest, Int1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::SmallInt, 1ULL);
   ASSERT_EQ(1, s.getSmallInt());
 
@@ -300,8 +300,8 @@ TEST(ParserTest, IntM1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::SmallInt, 1ULL);
   ASSERT_EQ(-1LL, s.getSmallInt());
 
@@ -315,8 +315,8 @@ TEST(ParserTest, Int2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::UInt, 4ULL);
   ASSERT_EQ(100000ULL, s.getUInt());
 
@@ -330,8 +330,8 @@ TEST(ParserTest, Int3) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Int, 4ULL);
   ASSERT_EQ(-100000LL, s.getInt());
 
@@ -346,8 +346,8 @@ TEST(ParserTest, UIntMaxNeg) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   // handle rounding errors
   ASSERT_DOUBLE_EQ(-18446744073709551615., s.getDouble());
@@ -360,8 +360,8 @@ TEST(ParserTest, IntMin) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Int, 9ULL);
   ASSERT_EQ(INT64_MIN, s.getInt());
 
@@ -375,8 +375,8 @@ TEST(ParserTest, IntMinMinusOne) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_DOUBLE_EQ(-9223372036854775809., s.getDouble());
 }
@@ -388,8 +388,8 @@ TEST(ParserTest, IntMax) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::UInt, 9ULL);
   ASSERT_EQ(static_cast<uint64_t>(INT64_MAX), s.getUInt());
 
@@ -403,8 +403,8 @@ TEST(ParserTest, IntMaxPlusOne) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::UInt, 9ULL);
   ASSERT_EQ(static_cast<uint64_t>(INT64_MAX) + 1, s.getUInt());
 
@@ -418,8 +418,8 @@ TEST(ParserTest, UIntMax) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::UInt, 9ULL);
   ASSERT_EQ(UINT64_MAX, s.getUInt());
 
@@ -433,8 +433,8 @@ TEST(ParserTest, UIntMaxPlusOne) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_DOUBLE_EQ(18446744073709551616., s.getDouble());
 }
@@ -446,8 +446,8 @@ TEST(ParserTest, Double1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(1.0124, s.getDouble());
 
@@ -461,8 +461,8 @@ TEST(ParserTest, Double2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(-1.0124, s.getDouble());
 
@@ -476,8 +476,8 @@ TEST(ParserTest, DoubleScientificWithoutDot1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(-3.e12, s.getDouble());
 
@@ -492,8 +492,8 @@ TEST(ParserTest, DoubleScientificWithoutDot2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(3e12, s.getDouble());
 
@@ -508,8 +508,8 @@ TEST(ParserTest, DoubleScientific1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(-1.0124e42, s.getDouble());
 
@@ -524,8 +524,8 @@ TEST(ParserTest, DoubleScientific2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(-1.0124e42, s.getDouble());
 
@@ -539,8 +539,8 @@ TEST(ParserTest, DoubleScientific3) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(3122243.0124e-42, s.getDouble());
 
@@ -555,8 +555,8 @@ TEST(ParserTest, DoubleScientific4) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(2335431.0124E-42, s.getDouble());
 
@@ -571,8 +571,8 @@ TEST(ParserTest, DoubleScientific5) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_EQ(3122243.0124e+42, s.getDouble());
 
@@ -587,8 +587,8 @@ TEST(ParserTest, DoubleNeg) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Double, 9ULL);
   ASSERT_DOUBLE_EQ(-184467440737095516161., s.getDouble());
 }
@@ -719,7 +719,7 @@ TEST(ParserTest, LongerString1) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal().slice());
+  Slice s(parser.steal()->slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
@@ -730,7 +730,7 @@ TEST(ParserTest, LongerString2) {
 
   Parser parser;
   parser.parse(value);
-  Slice s(parser.steal().slice());
+  Slice s(parser.steal()->slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
@@ -871,8 +871,8 @@ TEST(ParserTest, StringLiteral) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   std::string const correct = "der hund ging in den wald und aß den fuxx";
   checkBuild(s, ValueType::String, 1 + correct.size());
   char const* p = s.getString(len);
@@ -892,8 +892,8 @@ TEST(ParserTest, StringLiteralEmpty) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::String, 1ULL);
   char const* p = s.getString(len);
   ASSERT_EQ(0, strncmp("", p, len));
@@ -914,8 +914,8 @@ TEST(ParserTest, StringTwoByteUTF8) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder b = parser.steal();
-  Slice s(b.slice());
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
   ASSERT_EQ(value, s.toJson());
 }
 
@@ -928,8 +928,8 @@ TEST(ParserTest, StringThreeByteUTF8) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder b = parser.steal();
-  Slice s(b.slice());
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
   ASSERT_EQ(value, s.toJson());
 }
 
@@ -942,8 +942,8 @@ TEST(ParserTest, StringFourByteUTF8) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder b = parser.steal();
-  Slice s(b.slice());
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
   ASSERT_EQ(value, s.toJson());
 }
 
@@ -1055,8 +1055,8 @@ TEST(ParserTest, StringLiteralUtf8SequenceLowerCase) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::String, 11ULL);
   char const* p = s.getString(len);
   ASSERT_EQ(10ULL, len);
@@ -1076,8 +1076,8 @@ TEST(ParserTest, StringLiteralUtf8SequenceUpperCase) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   std::string correct = "der mÖter";
   checkBuild(s, ValueType::String, 1 + correct.size());
   char const* p = s.getString(len);
@@ -1096,8 +1096,8 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   std::string correct = "der mötör klötörte mät dän fößen";
   checkBuild(s, ValueType::String, 1 + correct.size());
   char const* p = s.getString(len);
@@ -1117,8 +1117,8 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   std::string correct = "der\thund\nging\rin\fden\\wald\"und\b\nden'fux";
   checkBuild(s, ValueType::String, 1 + correct.size());
   char const* p = s.getString(len);
@@ -1139,8 +1139,8 @@ TEST(ParserTest, StringLiteralWithSurrogatePairs) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   std::string correct = "\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85";
   checkBuild(s, ValueType::String, 1 + correct.size());
   char const* p = s.getString(len);
@@ -1161,8 +1161,8 @@ TEST(ParserTest, EmptyArray) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 1);
   ASSERT_EQ(0ULL, s.length());
 
@@ -1176,8 +1176,8 @@ TEST(ParserTest, WhitespacedArray) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 1);
   ASSERT_EQ(0ULL, s.length());
 
@@ -1192,8 +1192,8 @@ TEST(ParserTest, Array1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 3);
   ASSERT_EQ(1ULL, s.length());
   Slice ss = s[0];
@@ -1210,8 +1210,8 @@ TEST(ParserTest, Array2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 4);
   ASSERT_EQ(2ULL, s.length());
   Slice ss = s[0];
@@ -1230,8 +1230,8 @@ TEST(ParserTest, Array3) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 29);
   ASSERT_EQ(5ULL, s.length());
 
@@ -1267,8 +1267,8 @@ TEST(ParserTest, Array4) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 34);
   ASSERT_EQ(7ULL, s.length());
 
@@ -1314,8 +1314,8 @@ TEST(ParserTest, NestedArray1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 3);
   ASSERT_EQ(1ULL, s.length());
 
@@ -1333,8 +1333,8 @@ TEST(ParserTest, NestedArray2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 27);
   ASSERT_EQ(5ULL, s.length());
 
@@ -1398,8 +1398,8 @@ TEST(ParserTest, NestedArray3) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Array, 42);
   ASSERT_EQ(2ULL, s.length());
 
@@ -1508,8 +1508,8 @@ TEST(ParserTest, ShortArrayMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(7ULL, s.head());
   checkBuild(s, ValueType::Array, 1019);
   ASSERT_EQ(255ULL, s.length());
@@ -1549,8 +1549,8 @@ TEST(ParserTest, LongArrayFewMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(4ULL, s.head());
   checkBuild(s, ValueType::Array, 67154);
   ASSERT_EQ(65ULL, s.length());
@@ -1579,8 +1579,8 @@ TEST(ParserTest, LongArrayManyMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(7ULL, s.head());
   checkBuild(s, ValueType::Array, 1023);
   ASSERT_EQ(256ULL, s.length());
@@ -1603,8 +1603,8 @@ TEST(ParserTest, EmptyObject) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 1);
   ASSERT_EQ(0ULL, s.length());
 
@@ -1706,8 +1706,8 @@ TEST(ParserTest, ObjectSimple1) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 8);
   ASSERT_EQ(1ULL, s.length());
 
@@ -1731,8 +1731,8 @@ TEST(ParserTest, ObjectSimple2) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 18);
   ASSERT_EQ(2ULL, s.length());
 
@@ -1764,8 +1764,8 @@ TEST(ParserTest, ObjectDenseNotation) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 13);
   ASSERT_EQ(2ULL, s.length());
 
@@ -1798,8 +1798,8 @@ TEST(ParserTest, ObjectReservedKeys) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 35);
   ASSERT_EQ(3ULL, s.length());
 
@@ -1843,8 +1843,8 @@ TEST(ParserTest, ObjectMixed) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 43);
   ASSERT_EQ(5ULL, s.length());
 
@@ -1932,8 +1932,8 @@ TEST(ParserTest, ShortObjectMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(0xcULL, s.head());
   checkBuild(s, ValueType::Object, 3059);
   ASSERT_EQ(255ULL, s.length());
@@ -1995,8 +1995,8 @@ TEST(ParserTest, LongObjectFewMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(0x0dULL, s.head());  // object with offset size 4
   checkBuild(s, ValueType::Object, 66889);
   ASSERT_EQ(64ULL, s.length());
@@ -2046,8 +2046,8 @@ TEST(ParserTest, LongObjectManyMembers) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   ASSERT_EQ(0x0cULL, s.head());  // long object
   checkBuild(s, ValueType::Object, 3071);
   ASSERT_EQ(256ULL, s.length());
@@ -2084,8 +2084,8 @@ TEST(ParserTest, Utf8Bom) {
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
 
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   checkBuild(s, ValueType::Object, 8);
   ASSERT_EQ(1ULL, s.length());
 
@@ -2113,8 +2113,8 @@ TEST(ParserTest, DuplicateAttributesAllowed) {
 
   Parser parser;
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
 
   Slice v = s.get("foo");
   ASSERT_TRUE(v.isNumber());
@@ -2154,8 +2154,8 @@ TEST(ParserTest, DuplicateSubAttributesAllowed) {
 
   Parser parser(&options);
   parser.parse(value);
-  Builder builder = parser.steal();
-  Slice s(builder.start());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
   Slice v = s.get(std::vector<std::string>({"foo", "bar"}));
   ASSERT_TRUE(v.isNumber());
   ASSERT_EQ(1ULL, v.getUInt());
@@ -2177,9 +2177,9 @@ TEST(ParserTest, FromJson) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
 
   Options options;
-  Builder b = Parser::fromJson(value, &options);
+  std::shared_ptr<Builder> b = Parser::fromJson(value, &options);
 
-  Slice s(b.start());
+  Slice s(b->start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_TRUE(s.hasKey("bar"));
   ASSERT_TRUE(s.hasKey("baz"));
@@ -2191,10 +2191,10 @@ TEST(ParserTest, KeepTopLevelOpenFalse) {
 
   Options options;
   options.keepTopLevelOpen = false;
-  Builder b = Parser::fromJson(value, &options);
-  ASSERT_TRUE(b.isClosed());
+  std::shared_ptr<Builder> b = Parser::fromJson(value, &options);
+  ASSERT_TRUE(b->isClosed());
 
-  Slice s(b.start());
+  Slice s(b->start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_TRUE(s.hasKey("bar"));
   ASSERT_TRUE(s.hasKey("baz"));
@@ -2206,14 +2206,14 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
 
   Options options;
   options.keepTopLevelOpen = true;
-  Builder b = Parser::fromJson(value, &options);
-  ASSERT_FALSE(b.isClosed());
+  std::shared_ptr<Builder> b = Parser::fromJson(value, &options);
+  ASSERT_FALSE(b->isClosed());
 
-  ASSERT_VELOCYPACK_EXCEPTION(b.start(), Exception::BuilderNotSealed);
-  b.close();
-  ASSERT_TRUE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b->start(), Exception::BuilderNotSealed);
+  b->close();
+  ASSERT_TRUE(b->isClosed());
 
-  Slice s(b.start());
+  Slice s(b->start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_TRUE(s.hasKey("bar"));
   ASSERT_TRUE(s.hasKey("baz"));
@@ -2250,8 +2250,8 @@ TEST(ParserTest, ExcludeAttributesTopLevel) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder b = parser.steal();
-  Slice s(b.slice());
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
 
   ASSERT_EQ(4UL, s.length());
   ASSERT_FALSE(s.hasKey("foo"));
@@ -2296,8 +2296,8 @@ TEST(ParserTest, ExcludeAttributesSubLevel) {
   Parser parser(&options);
   parser.parse(value);
 
-  Builder b = parser.steal();
-  Slice s(b.slice());
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
 
   ASSERT_EQ(2UL, s.length());
   ASSERT_TRUE(s.hasKey("foo"));
@@ -2324,8 +2324,8 @@ TEST(ParserTest, UseNonSSEStringCopy) {
   Parser parser;
   parser.parse(value);
 
-  Builder builder = parser.steal();
-  Slice s(builder.slice());
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->slice());
 
   ASSERT_EQ("der\thund\nging\rin\fden\\wald\"und\b\nden'fux", s.copyString());
 }
@@ -2341,7 +2341,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal().slice());
+  Slice s(parser.steal()->slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);  // strip quotes
@@ -2359,7 +2359,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal().slice());
+  Slice s(parser.steal()->slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ("the quick brown\tfox\r\njumped \"over\" the lazy dog", parsed);
@@ -2399,9 +2399,9 @@ TEST(ParserTest, UseNonSSEWhitespaceCheck) {
 
   Parser parser;
   parser.parse(all);
-  Builder builder = parser.steal();
+  std::shared_ptr<Builder> builder = parser.steal();
 
-  Slice s(builder.slice());
+  Slice s(builder->slice());
 
   ASSERT_EQ(value.substr(1, value.size() - 2), s.copyString());
 }
