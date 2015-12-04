@@ -2420,6 +2420,20 @@ TEST(ParserTest, ClearBuilderOption) {
   ASSERT_EQ(p[1], 0x31);
 }
 
+TEST(ParserTest, UseBuilderOnStack) {
+  Builder builder;
+  {
+    Parser parser(builder);
+    Builder const& innerBuilder(parser.builder());
+
+    ASSERT_EQ(&builder, &innerBuilder);
+    parser.parse("17");
+    ASSERT_EQ(innerBuilder.size(), 2UL);
+    ASSERT_EQ(builder.size(), 2UL);
+  }
+  ASSERT_EQ(builder.size(), 2UL);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
