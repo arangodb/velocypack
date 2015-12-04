@@ -50,9 +50,14 @@ TEST(BuilderTest, CreateWithoutBufferOrOptions) {
 
 TEST(BuilderTest, Copy) {
   Builder b;
+  b.openArray();
+  for (int i = 0; i < 10; i++) {
+    b.add(Value("abcdefghijklmnopqrstuvwxyz"));
+  }
+  b.close();
 
   Builder a(b);
-  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
@@ -69,25 +74,13 @@ TEST(BuilderTest, CopyWithoutOptions) {
   }
 }
 
-TEST(BuilderTest, CopyWithoutBuffer) {
-  Builder b;
-  b.buffer().reset();
-
-  try {
-    Builder a(b);
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
-}
-
 TEST(BuilderTest, CopyAssign) {
   Builder b;
 
   Builder a;
   a = b;
 
-  ASSERT_EQ(a.buffer().get(), b.buffer().get());
+  ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
@@ -105,25 +98,15 @@ TEST(BuilderTest, CopyAssignWithoutOptions) {
   }
 }
 
-TEST(BuilderTest, CopyAssignWithoutBuffer) {
-  Builder b;
-  b.buffer().reset();
-
-  Builder a;
-  try {
-    a = b;
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
-}
-
 TEST(BuilderTest, Move) {
   Builder b;
 
+  auto shptrb = b.buffer();
   Builder a(std::move(b));
+  auto shptra = a.buffer();
+  ASSERT_EQ(shptrb.get(), shptra.get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() == nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
 }
 
 TEST(BuilderTest, MoveWithoutOptions) {
@@ -138,24 +121,16 @@ TEST(BuilderTest, MoveWithoutOptions) {
   }
 }
 
-TEST(BuilderTest, MoveWithoutBuffer) {
-  Builder b;
-  b.buffer().reset();
-
-  try {
-    Builder a(std::move(b));
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
-}
-
 TEST(BuilderTest, MoveAssign) {
   Builder b;
 
+  auto shptrb = b.buffer();
   Builder a = std::move(b);
+  auto shptra = a.buffer();
+  ASSERT_EQ(shptrb.get(), shptra.get());
+  ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() == nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
 }
 
 TEST(BuilderTest, MoveAssignWithoutOptions) {
@@ -171,17 +146,20 @@ TEST(BuilderTest, MoveAssignWithoutOptions) {
   }
 }
 
-TEST(BuilderTest, MoveAssignWithoutBuffer) {
+TEST(BuilderTest, StealBuffer) {
   Builder b;
-  b.buffer().reset();
-
-  Builder a;
-  try {
-    a = std::move(b);
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
+  b.openArray();
+  for (int i = 0; i < 10; i++) {
+    b.add(Value("abcdefghijklmnopqrstuvwxyz"));
   }
+  b.close();
+
+  auto ptr1 = b.buffer().get();
+  std::shared_ptr<Buffer<uint8_t>> buf(b.steal());
+  auto ptr2 = b.buffer().get();
+  auto ptr3 = buf.get();
+  ASSERT_EQ(ptr1, ptr3);
+  ASSERT_NE(ptr2, ptr1);
 }
 
 TEST(BuilderTest, SizeWithOpenObject) {
@@ -311,7 +289,7 @@ TEST(BuilderTest, BufferSharedPointerStealMultiple) {
   ASSERT_EQ(1, b.buffer().use_count());
 
   // steal again
-  ASSERT_VELOCYPACK_EXCEPTION(parser.steal(), Exception::InternalError);
+  Builder b2 = parser.steal();
 }
 
 TEST(BuilderTest, BufferSharedPointerInject) {
@@ -344,7 +322,7 @@ TEST(BuilderTest, BufferSharedPointerInject) {
   ASSERT_EQ(2, buffer.use_count());
   ASSERT_EQ(2, builderBuffer.use_count());
 
-  b.buffer().reset();
+  b.steal();   // steals the buffer, resulting shared_ptr is forgotten
   ASSERT_EQ(1, buffer.use_count());
   ASSERT_EQ(ptr, buffer.get());
 }
