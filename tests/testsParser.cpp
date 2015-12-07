@@ -2267,6 +2267,35 @@ TEST(ParserTest, ExcludeAttributesTopLevel) {
   ASSERT_EQ(7UL, s.get("bark").getUInt());
 }
 
+TEST(ParserTest, ExcludeAttributesTopLevelUsingHelper) {
+  std::string const value(
+      "{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":"
+      "7}");
+
+  TopLevelAttributeExcludeHandler handler(std::unordered_set<std::string>{ "foo", "bar", "qux" });
+  Options options;
+  options.attributeExcludeHandler = &handler;
+
+  Parser parser(&options);
+  parser.parse(value);
+
+  std::shared_ptr<Builder> b = parser.steal();
+  Slice s(b->slice());
+
+  ASSERT_EQ(4UL, s.length());
+  ASSERT_FALSE(s.hasKey("foo"));
+  ASSERT_FALSE(s.hasKey("bar"));
+  ASSERT_FALSE(s.hasKey("qux"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_EQ(3UL, s.get("baz").getUInt());
+  ASSERT_TRUE(s.hasKey("quux"));
+  ASSERT_EQ(5UL, s.get("quux").getUInt());
+  ASSERT_TRUE(s.hasKey("bart"));
+  ASSERT_EQ(6UL, s.get("bart").getUInt());
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(7UL, s.get("bark").getUInt());
+}
+
 TEST(ParserTest, ExcludeAttributesSubLevel) {
   std::string const value(
       "{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},"
