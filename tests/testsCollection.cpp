@@ -1813,6 +1813,32 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
   ASSERT_EQ(7, seen);
 }
 
+static bool lt(Slice const a, Slice const b) {
+  if (! a.isInteger() || ! b.isInteger()) {
+    return false;
+  }
+  return a.getInt() < b.getInt();
+}
+
+TEST(CollectionTest, Sort) {
+  const int NUMBER = 3;
+  Builder b;
+  b.openArray();
+  for (int i = NUMBER-1; i >= 0; --i) {
+    b.add(Value(i));
+  }
+  b.close();
+  Builder b2 = Collection::sort(b.slice(), &lt);
+  Slice const s(b2.slice());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(static_cast<uint64_t>(NUMBER), s.length());
+  for (int i = 0; i < NUMBER; i++) {
+    Slice const ss = s[i];
+    ASSERT_TRUE(ss.isInteger());
+    ASSERT_EQ(static_cast<int64_t>(i), ss.getInt());
+  }
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
