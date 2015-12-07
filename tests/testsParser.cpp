@@ -2479,6 +2479,18 @@ TEST(ParserTest, UseBuilderOnStackForArrayValue) {
   ASSERT_EQ(4UL, builder.size());
 }
 
+TEST(ParserTest, UseBuilderOnStackOptionsNullPtr) {
+  Builder builder;
+  Parser* parser = nullptr;
+  ASSERT_VELOCYPACK_EXCEPTION(parser = new Parser(builder, nullptr),
+                              Exception::InternalError);
+  if (parser == nullptr) {
+    parser = new Parser(builder);
+  }
+  parser->parse("[17]");
+  ASSERT_EQ(4UL, builder.size());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
