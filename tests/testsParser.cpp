@@ -719,7 +719,7 @@ TEST(ParserTest, LongerString1) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal()->slice());
+  Slice s(parser.builder().slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
@@ -730,7 +730,7 @@ TEST(ParserTest, LongerString2) {
 
   Parser parser;
   parser.parse(value);
-  Slice s(parser.steal()->slice());
+  Slice s(parser.builder().slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);
@@ -2370,7 +2370,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal()->slice());
+  Slice s(parser.builder().slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ(value.substr(1, value.size() - 2), parsed);  // strip quotes
@@ -2388,7 +2388,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.steal()->slice());
+  Slice s(parser.builder().slice());
 
   std::string parsed = s.copyString();
   ASSERT_EQ("the quick brown\tfox\r\njumped \"over\" the lazy dog", parsed);
@@ -2461,6 +2461,22 @@ TEST(ParserTest, UseBuilderOnStack) {
     ASSERT_EQ(builder.size(), 2UL);
   }
   ASSERT_EQ(builder.size(), 2UL);
+}
+
+TEST(ParserTest, UseBuilderOnStackForArrayValue) {
+  Builder builder;
+  builder.openArray();
+  {
+    Options opt;
+    opt.clearBuilderBeforeParse = false;
+    Parser parser(builder, &opt);
+    Builder const& innerBuilder(parser.builder());
+
+    ASSERT_EQ(&builder, &innerBuilder);
+    parser.parse("17");
+  }
+  builder.close();
+  ASSERT_EQ(4UL, builder.size());
 }
 
 int main(int argc, char* argv[]) {
