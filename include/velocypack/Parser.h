@@ -158,7 +158,8 @@ class Parser {
       _b->clear();
     }
     _b->options = options;
-    return parseInternal(multi);
+    ValueLength nr = parseInternal(multi);
+    return nr;
   }
 
   // We probably want a parse from stream at some stage...
