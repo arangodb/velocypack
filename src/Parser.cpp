@@ -49,7 +49,16 @@ ValueLength Parser::parseInternal(bool multi) {
   do {
     bool haveReported = false;
     if (!_b->_stack.empty()) {
-      _b->reportAdd(_b->_stack.back());
+      ValueLength const tos = _b->_stack.back();
+      if (_b->_start[tos] == 0x0b || _b->_start[tos] == 0x14) {
+        if (! _b->_keyWritten) {
+          throw Exception(Exception::BuilderKeyMustBeString);
+        }
+        else {
+          _b->_keyWritten = false;
+        }
+      }
+      _b->reportAdd();
       haveReported = true;
     }
     try {
@@ -400,7 +409,6 @@ void Parser::parseString() {
 }
 
 void Parser::parseArray() {
-  ValueLength base = _b->_pos;
   _b->addArray();
 
   int i = skipWhiteSpace("Expecting item or ']'");
@@ -415,7 +423,7 @@ void Parser::parseArray() {
 
   while (true) {
     // parse array element itself
-    _b->reportAdd(base);
+    _b->reportAdd();
     parseJson();
     i = skipWhiteSpace("Expecting ',' or ']'");
     if (i == ']') {
@@ -437,7 +445,6 @@ void Parser::parseArray() {
 }
 
 void Parser::parseObject() {
-  ValueLength base = _b->_pos;
   _b->addObject();
 
   int i = skipWhiteSpace("Expecting item or '}'");
@@ -461,7 +468,7 @@ void Parser::parseObject() {
     // get past the initial '"'
     ++_pos;
 
-    _b->reportAdd(base);
+    _b->reportAdd();
     bool excludeAttribute = false;
     auto const lastPos = _b->_pos;
     if (options->attributeExcludeHandler == nullptr) {

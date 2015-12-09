@@ -1481,7 +1481,7 @@ TEST(BuilderTest, AddOnNonArray) {
   Builder b;
   b.add(Value(ValueType::Object));
   ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(true)),
-                              Exception::BuilderNeedOpenArray);
+                              Exception::BuilderKeyMustBeString);
 }
 
 TEST(BuilderTest, AddOnNonObject) {
