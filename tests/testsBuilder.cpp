@@ -2104,6 +2104,163 @@ TEST(BuilderTest, ArrayBuilderNested) {
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
 }
 
+TEST(BuilderTest, AddKeysSeparately1) {
+  Builder b;
+  b.openObject();
+  b.add(Value("name"));
+  b.add(Value("Neunhoeffer"));
+  b.add(Value("firstName"));
+  b.add(Value("Max"));
+  b.close();
+  ASSERT_EQ(R"({"firstName":"Max","name":"Neunhoeffer"})", b.toJson());
+}
+
+TEST(BuilderTest, AddKeysSeparately2) {
+  Builder b;
+
+  b.openObject();
+  b.add(Value("foo"));
+  b.openArray();
+  b.close();
+
+  b.add(Value("bar"));
+  b.openObject();
+  b.close();
+
+  b.add(Value("baz"));
+  uint8_t buf[] = { 0x31 };
+  Slice s(buf);
+  b.add(s);
+
+  b.add(Value("bumm"));
+  Options options;
+  options.clearBuilderBeforeParse = false;
+  Parser p(b, &options);
+  p.parse("[13]");
+  b.close();
+  ASSERT_EQ(R"({"bar":{},"baz":1,"bumm":[13],"foo":[]})", b.toJson());
+}
+
+TEST(BuilderTest, AddKeysSeparatelyFail) {
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(false)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Null)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Array)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Object)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1.0)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(12, ValueType::UTCDate)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  uint8_t buf[] = { 0x31 };
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(&buf, ValueType::External)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MinKey)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::MaxKey)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(1)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(-112)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(113)),
+                                Exception::BuilderKeyMustBeString);
+  }
+  Slice s(buf);
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(s),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.openObject(),
+                                Exception::BuilderNeedOpenArray);
+  }
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(b.openArray(),
+                                Exception::BuilderNeedOpenArray);
+  }
+  {
+    Builder b;
+    b.openObject();
+    Options opt;
+    opt.clearBuilderBeforeParse = false;
+    Parser p(b, &opt);
+    ASSERT_VELOCYPACK_EXCEPTION(p.parse("[13]"),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    Options opt;
+    opt.clearBuilderBeforeParse = false;
+    Parser p(b, &opt);
+    ASSERT_VELOCYPACK_EXCEPTION(p.parse("\"max\""),
+                                Exception::BuilderKeyMustBeString);
+  }
+  {
+    Builder b;
+    b.openObject();
+    b.add(Value("abc"));
+    ASSERT_VELOCYPACK_EXCEPTION(b.add("abc", Value(1)),
+                                Exception::BuilderKeyAlreadyWritten);
+  }
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

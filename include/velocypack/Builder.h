@@ -247,6 +247,8 @@ class Builder {
 
   std::string toString() const;
 
+  std::string toJson() const;
+
   static Builder clone(Slice const& slice,
                        Options const* options = &Options::Defaults) {
     if (options == nullptr) {
@@ -491,11 +493,6 @@ private:
   uint8_t* addInternal(T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
-      ValueLength& tos = _stack.back();
-      if (_start[tos] != 0x06 && _start[tos] != 0x13 &&
-          _start[tos] != 0x0b && _start[tos] != 0x14) {
-        throw Exception(Exception::BuilderNeedOpenCompound);
-      }
       if (! _keyWritten) {
         reportAdd();
         haveReported = true;
@@ -574,10 +571,6 @@ private:
     bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
-      if (_start[tos] != 0x06 && _start[tos] != 0x13 &&
-          _start[tos] != 0x0b && _start[tos] != 0x14) {
-        throw Exception(Exception::BuilderNeedOpenCompound);
-      }
       if (! _keyWritten) {
         if (_start[tos] != 0x06 && _start[tos] != 0x13) {
           throw Exception(Exception::BuilderNeedOpenArray);

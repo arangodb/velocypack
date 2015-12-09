@@ -43,6 +43,13 @@ std::string Builder::toString() const {
   return std::move(buffer);
 }
 
+std::string Builder::toJson() const {
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper::dump(slice(), &sink);
+  return std::move(buffer);
+}
+
 void Builder::doActualSort(std::vector<SortEntry>& entries) {
   VELOCYPACK_ASSERT(entries.size() > 1);
   std::sort(entries.begin(), entries.end(),

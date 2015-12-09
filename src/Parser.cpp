@@ -58,8 +58,10 @@ ValueLength Parser::parseInternal(bool multi) {
           _b->_keyWritten = false;
         }
       }
-      _b->reportAdd();
-      haveReported = true;
+      else {
+        _b->reportAdd();
+        haveReported = true;
+      }
     }
     try {
       parseJson();
