@@ -2016,7 +2016,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
     ob->add("foo", Value("aha"));
     ob->add("bar", Value("qux"));
     {
-      ObjectBuilder ob2(&b);
+      ObjectBuilder ob2(&b, "hans");
       ASSERT_EQ(&*ob2, &b);
       ASSERT_FALSE(ob2->isClosed());
       ASSERT_FALSE(ob->isClosed());
@@ -2025,13 +2025,23 @@ TEST(BuilderTest, ObjectBuilderNested) {
       ob2->add("bart", Value("a"));
       ob2->add("zoo", Value("b"));
     }
+    {
+      ObjectBuilder ob2(&b, std::string("foobar"));
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ob2->add("bark", Value(1));
+      ob2->add("bonk", Value(2));
+    }
 
     ASSERT_FALSE(ob->isClosed());
     ASSERT_FALSE(b.isClosed());
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\",{\"bart\":\"a\",\"zoo\":\"b\"}}", b.toString());
+  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\",\"hans\":{\"bart\":\"a\",\"zoo\":\"b\"},\"foobar\":{\"bark\":1,\"bonk\":2}}", b.toString());
 }
 
 TEST(BuilderTest, ArrayBuilder) {
@@ -2076,12 +2086,22 @@ TEST(BuilderTest, ArrayBuilderNested) {
       ob2->add(Value("bart"));
       ob2->add(Value("qux"));
     }
+    {
+      ArrayBuilder ob2(&b);
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+
+      ob2->add(Value(1));
+      ob2->add(Value(2));
+    }
     ASSERT_FALSE(ob->isClosed());
     ASSERT_FALSE(b.isClosed());
   }
   ASSERT_TRUE(b.isClosed());
   
-  ASSERT_EQ("[\"foo\",\"bar\",[\"bart\",\"qux\"]]", b.toString());
+  ASSERT_EQ("[\"foo\",\"bar\",[\"bart\",\"qux\"],[1,2]]", b.toString());
 }
 
 int main(int argc, char* argv[]) {

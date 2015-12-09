@@ -637,6 +637,12 @@ struct ObjectBuilder final : public BuilderContainer, public NoHeapAllocation {
   ObjectBuilder(Builder* builder, bool allowUnindexed = false) : BuilderContainer(builder) {
     builder->openObject(allowUnindexed);
   }
+  ObjectBuilder(Builder* builder, std::string const& attributeName, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->add(attributeName, Value(ValueType::Object, allowUnindexed)); 
+  }
+  ObjectBuilder(Builder* builder, char const* attributeName, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->add(attributeName, Value(ValueType::Object, allowUnindexed)); 
+  }
   ~ObjectBuilder() {
     builder->close();
   }
