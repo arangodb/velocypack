@@ -2044,6 +2044,30 @@ TEST(BuilderTest, ObjectBuilderNested) {
   ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  },\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  }\n}", b.toString());
 }
 
+TEST(BuilderTest, ObjectBuilderClosed) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  ASSERT_TRUE(b.isClosed());
+
+  // when the object builder goes out of scope, it will close
+  // the object. if we manually close it ourselves in addition,
+  // this should not fail as we can't allow throwing destructors
+  {
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    b.close(); // manually close the builder
+    ASSERT_TRUE(b.isClosed());
+  } 
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\"\n}", b.toString());
+}
+
 TEST(BuilderTest, ArrayBuilder) {
   Options options;
   Builder b(&options);
@@ -2102,6 +2126,30 @@ TEST(BuilderTest, ArrayBuilderNested) {
   ASSERT_TRUE(b.isClosed());
   
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
+}
+
+TEST(BuilderTest, ArrayBuilderClosed) {
+  Options options;
+  Builder b(&options);
+  ASSERT_TRUE(b.isClosed());
+
+  // when the array builder goes out of scope, it will close
+  // the object. if we manually close it ourselves in addition,
+  // this should not fail as we can't allow throwing destructors
+  {
+    ArrayBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add(Value("foo"));
+    ob->add(Value("bar"));
+    b.close(); // manually close the builder
+    ASSERT_TRUE(ob->isClosed());
+    ASSERT_TRUE(b.isClosed());
+  } 
+  ASSERT_TRUE(b.isClosed());
+  
+  ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
 }
 
 int main(int argc, char* argv[]) {
