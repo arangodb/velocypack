@@ -553,7 +553,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b1.close();
   ASSERT_TRUE(b1.isClosed());
   ASSERT_EQ(0x0b, b1.slice().head());
-  ASSERT_EQ("{\"foo\":\"bar\"}", b1.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b1.toString());
   ASSERT_EQ(1UL, b1.slice().length());
 
   Builder b2;
@@ -564,7 +564,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.close();
   ASSERT_TRUE(b2.isClosed());
   ASSERT_EQ(0x0b, b2.slice().head());
-  ASSERT_EQ("{\"foo\":\"bar\"}", b2.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b2.toString());
   ASSERT_EQ(1UL, b2.slice().length());
 }
 
@@ -1977,8 +1977,131 @@ TEST(BuilderTest, ToString) {
   b.add("test3", Value(true));
   b.close();
 
-  ASSERT_EQ("{\"test1\":123,\"test2\":\"foobar\",\"test3\":true}",
+  ASSERT_EQ("{\n  \"test1\" : 123,\n  \"test2\" : \"foobar\",\n  \"test3\" : true\n}",
             b.toString());
+}
+
+TEST(BuilderTest, ObjectBuilder) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\"\n}", b.toString());
+}
+
+TEST(BuilderTest, ObjectBuilderNested) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    {
+      ObjectBuilder ob2(&b, "hans");
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ob2->add("bart", Value("a"));
+      ob2->add("zoo", Value("b"));
+    }
+    {
+      ObjectBuilder ob2(&b, std::string("foobar"));
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ob2->add("bark", Value(1));
+      ob2->add("bonk", Value(2));
+    }
+
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  },\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  }\n}", b.toString());
+}
+
+TEST(BuilderTest, ArrayBuilder) {
+  Options options;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ArrayBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add(Value("foo"));
+    ob->add(Value("bar"));
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+  
+  ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
+}
+
+TEST(BuilderTest, ArrayBuilderNested) {
+  Options options;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ArrayBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add(Value("foo"));
+    ob->add(Value("bar"));
+    {
+      ArrayBuilder ob2(&b);
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+
+      ob2->add(Value("bart"));
+      ob2->add(Value("qux"));
+    }
+    {
+      ArrayBuilder ob2(&b);
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+
+      ob2->add(Value(1));
+      ob2->add(Value(2));
+    }
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+  
+  ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
 }
 
 int main(int argc, char* argv[]) {

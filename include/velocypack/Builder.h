@@ -679,6 +679,60 @@ struct BuilderNonDeleter {
   }
 };
 
+// convenience class scope guard for building objects
+struct BuilderContainer {
+  BuilderContainer (Builder* builder) : builder(builder) {}
+
+  Builder& operator*() {
+    return *builder;
+  }
+  Builder const& operator*() const {
+    return *builder;
+  }
+  Builder* operator->() {
+    return builder;
+  }
+  Builder const* operator->() const {
+    return builder;
+  }
+  Builder* builder;
+};
+
+struct ObjectBuilder final : public BuilderContainer, public NoHeapAllocation {
+  ObjectBuilder(Builder* builder, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->openObject(allowUnindexed);
+  }
+  ObjectBuilder(Builder* builder, std::string const& attributeName, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->add(attributeName, Value(ValueType::Object, allowUnindexed)); 
+  }
+  ObjectBuilder(Builder* builder, char const* attributeName, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->add(attributeName, Value(ValueType::Object, allowUnindexed)); 
+  }
+  ~ObjectBuilder() {
+    try {
+      builder->close();
+    }
+    catch (...) {
+      // destructors must not throw
+    }
+  }
+};
+
+// convenience class scope guard for building arrays
+struct ArrayBuilder final : public BuilderContainer, public NoHeapAllocation {
+  ArrayBuilder(Builder* builder, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->openArray(allowUnindexed);
+  }
+  ~ArrayBuilder() {
+    try {
+      builder->close();
+    }
+    catch (...) {
+      // destructors must not throw
+    }
+  }
+};
+
 }  // namespace arangodb::velocypack
 }  // namespace arangodb
 
