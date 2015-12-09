@@ -593,6 +593,44 @@ struct BuilderNonDeleter {
   }
 };
 
+// convenience class scope guard for building objects
+struct BuilderContainer {
+  BuilderContainer (Builder* builder) : builder(builder) {}
+
+  Builder& operator*() {
+    return *builder;
+  }
+  Builder const& operator*() const {
+    return *builder;
+  }
+  Builder* operator->() {
+    return builder;
+  }
+  Builder const* operator->() const {
+    return builder;
+  }
+  Builder* builder;
+};
+
+struct ObjectBuilder final : public BuilderContainer, public NoHeapAllocation {
+  ObjectBuilder(Builder* builder, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->openObject(allowUnindexed);
+  }
+  ~ObjectBuilder() {
+    builder->close();
+  }
+};
+
+// convenience class scope guard for building arrays
+struct ArrayBuilder final : public BuilderContainer, public NoHeapAllocation {
+  ArrayBuilder(Builder* builder, bool allowUnindexed = false) : BuilderContainer(builder) {
+    builder->openArray(allowUnindexed);
+  }
+  ~ArrayBuilder() {
+    builder->close();
+  }
+};
+
 }  // namespace arangodb::velocypack
 }  // namespace arangodb
 

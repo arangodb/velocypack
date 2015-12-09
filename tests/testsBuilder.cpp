@@ -1963,6 +1963,109 @@ TEST(BuilderTest, ToString) {
             b.toString());
 }
 
+TEST(BuilderTest, ObjectBuilder) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\"}", b.toString());
+}
+
+TEST(BuilderTest, ObjectBuilderNested) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    {
+      ObjectBuilder ob2(&b);
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ob2->add("bart", Value("a"));
+      ob2->add("zoo", Value("b"));
+    }
+
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\",{\"bart\":\"a\",\"zoo\":\"b\"}}", b.toString());
+}
+
+TEST(BuilderTest, ArrayBuilder) {
+  Options options;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ArrayBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add(Value("foo"));
+    ob->add(Value("bar"));
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+  
+  ASSERT_EQ("[\"foo\",\"bar\"]", b.toString());
+}
+
+TEST(BuilderTest, ArrayBuilderNested) {
+  Options options;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ArrayBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add(Value("foo"));
+    ob->add(Value("bar"));
+    {
+      ArrayBuilder ob2(&b);
+      ASSERT_EQ(&*ob2, &b);
+      ASSERT_FALSE(ob2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+
+      ob2->add(Value("bart"));
+      ob2->add(Value("qux"));
+    }
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+  
+  ASSERT_EQ("[\"foo\",\"bar\",[\"bart\",\"qux\"]]", b.toString());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
