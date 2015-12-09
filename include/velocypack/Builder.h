@@ -285,6 +285,22 @@ class Builder {
 
   bool isClosed() const throw() { return _stack.empty(); }
 
+  bool isOpenArray() const throw() {
+    if (_stack.empty()) {
+      return false;
+    }
+    ValueLength const tos = _stack.back();
+    return _start[tos] == 0x06 || _start[tos] == 0x13;
+  }
+
+  bool isOpenObject() const throw() {
+    if (_stack.empty()) {
+      return false;
+    }
+    ValueLength const tos = _stack.back();
+    return _start[tos] == 0x0b || _start[tos] == 0x14;
+  }
+
   // Add a subvalue into an object from a Value:
   uint8_t* add(std::string const& attrName, Value const& sub);
 
