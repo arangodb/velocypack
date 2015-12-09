@@ -644,7 +644,12 @@ struct ObjectBuilder final : public BuilderContainer, public NoHeapAllocation {
     builder->add(attributeName, Value(ValueType::Object, allowUnindexed)); 
   }
   ~ObjectBuilder() {
-    builder->close();
+    try {
+      builder->close();
+    }
+    catch (...) {
+      // destructors must not throw
+    }
   }
 };
 
@@ -654,7 +659,12 @@ struct ArrayBuilder final : public BuilderContainer, public NoHeapAllocation {
     builder->openArray(allowUnindexed);
   }
   ~ArrayBuilder() {
-    builder->close();
+    try {
+      builder->close();
+    }
+    catch (...) {
+      // destructors must not throw
+    }
   }
 };
 
