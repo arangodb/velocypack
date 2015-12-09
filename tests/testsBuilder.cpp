@@ -30,6 +30,20 @@
 
 #include "tests-common.h"
 
+TEST(BuilderTest, AddObjectInArray) {
+  Builder b;
+  b.openArray();
+  b.openObject();
+  b.close();
+  b.close();
+  Slice s(b.slice());
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(1UL, s.length());
+  Slice ss(s[0]);
+  ASSERT_TRUE(ss.isObject());
+  ASSERT_EQ(0UL, ss.length());
+}
+
 TEST(BuilderTest, CreateWithoutBufferOrOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
 
@@ -513,7 +527,7 @@ TEST(BuilderTest, ExternalWithOtherTypes) {
 TEST(BuilderTest, AddAndOpenArray) {
   Builder b1;
   ASSERT_TRUE(b1.isClosed());
-  b1.addArray();
+  b1.openArray();
   ASSERT_FALSE(b1.isClosed());
   b1.add(Value("bar"));
   b1.close();
@@ -533,12 +547,14 @@ TEST(BuilderTest, AddAndOpenArray) {
 TEST(BuilderTest, AddAndOpenObject) {
   Builder b1;
   ASSERT_TRUE(b1.isClosed());
-  b1.addObject();
+  b1.openObject();
   ASSERT_FALSE(b1.isClosed());
   b1.add("foo", Value("bar"));
   b1.close();
   ASSERT_TRUE(b1.isClosed());
   ASSERT_EQ(0x0b, b1.slice().head());
+  ASSERT_EQ("{\"foo\":\"bar\"}", b1.toString());
+  ASSERT_EQ(1UL, b1.slice().length());
 
   Builder b2;
   ASSERT_TRUE(b2.isClosed());
@@ -548,6 +564,8 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.close();
   ASSERT_TRUE(b2.isClosed());
   ASSERT_EQ(0x0b, b2.slice().head());
+  ASSERT_EQ("{\"foo\":\"bar\"}", b2.toString());
+  ASSERT_EQ(1UL, b2.slice().length());
 }
 
 TEST(BuilderTest, MinKey) {
