@@ -553,7 +553,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b1.close();
   ASSERT_TRUE(b1.isClosed());
   ASSERT_EQ(0x0b, b1.slice().head());
-  ASSERT_EQ("{\"foo\":\"bar\"}", b1.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b1.toString());
   ASSERT_EQ(1UL, b1.slice().length());
 
   Builder b2;
@@ -564,7 +564,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.close();
   ASSERT_TRUE(b2.isClosed());
   ASSERT_EQ(0x0b, b2.slice().head());
-  ASSERT_EQ("{\"foo\":\"bar\"}", b2.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b2.toString());
   ASSERT_EQ(1UL, b2.slice().length());
 }
 
@@ -1977,7 +1977,7 @@ TEST(BuilderTest, ToString) {
   b.add("test3", Value(true));
   b.close();
 
-  ASSERT_EQ("{\"test1\":123,\"test2\":\"foobar\",\"test3\":true}",
+  ASSERT_EQ("{\n  \"test1\" : 123,\n  \"test2\" : \"foobar\",\n  \"test3\" : true\n}",
             b.toString());
 }
 
@@ -1999,7 +1999,7 @@ TEST(BuilderTest, ObjectBuilder) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\"}", b.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\"\n}", b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderNested) {
@@ -2041,7 +2041,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\"foo\":\"aha\",\"bar\":\"qux\",\"hans\":{\"bart\":\"a\",\"zoo\":\"b\"},\"foobar\":{\"bark\":1,\"bonk\":2}}", b.toString());
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  },\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  }\n}", b.toString());
 }
 
 TEST(BuilderTest, ArrayBuilder) {
@@ -2061,7 +2061,7 @@ TEST(BuilderTest, ArrayBuilder) {
   }
   ASSERT_TRUE(b.isClosed());
   
-  ASSERT_EQ("[\"foo\",\"bar\"]", b.toString());
+  ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
 }
 
 TEST(BuilderTest, ArrayBuilderNested) {
@@ -2101,7 +2101,7 @@ TEST(BuilderTest, ArrayBuilderNested) {
   }
   ASSERT_TRUE(b.isClosed());
   
-  ASSERT_EQ("[\"foo\",\"bar\",[\"bart\",\"qux\"],[1,2]]", b.toString());
+  ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
 }
 
 int main(int argc, char* argv[]) {
