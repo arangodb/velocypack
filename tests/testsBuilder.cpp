@@ -2044,6 +2044,48 @@ TEST(BuilderTest, ObjectBuilderNested) {
   ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  },\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  }\n}", b.toString());
 }
 
+TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
+  Options options;
+  options.sortAttributeNames = false;
+  Builder b(&options);
+  {
+    ASSERT_TRUE(b.isClosed());
+
+    ObjectBuilder ob(&b);
+    ASSERT_EQ(&*ob, &b);
+    ASSERT_FALSE(b.isClosed());
+    ASSERT_FALSE(ob->isClosed());
+    ob->add("foo", Value("aha"));
+    ob->add("bar", Value("qux"));
+    {
+      ArrayBuilder ab2(&b, "hans");
+      ASSERT_EQ(&*ab2, &b);
+      ASSERT_FALSE(ab2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ab2->add(Value("a"));
+      ab2->add(Value("b"));
+    }
+    {
+      ArrayBuilder ab2(&b, std::string("foobar"));
+      ASSERT_EQ(&*ab2, &b);
+      ASSERT_FALSE(ab2->isClosed());
+      ASSERT_FALSE(ob->isClosed());
+      ASSERT_FALSE(b.isClosed());
+    
+      ab2->add(Value(1));
+      ab2->add(Value(2));
+    }
+
+    ASSERT_FALSE(ob->isClosed());
+    ASSERT_FALSE(b.isClosed());
+  }
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : [\n    \"a\",\n    \"b\"\n  ],\n  \"foobar\" : [\n    1,\n    2\n  ]\n}", b.toString());
+}
+
 TEST(BuilderTest, ObjectBuilderClosed) {
   Options options;
   options.sortAttributeNames = false;
