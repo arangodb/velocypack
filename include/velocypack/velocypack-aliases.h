@@ -62,6 +62,7 @@ using VPackArrayBuilder = arangodb::velocypack::ArrayBuilder;
 #ifndef VELOCYPACK_ALIAS_BUFFER
 #define VELOCYPACK_ALIAS_BUFFER
 using VPackCharBuffer = arangodb::velocypack::CharBuffer;
+template<typename T> using VPackBuffer = arangodb::velocypack::Buffer<T>;
 #endif
 #endif
 
