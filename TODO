@@ -14,6 +14,10 @@ Features
 * implement missing type BCD in Builder, Slice, Parser and Dumper
 * unique/distinct/sort for Arrays
 * optionally validate Slice bounds (framing)
+* Constructor for Builder that gets a reference to a Buffer (like Parser
+  that gets a reference to Builder)
+* clone(Slice, Builder&)
+* clone(Slice, Buffer&)
 
 APIs
 ----
