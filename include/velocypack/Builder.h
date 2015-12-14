@@ -157,6 +157,18 @@ class Builder {
     }
   }
 
+  explicit Builder(Buffer<uint8_t>& buffer,
+                   Options const* options = &Options::Defaults)
+      : _pos(0), _keyWritten(false), options(options) {
+    _buffer.reset(&buffer, BufferNonDeleter<uint8_t>());
+    _start = _buffer->data();
+    _size = _buffer->size();
+
+    if (options == nullptr) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+    }
+  }
+
   // The rule of five:
 
   ~Builder() {}

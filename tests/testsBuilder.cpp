@@ -2351,6 +2351,35 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
   }
 }
 
+TEST(BuilderTest, HandInBuffer) {
+  Buffer<uint8_t> buf;
+  {
+    Builder b(buf);
+    b.openObject();
+    b.add("a",Value(123));
+    b.add("b",Value("abc"));
+    b.close();
+    Slice s(buf.data());
+    ASSERT_TRUE(s.isObject());
+    ASSERT_EQ(2UL, s.length());
+    Slice ss = s.get("a");
+    ASSERT_TRUE(ss.isInteger());
+    ASSERT_EQ(123L, ss.getInt());
+    ss = s.get("b");
+    ASSERT_TRUE(ss.isString());
+    ASSERT_EQ(std::string("abc"), ss.copyString());
+  }
+  Slice s(buf.data());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(2UL, s.length());
+  Slice ss = s.get("a");
+  ASSERT_TRUE(ss.isInteger());
+  ASSERT_EQ(123L, ss.getInt());
+  ss = s.get("b");
+  ASSERT_TRUE(ss.isString());
+  ASSERT_EQ(std::string("abc"), ss.copyString());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
