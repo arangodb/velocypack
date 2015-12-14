@@ -2378,6 +2378,10 @@ TEST(BuilderTest, HandInBuffer) {
   ss = s.get("b");
   ASSERT_TRUE(ss.isString());
   ASSERT_EQ(std::string("abc"), ss.copyString());
+  {
+    ASSERT_VELOCYPACK_EXCEPTION(new Builder(buf, nullptr),
+                                Exception::InternalError);
+  }
 }
 
 int main(int argc, char* argv[]) {
