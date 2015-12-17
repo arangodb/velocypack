@@ -56,7 +56,9 @@ TEST(BuilderTest, CreateWithoutBufferOrOptions) {
                               Exception::InternalError);
 
   Builder b;
+  ASSERT_TRUE(b.isEmpty());
   b.add(Value(123));
+  ASSERT_FALSE(b.isEmpty());
   Slice s = b.slice();
 
   ASSERT_VELOCYPACK_EXCEPTION(b.clone(s, nullptr), Exception::InternalError);
@@ -64,13 +66,16 @@ TEST(BuilderTest, CreateWithoutBufferOrOptions) {
 
 TEST(BuilderTest, Copy) {
   Builder b;
+  ASSERT_TRUE(b.isEmpty());
   b.openArray();
   for (int i = 0; i < 10; i++) {
     b.add(Value("abcdefghijklmnopqrstuvwxyz"));
   }
   b.close();
+  ASSERT_FALSE(b.isEmpty());
 
   Builder a(b);
+  ASSERT_FALSE(a.isEmpty());
   ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
@@ -90,9 +95,13 @@ TEST(BuilderTest, CopyWithoutOptions) {
 
 TEST(BuilderTest, CopyAssign) {
   Builder b;
+  ASSERT_TRUE(b.isEmpty());
 
   Builder a;
+  ASSERT_TRUE(a.isEmpty());
   a = b;
+  ASSERT_TRUE(a.isEmpty());
+  ASSERT_TRUE(b.isEmpty());
 
   ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
@@ -114,9 +123,28 @@ TEST(BuilderTest, CopyAssignWithoutOptions) {
 
 TEST(BuilderTest, Move) {
   Builder b;
+  ASSERT_TRUE(b.isEmpty());
 
   auto shptrb = b.buffer();
   Builder a(std::move(b));
+  ASSERT_TRUE(a.isEmpty());
+  ASSERT_TRUE(b.isEmpty());
+  auto shptra = a.buffer();
+  ASSERT_EQ(shptrb.get(), shptra.get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+TEST(BuilderTest, MoveNonEmpty) {
+  Builder b;
+  b.add(Value("foobar"));
+  ASSERT_FALSE(b.isEmpty());
+
+  auto shptrb = b.buffer();
+  Builder a(std::move(b));
+  ASSERT_FALSE(a.isEmpty());
+  ASSERT_TRUE(b.isEmpty());
+
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
@@ -137,9 +165,28 @@ TEST(BuilderTest, MoveWithoutOptions) {
 
 TEST(BuilderTest, MoveAssign) {
   Builder b;
+  ASSERT_TRUE(b.isEmpty());
 
   auto shptrb = b.buffer();
   Builder a = std::move(b);
+  ASSERT_TRUE(a.isEmpty());
+  ASSERT_TRUE(b.isEmpty());
+  auto shptra = a.buffer();
+  ASSERT_EQ(shptrb.get(), shptra.get());
+  ASSERT_NE(a.buffer().get(), b.buffer().get());
+  ASSERT_TRUE(a.buffer().get() != nullptr);
+  ASSERT_TRUE(b.buffer().get() != nullptr);
+}
+
+TEST(BuilderTest, MoveAssignNonEmpty) {
+  Builder b;
+  b.add(Value("foobar"));
+  ASSERT_FALSE(b.isEmpty());
+
+  auto shptrb = b.buffer();
+  Builder a = std::move(b);
+  ASSERT_FALSE(a.isEmpty());
+  ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
   ASSERT_NE(a.buffer().get(), b.buffer().get());
@@ -167,9 +214,11 @@ TEST(BuilderTest, StealBuffer) {
     b.add(Value("abcdefghijklmnopqrstuvwxyz"));
   }
   b.close();
+  ASSERT_FALSE(b.isEmpty());
 
   auto ptr1 = b.buffer().get();
   std::shared_ptr<Buffer<uint8_t>> buf(b.steal());
+  ASSERT_TRUE(b.isEmpty());
   auto ptr2 = b.buffer().get();
   auto ptr3 = buf.get();
   ASSERT_EQ(ptr1, ptr3);
