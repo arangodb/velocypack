@@ -343,7 +343,7 @@ class Builder {
   uint8_t* add(ValuePair const& sub);
 
   // Seal the innermost array or object:
-  void close();
+  Builder& close();
 
   // Remove last subvalue written to an (unclosed) object or array:
   // Throws if an error occurs.

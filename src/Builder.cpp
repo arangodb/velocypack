@@ -168,7 +168,7 @@ void Builder::removeLast() {
   index.pop_back();
 }
 
-void Builder::close() {
+Builder& Builder::close() {
   if (isClosed()) {
     throw Exception(Exception::BuilderNeedOpenCompound);
   }
@@ -188,7 +188,7 @@ void Builder::close() {
     _pos -= 8;  // no bytelength and number subvalues needed
     _stack.pop_back();
     // Intentionally leave _index[depth] intact to avoid future allocs!
-    return;
+    return *this;
   }
 
   // From now on index.size() > 0
@@ -237,7 +237,7 @@ void Builder::close() {
       _pos += nLen + bLen;
 
       _stack.pop_back();
-      return;
+      return *this;
     }
   }
 
@@ -379,6 +379,7 @@ void Builder::close() {
   // off the _stack:
   _stack.pop_back();
   // Intentionally leave _index[depth] intact to avoid future allocs!
+  return *this;
 }
 
 // checks whether an Object value has a specific key attribute
