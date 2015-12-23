@@ -109,6 +109,26 @@ TEST(BuilderTest, AddObjectIteratorTop) {
   ASSERT_EQ("{\"1-one\":1,\"2-two\":2,\"3-three\":3}", result.toJson());
 }
 
+TEST(BuilderTest, AddObjectIteratorReference) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openObject();
+  ASSERT_FALSE(b.isClosed());
+  auto it = ObjectIterator(objSlice);
+  b.add(it);
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\"1-one\":1,\"2-two\":2,\"3-three\":3}", result.toJson());
+}
+
 TEST(BuilderTest, AddObjectIteratorSub) {
   Builder obj;
   obj.openObject();
@@ -174,6 +194,26 @@ TEST(BuilderTest, AddArrayIteratorTop) {
   b.openArray();
   ASSERT_FALSE(b.isClosed());
   b.add(ArrayIterator(objSlice));
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("[1,2,3]", result.toJson());
+}
+
+TEST(BuilderTest, AddArrayIteratorReference) {
+  Builder obj;
+  obj.openArray();
+  obj.add(Value(1));
+  obj.add(Value(2));
+  obj.add(Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openArray();
+  ASSERT_FALSE(b.isClosed());
+  auto it = ArrayIterator(objSlice);
+  b.add(it);
   ASSERT_FALSE(b.isClosed());
   Slice result = b.close().slice();
   ASSERT_TRUE(b.isClosed());
