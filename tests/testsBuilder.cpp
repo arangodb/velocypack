@@ -44,6 +44,166 @@ TEST(BuilderTest, AddObjectInArray) {
   ASSERT_EQ(0UL, ss.length());
 }
 
+TEST(BuilderTest, AddObjectIteratorEmpty) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderNeedOpenObject);
+  ASSERT_TRUE(b.isClosed());
+}
+
+TEST(BuilderTest, AddObjectIteratorKeyAlreadyWritten) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  b.openObject();
+  b.add(Value("foo"));
+  ASSERT_FALSE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderKeyAlreadyWritten);
+  ASSERT_FALSE(b.isClosed());
+}
+
+TEST(BuilderTest, AddObjectIteratorNonObject) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openArray();
+  ASSERT_FALSE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderNeedOpenObject);
+  ASSERT_FALSE(b.isClosed());
+}
+
+TEST(BuilderTest, AddObjectIteratorTop) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openObject();
+  ASSERT_FALSE(b.isClosed());
+  b.add(ObjectIterator(objSlice));
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\"1-one\":1,\"2-two\":2,\"3-three\":3}", result.toJson());
+}
+
+TEST(BuilderTest, AddObjectIteratorSub) {
+  Builder obj;
+  obj.openObject();
+  obj.add("1-one", Value(1));
+  obj.add("2-two", Value(2));
+  obj.add("3-three", Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openObject();
+  b.add("1-something", Value("tennis"));
+  b.add(Value("2-values"));
+  b.openObject();
+  b.add(ObjectIterator(objSlice));
+  ASSERT_FALSE(b.isClosed());
+  b.close(); // close one level
+  b.add("3-bark", Value("qux"));
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("{\"1-something\":\"tennis\",\"2-values\":{\"1-one\":1,\"2-two\":2,\"3-three\":3},\"3-bark\":\"qux\"}", result.toJson());
+}
+
+TEST(BuilderTest, AddArrayIteratorEmpty) {
+  Builder obj;
+  obj.openArray();
+  obj.add(Value(1));
+  obj.add(Value(2));
+  obj.add(Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  ASSERT_TRUE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)), Exception::BuilderNeedOpenArray);
+  ASSERT_TRUE(b.isClosed());
+}
+
+TEST(BuilderTest, AddArrayIteratorNonArray) {
+  Builder obj;
+  obj.openArray();
+  obj.add(Value(1));
+  obj.add(Value(2));
+  obj.add(Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openObject();
+  ASSERT_FALSE(b.isClosed());
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)), Exception::BuilderNeedOpenArray);
+  ASSERT_FALSE(b.isClosed());
+}
+
+TEST(BuilderTest, AddArrayIteratorTop) {
+  Builder obj;
+  obj.openArray();
+  obj.add(Value(1));
+  obj.add(Value(2));
+  obj.add(Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openArray();
+  ASSERT_FALSE(b.isClosed());
+  b.add(ArrayIterator(objSlice));
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("[1,2,3]", result.toJson());
+}
+
+TEST(BuilderTest, AddArrayIteratorSub) {
+  Builder obj;
+  obj.openArray();
+  obj.add(Value(1));
+  obj.add(Value(2));
+  obj.add(Value(3));
+  Slice objSlice = obj.close().slice();
+
+  Builder b;
+  b.openArray();
+  b.add(Value("tennis"));
+  b.openArray();
+  b.add(ArrayIterator(objSlice));
+  ASSERT_FALSE(b.isClosed());
+  b.close(); // close one level
+  b.add(Value("qux"));
+  ASSERT_FALSE(b.isClosed());
+  Slice result = b.close().slice();
+  ASSERT_TRUE(b.isClosed());
+
+  ASSERT_EQ("[\"tennis\",[1,2,3],\"qux\"]", result.toJson());
+}
+
 TEST(BuilderTest, CreateWithoutBufferOrOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(nullptr), Exception::InternalError);
 
