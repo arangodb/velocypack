@@ -4,6 +4,7 @@
 install(FILES velocypack/vpack.h DESTINATION include/velocypack)
 install(FILES velocypack/velocypack-aliases.h DESTINATION include/velocypack)
 install(FILES velocypack/velocypack-common.h DESTINATION include/velocypack)
+install(FILES velocypack/velocypack-version-number.h DESTINATION include/velocypack)
 install(FILES velocypack/AttributeTranslator.h DESTINATION include/velocypack)
 install(FILES velocypack/Basics.h DESTINATION include/velocypack)
 install(FILES velocypack/Buffer.h DESTINATION include/velocypack)
