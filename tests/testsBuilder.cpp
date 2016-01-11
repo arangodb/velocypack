@@ -321,6 +321,41 @@ TEST(BuilderTest, CopyAssignWithoutOptions) {
   }
 }
 
+TEST(BuilderTest, MoveConstructOpenObject) {
+  Builder b;
+  b.openObject();
+  ASSERT_FALSE(b.isClosed());
+
+  Builder a;
+  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+}
+
+TEST(BuilderTest, MoveConstructOpenArray) {
+  Builder b;
+  b.openArray();
+  ASSERT_FALSE(b.isClosed());
+
+  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+}
+
+TEST(BuilderTest, MoveAssignOpenObject) {
+  Builder b;
+  b.openObject();
+  ASSERT_FALSE(b.isClosed());
+
+  Builder a;
+  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+}
+
+TEST(BuilderTest, MoveAssignOpenArray) {
+  Builder b;
+  b.openArray();
+  ASSERT_FALSE(b.isClosed());
+
+  Builder a;
+  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+}
+
 TEST(BuilderTest, Move) {
   Builder b;
   ASSERT_TRUE(b.isEmpty());
