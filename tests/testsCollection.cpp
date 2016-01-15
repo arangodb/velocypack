@@ -24,6 +24,7 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -147,6 +148,63 @@ TEST(CollectionTest, ObjectKeys3) {
   ASSERT_TRUE(keys.find("foo") != keys.end());
   ASSERT_TRUE(keys.find("bar") != keys.end());
   ASSERT_TRUE(keys.find("baz") != keys.end());
+}
+
+TEST(CollectionTest, KeysSetNonObject) {
+  std::string const value("[]");
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::set<std::string> result;
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s, result),
+                              Exception::InvalidValueType);
+}
+
+TEST(CollectionTest, ObjectKeysSet) {
+  Options options;
+
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  std::set<std::string> keys;
+  Collection::keys(s, keys);
+  ASSERT_EQ(3UL, keys.size());
+  ASSERT_TRUE(keys.find("bar") != keys.end());
+  ASSERT_TRUE(keys.find("baz") != keys.end());
+  ASSERT_TRUE(keys.find("foo") != keys.end());
+}
+
+TEST(CollectionTest, ObjectKeysSetMerge) {
+  Options options;
+
+  std::set<std::string> keys;
+  std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  Collection::keys(s, keys);
+  ASSERT_EQ(3UL, keys.size());
+  ASSERT_TRUE(keys.find("bar") != keys.end());
+  ASSERT_TRUE(keys.find("baz") != keys.end());
+  ASSERT_TRUE(keys.find("foo") != keys.end());
+  
+  std::string const value2("{\"foobar\":1,\"quux\":3,\"baz\":2,\"bark\":3}");
+  Parser parser2(&options);
+  parser2.parse(value2);
+  Slice s2(parser2.start());
+  
+  Collection::keys(s2, keys);
+  ASSERT_EQ(6UL, keys.size());
+  ASSERT_TRUE(keys.find("bar") != keys.end());
+  ASSERT_TRUE(keys.find("bark") != keys.end());
+  ASSERT_TRUE(keys.find("baz") != keys.end());
+  ASSERT_TRUE(keys.find("foo") != keys.end());
+  ASSERT_TRUE(keys.find("foobar") != keys.end());
+  ASSERT_TRUE(keys.find("quux") != keys.end());
 }
 
 TEST(CollectionTest, ObjectKeys) {
