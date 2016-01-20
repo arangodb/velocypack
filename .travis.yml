@@ -8,7 +8,7 @@ branches:
 
 language: cpp
 compiler:
-    - g++-4.9
+    - g++
     - clang
 
 sudo: false
@@ -24,7 +24,7 @@ addons:
             - cmake
 
 install:
-    #- if [ "$CXX" = "g++" ]; then export CXX="/usr/bin/g++-4.9"; fi
+    - if [ "$CXX" = "g++" ]; then export CXX="/usr/bin/g++-4.9"; fi
     - cmake --version
     - $CXX --version
 
