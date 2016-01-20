@@ -21,6 +21,7 @@ addons:
         packages:
             - g++-4.9
             - clang
+            - cmake-data
             - cmake
 
 install:
