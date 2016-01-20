@@ -7,7 +7,7 @@ branches:
     - master
 
 language: cpp
-compiler: 
+compiler:
   - g++
   - clang
 
@@ -21,7 +21,13 @@ addons:
     - g++-4.9
     - clang
 
-install: 
+
+before_install:
+    - sudo add-apt-repository ppa:geerge-edison55/precise-backports
+    - sudo apt get update -q -y
+    - sudo apt get install cmake -q -y
+
+install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
 - cmake --version
 - $CXX --version

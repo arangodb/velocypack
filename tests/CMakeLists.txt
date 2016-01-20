@@ -61,5 +61,5 @@ endif()
 # build AsmTest
 if (BuildAsmTest)
     standard_test(AsmTest "${CMAKE_SOURCE_DIR}/src/asm-functions.cpp")
-    target_compile_definitions(AsmTest PRIVATE DCOMPILE_VELOCYPACK_ASM_UNITTESTS)
+    target_compile_definitions(AsmTest PRIVATE COMPILE_VELOCYPACK_ASM_UNITTESTS)
 endif()
