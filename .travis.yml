@@ -21,15 +21,18 @@ addons:
     - g++-4.9
     - clang
 
-
-before_install:
-    - sudo add-apt-repository ppa:geerge-edison55/precise-backports
-    - sudo apt get update -q -y
-    - sudo apt get install cmake -q -y
+#before_install:
+#    - add-apt-repository ppa:geerge-edison55/precise-backports
+#    - sudo apt get update -q -y
+#    - sudo apt get install cmake -q -y
 
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
-- cmake --version
+- git clone https://github.com/Kitware/CMake
+- cd CMake
+- git checkout release
+- ./bootstrap --prefix=$HOME/local && make -j $(nproc) && make install
+- $HOME/local/bin/cmake --version
 - $CXX --version
 
 script: ./scripts/travis-test.sh
