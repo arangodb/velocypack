@@ -1,30 +1,33 @@
 env:
-  global:
-    secure: "Xtwlf0NPrlw6NpdLV1iIgs1f8aWK5lqGmfg1iCDQrsuYhHl7/3tldUIS/I1YMyxPOQHRuaBhFPBgv7YMcDl/1Hss001xm3ILbtgDNBCzUG6v4ZgZsB3qUaWWTegw/y9UwQbjqD720on9Wpqr6Rr8XqjaBxn+siWRN5io/sQj6w2o74xn2/+rIol+ei/XLtdmMHoayO24xN1dAAv14/0kCqH1L7Atij33grjyFIF3M6fyVlZzruoBTQVLfq/J19lkHtCf6ItjC2f2gorXYgGBfNQaWYz00U/fIHUgtLo/7QtvNsofb+J39jOeG97I4P0Nwu+2Jhn3O1wU0pnnCl99qLpDbYrzch/TaRWVau3khjLG2/1twLImdJn4nWXeBuX5S4Kazr3s0hGF2wBfFPDQU9izg/3nxC6gIT+o+BJvLcdJsio3SDdN2KorEuQrteRJsGXSAgOebBnsDaVkiKy/QDj6V4ZDYdkZ9G5OwsAAGpfDLDkRRwquCW83zUNBicReYOpervdtIDBQg2KbNdb6lIR+5b16+uggeoFV1O/+2dfKYj5MqXwtSRGRwCZ5ArFjWN1ARI3pObjrutsX6PoZdYL6Y4d6UYm7koI+25dkY3GCPCY5KB09ory6zIQ7vvfSHOs4LZZqdS6jDVtCjgWscwwgqEjmOA5uWGYWmf+yDs8="
+    global:
+        secure: "Xtwlf0NPrlw6NpdLV1iIgs1f8aWK5lqGmfg1iCDQrsuYhHl7/3tldUIS/I1YMyxPOQHRuaBhFPBgv7YMcDl/1Hss001xm3ILbtgDNBCzUG6v4ZgZsB3qUaWWTegw/y9UwQbjqD720on9Wpqr6Rr8XqjaBxn+siWRN5io/sQj6w2o74xn2/+rIol+ei/XLtdmMHoayO24xN1dAAv14/0kCqH1L7Atij33grjyFIF3M6fyVlZzruoBTQVLfq/J19lkHtCf6ItjC2f2gorXYgGBfNQaWYz00U/fIHUgtLo/7QtvNsofb+J39jOeG97I4P0Nwu+2Jhn3O1wU0pnnCl99qLpDbYrzch/TaRWVau3khjLG2/1twLImdJn4nWXeBuX5S4Kazr3s0hGF2wBfFPDQU9izg/3nxC6gIT+o+BJvLcdJsio3SDdN2KorEuQrteRJsGXSAgOebBnsDaVkiKy/QDj6V4ZDYdkZ9G5OwsAAGpfDLDkRRwquCW83zUNBicReYOpervdtIDBQg2KbNdb6lIR+5b16+uggeoFV1O/+2dfKYj5MqXwtSRGRwCZ5ArFjWN1ARI3pObjrutsX6PoZdYL6Y4d6UYm7koI+25dkY3GCPCY5KB09ory6zIQ7vvfSHOs4LZZqdS6jDVtCjgWscwwgqEjmOA5uWGYWmf+yDs8="
 
 branches:
-  only:
-    - master
+    only:
+        - master
 
 language: cpp
-compiler: 
-  - g++
-  - clang
+compiler:
+    - g++
+    - clang
 
 sudo: false
 
 addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - g++-4.9
-    - clang
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+            - george-edison55-precise-backports
+        packages:
+            - g++-4.9
+            - clang
+            - cmake-data
+            - cmake
 
-install: 
-- if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"; fi
-- cmake --version
-- $CXX --version
+install:
+    - if [ "$CXX" = "g++" ]; then export CXX="/usr/bin/g++-4.9"; fi
+    - cmake --version
+    - $CXX --version
 
 script: ./scripts/travis-test.sh
 
