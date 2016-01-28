@@ -33,5 +33,3 @@ script: ./scripts/travis-test.sh
 
 after_success: ./scripts/travis-after-success.sh
 
-after_failure: ./scripts/travis-after-failure.sh
-
