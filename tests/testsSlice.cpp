@@ -2222,6 +2222,7 @@ TEST(SliceTest, SliceScope) {
     // overwrite stack
     Slice c(Slice::fromJson(
         scope, "\"012345678901234567890123456789012345678901234567\""));
+    ASSERT_TRUE(c.isString());
   }
 
   ASSERT_TRUE(a.isString());
