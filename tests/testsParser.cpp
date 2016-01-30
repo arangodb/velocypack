@@ -2489,6 +2489,7 @@ TEST(ParserTest, UseBuilderOnStackOptionsNullPtr) {
   }
   parser->parse("[17]");
   ASSERT_EQ(4UL, builder.size());
+  delete parser;
 }
 
 int main(int argc, char* argv[]) {
