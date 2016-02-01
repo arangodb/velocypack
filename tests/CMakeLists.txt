@@ -24,6 +24,7 @@ set(Tests
     testsLookup
     testsParser
     testsSlice
+    testsSliceContainer
     testsType
     testsVersion
 )
