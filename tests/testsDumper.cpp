@@ -300,7 +300,7 @@ TEST(StringDumperTest, Null) {
 
 TEST(StringDumperTest, Numbers) {
   int64_t pp = 2;
-  for (int p = 1; p <= 62; p++) {
+  for (int p = 1; p <= 61; p++) {
     int64_t i;
 
     auto check = [&]() -> void {
