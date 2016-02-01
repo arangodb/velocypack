@@ -1,6 +1,6 @@
 include(TargetArch)
-find_package(SSE)
 target_architecture(ARCH)
+find_package(SSE)
 
 set(CMAKE_CXX_STANDARD 11)
 # compiler options
