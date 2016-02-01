@@ -1310,11 +1310,11 @@ TEST(CollectionTest, MergeNonObject) {
   b2.add(Value(ValueType::Object));
   b2.close();
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false),
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false, false),
                               Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false),
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false, false),
                               Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false),
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false, false),
                               Exception::InvalidValueType);
 }
 
@@ -1328,7 +1328,7 @@ TEST(CollectionTest, MergeEmptyLeft) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, true);
+  Builder b = Collection::merge(s1, s2, true, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("bark"));
   ASSERT_EQ(1UL, s.get("bark").getUInt());
@@ -1348,7 +1348,7 @@ TEST(CollectionTest, MergeEmptyRight) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, true);
+  Builder b = Collection::merge(s1, s2, true, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("bark"));
   ASSERT_EQ(1UL, s.get("bark").getUInt());
@@ -1368,7 +1368,7 @@ TEST(CollectionTest, MergeDistinct) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, true);
+  Builder b = Collection::merge(s1, s2, true, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_EQ(1UL, s.get("foo").getUInt());
@@ -1395,7 +1395,7 @@ TEST(CollectionTest, MergeOverlap) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, true);
+  Builder b = Collection::merge(s1, s2, true, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_EQ(12UL, s.get("foo").getUInt());
@@ -1425,7 +1425,7 @@ TEST(CollectionTest, MergeSubAttributes) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, true);
+  Builder b = Collection::merge(s1, s2, true, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_EQ(2UL, s.get("foo").getUInt());
@@ -1464,7 +1464,7 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
   std::shared_ptr<Builder> p2 = Parser::fromJson(r);
   Slice s2(p2->start());
 
-  Builder b = Collection::merge(s1, s2, false);
+  Builder b = Collection::merge(s1, s2, false, false);
   Slice s(b.start());
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_EQ(2UL, s.get("foo").getUInt());
@@ -1487,6 +1487,54 @@ TEST(CollectionTest, MergeOverwriteSubAttributes) {
   ASSERT_EQ(1UL, sub.get("test").getUInt());
   ASSERT_TRUE(sub.hasKey("bart"));
   ASSERT_EQ(2UL, sub.get("bart").getUInt());
+}
+
+TEST(CollectionTest, MergeNullMeansRemove) {
+  std::string const l("{\"foo\":1,\"bar\":2,\"baz\":3}");
+  std::string const r(
+      "{\"baz\":null,\"bark\":1,\"qux\":null,\"bar\":null,\"test\":9}");
+
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
+
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
+
+  Builder b = Collection::merge(s1, s2, true, true);
+  Slice s(b.start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(1UL, s.get("foo").getUInt());
+  ASSERT_FALSE(s.hasKey("bar"));
+  ASSERT_FALSE(s.hasKey("baz"));
+  ASSERT_TRUE(s.hasKey("bark"));
+  ASSERT_EQ(1UL, s.get("bark").getUInt());
+  ASSERT_FALSE(s.hasKey("qux"));
+  ASSERT_TRUE(s.hasKey("test"));
+  ASSERT_EQ(9UL, s.get("test").getUInt());
+}
+
+TEST(CollectionTest, MergeNullMeansRemoveRecursive) {
+  std::string const l("{\"foo\":1,\"bar\":{\"bart\":null,\"barto\":4},\"baz\":3,\"baz\":{\"foo\":1}}");
+  std::string const r(
+      "{\"bar\":{\"barto\":null,\"barko\":7},\"baz\":null}");
+
+  std::shared_ptr<Builder> p1 = Parser::fromJson(l);
+  Slice s1(p1->start());
+
+  std::shared_ptr<Builder> p2 = Parser::fromJson(r);
+  Slice s2(p2->start());
+
+  Builder b = Collection::merge(s1, s2, true, true);
+  Slice s(b.start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_EQ(1UL, s.get("foo").getUInt());
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "bar", "bart" })));
+  ASSERT_TRUE(s.get(std::vector<std::string>({ "bar", "bart" })).isNull());
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "bar", "barto" })));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "bar", "barko" })));
+  ASSERT_EQ(7UL, s.get(std::vector<std::string>({ "bar", "barko" })).getUInt());
+  ASSERT_FALSE(s.hasKey("baz"));
 }
 
 TEST(CollectionTest, VisitRecursiveNonCompound) {
