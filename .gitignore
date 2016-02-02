@@ -3,6 +3,7 @@ vpack-to-json
 json-to-vpack
 core 
 AsmTest
+testsBuffer
 testsBuilder
 testsCollection
 testsDumper
@@ -12,12 +13,8 @@ testsLarge
 testsLookup
 testsParser
 testsSlice
+testsSliceContainer
 testsType
-useBuilder
-useBuilder2
-useDumper
-useParser
-useSlice
 *.o
 *.orig
 *.rej
