@@ -13,6 +13,7 @@ message(STATUS "Building assembler test suite: ${BuildAsmTest}")
 
 set(Tests
     testsAliases
+    testsBuffer
     testsBuilder
     testsCollection
     testsCommon
