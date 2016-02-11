@@ -534,22 +534,20 @@ to derive the byte length of each custom data type.
 
 The following user-defined types exist:
 
-  - 0xf0-0xf3 : These are one-byte custom types containing no further
-                payload. The byte-length of the complete value is 1.
-  - 0xf4-0xf5 : 1 byte payload, directly following the type byte
-  - 0xf6-0xf7 : 2 bytes payload, directly following the type byte
-  - 0xf8-0xf9 : 4 bytes payload, directly following the type byte
-  - 0xfa-0xfb : 8 bytes payload, directly following the type byte
-  - 0xfc      : length of the payload is described by a single further 
+  - 0xf0      : 1 byte payload, directly following the type byte
+  - 0xf1      : 2 bytes payload, directly following the type byte
+  - 0xf2      : 4 bytes payload, directly following the type byte
+  - 0xf3      : 8 bytes payload, directly following the type byte
+  - 0xf4-0xf6 : length of the payload is described by a single further 
                 unsigned byte directly following the type byte, the
                 payload of that many bytes follows
-  - 0xfd      : length of the payload is described by two bytes (little 
+  - 0xf7-0xf9 : length of the payload is described by two bytes (little 
                 endian unsigned integer) directly following the type
                 byte, the payload of that many bytes follows
-  - 0xfe      : length of the payload is described by four bytes (little 
+  - 0xfa-0xfc : length of the payload is described by four bytes (little 
                 endian unsigned integer) directly following the type
                 byte, the payload of that many bytes follows
-  - 0xff      : length of the payload is described by eight bytes (little 
+  - 0xfd-0xff : length of the payload is described by eight bytes (little 
                 endian unsigned integer) directly following the type
                 byte, the payload of that many bytes follows
 
