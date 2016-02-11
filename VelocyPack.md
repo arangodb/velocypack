@@ -527,20 +527,29 @@ dumping) can be efficient.
 
 ## Custom types
 
-Note that custom types should not be used for data exchange but
-only internally in systems. The C++ library classes have pluggable
-methods for them.
+Note that custom types should usually not be used for data exchange but
+only internally in systems. Nevertheless, the design of this part of
+the specification is made such that it is possible by generic methods
+to derive the byte length of each custom data type.
 
-So far, the following user-defined types have been suggested for use
-in ArangoDB:
+The following user-defined types exist:
 
-  - 0xf0      : ID, to be specified, contains a collection ID and a
-                string key, for example as a uint followed by a string,
-                or as 8 bytes little endian unsigned int followed by a
-                string
-  - 0xf1      : the value of ArangoDB's _id attribute, it is generated
-                out of the collection name, "/" and the value of the
-                _key attribute when JSON is generated
-
-
+  - 0xf0-0xf3 : These are one-byte custom types containing no further
+                payload. The byte-length of the complete value is 1.
+  - 0xf4-0xf5 : 1 byte payload, directly following the type byte
+  - 0xf6-0xf7 : 2 bytes payload, directly following the type byte
+  - 0xf8-0xf9 : 4 bytes payload, directly following the type byte
+  - 0xfa-0xfb : 8 bytes payload, directly following the type byte
+  - 0xfc      : length of the payload is described by a single further 
+                unsigned byte directly following the type byte, the
+                payload of that many bytes follows
+  - 0xfd      : length of the payload is described by two bytes (little 
+                endian unsigned integer) directly following the type
+                byte, the payload of that many bytes follows
+  - 0xfe      : length of the payload is described by four bytes (little 
+                endian unsigned integer) directly following the type
+                byte, the payload of that many bytes follows
+  - 0xff      : length of the payload is described by eight bytes (little 
+                endian unsigned integer) directly following the type
+                byte, the payload of that many bytes follows
 
