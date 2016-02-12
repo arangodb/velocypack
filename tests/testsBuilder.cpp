@@ -2143,6 +2143,8 @@ TEST(BuilderTest, AttributeTranslations) {
   translator->add("quetzalcoatl", 6);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+   
   Options options;
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
@@ -2194,6 +2196,8 @@ TEST(BuilderTest, AttributeTranslationsSorted) {
   translator->add("mötör", 5);
   translator->add("quetzalcoatl", 6);
   translator->seal();
+  
+  AttributeTranslatorScope scope(translator.get());
 
   Options options;
   options.sortAttributeNames = true;

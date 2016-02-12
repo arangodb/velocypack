@@ -1985,6 +1985,8 @@ TEST(SliceTest, Translations) {
   translator->add("quetzalcoatl", 6);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   Builder b(&options);
   options.sortAttributeNames = false;
@@ -2001,7 +2003,7 @@ TEST(SliceTest, Translations) {
   b.add("quetzal", Value(21));
   b.close();
 
-  Slice s = Slice(b.start(), &options);
+  Slice s = Slice(b.start());
 
   ASSERT_EQ(8UL, s.length());
   ASSERT_TRUE(s.hasKey("foo"));
@@ -2037,6 +2039,8 @@ TEST(SliceTest, TranslationsSingleMemberObject) {
   translator->add("foo", 1);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   Builder b(&options);
   options.attributeTranslator = translator.get();
@@ -2045,7 +2049,7 @@ TEST(SliceTest, TranslationsSingleMemberObject) {
   b.add("foo", Value(true));
   b.close();
 
-  Slice s = Slice(b.start(), &options);
+  Slice s = Slice(b.start());
 
   ASSERT_EQ(1UL, s.length());
   ASSERT_TRUE(s.hasKey("foo"));
@@ -2063,6 +2067,8 @@ TEST(SliceTest, TranslationsSubObjects) {
   translator->add("baz", 3);
   translator->add("bark", 4);
   translator->seal();
+
+  AttributeTranslatorScope scope(translator.get());
 
   Options options;
   options.sortAttributeNames = false;
@@ -2085,7 +2091,7 @@ TEST(SliceTest, TranslationsSubObjects) {
   b.close();
   b.close();
 
-  Slice s = Slice(b.start(), &options);
+  Slice s = Slice(b.start());
 
   ASSERT_EQ(3UL, s.length());
   ASSERT_TRUE(s.hasKey("foo"));
@@ -2121,6 +2127,8 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
   translator->add("baz", 3);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   Builder b(&options);
   options.sortAttributeNames = false;
@@ -2136,6 +2144,8 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
   b.close();
 
   Slice s = Slice(b.start());
+
+  scope.revert();
 
   ASSERT_EQ(6UL, s.length());
   ASSERT_EQ("mötör", s.keyAt(0).copyString());
@@ -2159,6 +2169,8 @@ TEST(SliceTest, TranslatedWithCompactNotation) {
   translator->add("bark", 5);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   Builder b(&options);
   options.sortAttributeNames = false;
@@ -2173,7 +2185,7 @@ TEST(SliceTest, TranslatedWithCompactNotation) {
   b.add("bart", Value(5));
   b.close();
 
-  Slice s = Slice(b.start(), &options);
+  Slice s = Slice(b.start());
   ASSERT_EQ(0x14, s.head());
 
   ASSERT_EQ(5UL, s.length());
@@ -2190,6 +2202,8 @@ TEST(SliceTest, TranslatedInvalidKey) {
   translator->add("foo", 1);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
@@ -2197,7 +2211,7 @@ TEST(SliceTest, TranslatedInvalidKey) {
   // a compact object with a single member (key: 4, value: false)
   uint8_t const data[] = {0x14, 0x05, 0x34, 0x19, 0x01};
 
-  Slice s = Slice(data, &options);
+  Slice s = Slice(data);
 
   ASSERT_EQ(1UL, s.length());
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(), Exception::KeyNotFound);

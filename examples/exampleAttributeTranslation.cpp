@@ -5,7 +5,7 @@ using namespace arangodb::velocypack;
 
 static void printObject(Builder const& b) {
   // a Slice is a lightweight accessor for a VPack value
-  Slice s(b.start(), b.options);
+  Slice s(b.start());
 
   // inspect the outermost value (should be an Object...)
   std::cout << "Slice: " << s << std::endl;

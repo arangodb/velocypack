@@ -832,6 +832,8 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
   translator->add("bart", 0);
   translator->seal();
 
+  AttributeTranslatorScope scope(translator.get());
+
   Options options;
   options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
@@ -841,7 +843,7 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
 
   Parser parser(&options);
   parser.parse(value);
-  Slice s(parser.start(), &options);
+  Slice s(parser.start());
 
   ObjectIterator it(s);
   ASSERT_EQ(6UL, it.size());

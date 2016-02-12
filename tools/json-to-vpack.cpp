@@ -199,6 +199,7 @@ int main(int argc, char* argv[]) {
     }
     translator->seal();
 
+    Slice::attributeTranslator = translator.get();
     options.attributeTranslator = translator.get();
 
     // print statistics
@@ -266,7 +267,7 @@ int main(int argc, char* argv[]) {
     if (compress) {
       if (translator.get()->count() > 0) {
         std::cout << "Key dictionary size: "
-                  << Slice(translator.get()->builder()->data(), &options)
+                  << Slice(translator.get()->builder()->data())
                          .byteSize() << std::endl;
       } else {
         std::cout << "Key dictionary size: 0 (no benefit from compression)"
