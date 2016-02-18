@@ -7,15 +7,29 @@ using namespace arangodb::velocypack;
 struct MyCustomTypeHandler : public CustomTypeHandler {
   // serialize a custom type into JSON
   static int const myMagicNumber = 42;
+  
+  std::string toString(Slice const& value, Options const*, Slice const&) override final {
+    if (value.head() == 0xf0) {
+      return std::to_string(myMagicNumber);
+    }
+    if (value.head() == 0xf4) {
+      char const* start = value.startAs<char const>();
+      // read string length
+      uint8_t length = *(value.start() + 1);
+      // append string (don't care about escaping here...)
+      return std::string(start, length);
+    }
+    throw "unknown type!";
+  }
 
-  void toJson(Slice const& value, Dumper* dumper, Slice const&) {
+  void dump(Slice const& value, Dumper* dumper, Slice const&) override final {
     Sink* sink = dumper->sink();
 
     if (value.head() == 0xf0) {
       sink->append(std::to_string(myMagicNumber));
       return;
     }
-    if (value.head() == 0xf1) {
+    if (value.head() == 0xf4) {
       char const* start = value.startAs<char const>();
       // read string length
       uint8_t length = *(value.start() + 1);
@@ -24,22 +38,6 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
       sink->append(start + 2, static_cast<ValueLength>(length));
       sink->push_back('"');
       return;
-    }
-    throw "unknown type!";
-  }
-
-  ValueLength byteSize(Slice const& value) {
-    if (value.head() == 0xf0) {
-      // this custom type uses 1 byte only
-      return 1;
-    }
-    if (value.head() == 0xf1) {
-      uint8_t const* start = value.start();
-      // read string length
-      uint8_t length = *(start + 1);
-      // 1 byte for the type, 1 byte for the length info + x bytes for the
-      // actual string
-      return static_cast<ValueLength>(1 + 1 + length);
     }
     throw "unknown type!";
   }
@@ -57,7 +55,7 @@ int main(int, char* []) {
   uint8_t* p;
   // create an attribute "custom1" of type 0xf0 with bytesize 1
   // this type will be serialized into the value of 42
-  p = b.add("custom1", ValuePair(1ULL, ValueType::Custom));
+  p = b.add("custom1", ValuePair(2ULL, ValueType::Custom));
   *p = 0xf0;
 
   // create an attribute "custom2" of type 0xf1 with bytesize 8
@@ -65,7 +63,7 @@ int main(int, char* []) {
   // one byte of string length information following the Slice's
   // head byte, and the string bytes are it.
   p = b.add("custom2", ValuePair(8ULL, ValueType::Custom));
-  *p++ = 0xf1;
+  *p++ = 0xf4;
   // fill it with something useful...
   *p++ = static_cast<uint8_t>(6);  // length of following string
   *p++ = 'f';
@@ -77,7 +75,7 @@ int main(int, char* []) {
 
   // another 0xf1 value
   p = b.add("custom3", ValuePair(5ULL, ValueType::Custom));
-  *p++ = 0xf1;
+  *p++ = 0xf4;
   *p++ = static_cast<uint8_t>(3);  // length of following string
   *p++ = 'q';
   *p++ = 'u';
