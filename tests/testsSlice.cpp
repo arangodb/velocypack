@@ -2251,6 +2251,104 @@ TEST(SliceTest, SliceScope) {
       b.copyString());
 }
 
+TEST(SliceTest, CustomTypeByteSize) {
+  uint8_t example0[] = { 0xf0, 0x00 };
+  {
+    Slice s(example0);
+    ASSERT_EQ(sizeof(example0), s.byteSize());
+  }
+
+  uint8_t example1[] = { 0xf1, 0x00, 0x00 };
+  {
+    Slice s(example1);
+    ASSERT_EQ(sizeof(example1), s.byteSize());
+  }
+
+  uint8_t example2[] = { 0xf2, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example2);
+    ASSERT_EQ(sizeof(example2), s.byteSize());
+  }
+
+  uint8_t example3[] = { 0xf3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example3);
+    ASSERT_EQ(sizeof(example3), s.byteSize());
+  }
+
+  uint8_t example4[] = { 0xf4, 0x03, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example4);
+    ASSERT_EQ(sizeof(example4), s.byteSize());
+  }
+
+  uint8_t example5[] = { 0xf5, 0x02, 0x00, 0x00 };
+  {
+    Slice s(example5);
+    ASSERT_EQ(sizeof(example5), s.byteSize());
+  }
+
+  uint8_t example6[] = { 0xf6, 0x01, 0x00 };
+  {
+    Slice s(example6);
+    ASSERT_EQ(sizeof(example6), s.byteSize());
+  }
+
+  uint8_t example7[] = { 0xf7, 0x01, 0x00, 0x00 };
+  {
+    Slice s(example7);
+    ASSERT_EQ(sizeof(example7), s.byteSize());
+  }
+
+  uint8_t example8[] = { 0xf8, 0x02, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example8);
+    ASSERT_EQ(sizeof(example8), s.byteSize());
+  }
+
+  uint8_t example9[] = { 0xf9, 0x03, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example9);
+    ASSERT_EQ(sizeof(example9), s.byteSize());
+  }
+
+  uint8_t example10[] = { 0xfa, 0x01, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example10);
+    ASSERT_EQ(sizeof(example10), s.byteSize());
+  }
+
+  uint8_t example11[] = { 0xfb, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example11);
+    ASSERT_EQ(sizeof(example11), s.byteSize());
+  }
+
+  uint8_t example12[] = { 0xfc, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example12);
+    ASSERT_EQ(sizeof(example12), s.byteSize());
+  }
+
+  uint8_t example13[] = { 0xfd, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example13);
+    ASSERT_EQ(sizeof(example13), s.byteSize());
+  }
+
+  uint8_t example14[] = { 0xfe, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example14);
+    ASSERT_EQ(sizeof(example14), s.byteSize());
+  }
+
+  uint8_t example15[] = { 0xff, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  {
+    Slice s(example15);
+    ASSERT_EQ(sizeof(example15), s.byteSize());
+  }
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
