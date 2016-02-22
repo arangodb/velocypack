@@ -551,3 +551,5 @@ The following user-defined types exist:
                 endian unsigned integer) directly following the type
                 byte, the payload of that many bytes follows
 
+Note: In types 0xf4 to 0xff the "payload" refers to the actual data not
+including the length specification.
