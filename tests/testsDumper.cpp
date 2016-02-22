@@ -595,7 +595,6 @@ TEST(StringDumperTest, External) {
   ASSERT_EQ(std::string("\"this is a test string\""), Dumper::toString(slice2));
 }
 
-#if 0
 TEST(StringDumperTest, CustomWithoutHandler) {
   LocalBuffer[0] = 0xf0;
   LocalBuffer[1] = 0x00;
@@ -612,19 +611,23 @@ TEST(StringDumperTest, CustomWithoutHandler) {
 TEST(StringDumperTest, CustomWithCallback) {
   Builder b;
   b.add(Value(ValueType::Object));
-  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf0;
+  uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
+  *p = 0xf3;
+  for (size_t i = 1; i <= 8; i++) {
+    p[i] = i + '@';
+  }
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson(Slice const& value, Dumper*, Slice const&) {
+    void dump(Slice const& value, Dumper* dumper, Slice const&) override {
       ASSERT_EQ(ValueType::Custom, value.type());
-      ASSERT_EQ(0xf0UL, value.head());
+      ASSERT_EQ(0xf3UL, value.head());
       sawCustom = true;
-    }
-    ValueLength byteSize(Slice const&) {
-      EXPECT_TRUE(false);
-      return 0;
+      dumper->sink()->push_back('"');
+      for (size_t i = 1; i <= 8; i++) {
+        dumper->sink()->push_back(value.start()[i]);
+      }
+      dumper->sink()->push_back('"');
     }
     bool sawCustom = false;
   };
@@ -637,13 +640,14 @@ TEST(StringDumperTest, CustomWithCallback) {
   Dumper dumper(&sink, &options);
   dumper.dump(b.slice());
   ASSERT_TRUE(handler.sawCustom);
+  ASSERT_EQ(R"({"_id":"ABCDEFGH"})", buffer);
 }
 
 TEST(StringDumperTest, CustomStringWithCallback) {
   Builder b;
   b.add(Value(ValueType::Object));
   uint8_t* p = b.add("foo", ValuePair(5ULL, ValueType::Custom));
-  *p++ = 0xf1;
+  *p++ = 0xf5;
   *p++ = 0x03;
   *p++ = 'b';
   *p++ = 'a';
@@ -651,19 +655,15 @@ TEST(StringDumperTest, CustomStringWithCallback) {
   b.close();
 
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson(Slice const& value, Dumper* dumper, Slice const&) {
+    void dump(Slice const& value, Dumper* dumper, Slice const&) {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
-      ASSERT_EQ(0xf1UL, value.head());
+      ASSERT_EQ(0xf5UL, value.head());
       ValueLength length = static_cast<ValueLength>(*(value.start() + 1));
       sink->push_back('"');
       sink->append(value.startAs<char const>() + 2, length);
       sink->push_back('"');
       sawCustom = true;
-    }
-    ValueLength byteSize(Slice const&) {
-      EXPECT_TRUE(false);
-      return 0;
     }
     bool sawCustom = false;
   };
@@ -682,7 +682,7 @@ TEST(StringDumperTest, CustomStringWithCallback) {
 
 TEST(StringDumperTest, CustomWithCallbackWithContent) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson(Slice const& value, Dumper* dumper, Slice const& base) {
+    void dump(Slice const& value, Dumper* dumper, Slice const& base) override {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
@@ -693,7 +693,6 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
       sink->append(key.copyString());
       sink->push_back('"');
     }
-    ValueLength byteSize(Slice const&) { return 1; }
   };
 
   MyCustomTypeHandler handler;
@@ -702,8 +701,9 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
 
   Builder b(&options);
   b.add(Value(ValueType::Object));
-  uint8_t* p = b.add("_id", ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf0;
+  uint8_t* p = b.add("_id", ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p = 0x12;
   b.add("_key", Value("this is a key"));
   b.close();
 
@@ -720,18 +720,18 @@ TEST(StringDumperTest, CustomWithCallbackWithContent) {
 
 TEST(StringDumperTest, ArrayWithCustom) {
   struct MyCustomTypeHandler : public CustomTypeHandler {
-    void toJson(Slice const& value, Dumper* dumper, Slice const& base) {
+    void dump(Slice const& value, Dumper* dumper, Slice const& base) {
       Sink* sink = dumper->sink();
       ASSERT_EQ(ValueType::Custom, value.type());
 
       EXPECT_TRUE(base.isArray());
-      if (value.head() == 0xf0) {
+      if (value.head() == 0xf0 && value.start()[1] == 0x01) {
         sink->append("\"foobar\"");
-      } else if (value.head() == 0xf1) {
+      } else if (value.head() == 0xf0 && value.start()[1] == 0x02) {
         sink->append("1234");
-      } else if (value.head() == 0xf2) {
+      } else if (value.head() == 0xf0 && value.start()[1] == 0x03) {
         sink->append("[]");
-      } else if (value.head() == 0xf3) {
+      } else if (value.head() == 0xf0 && value.start()[1] == 0x04) {
         sink->append("{\"qux\":2}");
       } else {
         EXPECT_TRUE(false);
@@ -747,14 +747,18 @@ TEST(StringDumperTest, ArrayWithCustom) {
 
   Builder b(&options);
   b.add(Value(ValueType::Array));
-  p = b.add(ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf0;
-  p = b.add(ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf1;
-  p = b.add(ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf2;
-  p = b.add(ValuePair(1ULL, ValueType::Custom));
-  *p = 0xf3;
+  p = b.add(ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p = 1;
+  p = b.add(ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p = 2;
+  p = b.add(ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p = 3;
+  p = b.add(ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p = 4;
   b.close();
 
   // array with same sizes
@@ -767,7 +771,6 @@ TEST(StringDumperTest, ArrayWithCustom) {
 
   ASSERT_EQ(std::string("[\"foobar\",1234,[],{\"qux\":2}]"), buffer);
 }
-#endif
 
 TEST(StringDumperTest, AppendCharTest) {
   char const* p = "this is a simple string";
