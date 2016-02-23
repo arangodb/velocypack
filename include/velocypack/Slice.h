@@ -95,6 +95,9 @@ class Slice {
   // pointer to the head byte
   uint8_t const* start() const { return _start; }
 
+  // Set new memory position
+  void set(uint8_t const* s) { _start = s; }
+
   // pointer to the head byte
   template <typename T>
   T const* startAs() const {

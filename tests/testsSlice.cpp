@@ -2349,6 +2349,17 @@ TEST(SliceTest, CustomTypeByteSize) {
   }
 }
 
+TEST(SliceTest, Reassign) {
+  uint8_t buf1[] = { 0x19 };
+  uint8_t buf2[] = { 0x1a };
+  Slice s(buf1);
+  ASSERT_TRUE(s.isBoolean());
+  ASSERT_FALSE(s.getBool());
+  s.set(buf2);
+  ASSERT_TRUE(s.isBoolean());
+  ASSERT_TRUE(s.getBool());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
