@@ -660,6 +660,7 @@ class Slice {
 
   // check if two Slices are equal on the binary level
   bool equals(Slice const& other) const;
+  bool operator==(Slice const& other) const { return equals(other); }
 
   static bool equals(uint8_t const* left, uint8_t const* right) {
     return Slice(left).equals(Slice(right));
@@ -775,14 +776,6 @@ struct hash<arangodb::velocypack::Slice> {
   }
 };
 
-// implementation of std::equal_to for two Slice objects
-template <>
-struct equal_to<arangodb::velocypack::Slice> {
-  bool operator()(arangodb::velocypack::Slice const& left,
-                  arangodb::velocypack::Slice const& right) const {
-    return left.equals(right);
-  }
-};
 }
 
 std::ostream& operator<<(std::ostream&, arangodb::velocypack::Slice const*);
