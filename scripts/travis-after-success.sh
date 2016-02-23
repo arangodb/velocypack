@@ -1,5 +1,4 @@
-echo CXX "is:$CXX" 
-if [ "$CXX" = "g++-4.9" ]; then 
+if [ "$CXX" = "/usr/bin/g++-4.9" ]; then 
   gem install coveralls-lcov
   # install lcov 1.11
   wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
