@@ -1,3 +1,4 @@
+echo CXX "is:$CXX" 
 if [ "$CXX" = "g++-4.9" ]; then 
   gem install coveralls-lcov
   # install lcov 1.11
