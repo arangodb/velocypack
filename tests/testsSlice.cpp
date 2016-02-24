@@ -1678,6 +1678,8 @@ TEST(SliceTest, EqualToNull) {
   Slice s2 = b2->slice();
 
   ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1 == s2);
+  ASSERT_FALSE(s1 != s2);
 }
 
 TEST(SliceTest, EqualToInt) {
