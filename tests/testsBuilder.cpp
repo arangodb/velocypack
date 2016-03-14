@@ -1617,8 +1617,7 @@ TEST(BuilderTest, ShortStringViaValuePair) {
   char const* p = "the quick brown fox jumped over the lazy dog";
 
   Builder b;
-  uint8_t* dst = b.add(ValuePair(p, strlen(p), ValueType::String));
-  memcpy(dst, p, strlen(p));
+  b.add(ValuePair(p, strlen(p), ValueType::String));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
@@ -1639,8 +1638,7 @@ TEST(BuilderTest, LongStringViaValuePair) {
       "and longer until the test finally worked.";
 
   Builder b;
-  uint8_t* dst = b.add(ValuePair(p, strlen(p), ValueType::String));
-  memcpy(dst, p, strlen(p));
+  b.add(ValuePair(p, strlen(p), ValueType::String));
   uint8_t* result = b.start();
   ValueLength len = b.size();
 
