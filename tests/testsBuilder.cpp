@@ -30,6 +30,22 @@
 
 #include "tests-common.h"
 
+TEST(BuilderTest, ConstructWithBufferRef) {
+  Builder b1;
+  uint32_t u = 1;
+  b1.openObject();
+  b1.add("test",Value(u));
+  b1.close();
+  Buffer<uint8_t> buf = *b1.steal();
+  Builder b2(buf);
+  Slice s(buf.data());
+
+  ASSERT_EQ(ValueType::Object, s.type());
+  ASSERT_EQ(s.get("test").getUInt(), u);
+//  ASSERT_EQ(ValueType::UInt, s.type());
+//  ASSERT_EQ(u, s.type().getUInt());
+}
+
 TEST(BuilderTest, AddObjectInArray) {
   Builder b;
   b.openArray();
