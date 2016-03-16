@@ -207,6 +207,47 @@ TEST(BufferTest, MoveAssignDiscardOwnValue) {
   ASSERT_NE(buffer.data(), buffer2.data());
 }
 
+TEST(BufferTest, SizeEmpty) {
+  Buffer<uint8_t> buffer;
+
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+}
+
+TEST(BufferTest, SizeNonEmpty) {
+  Buffer<uint8_t> buffer;
+  buffer.append("foobar", 6);
+
+  ASSERT_EQ(6UL, buffer.size());
+  ASSERT_EQ(6UL, buffer.length());
+  ASSERT_EQ(6UL, buffer.byteSize());
+  ASSERT_TRUE(!buffer.empty());
+}
+   
+TEST(BufferTest, SizeAfterClear) {
+  Buffer<uint8_t> buffer;
+  buffer.append("foobar", 6);
+
+  buffer.clear();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+}
+
+TEST(BufferTest, SizeAfterReset) {
+  Buffer<uint8_t> buffer;
+  buffer.append("foobar", 6);
+
+  buffer.reset();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
