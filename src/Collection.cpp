@@ -37,6 +37,16 @@ using namespace arangodb::velocypack;
 
 // indicator for "element not found" in indexOf() method
 ValueLength const Collection::NotFound = UINT64_MAX;
+  
+// fully append an array to the builder
+static void appendArray(Builder& builder, Slice const& slice) {
+  ArrayIterator it(slice);
+
+  while (it.valid()) {
+    builder.add(it.value());
+    it.next();
+  }
+}
 
 // convert a vector of strings into an unordered_set of strings
 static inline std::unordered_set<std::string> makeSet(
@@ -180,6 +190,16 @@ std::vector<std::string> Collection::keys(Slice const& slice) {
   keys(slice, result);
 
   return result;
+}
+
+Builder Collection::concat(Slice const& slice1, Slice const& slice2) {
+  Builder b;
+  b.openArray();
+  appendArray(b, slice1);
+  appendArray(b, slice2);
+  b.close();
+
+  return b;
 }
 
 Builder Collection::values(Slice const& slice) {

@@ -914,6 +914,94 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
   ASSERT_EQ(1UL, seen);
 }
 
+TEST(CollectionTest, ConcatEmpty) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s1(parser.start());
+  Slice s2(parser.start());
+
+  Builder b = Collection::concat(s1, s2);
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.isArray()); 
+  ASSERT_EQ(0UL, s.length()); 
+}
+
+TEST(CollectionTest, ConcatLeftEmpty) {
+  std::string const value1("[]");
+  std::string const value2("[1,2,3]");
+
+  Parser parser1;
+  parser1.parse(value1);
+  Slice s1(parser1.start());
+
+  Parser parser2;
+  parser2.parse(value2);
+  Slice s2(parser2.start());
+
+  Builder b = Collection::concat(s1, s2);
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.isArray()); 
+  ASSERT_EQ(3UL, s.length()); 
+  ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
+  ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
+}
+
+TEST(CollectionTest, ConcatRightEmpty) {
+  std::string const value1("[1,2,3]");
+  std::string const value2("[]");
+
+  Parser parser1;
+  parser1.parse(value1);
+  Slice s1(parser1.start());
+
+  Parser parser2;
+  parser2.parse(value2);
+  Slice s2(parser2.start());
+
+  Builder b = Collection::concat(s1, s2);
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.isArray()); 
+  ASSERT_EQ(3UL, s.length()); 
+  ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
+  ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
+}
+
+TEST(CollectionTest, ConcatArray) {
+  std::string const value1("[1,2,3,4,5,10,42]");
+  std::string const value2("[1,2,3]");
+
+  Parser parser1;
+  parser1.parse(value1);
+  Slice s1(parser1.start());
+
+  Parser parser2;
+  parser2.parse(value2);
+  Slice s2(parser2.start());
+
+  Builder b = Collection::concat(s1, s2);
+  Slice s = b.slice();
+
+  ASSERT_TRUE(s.isArray()); 
+  ASSERT_EQ(10UL, s.length()); 
+  ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
+  ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
+  ASSERT_EQ(4UL, s.at(3).getNumber<uint64_t>());
+  ASSERT_EQ(5UL, s.at(4).getNumber<uint64_t>());
+  ASSERT_EQ(10UL, s.at(5).getNumber<uint64_t>());
+  ASSERT_EQ(42UL, s.at(6).getNumber<uint64_t>());
+  ASSERT_EQ(1UL, s.at(7).getNumber<uint64_t>());
+  ASSERT_EQ(2UL, s.at(8).getNumber<uint64_t>());
+  ASSERT_EQ(3UL, s.at(9).getNumber<uint64_t>());
+}
+
 TEST(CollectionTest, KeepNonObject) {
   std::string const value("[]");
 
