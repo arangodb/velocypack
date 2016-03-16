@@ -1002,6 +1002,84 @@ TEST(CollectionTest, ConcatArray) {
   ASSERT_EQ(3UL, s.at(9).getNumber<uint64_t>());
 }
 
+TEST(CollectionTest, ExtractEmpty) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  Builder b1 = Collection::extract(s, 0, 10);
+  Slice s1 = b1.slice();
+  ASSERT_TRUE(s1.isArray()); 
+  ASSERT_EQ(0UL, s1.length()); 
+  
+  Builder b2 = Collection::extract(s, 0, 0);
+  Slice s2 = b2.slice();
+  ASSERT_TRUE(s2.isArray()); 
+  ASSERT_EQ(0UL, s2.length()); 
+  
+  Builder b3 = Collection::extract(s, 2, -1);
+  Slice s3 = b3.slice();
+  ASSERT_TRUE(s3.isArray()); 
+  ASSERT_EQ(0UL, s3.length()); 
+  
+  Builder b4 = Collection::extract(s, 4, 10);
+  Slice s4 = b4.slice();
+  ASSERT_TRUE(s4.isArray()); 
+  ASSERT_EQ(0UL, s4.length()); 
+}
+
+TEST(CollectionTest, ExtractVarious) {
+  std::string const value("[1,2,3,4,5,6]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  Builder b1 = Collection::extract(s, 0, 10);
+  Slice s1 = b1.slice();
+  ASSERT_TRUE(s1.isArray()); 
+  ASSERT_EQ(6UL, s1.length()); 
+  ASSERT_EQ(1UL, s1.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(2UL, s1.at(1).getNumber<uint64_t>());
+  ASSERT_EQ(6UL, s1.at(5).getNumber<uint64_t>());
+  
+  Builder b2 = Collection::extract(s, 1, 1);
+  Slice s2 = b2.slice();
+  ASSERT_TRUE(s2.isArray()); 
+  ASSERT_EQ(1UL, s2.length()); 
+  ASSERT_EQ(2UL, s2.at(0).getNumber<uint64_t>());
+  
+  Builder b3 = Collection::extract(s, 1, -1);
+  Slice s3 = b3.slice();
+  ASSERT_TRUE(s3.isArray()); 
+  ASSERT_EQ(4UL, s3.length()); 
+  ASSERT_EQ(2UL, s3.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(5UL, s3.at(3).getNumber<uint64_t>());
+  
+  Builder b4 = Collection::extract(s, 1, 4);
+  Slice s4 = b4.slice();
+  ASSERT_TRUE(s4.isArray()); 
+  ASSERT_EQ(4UL, s4.length()); 
+  ASSERT_EQ(2UL, s4.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(5UL, s4.at(3).getNumber<uint64_t>());
+  
+  Builder b5 = Collection::extract(s, 1, 5);
+  Slice s5 = b5.slice();
+  ASSERT_TRUE(s5.isArray()); 
+  ASSERT_EQ(5UL, s5.length()); 
+  ASSERT_EQ(2UL, s5.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(6UL, s5.at(4).getNumber<uint64_t>());
+  
+  Builder b6 = Collection::extract(s, 1, -2);
+  Slice s6 = b6.slice();
+  ASSERT_TRUE(s6.isArray()); 
+  ASSERT_EQ(3UL, s6.length()); 
+  ASSERT_EQ(2UL, s6.at(0).getNumber<uint64_t>());
+  ASSERT_EQ(4UL, s6.at(2).getNumber<uint64_t>());
+}
+
 TEST(CollectionTest, KeepNonObject) {
   std::string const value("[]");
 

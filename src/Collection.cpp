@@ -202,6 +202,37 @@ Builder Collection::concat(Slice const& slice1, Slice const& slice2) {
   return b;
 }
 
+Builder Collection::extract(Slice const& slice, int64_t from, int64_t to) {
+  Builder b;
+  b.openArray();
+
+  int64_t length = static_cast<int64_t>(slice.length());
+  int64_t skip = from;
+  int64_t limit = to;
+
+  if (limit < 0) {
+    limit = length + limit - skip;
+  }
+  if (limit > 0) {
+    ArrayIterator it(slice);
+    while (it.valid()) {
+      if (skip > 0) {
+        --skip;
+      }
+      else {
+        b.add(it.value());
+        if (--limit == 0) {
+          break;
+        }
+      }
+      it.next();
+    }
+  }
+  b.close();
+
+  return b;
+}
+
 Builder Collection::values(Slice const& slice) {
   Builder b;
   b.add(Value(ValueType::Array));
