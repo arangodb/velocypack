@@ -30,6 +30,8 @@
 #include "velocypack/velocypack-common.h"
 #include "asm-functions.h"
 
+using namespace arangodb::velocypack;
+
 static bool DisableSSE42 = false;
 
 size_t JSONStringCopyC(uint8_t* dst, uint8_t const* src, size_t limit) {
