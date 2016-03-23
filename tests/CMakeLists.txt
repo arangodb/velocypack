@@ -62,6 +62,8 @@ endif()
 
 # build AsmTest
 if (BuildAsmTest)
-    standard_test(AsmTest "${CMAKE_SOURCE_DIR}/src/asm-functions.cpp")
+    add_executable(AsmTest "${CMAKE_SOURCE_DIR}/src/asm-functions.cpp")
     target_compile_definitions(AsmTest PRIVATE COMPILE_VELOCYPACK_ASM_UNITTESTS)
+    target_link_libraries(AsmTest velocypack ${CMAKE_THREAD_LIBS_INIT})
+    add_test(AsmTest AsmTest 300 10000000 100)
 endif()
