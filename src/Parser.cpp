@@ -106,11 +106,16 @@ int Parser::skipWhiteSpace(char const* err) {
     }
   }
   size_t remaining = _size - _pos;
-  size_t count = JSONSkipWhiteSpace(_start + _pos, remaining);
-  _pos += count;
-  if (count < remaining) {
-    return static_cast<int>(_start[_pos]);
+  if (remaining >= 16) {
+    size_t count = JSONSkipWhiteSpace(_start + _pos, remaining - 15);
+    _pos += count;
   }
+  do {
+    if (!isWhiteSpace(_start[_pos])) {
+      return static_cast<int>(_start[_pos]);
+    }
+    _pos++;
+  } while (_pos < _size);
   throw Exception(Exception::ParseError, err);
 }
 
