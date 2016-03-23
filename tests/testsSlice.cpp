@@ -1931,8 +1931,32 @@ TEST(SliceTest, NormalizedHashObject) {
   ASSERT_EQ(15518419071972093120ULL, s1.hash());
   ASSERT_EQ(4048487509578424242ULL, s2.hash());
 
-  ASSERT_EQ(16402636469052949296ULL, s1.normalizedHash());
-  ASSERT_EQ(16402636469052949296ULL, s2.normalizedHash());
+  ASSERT_EQ(761244080014510746ULL, s1.normalizedHash());
+  ASSERT_EQ(761244080014510746ULL, s2.normalizedHash());
+}
+
+TEST(SliceTest, NormalizedHashObjectOrder) {
+  Options options;
+
+  options.sortAttributeNames = true;
+  options.buildUnindexedObjects = false;
+  std::shared_ptr<Builder> b1 = Parser::fromJson(
+      "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
+      "\"seven\":7}", &options);
+  Slice s1 = b1->slice();
+  
+  options.sortAttributeNames = true;
+  options.buildUnindexedObjects = false;
+  std::shared_ptr<Builder> b2 = Parser::fromJson(
+      "{\"seven\":7,\"six\":6,\"five\":5,\"four\":4,\"three\":3,\"two\":2,\"one\":1}", &options);
+  Slice s2 = b2->slice();
+  
+  // hash values differ, but normalized hash values shouldn't!
+  ASSERT_EQ(6865527808070733846ULL, s1.hash());
+  ASSERT_EQ(11084437118009261125ULL, s2.hash());
+
+  ASSERT_EQ(761244080014510746ULL, s1.normalizedHash());
+  ASSERT_EQ(761244080014510746ULL, s2.normalizedHash());
 }
 
 TEST(SliceTest, GetNumericValueIntNoLoss) {
