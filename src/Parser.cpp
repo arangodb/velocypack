@@ -231,11 +231,16 @@ void Parser::parseString() {
     if (remainder >= 16) {
       _b->reserveSpace(remainder);
       size_t count;
+      // Note that the SSE4.2 accelerated string copying functions might
+      // peek up to 15 bytes over the given end, because they use 128bit
+      // registers. Therefore, we have to subtract 15 from remainder
+      // to be on the safe side. Further bytes will be processed below.
       if (options->validateUtf8Strings) {
         count = JSONStringCopyCheckUtf8(_b->_start + _b->_pos, _start + _pos,
-                                        remainder);
+                                        remainder - 15);
       } else {
-        count = JSONStringCopy(_b->_start + _b->_pos, _start + _pos, remainder);
+        count = JSONStringCopy(_b->_start + _b->_pos, _start + _pos,
+                               remainder - 15);
       }
       _pos += count;
       _b->_pos += count;

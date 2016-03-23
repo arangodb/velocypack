@@ -585,7 +585,7 @@ TEST(BuilderTest, BufferSharedPointerStealAndReturn) {
 
   std::shared_ptr<Builder> b = func();
   ASSERT_EQ(0xbf, *(b->buffer()->data()));  // long UTF-8 string...
-  ASSERT_EQ(217UL, b->buffer()->size());
+  ASSERT_EQ(216UL, b->size());
 }
 
 TEST(BuilderTest, BufferSharedPointerStealMultiple) {
@@ -598,7 +598,7 @@ TEST(BuilderTest, BufferSharedPointerStealMultiple) {
 
   std::shared_ptr<Builder> b = parser.steal();
   ASSERT_EQ(0xbf, *(b->buffer()->data()));  // long UTF-8 string...
-  ASSERT_EQ(217UL, b->buffer()->size());
+  ASSERT_EQ(216UL, b->size());
   ASSERT_EQ(1, b->buffer().use_count());
 
   // steal again, should work, but Builder should be empty:
