@@ -31,6 +31,46 @@
 
 static unsigned char LocalBuffer[4096];
 
+TEST(SliceTest, NoneFactory) {
+  Slice s = Slice::noneSlice();
+  ASSERT_TRUE(s.isNone());
+}
+
+TEST(SliceTest, NullFactory) {
+  Slice s = Slice::nullSlice();
+  ASSERT_TRUE(s.isNull());
+}
+
+TEST(SliceTest, FalseFactory) {
+  Slice s = Slice::falseSlice();
+  ASSERT_TRUE(s.isBoolean() && !s.getBoolean());
+}
+
+TEST(SliceTest, TrueFactory) {
+  Slice s = Slice::trueSlice();
+  ASSERT_TRUE(s.isBoolean() && s.getBoolean());
+}
+
+TEST(SliceTest, EmptyArrayFactory) {
+  Slice s = Slice::emptyArraySlice();
+  ASSERT_TRUE(s.isArray() && s.length() == 0);
+}
+
+TEST(SliceTest, EmptyObjectFactory) {
+  Slice s = Slice::emptyObjectSlice();
+  ASSERT_TRUE(s.isObject() && s.length() == 0);
+}
+
+TEST(SliceTest, MinKeyFactory) {
+  Slice s = Slice::minKeySlice();
+  ASSERT_TRUE(s.isMinKey());
+}
+
+TEST(SliceTest, MaxKeyFactory) {
+  Slice s = Slice::maxKeySlice();
+  ASSERT_TRUE(s.isMaxKey());
+}
+  
 TEST(SliceTest, SliceStart) {
   std::string const value("null");
 
