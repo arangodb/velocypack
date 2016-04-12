@@ -69,6 +69,9 @@ class Slice {
 
   // creates a slice of type None
   static Slice noneSlice() { return Slice("\x00"); }
+  
+  // creates a slice of type Illegal
+  static Slice illegalSlice() { return Slice("\x17"); }
 
   // creates a slice of type Null
   static Slice nullSlice() { return Slice("\x18"); }
@@ -148,6 +151,9 @@ class Slice {
 
   // check if slice is a None object
   bool isNone() const { return isType(ValueType::None); }
+  
+  // check if slice is an Illegal object
+  bool isIllegal() const { return isType(ValueType::Illegal); }
 
   // check if slice is a Null object
   bool isNull() const { return isType(ValueType::Null); }
@@ -599,6 +605,7 @@ class Slice {
   ValueLength byteSize() const {
     switch (type()) {
       case ValueType::None:
+      case ValueType::Illegal:
       case ValueType::Null:
       case ValueType::Bool:
       case ValueType::MinKey:

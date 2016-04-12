@@ -58,7 +58,9 @@ reference, for arrays and objects see below for details:
                 attribute name, 8-byte bytelen and # subvals
   - 0x13      : compact array, no index table
   - 0x14      : compact object, no index table
-  - 0x15-0x17 : reserved
+  - 0x15-0x16 : reserved
+  - 0x17      : illegal - this type can be used to indicate a value that
+                is illegal in the embedding application
   - 0x18      : null
   - 0x19      : false
   - 0x1a      : true

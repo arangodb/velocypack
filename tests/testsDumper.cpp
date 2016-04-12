@@ -1168,6 +1168,27 @@ TEST(StringDumperTest, ConvertTypeNull) {
   ASSERT_EQ(std::string("null"), buffer);
 }
 
+TEST(StringDumperTest, UnsupportedTypeIllegal) {
+  static uint8_t const b[] = {0x17};
+  Slice slice(&b[0]);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Dumper::toString(slice),
+                              Exception::NoJsonEquivalent);
+}
+
+TEST(StringDumperTest, ConvertTypeIllegal) {
+  static uint8_t const b[] = {0x17};
+  Slice slice(&b[0]);
+
+  Options options;
+  options.unsupportedTypeBehavior = Options::NullifyUnsupportedType;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("null"), buffer);
+}
+
 TEST(StringDumperTest, UnsupportedTypeMinKey) {
   static uint8_t const b[] = {0x1e};
   Slice slice(&b[0]);

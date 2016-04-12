@@ -41,6 +41,11 @@ TEST(SliceTest, NullFactory) {
   ASSERT_TRUE(s.isNull());
 }
 
+TEST(SliceTest, IllegalFactory) {
+  Slice s = Slice::illegalSlice();
+  ASSERT_TRUE(s.isIllegal());
+}
+
 TEST(SliceTest, FalseFactory) {
   Slice s = Slice::falseSlice();
   ASSERT_TRUE(s.isBoolean() && !s.getBoolean());

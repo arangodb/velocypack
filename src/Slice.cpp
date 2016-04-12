@@ -53,7 +53,7 @@ VT const Slice::TypeMap[256] = {
     /* 0x10 */ VT::Object,   /* 0x11 */ VT::Object,
     /* 0x12 */ VT::Object,   /* 0x13 */ VT::Array,
     /* 0x14 */ VT::Object,   /* 0x15 */ VT::None,
-    /* 0x16 */ VT::None,     /* 0x17 */ VT::None,
+    /* 0x16 */ VT::None,     /* 0x17 */ VT::Illegal,
     /* 0x18 */ VT::Null,     /* 0x19 */ VT::Bool,
     /* 0x1a */ VT::Bool,     /* 0x1b */ VT::Double,
     /* 0x1c */ VT::UTCDate,  /* 0x1d */ VT::External,

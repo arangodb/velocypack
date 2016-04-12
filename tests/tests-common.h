@@ -74,6 +74,30 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
 
   switch (t) {
     case ValueType::None:
+      ASSERT_TRUE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
+      ASSERT_FALSE(s.isNull());
+      ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
+      ASSERT_FALSE(s.isDouble());
+      ASSERT_FALSE(s.isArray());
+      ASSERT_FALSE(s.isObject());
+      ASSERT_FALSE(s.isExternal());
+      ASSERT_FALSE(s.isUTCDate());
+      ASSERT_FALSE(s.isInt());
+      ASSERT_FALSE(s.isUInt());
+      ASSERT_FALSE(s.isSmallInt());
+      ASSERT_FALSE(s.isString());
+      ASSERT_FALSE(s.isBinary());
+      ASSERT_FALSE(s.isNumber());
+      ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      break;
+    case ValueType::Illegal:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_TRUE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -94,6 +118,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMaxKey());
       break;
     case ValueType::Null:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_TRUE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -115,6 +141,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Bool:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_TRUE(s.isBool());
       ASSERT_TRUE(s.isFalse() || s.isTrue());
@@ -135,6 +163,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Double:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -156,6 +186,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Array:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -177,6 +209,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Object:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -198,6 +232,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::External:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -219,6 +255,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::UTCDate:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -240,6 +278,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Int:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -261,6 +301,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::UInt:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -282,6 +324,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::SmallInt:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -303,6 +347,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::String:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -324,6 +370,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Binary:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -345,6 +393,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::BCD:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -366,6 +416,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::MinKey:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -387,6 +439,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::MaxKey:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
@@ -408,6 +462,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isCustom());
       break;
     case ValueType::Custom:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
       ASSERT_FALSE(s.isNull());
       ASSERT_FALSE(s.isBool());
       ASSERT_FALSE(s.isFalse());
