@@ -2173,11 +2173,37 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
                               Exception::DuplicateAttributeName);
 }
 
-TEST(ParserTest, FromJson) {
+TEST(ParserTest, FromJsonString) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
 
   Options options;
   std::shared_ptr<Builder> b = Parser::fromJson(value, &options);
+
+  Slice s(b->start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("qux"));
+}
+
+TEST(ParserTest, FromJsonChar) {
+  char const* value = "{\"foo\":1,\"bar\":2,\"baz\":3}";
+
+  Options options;
+  std::shared_ptr<Builder> b = Parser::fromJson(value, strlen(value), &options);
+
+  Slice s(b->start());
+  ASSERT_TRUE(s.hasKey("foo"));
+  ASSERT_TRUE(s.hasKey("bar"));
+  ASSERT_TRUE(s.hasKey("baz"));
+  ASSERT_FALSE(s.hasKey("qux"));
+}
+
+TEST(ParserTest, FromJsonUInt8) {
+  char const* value = "{\"foo\":1,\"bar\":2,\"baz\":3}";
+
+  Options options;
+  std::shared_ptr<Builder> b = Parser::fromJson(reinterpret_cast<uint8_t const*>(value), strlen(value), &options);
 
   Slice s(b->start());
   ASSERT_TRUE(s.hasKey("foo"));
