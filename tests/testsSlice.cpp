@@ -26,6 +26,7 @@
 
 #include <ostream>
 #include <string>
+#include <iostream>
 
 #include "tests-common.h"
 
@@ -74,6 +75,67 @@ TEST(SliceTest, MinKeyFactory) {
 TEST(SliceTest, MaxKeyFactory) {
   Slice s = Slice::maxKeySlice();
   ASSERT_TRUE(s.isMaxKey());
+}
+
+TEST(SliceTest, ResolveExternal) {
+  ASSERT_TRUE(Slice::illegalSlice().isIllegal());
+  ASSERT_TRUE(Slice::illegalSlice().resolveExternal().isIllegal());
+
+  ASSERT_TRUE(Slice::noneSlice().isNone());
+  ASSERT_TRUE(Slice::noneSlice().resolveExternal().isNone());
+
+  ASSERT_TRUE(Slice::nullSlice().isNull());
+  ASSERT_TRUE(Slice::nullSlice().resolveExternal().isNull());
+
+  ASSERT_TRUE(Slice::falseSlice().isFalse());
+  ASSERT_TRUE(Slice::falseSlice().resolveExternal().isFalse());
+
+  ASSERT_TRUE(Slice::trueSlice().isTrue());
+  ASSERT_TRUE(Slice::trueSlice().resolveExternal().isTrue());
+
+  ASSERT_TRUE(Slice::emptyArraySlice().isArray());
+  ASSERT_TRUE(Slice::emptyArraySlice().resolveExternal().isArray());
+
+  ASSERT_TRUE(Slice::emptyObjectSlice().isObject());
+  ASSERT_TRUE(Slice::emptyObjectSlice().resolveExternal().isObject());
+
+  ASSERT_TRUE(Slice::minKeySlice().isMinKey());
+  ASSERT_TRUE(Slice::minKeySlice().resolveExternal().isMinKey());
+
+  ASSERT_TRUE(Slice::maxKeySlice().isMaxKey());
+  ASSERT_TRUE(Slice::maxKeySlice().resolveExternal().isMaxKey());
+ 
+  Builder builder;
+  builder.openArray();
+  builder.add(Value(1));
+  builder.close();
+   
+  LocalBuffer[0] = 0x1d;
+  char const* p = builder.slice().startAs<char const>();
+  memcpy(&LocalBuffer[1], &p, sizeof(char const*));
+  
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).isExternal());
+  ASSERT_FALSE(Slice(&LocalBuffer[0]).isArray());
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().isArray());
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().at(0).isNumber());
+  
+  Builder builder2;
+  builder2.openObject();
+  builder2.add("foo", Value(1));
+  builder2.add("bar", Value("baz"));
+  builder2.close();
+  
+  LocalBuffer[0] = 0x1d;
+  p = builder2.slice().startAs<char const>();
+  memcpy(&LocalBuffer[1], &p, sizeof(char const*));
+  
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).isExternal());
+  ASSERT_FALSE(Slice(&LocalBuffer[0]).isObject());
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().isObject());
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().get("foo").isNumber());
+  ASSERT_EQ(1, Slice(&LocalBuffer[0]).resolveExternal().get("foo").getInt());
+  ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().get("bar").isString());
+  ASSERT_EQ("baz", Slice(&LocalBuffer[0]).resolveExternal().get("bar").copyString());
 }
   
 TEST(SliceTest, SliceStart) {
