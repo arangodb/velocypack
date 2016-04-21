@@ -2450,8 +2450,8 @@ TEST(SliceTest, TranslatedInvalidKey) {
   Slice s = Slice(data);
 
   ASSERT_EQ(1UL, s.length());
-  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(), Exception::KeyNotFound);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::KeyNotFound);
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
 }
 
 TEST(SliceTest, SliceScope) {

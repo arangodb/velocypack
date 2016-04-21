@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
     }
     translator->seal();
 
-    Slice::attributeTranslator = translator.get();
+    Options::Defaults.attributeTranslator = translator.get();
     options.attributeTranslator = translator.get();
 
     // print statistics
