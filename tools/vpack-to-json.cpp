@@ -50,8 +50,45 @@ static void usage(char* argv[]) {
   std::cout << "printed to stdout." << std::endl;
 #endif
   std::cout << "Available options are:" << std::endl;
-  std::cout << " --pretty        pretty-print JSON output" << std::endl;
-  std::cout << " --no-pretty     don't pretty print JSON output" << std::endl;
+  std::cout << " --pretty                  pretty-print JSON output" << std::endl;
+  std::cout << " --no-pretty               don't pretty print JSON output" << std::endl;
+  std::cout << " --print-unsupported       convert non-JSON types into something else" << std::endl;
+  std::cout << " --no-print-unsupported    fail when encoutering a non-JSON type" << std::endl;
+  std::cout << " --hex                     try to turn hex-encoded input into binary vpack" << std::endl;
+}
+
+static std::string convertFromHex(std::string const& value) {
+  std::string result;
+  result.reserve(value.size());
+
+  size_t const n = value.size();
+  int prev = -1;
+
+  for (size_t i = 0; i < n; ++i) {
+    int current;
+
+    if (value[i] >= '0' && value[i] <= '9') {
+      current = value[i] - '0';
+    } else if (value[i] >= 'a' && value[i] <= 'f') {
+      current = 10 + (value[i] - 'a');
+    } else if (value[i] >= 'A' && value[i] <= 'F') {
+      current = 10 + (value[i] - 'A');
+    } else {
+      prev = -1;
+      continue;
+    }
+
+    if (prev == -1) {
+      // first part of two-byte sequence
+      prev = current;
+    } else {
+      // second part of two-byte sequence
+      result.push_back(static_cast<unsigned char>((prev << 4) + current));
+      prev = -1;
+    }
+  }
+
+  return result;
 }
 
 static inline bool isOption(char const* arg, char const* expected) {
@@ -63,6 +100,8 @@ int main(int argc, char* argv[]) {
   char const* outfileName = nullptr;
   bool allowFlags = true;
   bool pretty = true;
+  bool printUnsupported = true;
+  bool hex = false;
 
   int i = 1;
   while (i < argc) {
@@ -74,6 +113,12 @@ int main(int argc, char* argv[]) {
       pretty = true;
     } else if (allowFlags && isOption(p, "--no-pretty")) {
       pretty = false;
+    } else if (allowFlags && isOption(p, "--print-unsupported")) {
+      printUnsupported = true;
+    } else if (allowFlags && isOption(p, "--no-print-unsupported")) {
+      printUnsupported = false;
+    } else if (allowFlags && isOption(p, "--hex")) {
+      hex = true;
     } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
     } else if (infileName == nullptr) {
@@ -132,10 +177,16 @@ int main(int argc, char* argv[]) {
   }
   ifs.close();
 
+  if (hex) {
+    s = convertFromHex(s);
+  }
+
   Slice const slice(s.c_str());
 
   Options options;
   options.prettyPrint = pretty;
+  options.unsupportedTypeBehavior = 
+    (printUnsupported ? Options::ConvertUnsupportedType : Options::FailOnUnsupportedType);
 
   Buffer<char> buffer(4096);
   CharBufferSink sink(&buffer);
