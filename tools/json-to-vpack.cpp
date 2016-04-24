@@ -128,6 +128,12 @@ int main(int argc, char* argv[]) {
     ++i;
   }
 
+#ifdef __linux__
+  if (infileName == nullptr) {
+    infileName = "-";
+  }
+#endif
+
   if (infileName == nullptr) {
     usage(argv);
     return EXIT_FAILURE;
