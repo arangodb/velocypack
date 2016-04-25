@@ -456,6 +456,12 @@ class Builder {
 
 private:
 
+  // close for the empty case:
+  Builder& closeEmptyArrayOrObject(ValueLength tos, bool isArray);
+
+  // close for the compact case:
+  bool closeCompactArrayOrObject(ValueLength tos, bool isArray);
+
   void addNull() {
     reserveSpace(1);
     _start[_pos++] = 0x18;

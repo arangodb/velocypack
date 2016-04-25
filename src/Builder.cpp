@@ -164,6 +164,62 @@ void Builder::removeLast() {
   index.pop_back();
 }
 
+Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
+  // empty Array or Object
+  _start[tos] = (isArray ? 0x01 : 0x0a);
+  VELOCYPACK_ASSERT(_pos == tos + 9);
+  _pos -= 8;  // no bytelength and number subvalues needed
+  _stack.pop_back();
+  // Intentionally leave _index[depth] intact to avoid future allocs!
+  return *this;
+}
+
+bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray) {
+  // use compact notation
+  std::vector<ValueLength>& index = _index[_stack.size() - 1];
+  ValueLength nLen =
+      getVariableValueLength(static_cast<ValueLength>(index.size()));
+  VELOCYPACK_ASSERT(nLen > 0);
+  ValueLength byteSize = _pos - (tos + 8) + nLen;
+  VELOCYPACK_ASSERT(byteSize > 0);
+  ValueLength bLen = getVariableValueLength(byteSize);
+  byteSize += bLen;
+  if (getVariableValueLength(byteSize) != bLen) {
+    byteSize += 1;
+    bLen += 1;
+  }
+
+  if (bLen < 9) {
+    // can only use compact notation if total byte length is at most 8 bytes
+    // long
+    _start[tos] = (isArray ? 0x13 : 0x14);
+    ValueLength targetPos = 1 + bLen;
+
+    if (_pos > (tos + 9)) {
+      ValueLength len = _pos - (tos + 9);
+      memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
+    }
+
+    // store byte length
+    VELOCYPACK_ASSERT(byteSize > 0);
+    storeVariableValueLength<false>(_start + tos + 1, byteSize);
+
+    // need additional memory for storing the number of values
+    if (nLen > 8 - bLen) {
+      reserveSpace(nLen);
+    }
+    storeVariableValueLength<true>(_start + tos + byteSize - 1,
+                                   static_cast<ValueLength>(index.size()));
+
+    _pos -= 8;
+    _pos += nLen + bLen;
+
+    _stack.pop_back();
+    return true;
+  }
+  return false;
+}
+
 Builder& Builder::close() {
   if (isClosed()) {
     throw Exception(Exception::BuilderNeedOpenCompound);
@@ -178,13 +234,7 @@ Builder& Builder::close() {
   std::vector<ValueLength>& index = _index[_stack.size() - 1];
 
   if (index.empty()) {
-    // empty Array or Object
-    _start[tos] = (isArray ? 0x01 : 0x0a);
-    VELOCYPACK_ASSERT(_pos == tos + 9);
-    _pos -= 8;  // no bytelength and number subvalues needed
-    _stack.pop_back();
-    // Intentionally leave _index[depth] intact to avoid future allocs!
-    return *this;
+    return closeEmptyArrayOrObject(tos, isArray);
   }
 
   // From now on index.size() > 0
@@ -194,47 +244,10 @@ Builder& Builder::close() {
   if (index.size() > 1 && ((head == 0x13 || head == 0x14) ||
                            (head == 0x06 && options->buildUnindexedArrays) ||
                            (head == 0x0b && options->buildUnindexedObjects))) {
-    // use compact notation
-    ValueLength nLen =
-        getVariableValueLength(static_cast<ValueLength>(index.size()));
-    VELOCYPACK_ASSERT(nLen > 0);
-    ValueLength byteSize = _pos - (tos + 8) + nLen;
-    VELOCYPACK_ASSERT(byteSize > 0);
-    ValueLength bLen = getVariableValueLength(byteSize);
-    byteSize += bLen;
-    if (getVariableValueLength(byteSize) != bLen) {
-      byteSize += 1;
-      bLen += 1;
-    }
-
-    if (bLen < 9) {
-      // can only use compact notation if total byte length is at most 8 bytes
-      // long
-      _start[tos] = (isArray ? 0x13 : 0x14);
-      ValueLength targetPos = 1 + bLen;
-
-      if (_pos > (tos + 9)) {
-        ValueLength len = _pos - (tos + 9);
-        memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
-      }
-
-      // store byte length
-      VELOCYPACK_ASSERT(byteSize > 0);
-      storeVariableValueLength<false>(_start + tos + 1, byteSize);
-
-      // need additional memory for storing the number of values
-      if (nLen > 8 - bLen) {
-        reserveSpace(nLen);
-      }
-      storeVariableValueLength<true>(_start + tos + byteSize - 1,
-                                     static_cast<ValueLength>(index.size()));
-
-      _pos -= 8;
-      _pos += nLen + bLen;
-
-      _stack.pop_back();
+    if (closeCompactArrayOrObject(tos, isArray)) {
       return *this;
     }
+    // This might fall through, if closeCompactArrayOrObject gave up!
   }
 
   // fix head byte in case a compact Array / Object was originally requested
