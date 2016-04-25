@@ -382,25 +382,19 @@ Builder& Builder::close() {
   // fix head byte in case a compact Array / Object was originally requested
   _start[tos] = 0x0b;
 
-  bool needIndexTable = true;
-  if (index.size() == 1) {
-    needIndexTable = false;
-  }
-
   // First determine byte length and its format:
   unsigned int offsetSize;
   // can be 1, 2, 4 or 8 for the byte width of the offsets,
   // the byte length and the number of subvalues:
-  if (_pos - tos + (needIndexTable ? index.size() : 0) - 6 <= 0xff) {
+  if (_pos - tos + index.size() - 6 <= 0xff) {
     // We have so far used _pos - tos bytes, including the reserved 8
     // bytes for byte length and number of subvalues. In the 1-byte number
     // case we would win back 6 bytes but would need one byte per subvalue
     // for the index table
     offsetSize = 1;
-  } else if (_pos - tos + (needIndexTable ? 2 * index.size() : 0) <= 0xffff) {
+  } else if (_pos - tos + 2 * index.size() <= 0xffff) {
     offsetSize = 2;
-  } else if (_pos - tos + (needIndexTable ? 4 * index.size() : 0) <=
-             0xffffffffu) {
+  } else if (_pos - tos + 4 * index.size() <= 0xffffffffu) {
     offsetSize = 4;
   } else {
     offsetSize = 8;
@@ -415,35 +409,31 @@ Builder& Builder::close() {
     }
     ValueLength const diff = 9 - targetPos;
     _pos -= diff;
-    if (needIndexTable) {
-      size_t const n = index.size();
-      for (size_t i = 0; i < n; i++) {
-        index[i] -= diff;
-      }
-    }  // Note: if !needIndexTable the index array is now wrong!
+    size_t const n = index.size();
+    for (size_t i = 0; i < n; i++) {
+      index[i] -= diff;
+    }
   }
   // One could move down things in the offsetSize == 2 case as well,
   // since we only need 4 bytes in the beginning. However, saving these
   // 4 bytes has been sacrificed on the Altar of Performance.
 
   // Now build the table:
-  if (needIndexTable) {
-    ValueLength tableBase;
-    reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
-    tableBase = _pos;
-    _pos += offsetSize * index.size();
-    // Object
-    if (!options->sortAttributeNames) {
-      _start[tos] = 0x0f;  // unsorted
-    } else if (index.size() >= 2 && options->sortAttributeNames) {
-      sortObjectIndex(_start + tos, index);
-    }
-    for (size_t i = 0; i < index.size(); i++) {
-      uint64_t x = index[i];
-      for (size_t j = 0; j < offsetSize; j++) {
-        _start[tableBase + offsetSize * i + j] = x & 0xff;
-        x >>= 8;
-      }
+  ValueLength tableBase;
+  reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
+  tableBase = _pos;
+  _pos += offsetSize * index.size();
+  // Object
+  if (!options->sortAttributeNames) {
+    _start[tos] = 0x0f;  // unsorted
+  } else if (index.size() >= 2 && options->sortAttributeNames) {
+    sortObjectIndex(_start + tos, index);
+  }
+  for (size_t i = 0; i < index.size(); i++) {
+    uint64_t x = index[i];
+    for (size_t j = 0; j < offsetSize; j++) {
+      _start[tableBase + offsetSize * i + j] = x & 0xff;
+      x >>= 8;
     }
   }
   // Finally fix the byte width in the type byte:
