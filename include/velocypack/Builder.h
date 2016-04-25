@@ -460,7 +460,11 @@ private:
   Builder& closeEmptyArrayOrObject(ValueLength tos, bool isArray);
 
   // close for the compact case:
-  bool closeCompactArrayOrObject(ValueLength tos, bool isArray);
+  bool closeCompactArrayOrObject(ValueLength tos, bool isArray,
+                                 std::vector<ValueLength>& index);
+
+  // close for the array case:
+  Builder& closeArray(ValueLength tos, std::vector<ValueLength>& index);
 
   void addNull() {
     reserveSpace(1);

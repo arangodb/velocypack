@@ -174,9 +174,9 @@ Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
   return *this;
 }
 
-bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray) {
+bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray,
+                                        std::vector<ValueLength>& index) {
   // use compact notation
-  std::vector<ValueLength>& index = _index[_stack.size() - 1];
   ValueLength nLen =
       getVariableValueLength(static_cast<ValueLength>(index.size()));
   VELOCYPACK_ASSERT(nLen > 0);
@@ -220,49 +220,16 @@ bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray) {
   return false;
 }
 
-Builder& Builder::close() {
-  if (isClosed()) {
-    throw Exception(Exception::BuilderNeedOpenCompound);
-  }
-  ValueLength& tos = _stack.back();
-  uint8_t const head = _start[tos];
-
-  VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 ||
-                    head == 0x14);
-
-  bool const isArray = (head == 0x06 || head == 0x13);
-  std::vector<ValueLength>& index = _index[_stack.size() - 1];
-
-  if (index.empty()) {
-    return closeEmptyArrayOrObject(tos, isArray);
-  }
-
-  // From now on index.size() > 0
-  VELOCYPACK_ASSERT(index.size() > 0);
-
-  // check if we can use the compact Array / Object format
-  if (index.size() > 1 && ((head == 0x13 || head == 0x14) ||
-                           (head == 0x06 && options->buildUnindexedArrays) ||
-                           (head == 0x0b && options->buildUnindexedObjects))) {
-    if (closeCompactArrayOrObject(tos, isArray)) {
-      return *this;
-    }
-    // This might fall through, if closeCompactArrayOrObject gave up!
-  }
-
-  // fix head byte in case a compact Array / Object was originally requested
-  _start[tos] = (isArray ? 0x06 : 0x0b);
+Builder& Builder::closeArray(ValueLength tos, std::vector<ValueLength>& index) {
+  // fix head byte in case a compact Array was originally requested:
+  _start[tos] = 0x06;
 
   bool needIndexTable = true;
   bool needNrSubs = true;
   if (index.size() == 1) {
     needIndexTable = false;
-    if (_start[tos] == 0x06) {
-      needNrSubs = false;
-    }
-    // For objects we leave needNrSubs at true here!
-  } else if (_start[tos] == 0x06 &&  // an Array
-             (_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
+    needNrSubs = false;
+  } else if ((_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
     bool noTable = true;
@@ -306,7 +273,7 @@ Builder& Builder::close() {
   // Maybe we need to move down data:
   if (offsetSize == 1) {
     ValueLength targetPos = 3;
-    if (!needIndexTable && _start[tos] == 0x06) {
+    if (!needIndexTable) {
       targetPos = 2;
     }
     if (_pos > (tos + 9)) {
@@ -315,10 +282,12 @@ Builder& Builder::close() {
     }
     ValueLength const diff = 9 - targetPos;
     _pos -= diff;
-    size_t const n = index.size();
-    for (size_t i = 0; i < n; i++) {
-      index[i] -= diff;
-    }
+    if (needIndexTable) {
+      size_t const n = index.size();
+      for (size_t i = 0; i < n; i++) {
+        index[i] -= diff;
+      }
+    }  // Note: if !needIndexTable the index array is now wrong!
   }
   // One could move down things in the offsetSize == 2 case as well,
   // since we only need 4 bytes in the beginning. However, saving these
@@ -330,14 +299,6 @@ Builder& Builder::close() {
     reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
     tableBase = _pos;
     _pos += offsetSize * index.size();
-    if (_start[tos] == 0x0b) {
-      // Object
-      if (!options->sortAttributeNames) {
-        _start[tos] = 0x0f;  // unsorted
-      } else if (index.size() >= 2 && options->sortAttributeNames) {
-        sortObjectIndex(_start + tos, index);
-      }
-    }
     for (size_t i = 0; i < index.size(); i++) {
       uint64_t x = index[i];
       for (size_t j = 0; j < offsetSize; j++) {
@@ -346,8 +307,143 @@ Builder& Builder::close() {
       }
     }
   } else {  // no index table
-    if (_start[tos] == 0x06) {
-      _start[tos] = 0x02;
+    _start[tos] = 0x02;
+  }
+  // Finally fix the byte width in the type byte:
+  if (offsetSize > 1) {
+    if (offsetSize == 2) {
+      _start[tos] += 1;
+    } else if (offsetSize == 4) {
+      _start[tos] += 2;
+    } else {  // offsetSize == 8
+      _start[tos] += 3;
+      if (needNrSubs) {
+        appendLength(index.size(), 8);
+      }
+    }
+  }
+
+  // Fix the byte length in the beginning:
+  ValueLength x = _pos - tos;
+  for (unsigned int i = 1; i <= offsetSize; i++) {
+    _start[tos + i] = x & 0xff;
+    x >>= 8;
+  }
+
+  if (offsetSize < 8 && needNrSubs) {
+    x = index.size();
+    for (unsigned int i = offsetSize + 1; i <= 2 * offsetSize; i++) {
+      _start[tos + i] = x & 0xff;
+      x >>= 8;
+    }
+  }
+
+  // Now the array or object is complete, we pop a ValueLength
+  // off the _stack:
+  _stack.pop_back();
+  // Intentionally leave _index[depth] intact to avoid future allocs!
+  return *this;
+}
+
+Builder& Builder::close() {
+  if (isClosed()) {
+    throw Exception(Exception::BuilderNeedOpenCompound);
+  }
+  ValueLength& tos = _stack.back();
+  uint8_t const head = _start[tos];
+
+  VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 ||
+                    head == 0x14);
+
+  bool const isArray = (head == 0x06 || head == 0x13);
+  std::vector<ValueLength>& index = _index[_stack.size() - 1];
+
+  if (index.empty()) {
+    return closeEmptyArrayOrObject(tos, isArray);
+  }
+
+  // From now on index.size() > 0
+  VELOCYPACK_ASSERT(index.size() > 0);
+
+  // check if we can use the compact Array / Object format
+  if (index.size() > 1 && ((head == 0x13 || head == 0x14) ||
+                           (head == 0x06 && options->buildUnindexedArrays) ||
+                           (head == 0x0b && options->buildUnindexedObjects))) {
+    if (closeCompactArrayOrObject(tos, isArray, index)) {
+      return *this;
+    }
+    // This might fall through, if closeCompactArrayOrObject gave up!
+  }
+
+  if (isArray) {
+    return closeArray(tos, index);
+  }
+
+  // fix head byte in case a compact Array / Object was originally requested
+  _start[tos] = 0x0b;
+
+  bool needIndexTable = true;
+  if (index.size() == 1) {
+    needIndexTable = false;
+  }
+
+  // First determine byte length and its format:
+  unsigned int offsetSize;
+  // can be 1, 2, 4 or 8 for the byte width of the offsets,
+  // the byte length and the number of subvalues:
+  if (_pos - tos + (needIndexTable ? index.size() : 0) - 6 <= 0xff) {
+    // We have so far used _pos - tos bytes, including the reserved 8
+    // bytes for byte length and number of subvalues. In the 1-byte number
+    // case we would win back 6 bytes but would need one byte per subvalue
+    // for the index table
+    offsetSize = 1;
+  } else if (_pos - tos + (needIndexTable ? 2 * index.size() : 0) <= 0xffff) {
+    offsetSize = 2;
+  } else if (_pos - tos + (needIndexTable ? 4 * index.size() : 0) <=
+             0xffffffffu) {
+    offsetSize = 4;
+  } else {
+    offsetSize = 8;
+  }
+
+  // Maybe we need to move down data:
+  if (offsetSize == 1) {
+    ValueLength targetPos = 3;
+    if (_pos > (tos + 9)) {
+      ValueLength len = _pos - (tos + 9);
+      memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
+    }
+    ValueLength const diff = 9 - targetPos;
+    _pos -= diff;
+    if (needIndexTable) {
+      size_t const n = index.size();
+      for (size_t i = 0; i < n; i++) {
+        index[i] -= diff;
+      }
+    }  // Note: if !needIndexTable the index array is now wrong!
+  }
+  // One could move down things in the offsetSize == 2 case as well,
+  // since we only need 4 bytes in the beginning. However, saving these
+  // 4 bytes has been sacrificed on the Altar of Performance.
+
+  // Now build the table:
+  if (needIndexTable) {
+    ValueLength tableBase;
+    reserveSpace(offsetSize * index.size() + (offsetSize == 8 ? 8 : 0));
+    tableBase = _pos;
+    _pos += offsetSize * index.size();
+    // Object
+    if (!options->sortAttributeNames) {
+      _start[tos] = 0x0f;  // unsorted
+    } else if (index.size() >= 2 && options->sortAttributeNames) {
+      sortObjectIndex(_start + tos, index);
+    }
+    for (size_t i = 0; i < index.size(); i++) {
+      uint64_t x = index[i];
+      for (size_t j = 0; j < offsetSize; j++) {
+        _start[tableBase + offsetSize * i + j] = x & 0xff;
+        x >>= 8;
+      }
     }
   }
   // Finally fix the byte width in the type byte:
@@ -371,7 +467,7 @@ Builder& Builder::close() {
     x >>= 8;
   }
 
-  if (offsetSize < 8 && needNrSubs) {
+  if (offsetSize < 8) {
     x = index.size();
     for (unsigned int i = offsetSize + 1; i <= 2 * offsetSize; i++) {
       _start[tos + i] = x & 0xff;
@@ -380,8 +476,7 @@ Builder& Builder::close() {
   }
 
   // And, if desired, check attribute uniqueness:
-  if (options->checkAttributeUniqueness && index.size() > 1 &&
-      _start[tos] >= 0x0b) {
+  if (options->checkAttributeUniqueness && index.size() > 1) {
     // check uniqueness of attribute names
     checkAttributeUniqueness(Slice(_start + tos));
   }
