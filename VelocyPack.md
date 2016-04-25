@@ -48,14 +48,7 @@ reference, for arrays and objects see below for details:
                 attribute name, 4-byte bytelen and # subvals
   - 0x0e      : object with 8-byte index table offsets, sorted by
                 attribute name, 8-byte bytelen and # subvals
-  - 0x0f      : object with 1-byte index table offsets, not sorted by
-                attribute name, 1-byte bytelen and # subvals
-  - 0x10      : object with 2-byte index table offsets, not sorted by
-                attribute name, 2-byte bytelen and # subvals
-  - 0x11      : object with 4-byte index table offsets, not sorted by
-                attribute name, 4-byte bytelen and # subvals
-  - 0x12      : object with 8-byte index table offsets, not sorted by
-                attribute name, 8-byte bytelen and # subvals
+  - 0x0f-0x12 : unused
   - 0x13      : compact array, no index table
   - 0x14      : compact object, no index table
   - 0x15-0x16 : reserved
@@ -351,15 +344,7 @@ entries, as in this example:
     0c 00 00 00 09 00 00 00 10 00 00 00
 
 Similarly with type 0x0c and 2-byte offsets, byte length and number of
-subvalues, or with type 0x09 and 8-byte numbers. Furthermore, it could
-be stored unsorted like in:
-
-    0f
-    13 03
-    41 62 03
-    41 61 28 0c
-    41 63 43 78 79 7a
-    03 06 0a
+subvalues, or with type 0x0e and 8-byte numbers.
 
 Note that it is not recommended to encode short arrays with too long
 index tables.
