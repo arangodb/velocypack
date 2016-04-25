@@ -853,7 +853,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b1.add("foo", Value("bar"));
   b1.close();
   ASSERT_TRUE(b1.isClosed());
-  ASSERT_EQ(0x0b, b1.slice().head());
+  ASSERT_EQ(0x14, b1.slice().head());
   ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b1.toString());
   ASSERT_EQ(1UL, b1.slice().length());
 
@@ -864,7 +864,7 @@ TEST(BuilderTest, AddAndOpenObject) {
   b2.add("foo", Value("bar"));
   b2.close();
   ASSERT_TRUE(b2.isClosed());
-  ASSERT_EQ(0x0b, b2.slice().head());
+  ASSERT_EQ(0x14, b2.slice().head());
   ASSERT_EQ("{\n  \"foo\" : \"bar\"\n}", b2.toString());
   ASSERT_EQ(1UL, b2.slice().length());
 }

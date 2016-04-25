@@ -175,7 +175,7 @@ TEST(PrettyDumperTest, SimpleObject) {
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[Slice object (0x0b), byteSize: 11]", result.str());
+  ASSERT_EQ("[Slice object (0x14), byteSize: 11]", result.str());
 
   Options dumperOptions;
   dumperOptions.prettyPrint = true;

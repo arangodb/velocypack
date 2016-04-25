@@ -188,13 +188,8 @@ class ObjectIterator {
       throw Exception(Exception::InvalidValueType, "Expecting Object slice");
     }
 
-    if (_size > 0) {
-      auto h = slice.head();
-      if (h == 0x14) {
-        _current = slice.keyAt(0, false).start();
-      } else if (allowRandomIteration) {
-        _current = slice.begin() + slice.findDataOffset(h);
-      }
+    if (slice.head() == 0x14 && slice.length() > 0) {
+      _current = slice.keyAt(0, false).start();
     }
   }
 

@@ -368,7 +368,7 @@ Builder& Builder::close() {
   // check if we can use the compact Array / Object format
   if (head == 0x13 || head == 0x14 ||
       (head == 0x06 && options->buildUnindexedArrays) ||
-      (head == 0x0b && options->buildUnindexedObjects)) {
+      (head == 0x0b && (options->buildUnindexedObjects || index.size() == 1))) {
     if (closeCompactArrayOrObject(tos, isArray, index)) {
       return *this;
     }

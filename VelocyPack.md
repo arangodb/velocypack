@@ -108,14 +108,46 @@ Empty arrays are simply a single byte 0x01.
 We next describe the type cases 0x02 to 0x09, see below for the
 special compact type 0x13.
 
-Nonempty arrays look like this:
+Nonempty arrays look like one of the following:
 
-  one of 0x02 to 0x09
-  BYTELENGTH
-  optional NRITEMS
-  sub VPack values
-  optional INDEXTABLE
-  optional NRITEMS if numbers are 8 bytes
+    one of 0x02 to 0x05
+    BYTELENGTH
+    OPTIONAL UNUSED: 1, 3 or 7 zero bytes
+    sub VPack values
+
+or
+
+    0x06
+    BYTELENGTH in 1 byte
+    NRITEMS in 1 byte
+    OPTIONAL UNUSED: 6 bytes equal to 0
+    sub VPack values
+    INDEXTABLE with 1 byte per entry
+
+or
+
+    0x07
+    BYTELENGTH in 2 bytes
+    NRITEMS in 2 bytes
+    OPTIONAL UNUSED: 4 bytes equal to 0
+    sub VPack values
+    INDEXTABLE with 4 byte per entry
+
+or
+
+    0x08
+    BYTELENGTH in 4 bytes
+    NRITEMS in 4 bytes
+    sub VPack values
+    INDEXTABLE with 4 byte per entry
+
+or
+
+    0x09
+    BYTELENGTH in 8 bytes
+    sub VPack values
+    INDEXTABLE with 8 byte per entry
+    NRITEMS in 8 bytes
 
 Numbers (for byte length, number of subvalues and offsets in the
 INDEXTABLE) are little endian unsigned integers, using 1 byte for
@@ -125,19 +157,16 @@ types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
 NRITEMS is a single number as described above.
 
 The INDEXTABLE consists of:
-  - not existent for types 0x02-0x05, then it is guaranteed that all
-    items have the same byte length, one of these types is always
-    taken for arrays with 1 element.
   - for types 0x06-0x09 an array of offsets (unaligned, in the number
     format described above) earlier offsets reside at lower addresses.
     Offsets are measured from the start of the VPack value.
 
 
-Nonempty arrays have a small header including their byte length, the
-number of subvalues, then all the subvalues and finally an index table
-containing offsets to the subvalues. To find the index table, find the
-number of subvalues, then the end, and from that the base of the index
-table, considering how wide its entries are.
+Nonempty arrays of types 0x06 to 0x09 have a small header including
+their byte length, the number of subvalues, then all the subvalues and
+finally an index table containing offsets to the subvalues. To find the
+index table, find the number of subvalues, then the end, and from that
+the base of the index table, considering how wide its entries are.
 
 For types 0x02 to 0x05 there is no offset table and no number of items.
 The first item begins at address A+2, A+3, A+5 or respectively A+9,
