@@ -188,7 +188,7 @@ TEST(LookupTest, HasKeySubattributesCompact) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  ASSERT_EQ(0x0b, s.head());
+  ASSERT_EQ(0x14, s.head());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.hasKey(std::vector<std::string>()),
                               Exception::InvalidAttributePath);
@@ -409,7 +409,7 @@ TEST(LookupTest, LookupSubattributesCompact) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  ASSERT_EQ(0x0b, s.head());
+  ASSERT_EQ(0x14, s.head());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.get(std::vector<std::string>()),
                               Exception::InvalidAttributePath);

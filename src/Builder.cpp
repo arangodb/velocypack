@@ -366,9 +366,9 @@ Builder& Builder::close() {
   VELOCYPACK_ASSERT(index.size() > 0);
 
   // check if we can use the compact Array / Object format
-  if (index.size() > 1 && ((head == 0x13 || head == 0x14) ||
-                           (head == 0x06 && options->buildUnindexedArrays) ||
-                           (head == 0x0b && options->buildUnindexedObjects))) {
+  if (head == 0x13 || head == 0x14 ||
+      (head == 0x06 && options->buildUnindexedArrays) ||
+      (head == 0x0b && options->buildUnindexedObjects)) {
     if (closeCompactArrayOrObject(tos, isArray, index)) {
       return *this;
     }
