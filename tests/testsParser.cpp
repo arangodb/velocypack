@@ -2135,7 +2135,6 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
 TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
   Options options;
   options.checkAttributeUniqueness = true;
-  options.sortAttributeNames = false;
 
   std::string const value("{\"foo\":1,\"bar\":3,\"foo\":2}");
 

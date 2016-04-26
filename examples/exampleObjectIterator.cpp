@@ -4,11 +4,8 @@
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
-  Options options;
-  options.sortAttributeNames = false;
-
   // create an object with a few members
-  Builder b(&options);
+  Builder b;
 
   b(Value(ValueType::Object));
   b.add("foo", Value(42));

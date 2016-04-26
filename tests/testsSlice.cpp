@@ -2285,14 +2285,12 @@ TEST(SliceTest, NormalizedHashArrayNested) {
 TEST(SliceTest, NormalizedHashObject) {
   Options options;
 
-  options.sortAttributeNames = false;
   options.buildUnindexedObjects = false;
   std::shared_ptr<Builder> b1 = Parser::fromJson(
       "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
       "\"seven\":7}", &options);
   Slice s1 = b1->slice();
   
-  options.sortAttributeNames = false;
   options.buildUnindexedObjects = true;
   std::shared_ptr<Builder> b2 = Parser::fromJson(
       "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
@@ -2310,14 +2308,12 @@ TEST(SliceTest, NormalizedHashObject) {
 TEST(SliceTest, NormalizedHashObjectOrder) {
   Options options;
 
-  options.sortAttributeNames = true;
   options.buildUnindexedObjects = false;
   std::shared_ptr<Builder> b1 = Parser::fromJson(
       "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
       "\"seven\":7}", &options);
   Slice s1 = b1->slice();
   
-  options.sortAttributeNames = true;
   options.buildUnindexedObjects = false;
   std::shared_ptr<Builder> b2 = Parser::fromJson(
       "{\"seven\":7,\"six\":6,\"five\":5,\"four\":4,\"three\":3,\"two\":2,\"one\":1}", &options);
@@ -2563,7 +2559,6 @@ TEST(SliceTest, Translations) {
 
   Options options;
   Builder b(&options);
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   b.add(Value(ValueType::Object));
@@ -2645,7 +2640,6 @@ TEST(SliceTest, TranslationsSubObjects) {
   AttributeTranslatorScope scope(translator.get());
 
   Options options;
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   Builder b(&options);
@@ -2705,7 +2699,6 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
 
   Options options;
   Builder b(&options);
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   b.add(Value(ValueType::Object));
@@ -2747,7 +2740,6 @@ TEST(SliceTest, TranslatedWithCompactNotation) {
 
   Options options;
   Builder b(&options);
-  options.sortAttributeNames = false;
   options.buildUnindexedObjects = true;
   options.attributeTranslator = translator.get();
 
@@ -2779,7 +2771,6 @@ TEST(SliceTest, TranslatedInvalidKey) {
   AttributeTranslatorScope scope(translator.get());
 
   Options options;
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   // a compact object with a single member (key: 4, value: false)

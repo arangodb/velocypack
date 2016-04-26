@@ -1162,11 +1162,8 @@ TEST(BuilderTest, ObjectEmptyCompact) {
 }
 
 TEST(BuilderTest, ObjectSorted) {
-  Options options;
-  options.sortAttributeNames = true;
-
   double value = 2.3;
-  Builder b(&options);
+  Builder b;
   b.add(Value(ValueType::Object));
   b.add("d", Value(uint64_t(1200)));
   b.add("c", Value(value));
@@ -1192,11 +1189,8 @@ TEST(BuilderTest, ObjectSorted) {
 }
 
 TEST(BuilderTest, ObjectUnsorted) {
-  Options options;
-  options.sortAttributeNames = false;
-
   double value = 2.3;
-  Builder b(&options);
+  Builder b;
   b.add(Value(ValueType::Object));
   b.add("d", Value(uint64_t(1200)));
   b.add("c", Value(value));
@@ -2167,7 +2161,6 @@ TEST(BuilderTest, AttributeTranslations) {
   AttributeTranslatorScope scope(translator.get());
    
   Options options;
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   Builder b(&options);
@@ -2221,7 +2214,6 @@ TEST(BuilderTest, AttributeTranslationsSorted) {
   AttributeTranslatorScope scope(translator.get());
 
   Options options;
-  options.sortAttributeNames = true;
   options.attributeTranslator = translator.get();
 
   Builder b(&options);
@@ -2291,9 +2283,7 @@ TEST(BuilderTest, ToString) {
 }
 
 TEST(BuilderTest, ObjectBuilder) {
-  Options options;
-  options.sortAttributeNames = false;
-  Builder b(&options);
+  Builder b;
   {
     ASSERT_TRUE(b.isClosed());
 
@@ -2312,9 +2302,7 @@ TEST(BuilderTest, ObjectBuilder) {
 }
 
 TEST(BuilderTest, ObjectBuilderNested) {
-  Options options;
-  options.sortAttributeNames = false;
-  Builder b(&options);
+  Builder b;
   {
     ASSERT_TRUE(b.isClosed());
 
@@ -2354,9 +2342,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
 }
 
 TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
-  Options options;
-  options.sortAttributeNames = false;
-  Builder b(&options);
+  Builder b;
   {
     ASSERT_TRUE(b.isClosed());
 
@@ -2396,9 +2382,7 @@ TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
 }
 
 TEST(BuilderTest, ObjectBuilderClosed) {
-  Options options;
-  options.sortAttributeNames = false;
-  Builder b(&options);
+  Builder b;
   ASSERT_TRUE(b.isClosed());
 
   // when the object builder goes out of scope, it will close

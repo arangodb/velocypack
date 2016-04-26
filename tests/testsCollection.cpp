@@ -101,11 +101,8 @@ TEST(CollectionTest, KeysNonObject6) {
 }
 
 TEST(CollectionTest, ObjectKeys1) {
-  Options options;
-  options.sortAttributeNames = false;
-
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -117,11 +114,8 @@ TEST(CollectionTest, ObjectKeys1) {
 }
 
 TEST(CollectionTest, ObjectKeys2) {
-  Options options;
-  options.sortAttributeNames = false;
-
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -134,11 +128,8 @@ TEST(CollectionTest, ObjectKeys2) {
 }
 
 TEST(CollectionTest, ObjectKeys3) {
-  Options options;
-  options.sortAttributeNames = false;
-
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3}");
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -1797,9 +1788,7 @@ TEST(CollectionTest, VisitRecursiveArrayPostOrderAbort) {
 TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
   std::string const value("{\"foo\":true,\"bar\":false,\"baz\":1}");
 
-  Options options;
-  options.sortAttributeNames = false;
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -1830,9 +1819,7 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
 TEST(CollectionTest, VisitRecursiveObjectPostOrderAbort) {
   std::string const value("{\"foo\":{\"baz\":1,\"bar\":2},\"bark\":3}");
 
-  Options options;
-  options.sortAttributeNames = false;
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -1974,9 +1961,7 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrder) {
       "{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":"
       "42},\"quux\":{}}");
 
-  Options options;
-  options.sortAttributeNames = false;
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 
@@ -2032,9 +2017,7 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
       "{\"foo\":1,\"bar\":null,\"baz\":true,\"bark\":{\"qux\":23,\"quetzal\":"
       "42},\"quux\":{}}");
 
-  Options options;
-  options.sortAttributeNames = false;
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   Slice s(parser.start());
 

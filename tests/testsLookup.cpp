@@ -585,10 +585,7 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
   }
   value.append("}");
 
-  Options options;
-  options.sortAttributeNames = false;
-
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
@@ -908,10 +905,7 @@ TEST(LookupTest, KeyAtNull) {
 TEST(LookupTest, KeyAtObject) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
-  Options options;
-  options.sortAttributeNames = false;
-
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
@@ -927,10 +921,7 @@ TEST(LookupTest, KeyAtObject) {
 TEST(LookupTest, KeyAtObjectSorted) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
-  Options options;
-  options.sortAttributeNames = true;
-
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
@@ -947,7 +938,6 @@ TEST(LookupTest, KeyAtObjectCompact) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
   Options options;
-  options.sortAttributeNames = false;
   options.buildUnindexedObjects = true;
 
   Parser parser(&options);
@@ -1002,10 +992,7 @@ TEST(LookupTest, ValueAtNull) {
 TEST(LookupTest, ValueAtObject) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
-  Options options;
-  options.sortAttributeNames = false;
-
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
@@ -1021,10 +1008,7 @@ TEST(LookupTest, ValueAtObject) {
 TEST(LookupTest, ValueAtObjectSorted) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
-  Options options;
-  options.sortAttributeNames = true;
-
-  Parser parser(&options);
+  Parser parser;
   parser.parse(value);
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
@@ -1041,7 +1025,6 @@ TEST(LookupTest, ValueAtObjectCompact) {
   std::string const value("{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4}");
 
   Options options;
-  options.sortAttributeNames = false;
   options.buildUnindexedObjects = true;
 
   Parser parser(&options);

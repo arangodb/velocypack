@@ -43,7 +43,6 @@ int main(int, char* []) {
   translator->seal();
 
   Options withTranslatorOptions;
-  withTranslatorOptions.sortAttributeNames = false;
   // register the above attribute name translator
   withTranslatorOptions.attributeTranslator = translator.get();
 
@@ -56,7 +55,6 @@ int main(int, char* []) {
 
   // now build the same object again, but without translations
   Options noTranslatorOptions;
-  noTranslatorOptions.sortAttributeNames = false;
   noTranslatorOptions.attributeTranslator = nullptr;
 
   std::cout << "Building object without translations:" << std::endl;

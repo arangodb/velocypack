@@ -94,7 +94,6 @@ static std::string readFile(std::string filename) {
 static void run(std::string& data, int runTime, size_t copies, bool useVPack,
                 bool fullOutput) {
   Options options;
-  options.sortAttributeNames = false;
 
   std::vector<std::string> inputs;
   std::vector<Parser*> outputs;
