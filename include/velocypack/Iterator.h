@@ -287,9 +287,8 @@ class ObjectIterator {
     return _slice.getNthValue(_position);
   }
 
-  inline bool next() noexcept {
+  inline void next() noexcept {
     operator++();
-    return valid();
   }
 
   inline ValueLength index() const noexcept { return _position; }

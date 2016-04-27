@@ -467,7 +467,8 @@ TEST(IteratorTest, IterateObjectEmpty) {
   ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 
-  ASSERT_FALSE(it.next());
+  it.next();
+  ASSERT_FALSE(it.valid());
 }
 
 TEST(IteratorTest, IterateObject) {
@@ -488,69 +489,69 @@ TEST(IteratorTest, IterateObject) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("b", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("c", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("d", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("e", key.copyString());
   ASSERT_TRUE(current.isNull());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("f", key.copyString());
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("g", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("h", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
@@ -620,69 +621,69 @@ TEST(IteratorTest, IterateObjectCompact) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("b", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("c", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("d", key.copyString());
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("e", key.copyString());
   ASSERT_TRUE(current.isNull());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("f", key.copyString());
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("g", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
 
-  ASSERT_TRUE(it.next());
-
+  it.next();
   ASSERT_TRUE(it.valid());
+
   key = it.key();
   current = it.value();
   ASSERT_EQ("h", key.copyString());
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
