@@ -1,3 +1,15 @@
+Lessons from Cuckoo
+-------------------
+
+* improve normalizedHash
+* ObjectIterator::next
+* Add tests for empty attribute names
+* throw out types 0x0f to x012
+* remove flag sortAttributeNames
+* ObjectIterator: performance
+* 1 element arrays and objects compact
+* refactor close() method
+
 Documentation
 -------------
 * write Performance.md section for speed tests
