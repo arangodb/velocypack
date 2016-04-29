@@ -607,28 +607,18 @@ class Slice {
 
   // get the total byte size for the slice, including the head byte
   ValueLength byteSize() const {
+    // check if the type has a fixed length first
+    ValueLength l = FixedTypeLengths[head()];
+    if (l != 0) {
+      // return fixed length
+      return l;
+    }
+
+    // types with dynamic lengths need special treatment:
     switch (type()) {
-      case ValueType::None:
-      case ValueType::Illegal:
-      case ValueType::Null:
-      case ValueType::Bool:
-      case ValueType::MinKey:
-      case ValueType::MaxKey:
-      case ValueType::SmallInt: {
-        return 1;
-      }
-
-      case ValueType::Double: {
-        return 1 + sizeof(double);
-      }
-
       case ValueType::Array:
       case ValueType::Object: {
         auto const h = head();
-        if (h == 0x01 || h == 0x0a) {
-          // empty Array or Object
-          return 1;
-        }
 
         if (h == 0x13 || h == 0x14) {
           // compact Array or Object
@@ -639,32 +629,11 @@ class Slice {
         return readInteger<ValueLength>(_start + 1, WidthMap[h]);
       }
 
-      case ValueType::External: {
-        return 1 + sizeof(char*);
-      }
-
-      case ValueType::UTCDate: {
-        return 1 + sizeof(int64_t);
-      }
-
-      case ValueType::Int: {
-        return static_cast<ValueLength>(1 + (head() - 0x1f));
-      }
-
-      case ValueType::UInt: {
-        return static_cast<ValueLength>(1 + (head() - 0x27));
-      }
-
       case ValueType::String: {
-        auto const h = head();
-        if (h == 0xbf) {
-          // long UTF-8 String
-          return static_cast<ValueLength>(
-              1 + 8 + readInteger<ValueLength>(_start + 1, 8));
-        }
-
-        // short UTF-8 String
-        return static_cast<ValueLength>(1 + h - 0x40);
+        VELOCYPACK_ASSERT(head() == 0xbf);
+        // long UTF-8 String
+        return static_cast<ValueLength>(
+            1 + 8 + readInteger<ValueLength>(_start + 1, 8));
       }
 
       case ValueType::Binary: {
@@ -688,12 +657,8 @@ class Slice {
 
       case ValueType::Custom: {
         auto const h = head();
+        VELOCYPACK_ASSERT(h >= 0xf4);
         switch (h) {
-          case 0xf0: return 1 + 1;
-          case 0xf1: return 1 + 2;
-          case 0xf2: return 1 + 4;
-          case 0xf3: return 1 + 8;
-
           case 0xf4: 
           case 0xf5: 
           case 0xf6: {
@@ -722,6 +687,9 @@ class Slice {
             // fallthrough intentional
           }
         }
+      }
+      default: {
+        // fallthrough intentional
       }
     }
 
@@ -820,6 +788,7 @@ class Slice {
   }
 
  private:
+  static ValueLength const FixedTypeLengths[256];
   static ValueType const TypeMap[256];
   static unsigned int const WidthMap[32];
   static unsigned int const FirstSubMap[32];
