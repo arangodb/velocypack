@@ -337,6 +337,15 @@ class Slice {
     Slice key = getNthKey(index, false);
     return Slice(key.start() + key.byteSize());
   }
+  
+  // extract the nth key from an Object
+  Slice getNthKey(ValueLength index, bool) const;
+  
+  // extract the nth value from an Object
+  Slice getNthValue(ValueLength index) const {
+    Slice key = getNthKey(index, false);
+    return Slice(key.start() + key.byteSize());
+  }
 
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
@@ -713,7 +722,7 @@ class Slice {
   std::string toJson(Options const* options = &Options::Defaults) const;
   std::string toString(Options const* options = &Options::Defaults) const;
   std::string hexType() const;
-
+  
  private:
   // return the value for a UInt object, without checks
   // returns 0 for invalid values/types
@@ -745,9 +754,6 @@ class Slice {
 
   // extract the nth member from an Array
   Slice getNth(ValueLength index) const;
-
-  // extract the nth member from an Object
-  Slice getNthKey(ValueLength index, bool) const;
 
   // get the offset for the nth member from a compact Array or Object type
   ValueLength getNthOffsetFromCompact(ValueLength index) const;
