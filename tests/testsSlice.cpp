@@ -1059,6 +1059,34 @@ TEST(SliceTest, StringEmpty) {
   ASSERT_EQ("", slice.copyString());
 }
 
+TEST(SliceTest, StringLengths) {
+  Builder builder;
+
+  for (size_t i = 0; i < 255; ++i) {
+    builder.clear();
+
+    std::string temp;
+    for (size_t j = 0; j < i; ++j) {
+      temp.push_back('x');
+    }
+
+    builder.add(Value(temp));
+
+    Slice slice = builder.slice();
+  
+    ASSERT_TRUE(slice.isString());
+    ASSERT_EQ(ValueType::String, slice.type());
+    
+    ASSERT_EQ(i, slice.getStringLength());
+    
+    if (i <= 126) {
+      ASSERT_EQ(i + 1, slice.byteSize());
+    } else {
+      ASSERT_EQ(i + 9, slice.byteSize());
+    }
+  }
+}
+
 TEST(SliceTest, String1) {
   LocalBuffer[0] = 0x40 + static_cast<char>(strlen("foobar"));
 
