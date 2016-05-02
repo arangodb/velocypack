@@ -42,6 +42,12 @@ TEST(SliceTest, NullFactory) {
   ASSERT_TRUE(s.isNull());
 }
 
+TEST(SliceTest, ZeroFactory) {
+  Slice s = Slice::zeroSlice();
+  ASSERT_TRUE(s.isSmallInt());
+  ASSERT_EQ(0UL, s.getUInt());
+}
+
 TEST(SliceTest, IllegalFactory) {
   Slice s = Slice::illegalSlice();
   ASSERT_TRUE(s.isIllegal());
@@ -92,6 +98,9 @@ TEST(SliceTest, ResolveExternal) {
 
   ASSERT_TRUE(Slice::trueSlice().isTrue());
   ASSERT_TRUE(Slice::trueSlice().resolveExternal().isTrue());
+  
+  ASSERT_TRUE(Slice::zeroSlice().isSmallInt());
+  ASSERT_TRUE(Slice::zeroSlice().resolveExternal().isSmallInt());
 
   ASSERT_TRUE(Slice::emptyArraySlice().isArray());
   ASSERT_TRUE(Slice::emptyArraySlice().resolveExternal().isArray());
