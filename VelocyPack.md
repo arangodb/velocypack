@@ -253,7 +253,7 @@ Here is an example, the array [1, 16] can be encoded as follows:
 
     13 06
     31 28 10
-    01
+    02
 
 ## Objects
 
