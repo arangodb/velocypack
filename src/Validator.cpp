@@ -74,12 +74,31 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
     }
 
     case ValueType::Array: {
+      ValueLength byteLength = 0;
+      bool equalSize = false;
+      bool hasIndexTable = false;
+
       if (head >= 0x02 && head <= 0x05) {
         // Array without index table, with 1-8 bytes bytelength, all values with same length
-        ValueLength byteLength = 1 << (head - 0x02);
-        validateBufferLength(1 + byteLength, length, true);
+        byteLength = 1 << (head - 0x02);
+        equalSize = true;
+      } else if (head >= 0x06 && head <= 0x09) {
+        // Array with index table, with 1-8 bytes bytelength
+        byteLength = 1 << (head - 0x06);
+        hasIndexTable = true;
+      } else if (head == 0x13) {
+        // compact Array without index table
+        // TODO
+      }
+
+      if (byteLength > 0) {
+        validateBufferLength(1 + byteLength + byteLength, length, true);
         ValueLength nrItems = Slice(ptr).length();
+        uint8_t nx = *(ptr + 2);
         uint8_t const* p = ptr + 1 + byteLength;
+        if (!equalSize) {
+          p += byteLength;
+        }
         uint8_t const* e = ptr + length;
         ValueLength l = 0;
         while (nrItems > 0) {
@@ -89,43 +108,27 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
           // validate sub value
           validate(p, e - p, true);
           ValueLength al = Slice(p).byteSize();
-          if (l == 0) {
-            l = al;
-          } else if (l != al) {
-            throw Exception(Exception::ValidatorInvalidLength, "Unexpected Array value length");
+          if (equalSize) {
+            if (l == 0) {
+              l = al;
+            } else if (l != al) {
+              throw Exception(Exception::ValidatorInvalidLength, "Unexpected Array value length");
+            }
           }
-          p += l;
+          p += al;
           --nrItems;
         }
-      } else if (head >= 0x06 && head <= 0x09) {
-        // Array with index table, with 1-8 bytes bytelength
-        ValueLength byteLength = 1 << (head - 0x06);
-        validateBufferLength(1 + byteLength + byteLength, length, true);
-        // TODO: this doesn't cover arrays with byteLength 8 yet
-        ValueLength nrItems = Slice(ptr).length();
-        uint8_t const* p = ptr + 1 + byteLength;
-        uint8_t const* e = ptr + length;
-        while (nrItems > 0) {
-          if (p >= e) {
-            throw Exception(Exception::ValidatorInvalidLength, "Array value is out of bounds");
+        
+        if (hasIndexTable) {
+          // now also validate index table
+          for (ValueLength i = 0; i < nrItems; ++i) {
+            ValueLength offset = Slice(ptr).getNthOffset(i);
+            if (offset >= length) {
+              throw Exception(Exception::ValidatorInvalidLength, "Array value offset is out of bounds");
+            }
+            validate(ptr + offset, length - offset, true);
           }
-          // validate sub value
-          validate(p, e - p, true);
-          p += Slice(p).byteSize();
-          --nrItems;
         }
-
-        // now also validate index table
-        for (ValueLength i = 0; i < nrItems; ++i) {
-          ValueLength offset = Slice(ptr).getNthOffset(i);
-          if (offset >= length) {
-            throw Exception(Exception::ValidatorInvalidLength, "Array value offset is out of bounds");
-          }
-          validate(ptr + offset, length - offset, true);
-        }
-      } else if (head == 0x13) {
-        // compact Array without index table
-        // TODO
       }
       break;
     }
