@@ -42,6 +42,7 @@ set(VELOCITY_SOURCE
     src/Options.cpp
     src/Parser.cpp
     src/Slice.cpp
+    src/Validator.cpp
     src/ValueType.cpp
     src/Version.cpp
     src/asm-functions.cpp

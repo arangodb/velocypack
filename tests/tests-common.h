@@ -15,6 +15,7 @@
 #include "velocypack/Sink.h"
 #include "velocypack/Slice.h"
 #include "velocypack/SliceContainer.h"
+#include "velocypack/Validator.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 #include "velocypack/Version.h"

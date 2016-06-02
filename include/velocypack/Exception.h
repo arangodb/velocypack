@@ -68,6 +68,9 @@ struct Exception : std::exception {
     BuilderKeyAlreadyWritten = 38,
     BuilderKeyMustBeString = 39,
 
+    ValidatorInvalidLength = 50,
+    ValidatorInvalidType = 51,
+
     UnknownError = 999
   };
 
@@ -139,6 +142,11 @@ struct Exception : std::exception {
         return "The key of the next key/value pair is already written";
       case BuilderKeyMustBeString:
         return "The key of the next key/value pair must be a string";
+    
+      case ValidatorInvalidType:
+        return "Invalid type found in binary data";
+      case ValidatorInvalidLength:
+        return "Invalid length found in binary data";
 
       case UnknownError:
       default:

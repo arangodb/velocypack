@@ -729,6 +729,9 @@ class Slice {
     }
     return 9;
   }
+  
+  // get the offset for the nth member from an Array type
+  ValueLength getNthOffset(ValueLength index) const;
 
   Slice makeKey() const;
 
@@ -771,9 +774,6 @@ class Slice {
   Slice translateUnchecked() const;
 
   Slice getFromCompactObject(std::string const& attribute) const;
-
-  // get the offset for the nth member from an Array type
-  ValueLength getNthOffset(ValueLength index) const;
 
   // extract the nth member from an Array
   Slice getNth(ValueLength index) const;

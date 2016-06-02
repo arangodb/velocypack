@@ -27,6 +27,7 @@ set(Tests
     testsSlice
     testsSliceContainer
     testsType
+    testsValidator
     testsVersion
 )
 

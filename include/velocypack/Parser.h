@@ -89,7 +89,7 @@ class Parser {
   Options const* options;
 
   Parser(Parser const&) = delete;
-  Parser(Parser &&) = delete;
+  Parser(Parser&&) = delete;
   Parser& operator=(Parser const&) = delete;
   Parser& operator=(Parser&&) = delete;
   ~Parser() = default;
