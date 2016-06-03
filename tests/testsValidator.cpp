@@ -120,6 +120,69 @@ TEST(ValidatorTest, ArrayOneByteMultipleMembersDifferentSizes) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ArrayCompact) {
+  std::string const value("\x13\x04\x18\x01", 4);
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, ArrayCompactWithExtra) {
+  std::string const value("\x13\x04\x18\x01\x41", 5);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort1) {
+  std::string const value("\x13\x04", 2);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort2) {
+  std::string const value("\x13\x04\x18", 3);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort3) {
+  std::string const value("\x13\x80", 2);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort4) {
+  std::string const value("\x13\x80\x05\x18", 4);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort5) {
+  std::string const value("\x13\x04\x18\x02", 4);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort6) {
+  std::string const value("\x13\x04\x18\xff", 4);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort7) {
+  std::string const value("\x13\x04\x06\x01", 4);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
 TEST(ValidatorTest, EmptyObject) {
   std::string const value("\x0a", 1);
 

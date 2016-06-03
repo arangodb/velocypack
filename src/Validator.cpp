@@ -86,15 +86,60 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
         // Array with index table, with 1-8 bytes bytelength
         byteLength = 1 << (head - 0x06);
         hasIndexTable = true;
-      } else if (head == 0x13) {
+      } 
+      
+      if (head == 0x13) {
         // compact Array without index table
-        // TODO
-      }
-
-      if (byteLength > 0) {
+        validateBufferLength(2, length, true);
+        uint8_t const* p = ptr + 1;
+        uint8_t const* e = p + length;
+        ValueLength shifter = 0;
+        while (true) {
+          uint8_t c = *p;
+          byteLength += (c & 0x7f) << shifter;
+          shifter += 7;
+          ++p;
+          if (!(c & 0x80)) {
+            break;
+          }
+          if (p == e) {
+            throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+          }
+        }
+        if (byteLength > length || byteLength < 4) {
+          throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+        }
+        uint8_t const* data = p;
+        p = ptr + byteLength - 1;
+        ValueLength nrItems = 0;
+        shifter = 0;
+        while (true) {
+          uint8_t c = *p;
+          nrItems += (c & 0x7f) << shifter;
+          shifter += 7;
+          --p;
+          if (!(c & 0x80)) {
+            break;
+          }
+          if (p == ptr + byteLength) {
+            throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+          }
+        } 
+        if (nrItems == 0) {
+          throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+        }
+        ++p;
+        
+        // validate the array members 
+        e = p;
+        p = data;
+        while (nrItems-- > 0) { 
+          validate(p, e - p, true);
+          p += Slice(p).byteSize();
+        }
+      } else if (byteLength > 0) {
         validateBufferLength(1 + byteLength + byteLength, length, true);
         ValueLength nrItems = Slice(ptr).length();
-        uint8_t nx = *(ptr + 2);
         uint8_t const* p = ptr + 1 + byteLength;
         if (!equalSize) {
           p += byteLength;
