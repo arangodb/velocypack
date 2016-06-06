@@ -146,6 +146,50 @@ TEST(SliceTest, ResolveExternal) {
   ASSERT_TRUE(Slice(&LocalBuffer[0]).resolveExternal().get("bar").isString());
   ASSERT_EQ("baz", Slice(&LocalBuffer[0]).resolveExternal().get("bar").copyString());
 }
+
+TEST(SliceTest, GetResolveExternal) {
+  Builder bExternal;
+  bExternal.openObject();
+  bExternal.add("foo", Value(1));
+  bExternal.add("bar", Value(2));
+  bExternal.add("baz", Value(3));
+  bExternal.close();
+
+  Slice bs = bExternal.slice();
+
+  Builder builder;
+  builder.openObject();
+  builder.add("boo", Value(static_cast<void const*>(bs.start()), ValueType::External));
+  builder.close();
+   
+  Slice s = builder.slice();
+  
+  ASSERT_FALSE(s.get(std::vector<std::string>{"boo"}).isExternal());
+  ASSERT_FALSE(s.get(std::vector<std::string>{"boo"}, false).isExternal());
+  ASSERT_FALSE(s.get(std::vector<std::string>{"boo"}, true).isExternal());
+}
+
+TEST(SliceTest, GetResolveExternalExternal) {
+  Builder bExternal;
+  bExternal.openObject();
+  bExternal.add("foo", Value(1));
+  bExternal.add("bar", Value(2));
+  bExternal.add("baz", Value(3));
+  bExternal.close();
+
+  Builder builder;
+  builder.openObject();
+  builder.add("boo", Value(static_cast<void const*>(bExternal.slice().start()), ValueType::External));
+  builder.close();
+   
+  Builder b;
+  b.add(Value(static_cast<void const*>(builder.slice().start()), ValueType::External));
+
+  Slice s = b.slice();
+  
+  ASSERT_FALSE(s.get(std::vector<std::string>{"boo"}, true).isExternal());
+  ASSERT_TRUE(s.get(std::vector<std::string>{"boo"}, true).isObject());
+}
   
 TEST(SliceTest, SliceStart) {
   std::string const value("null");
@@ -1929,47 +1973,47 @@ TEST(SliceTest, HashNull) {
   std::shared_ptr<Builder> b = Parser::fromJson("null");
   Slice s = b->slice();
 
-  ASSERT_EQ(15292542490648858194ULL, s.hash());
-  ASSERT_EQ(15292542490648858194ULL, s.normalizedHash());
+  ASSERT_EQ(1903446559881298698ULL, s.hash());
+  ASSERT_EQ(1903446559881298698ULL, s.normalizedHash());
 }
 
 TEST(SliceTest, HashDouble) {
   std::shared_ptr<Builder> b = Parser::fromJson("-345354.35532352");
   Slice s = b->slice();
 
-  ASSERT_EQ(8711156443018077288ULL, s.hash());
-  ASSERT_EQ(15147306223577264442ULL, s.normalizedHash());
+  ASSERT_EQ(4457948945193834531ULL, s.hash());
+  ASSERT_EQ(9737553273926297610ULL, s.normalizedHash());
 }
 
 TEST(SliceTest, HashString) {
   std::shared_ptr<Builder> b = Parser::fromJson("\"this is a test string\"");
   Slice s = b->slice();
 
-  ASSERT_EQ(16298643255475496611ULL, s.hash());
-  ASSERT_EQ(16298643255475496611ULL, s.normalizedHash());
+  ASSERT_EQ(9531555437566788706ULL, s.hash());
+  ASSERT_EQ(9531555437566788706ULL, s.normalizedHash());
 }
 
 TEST(SliceTest, HashStringEmpty) {
   std::shared_ptr<Builder> b = Parser::fromJson("\"\"");
   Slice s = b->slice();
 
-  ASSERT_EQ(5324680019219065241ULL, s.hash());
-  ASSERT_EQ(5324680019219065241ULL, s.normalizedHash());
+  ASSERT_EQ(1450600894602296270ULL, s.hash());
+  ASSERT_EQ(1450600894602296270ULL, s.normalizedHash());
 }
 
 TEST(SliceTest, HashStringShort) {
   std::shared_ptr<Builder> b = Parser::fromJson("\"123456\"");
   Slice s = b->slice();
 
-  ASSERT_EQ(13345050106135537218ULL, s.hash());
-  ASSERT_EQ(13345050106135537218ULL, s.normalizedHash());
+  ASSERT_EQ(14855108345558666872ULL, s.hash());
+  ASSERT_EQ(14855108345558666872ULL, s.normalizedHash());
 }
 
 TEST(SliceTest, HashArray) {
   std::shared_ptr<Builder> b = Parser::fromJson("[1,2,3,4,5,6,7,8,9,10]");
   Slice s = b->slice();
 
-  ASSERT_EQ(1515761289406454211ULL, s.hash());
+  ASSERT_EQ(8308483934453544580ULL, s.hash());
 }
 
 TEST(SliceTest, HashObject) {
@@ -1978,7 +2022,7 @@ TEST(SliceTest, HashObject) {
       "\"seven\":7}");
   Slice s = b->slice();
 
-  ASSERT_EQ(6865527808070733846ULL, s.hash());
+  ASSERT_EQ(8873752126133306149ULL, s.hash());
 }
 
 TEST(SliceTest, NormalizedHashDouble) {
@@ -2009,11 +2053,11 @@ TEST(SliceTest, NormalizedHashDouble) {
   b2.close();
 
   // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(200376126201688693ULL, b1.slice().hash());
-  ASSERT_EQ(3369550273364380220ULL, b2.slice().hash());
+  ASSERT_EQ(7102974787002861403ULL, b1.slice().hash());
+  ASSERT_EQ(14248638626330948552ULL, b2.slice().hash());
 
-  ASSERT_EQ(65589186907022834ULL, b1.slice().normalizedHash());
-  ASSERT_EQ(65589186907022834ULL, b2.slice().normalizedHash());
+  ASSERT_EQ(13690116699997059692ULL, b1.slice().normalizedHash());
+  ASSERT_EQ(13690116699997059692ULL, b2.slice().normalizedHash());
 }
 
 TEST(SliceTest, NormalizedHashArray) {
@@ -2028,11 +2072,11 @@ TEST(SliceTest, NormalizedHashArray) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(1515761289406454211ULL, s1.hash());
-  ASSERT_EQ(6179595527158943660ULL, s2.hash());
+  ASSERT_EQ(8308483934453544580ULL, s1.hash());
+  ASSERT_EQ(15333913616940129336ULL, s2.hash());
 
-  ASSERT_EQ(13469007395921057835ULL, s1.normalizedHash());
-  ASSERT_EQ(13469007395921057835ULL, s2.normalizedHash());
+  ASSERT_EQ(1025874842406722974ULL, s1.normalizedHash());
+  ASSERT_EQ(1025874842406722974ULL, s2.normalizedHash());
 }
 
 TEST(SliceTest, NormalizedHashArrayNested) {
@@ -2047,11 +2091,11 @@ TEST(SliceTest, NormalizedHashArrayNested) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(437707331568343016ULL, s1.hash());
-  ASSERT_EQ(12530379609568313352ULL, s2.hash());
+  ASSERT_EQ(15793061464938738924ULL, s1.hash());
+  ASSERT_EQ(2722569323545975071ULL, s2.hash());
 
-  ASSERT_EQ(16364328471445495391ULL, s1.normalizedHash());
-  ASSERT_EQ(16364328471445495391ULL, s2.normalizedHash());
+  ASSERT_EQ(11101500731480543049ULL, s1.normalizedHash());
+  ASSERT_EQ(11101500731480543049ULL, s2.normalizedHash());
 }
 
 TEST(SliceTest, NormalizedHashObject) {
@@ -2072,11 +2116,11 @@ TEST(SliceTest, NormalizedHashObject) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(15518419071972093120ULL, s1.hash());
-  ASSERT_EQ(4048487509578424242ULL, s2.hash());
+  ASSERT_EQ(3104094738535244520ULL, s1.hash());
+  ASSERT_EQ(7052583882019581480ULL, s2.hash());
 
-  ASSERT_EQ(761244080014510746ULL, s1.normalizedHash());
-  ASSERT_EQ(761244080014510746ULL, s2.normalizedHash());
+  ASSERT_EQ(724735390467908482ULL, s1.normalizedHash());
+  ASSERT_EQ(724735390467908482ULL, s2.normalizedHash());
 }
 
 TEST(SliceTest, NormalizedHashObjectOrder) {
@@ -2096,11 +2140,11 @@ TEST(SliceTest, NormalizedHashObjectOrder) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(6865527808070733846ULL, s1.hash());
-  ASSERT_EQ(11084437118009261125ULL, s2.hash());
+  ASSERT_EQ(8873752126133306149ULL, s1.hash());
+  ASSERT_EQ(9972002797221051811ULL, s2.hash());
 
-  ASSERT_EQ(761244080014510746ULL, s1.normalizedHash());
-  ASSERT_EQ(761244080014510746ULL, s2.normalizedHash());
+  ASSERT_EQ(724735390467908482ULL, s1.normalizedHash());
+  ASSERT_EQ(724735390467908482ULL, s2.normalizedHash());
 }
 
 TEST(SliceTest, GetNumericValueIntNoLoss) {
@@ -2245,6 +2289,77 @@ TEST(SliceTest, GetNumericValueWrongSource) {
                               Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(s.at(4).getNumber<double>(),
                               Exception::InvalidValueType);
+}
+
+TEST(SliceTest, Translate) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->seal();
+
+  AttributeTranslatorScope scope(translator.get());
+
+  Options options;
+  Builder b(&options);
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.add("bar", Value(false));
+  b.add("baz", Value(1));
+  b.add("bart", Value(2));
+  b.add("bark", Value(42));
+  b.add("mötör", Value(19));
+  b.add("mötörhead", Value(20));
+  b.close();
+
+  Slice s = Slice(b.start());
+
+  ASSERT_EQ(7UL, s.length());
+  
+  ASSERT_EQ("foo", Slice(s.start() + s.getNthOffset(0)).translate().copyString());
+  ASSERT_EQ("bar", Slice(s.start() + s.getNthOffset(1)).translate().copyString());
+  ASSERT_EQ("baz", Slice(s.start() + s.getNthOffset(2)).translate().copyString());
+  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(3)).translate().copyString(), Exception::InvalidValueType); 
+  ASSERT_EQ("bark", Slice(s.start() + s.getNthOffset(4)).translate().copyString());
+  ASSERT_EQ("mötör", Slice(s.start() + s.getNthOffset(5)).translate().copyString());
+  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(6)).translate().copyString(), Exception::InvalidValueType); 
+
+  // try again w/o AttributeTranslator
+  scope.revert();
+  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(0)).translate().copyString(), Exception::NeedAttributeTranslator); 
+}
+
+TEST(SliceTest, TranslateSingleMember) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->seal();
+
+  AttributeTranslatorScope scope(translator.get());
+
+  Options options;
+  Builder b(&options);
+  options.attributeTranslator = translator.get();
+
+  b.add(Value(ValueType::Object));
+  b.add("foo", Value(true));
+  b.close();
+
+  Slice s = Slice(b.start());
+
+  ASSERT_EQ(1UL, s.length());
+  
+  ASSERT_EQ("foo", Slice(s.start() + s.getNthOffset(0)).translate().copyString());
+
+  // try again w/o AttributeTranslator
+  scope.revert();
+  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(0)).translate().copyString(), Exception::NeedAttributeTranslator); 
 }
 
 TEST(SliceTest, Translations) {

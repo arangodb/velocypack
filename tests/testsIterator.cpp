@@ -86,6 +86,8 @@ TEST(IteratorTest, IterateArrayEmpty) {
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 
   ASSERT_FALSE(it.next());
+  
+  ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateArray) {
@@ -152,6 +154,123 @@ TEST(IteratorTest, IterateArray) {
 
   ASSERT_FALSE(it.next());
   ASSERT_FALSE(it.valid());
+
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+}
+
+TEST(IteratorTest, IterateArrayForward) {
+  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ArrayIterator it(s);
+
+  ASSERT_TRUE(it.valid());
+  Slice current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(1UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(2UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(3UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(4UL, current.getUInt());
+
+  it.forward(2);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isBool());
+  ASSERT_TRUE(current.getBool());
+  
+  it.forward(2);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("bar", current.copyString());
+  
+  it.forward(1);
+
+  ASSERT_FALSE(it.valid());
+  ASSERT_FALSE(it.next());
+
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+}
+
+TEST(IteratorTest, IterateCompactArrayForward) {
+  std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
+  
+  Options options;
+  options.buildUnindexedArrays = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  Slice s(parser.start());
+
+  ArrayIterator it(s);
+
+  ASSERT_TRUE(it.valid());
+  Slice current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(1UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(2UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(3UL, current.getUInt());
+
+  it.forward(1);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isNumber());
+  ASSERT_EQ(4UL, current.getUInt());
+
+  it.forward(2);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isBool());
+  ASSERT_TRUE(current.getBool());
+  
+  it.forward(2);
+
+  ASSERT_TRUE(it.valid());
+  current = it.value();
+  ASSERT_TRUE(current.isString());
+  ASSERT_EQ("bar", current.copyString());
+  
+  it.forward(1);
+
+  ASSERT_FALSE(it.valid());
+  ASSERT_FALSE(it.next());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
@@ -229,7 +348,7 @@ TEST(IteratorTest, IterateArrayUnsorted) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ArrayIterator it(s, false);
+  ArrayIterator it(s);
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();

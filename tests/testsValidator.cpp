@@ -28,6 +28,10 @@
 #include <string>
 
 #include "tests-common.h"
+  
+TEST(ValidatorTest, NoOptions) {
+  ASSERT_VELOCYPACK_EXCEPTION(Validator(nullptr), Exception::InternalError);
+}
 
 TEST(ValidatorTest, ReservedValue1) {
   std::string const value("\x15", 1);
@@ -156,27 +160,34 @@ TEST(ValidatorTest, ArrayCompactTooShort3) {
 }
 
 TEST(ValidatorTest, ArrayCompactTooShort4) {
-  std::string const value("\x13\x80\x05\x18", 4);
+  std::string const value("\x13\x80\x80", 3);
  
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
 TEST(ValidatorTest, ArrayCompactTooShort5) {
-  std::string const value("\x13\x04\x18\x02", 4);
+  std::string const value("\x13\x80\x05\x18", 4);
  
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
 TEST(ValidatorTest, ArrayCompactTooShort6) {
-  std::string const value("\x13\x04\x18\xff", 4);
+  std::string const value("\x13\x04\x18\x02", 4);
  
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
 TEST(ValidatorTest, ArrayCompactTooShort7) {
+  std::string const value("\x13\x04\x18\xff", 4);
+ 
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayCompactTooShort8) {
   std::string const value("\x13\x04\x06\x01", 4);
  
   Validator validator;

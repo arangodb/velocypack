@@ -2093,10 +2093,10 @@ static bool lt(Slice const a, Slice const b) {
 }
 
 TEST(CollectionTest, Sort) {
-  const int NUMBER = 3;
+  int const NUMBER = 3;
   Builder b;
   b.openArray();
-  for (int i = NUMBER-1; i >= 0; --i) {
+  for (int i = NUMBER - 1; i >= 0; --i) {
     b.add(Value(i));
   }
   b.close();
@@ -2109,6 +2109,13 @@ TEST(CollectionTest, Sort) {
     ASSERT_TRUE(ss.isInteger());
     ASSERT_EQ(static_cast<int64_t>(i), ss.getInt());
   }
+}
+
+TEST(CollectionTest, SortNonArray) {
+  Builder b;
+  b.add(Value("foo"));
+  
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::sort(b.slice(), &lt), Exception::InvalidValueType);
 }
 
 int main(int argc, char* argv[]) {

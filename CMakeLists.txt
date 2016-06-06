@@ -48,6 +48,7 @@ set(VELOCITY_SOURCE
     src/asm-functions.cpp
     src/fasthash.cpp
     src/fpconv.cpp
+    src/xxhash.cpp
 )
 
 add_library(velocypack STATIC ${VELOCITY_SOURCE})

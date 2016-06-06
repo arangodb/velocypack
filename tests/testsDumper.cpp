@@ -608,9 +608,30 @@ TEST(StringDumperTest, CustomWithoutHandler) {
                               Exception::NeedCustomTypeHandler);
 }
 
+TEST(StringDumperTest, CustomWithCallbackDefaultHandler) {
+  Builder b;
+  b.openObject();
+  uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
+  *p = 0xf3;
+  for (size_t i = 1; i <= 8; i++) {
+    p[i] = i + '@';
+  }
+  b.close();
+
+  struct MyCustomTypeHandler : public CustomTypeHandler {};
+  
+  MyCustomTypeHandler handler;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Options options;
+  options.customTypeHandler = &handler;
+  Dumper dumper(&sink, &options);
+  ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(b.slice()), Exception::NotImplemented);
+}
+
 TEST(StringDumperTest, CustomWithCallback) {
   Builder b;
-  b.add(Value(ValueType::Object));
+  b.openObject();
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
   for (size_t i = 1; i <= 8; i++) {
@@ -1147,6 +1168,22 @@ TEST(StringDumperTest, ConvertTypeUTCDate) {
   ASSERT_EQ(std::string("null"), buffer);
 }
 
+TEST(StringDumperTest, ConvertUnsupportedTypeUTCDate) {
+  int64_t v = 0;
+  Builder b;
+  b.add(Value(v, ValueType::UTCDate));
+
+  Slice slice = b.slice();
+
+  Options options;
+  options.unsupportedTypeBehavior = Options::ConvertUnsupportedType;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("\"(non-representable type utc-date)\""), buffer);
+}
+
 TEST(StringDumperTest, UnsupportedTypeNone) {
   static uint8_t const b[] = {0x00};
   Slice slice(&b[0]);
@@ -1155,7 +1192,7 @@ TEST(StringDumperTest, UnsupportedTypeNone) {
                               Exception::NoJsonEquivalent);
 }
 
-TEST(StringDumperTest, ConvertTypeNull) {
+TEST(StringDumperTest, ConvertTypeNone) {
   static uint8_t const b[] = {0x00};
   Slice slice(&b[0]);
 
@@ -1187,6 +1224,19 @@ TEST(StringDumperTest, ConvertTypeIllegal) {
   Dumper dumper(&sink, &options);
   dumper.dump(slice);
   ASSERT_EQ(std::string("null"), buffer);
+}
+
+TEST(StringDumperTest, ConvertUnsupportedTypeIllegal) {
+  static uint8_t const b[] = {0x17};
+  Slice slice(&b[0]);
+
+  Options options;
+  options.unsupportedTypeBehavior = Options::ConvertUnsupportedType;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("\"(non-representable type illegal)\""), buffer);
 }
 
 TEST(StringDumperTest, UnsupportedTypeMinKey) {
