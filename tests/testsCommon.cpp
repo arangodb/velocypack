@@ -26,6 +26,10 @@
 
 #include "tests-common.h"
 
+#ifndef _WIN32
+#include <sys/time.h>
+#endif
+
 static uint8_t LocalBuffer[128];
 
 TEST(CommonTest, StoreUInt64Zero) {
@@ -119,6 +123,25 @@ TEST(CommonTest, StoreUInt64Max) {
   ASSERT_EQ(0xff, LocalBuffer[7]);
 
   ASSERT_EQ(value, readUInt64(&LocalBuffer[0]));
+}
+
+#ifndef _WIN32
+TEST(CommonTest, CurrentUTCValue) {
+  struct timeval t;
+  gettimeofday(&t, 0);
+
+  int64_t now = (t.tv_sec * 1000) + (t.tv_usec / 1000);
+  int64_t utc = currentUTCDateValue();
+
+  ASSERT_TRUE(utc >= now);
+  ASSERT_TRUE((utc - now) < 120 * 1000);
+}
+#endif
+
+TEST(CommonTest, AsmFunctions) {
+  disableAssemblerFunctions();
+  ASSERT_TRUE(assemblerFunctionsDisabled());
+  ASSERT_FALSE(assemblerFunctionsEnabled());
 }
 
 int main(int argc, char* argv[]) {

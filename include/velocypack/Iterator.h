@@ -42,15 +42,13 @@ class ArrayIterator {
  public:
   ArrayIterator() = delete;
 
-  ArrayIterator(Slice const& slice)
-      : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr) {
+  explicit ArrayIterator(Slice const& slice)
+      : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr) { 
     if (slice.type() != ValueType::Array) {
       throw Exception(Exception::InvalidValueType, "Expecting Array slice");
     }
-
-    if (slice.head() == 0x13 && slice.length() > 0) {
-      _current = slice.at(0).start();
-    }
+   
+    reset();   
   }
 
   ArrayIterator(ArrayIterator const& other)
@@ -112,7 +110,7 @@ class ArrayIterator {
     return it;
   }
 
-  inline bool valid() const throw() { return (_position < _size); }
+  inline bool valid() const noexcept { return (_position < _size); }
 
   inline Slice value() const {
     if (_position >= _size) {
@@ -121,18 +119,50 @@ class ArrayIterator {
     return operator*();
   }
 
-  inline bool next() throw() {
+  inline bool next() noexcept {
     operator++();
     return valid();
   }
 
-  inline ValueLength index() const throw() { return _position; }
+  inline ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const throw() { return _size; }
+  inline ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const throw() { return (_position == 0); }
+  inline bool isFirst() const noexcept { return (_position == 0); }
 
-  inline bool isLast() const throw() { return (_position + 1 >= _size); }
+  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
+
+  inline void forward(ValueLength count) {
+    if (_position + count >= _size) {
+      // beyond end of data
+      _current = nullptr;
+      _position = _size;
+    } else {
+      auto h = _slice.head();
+      if (h == 0x13) {
+        while (count-- > 0) {
+          _current += Slice(_current).byteSize();
+          ++_position;
+        }
+      } else {
+        _position += count;
+        _current = _slice.at(_position).start();
+      } 
+    }
+  }
+    
+  inline void reset() {
+    _position = 0;
+    _current = nullptr;
+    if (_size > 0) {
+      auto h = _slice.head();
+      if (h == 0x13) {
+        _current = _slice.at(0).start();
+      } else {
+        _current = _slice.begin() + _slice.findDataOffset(h);
+      }
+    }
+  }
 
  private:
   Slice _slice;
@@ -151,14 +181,20 @@ class ObjectIterator {
 
   ObjectIterator() = delete;
 
-  ObjectIterator(Slice const& slice)
-      : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr) {
+  ObjectIterator(Slice const& slice, bool allowRandomIteration = false)
+      : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr),
+        _allowRandomIteration(allowRandomIteration) {
     if (slice.type() != ValueType::Object) {
       throw Exception(Exception::InvalidValueType, "Expecting Object slice");
     }
 
-    if (slice.head() == 0x14 && slice.length() > 0) {
-      _current = slice.keyAt(0, false).start();
+    if (_size > 0) {
+      auto h = slice.head();
+      if (h == 0x14) {
+        _current = slice.keyAt(0, false).start();
+      } else if (allowRandomIteration) {
+        _current = slice.begin() + slice.findDataOffset(h);
+      }
     }
   }
 
@@ -166,13 +202,15 @@ class ObjectIterator {
       : _slice(other._slice),
         _size(other._size),
         _position(other._position),
-        _current(other._current) {}
+        _current(other._current),
+        _allowRandomIteration(other._allowRandomIteration) {}
 
   ObjectIterator& operator=(ObjectIterator const& other) {
     _slice = other._slice;
     _size = other._size;
     _position = other._position;
     _current = other._current;
+    _allowRandomIteration = other._allowRandomIteration;
     return *this;
   }
 
@@ -206,26 +244,26 @@ class ObjectIterator {
       Slice key = Slice(_current);
       return ObjectPair(key, Slice(_current + key.byteSize()));
     }
-    return ObjectPair(_slice.keyAt(_position), _slice.valueAt(_position));
+    return ObjectPair(_slice.getNthKey(_position, true), _slice.getNthValue(_position));
   }
 
-  ObjectIterator begin() { return ObjectIterator(_slice); }
+  ObjectIterator begin() { return ObjectIterator(_slice, _allowRandomIteration); }
 
-  ObjectIterator begin() const { return ObjectIterator(_slice); }
+  ObjectIterator begin() const { return ObjectIterator(_slice, _allowRandomIteration); }
 
   ObjectIterator end() {
-    auto it = ObjectIterator(_slice);
+    auto it = ObjectIterator(_slice, _allowRandomIteration);
     it._position = it._size;
     return it;
   }
 
   ObjectIterator end() const {
-    auto it = ObjectIterator(_slice);
+    auto it = ObjectIterator(_slice, _allowRandomIteration);
     it._position = it._size;
     return it;
   }
 
-  inline bool valid() const throw() { return (_position < _size); }
+  inline bool valid() const noexcept { return (_position < _size); }
 
   inline Slice key(bool translate = true) const {
     if (_position >= _size) {
@@ -234,7 +272,7 @@ class ObjectIterator {
     if (_current != nullptr) {
       return Slice(_current);
     }
-    return _slice.keyAt(_position, translate);
+    return _slice.getNthKey(_position, translate);
   }
 
   inline Slice value() const {
@@ -245,27 +283,28 @@ class ObjectIterator {
       Slice key = Slice(_current);
       return Slice(_current + key.byteSize());
     }
-    return _slice.valueAt(_position);
+    return _slice.getNthValue(_position);
   }
 
-  inline bool next() throw() {
+  inline bool next() noexcept {
     operator++();
     return valid();
   }
 
-  inline ValueLength index() const throw() { return _position; }
+  inline ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const throw() { return _size; }
+  inline ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const throw() { return (_position == 0); }
+  inline bool isFirst() const noexcept { return (_position == 0); }
 
-  inline bool isLast() const throw() { return (_position + 1 >= _size); }
+  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
 
  private:
   Slice _slice;
   ValueLength _size;
   ValueLength _position;
   uint8_t const* _current;
+  bool _allowRandomIteration;
 };
 
 }  // namespace arangodb::velocypack

@@ -70,6 +70,10 @@ TEST(ExceptionTest, TestMessages) {
                Exception::message(Exception::BuilderUnexpectedValue));
   ASSERT_STREQ("Externals are not allowed in this configuration",
                Exception::message(Exception::BuilderExternalsDisallowed));
+  ASSERT_STREQ("Invalid type found in binary data",
+               Exception::message(Exception::ValidatorInvalidType));
+  ASSERT_STREQ("Invalid length found in binary data",
+               Exception::message(Exception::ValidatorInvalidLength));
 
   ASSERT_STREQ("Unknown error", Exception::message(Exception::UnknownError));
   ASSERT_STREQ("Unknown error",

@@ -8,10 +8,10 @@ The VPack library can be built on Linux, MacOS and Windows. Other platforms may
 work too, but are untested.
 
 The VPack library is implemented in C++. To build it, a C++11-enabled compiler
-is required. Recent versions of g++ and clang++ are known to work.
+is required. Recent versions of g++, clang++ and Visual Studio are known to work.
 
 VPack uses [CMake](https://cmake.org/download/) for building. Therefore a recent
-version of CMake is required, too.
+version of CMake is required too.
 
 
 Building the VPack library
@@ -52,8 +52,8 @@ the desired target directory when invoking `make install`, e.g.:
 To create the Visual Studio project files for *Visual Studio for Windows*, 
 execute the appropriate command in the `build` subdirectory:
 
-* 32 bit: `cmake -G "Visual Studio 12 2013" -DCMAKE_BUILD_TYPE=Release ..`
-* 64 bit: `cmake -G "Visual Studio 12 2013 Win64" -DCMAKE_BUILD_TYPE=Release ..`
+* 32 bit: `cmake -G "Visual Studio 14 2015" -DCMAKE_BUILD_TYPE=Release ..`
+* 64 bit: `cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release ..`
 
 After that, open the generated file `velocypack.sln` from the `build`
 subdirectory with Visual Studio.
@@ -70,6 +70,8 @@ The following options can be set when building VPack:
 * `-DCMAKE_BUILD_TYPE=Debug`: builds the VPack library in debug mode. This
   adds debug symbols and turns off optimizations. Use this mode for development,
   but not for production or performance testing.
+* `-DHashType`: sets the hash function internally used by VelocyPack. Valid values
+  for this option are `xxhash` and `fasthash`.
 * `-DBuildTools`: controls whether some tool binaries for VPack values should be
   built. These tools can be used to inspect VPack values contained in files or to
   convert JSON files to VPack. They are not needed when VPack is used as a library  

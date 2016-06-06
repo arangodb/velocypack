@@ -6,6 +6,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 option(Maintainer "Build maintainer tools" OFF)
 option(Coverage "Build with coverage" OFF)
+option(HashType "Hash type (fasthash, xxhash)" OFF)
+
+#Default to xxhash
+if(HashType STREQUAL "OFF")
+    set(HashType "xxhash")
+endif()
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
@@ -30,7 +36,7 @@ set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization form
 include(AR_CompilerSettings)
 
 # build version number generator - NICE!
-set(VELOCITY_SOURCE
+set(VELOCY_SOURCE
     src/velocypack-common.cpp
     src/AttributeTranslator.cpp
     src/Builder.cpp
@@ -42,14 +48,25 @@ set(VELOCITY_SOURCE
     src/Options.cpp
     src/Parser.cpp
     src/Slice.cpp
+    src/Validator.cpp
     src/ValueType.cpp
     src/Version.cpp
     src/asm-functions.cpp
-    src/fasthash.cpp
     src/fpconv.cpp
 )
 
-add_library(velocypack STATIC ${VELOCITY_SOURCE})
+#Use xxhash or fasthash?  
+if(HashType STREQUAL "xxhash")
+    list(APPEND VELOCY_SOURCE src/xxhash.cpp)
+    add_definitions("-DVELOCYPACK_XXHASH=1")
+elseif(HashType STREQUAL "fasthash")
+    list(APPEND VELOCY_SOURCE src/fasthash.cpp)
+    add_definitions("-DVELOCYPACK_FASTHASH=1")
+else()
+    message(FATAL_ERROR "invalid HashType value. supported values: xxhash or fasthash")    
+endif()
+
+add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(velocypack PRIVATE src)
 target_include_directories(velocypack PUBLIC include)
 

@@ -2693,6 +2693,75 @@ TEST(BuilderTest, HandInBuffer) {
   }
 }
 
+TEST(BuilderTest, SliceEmpty) {
+  Builder b;
+  ASSERT_EQ(ValueType::None, b.slice().type());
+  ASSERT_EQ(1ULL, b.slice().byteSize());
+}
+
+TEST(BuilderTest, AddKeyToNonObject) {
+  Builder b;
+  b.openArray();
+    
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderNeedOpenObject);
+}
+
+TEST(BuilderTest, KeyWritten) {
+  Builder b;
+  b.openObject();
+  b.add(Value("foo"));
+    
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderKeyAlreadyWritten);
+}
+
+TEST(BuilderTest, AddWithTranslator) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("foo", 1);
+  translator->add("bar", 2);
+  translator->add("baz", 3);
+  translator->add("bark", 4);
+  translator->add("mötör", 5);
+  translator->add("quetzalcoatl", 6);
+  translator->seal();
+
+  AttributeTranslatorScope scope(translator.get());
+   
+  Options options;
+  options.sortAttributeNames = false;
+  options.attributeTranslator = translator.get();
+  
+  Builder b(&options);
+  b.openObject();
+  b.add(std::string("foo"), Value("bar"));
+  b.add(std::string("bar"), Value("baz"));
+  b.add(std::string("bark"), Value("bank"));
+  b.add(std::string("bonk"), Value("b0rk"));
+  b.add(std::string("mötör"), Value("köter"));
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_EQ(5UL, s.length());
+  ASSERT_EQ("foo", s.keyAt(0).copyString());
+  ASSERT_EQ(1UL, s.keyAt(0, false).getUInt());
+  ASSERT_EQ("bar", s.valueAt(0).copyString());
+  
+  ASSERT_EQ("bar", s.keyAt(1).copyString());
+  ASSERT_EQ(2UL, s.keyAt(1, false).getUInt());
+  ASSERT_EQ("baz", s.valueAt(1).copyString());
+  
+  ASSERT_EQ("bark", s.keyAt(2).copyString());
+  ASSERT_EQ(4UL, s.keyAt(2, false).getUInt());
+  ASSERT_EQ("bank", s.valueAt(2).copyString());
+
+  ASSERT_EQ("bonk", s.keyAt(3).copyString());
+  ASSERT_EQ("b0rk", s.valueAt(3).copyString());
+  
+  ASSERT_EQ("mötör", s.keyAt(4).copyString());
+  ASSERT_EQ(5UL, s.keyAt(4, false).getUInt());
+  ASSERT_EQ("köter", s.valueAt(4).copyString());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
