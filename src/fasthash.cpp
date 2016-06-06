@@ -26,9 +26,6 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace arangodb {
-namespace velocypack {
-
 // Compression function for Merkle-Damgard construction.
 // This function is generated using the framework provided.
 static inline uint64_t mix(uint64_t h) {
@@ -77,6 +74,3 @@ uint64_t fasthash64(const void *buf, size_t len, uint64_t seed) {
 
   return mix(h);
 }
-
-}  // namespace arangodb::velocypack
-}  // namespace arangodb

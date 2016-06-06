@@ -86,11 +86,11 @@ struct Exception : std::exception {
 
   explicit Exception(ExceptionType type) : Exception(type, message(type)) {}
 
-  char const* what() const throw() { return _msg.c_str(); }
+  char const* what() const noexcept { return _msg.c_str(); }
 
-  ExceptionType errorCode() const throw() { return _type; }
+  ExceptionType errorCode() const noexcept { return _type; }
 
-  static char const* message(ExceptionType type) throw() {
+  static char const* message(ExceptionType type) noexcept {
     switch (type) {
       case InternalError:
         return "Internal error";

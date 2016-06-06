@@ -627,6 +627,9 @@ TEST(StringDumperTest, CustomWithCallbackDefaultHandler) {
   options.customTypeHandler = &handler;
   Dumper dumper(&sink, &options);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(b.slice()), Exception::NotImplemented);
+  
+  ASSERT_VELOCYPACK_EXCEPTION(handler.dump(b.slice(), &dumper, b.slice()), Exception::NotImplemented);
+  ASSERT_VELOCYPACK_EXCEPTION(handler.toString(b.slice(), nullptr, b.slice()), Exception::NotImplemented);
 }
 
 TEST(StringDumperTest, CustomWithCallback) {

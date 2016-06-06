@@ -110,7 +110,7 @@ class ArrayIterator {
     return it;
   }
 
-  inline bool valid() const throw() { return (_position < _size); }
+  inline bool valid() const noexcept { return (_position < _size); }
 
   inline Slice value() const {
     if (_position >= _size) {
@@ -119,18 +119,18 @@ class ArrayIterator {
     return operator*();
   }
 
-  inline bool next() throw() {
+  inline bool next() noexcept {
     operator++();
     return valid();
   }
 
-  inline ValueLength index() const throw() { return _position; }
+  inline ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const throw() { return _size; }
+  inline ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const throw() { return (_position == 0); }
+  inline bool isFirst() const noexcept { return (_position == 0); }
 
-  inline bool isLast() const throw() { return (_position + 1 >= _size); }
+  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
 
   inline void forward(ValueLength count) {
     if (_position + count >= _size) {
@@ -263,7 +263,7 @@ class ObjectIterator {
     return it;
   }
 
-  inline bool valid() const throw() { return (_position < _size); }
+  inline bool valid() const noexcept { return (_position < _size); }
 
   inline Slice key(bool translate = true) const {
     if (_position >= _size) {
@@ -286,18 +286,18 @@ class ObjectIterator {
     return _slice.getNthValue(_position);
   }
 
-  inline bool next() throw() {
+  inline bool next() noexcept {
     operator++();
     return valid();
   }
 
-  inline ValueLength index() const throw() { return _position; }
+  inline ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const throw() { return _size; }
+  inline ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const throw() { return (_position == 0); }
+  inline bool isFirst() const noexcept { return (_position == 0); }
 
-  inline bool isLast() const throw() { return (_position + 1 >= _size); }
+  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
 
  private:
   Slice _slice;

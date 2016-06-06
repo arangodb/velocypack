@@ -209,7 +209,7 @@ class Parser {
 
   ValueLength parseInternal(bool multi);
 
-  inline bool isWhiteSpace(uint8_t i) const throw() {
+  inline bool isWhiteSpace(uint8_t i) const noexcept {
     return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
   }
 
