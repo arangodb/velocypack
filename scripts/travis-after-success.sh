@@ -15,7 +15,7 @@ if [ "$CXX" = "/usr/bin/g++-4.9" ]; then
   (cd build/tests/ && ctest -V)
   # collect coverage info
   ~/bin/lcov/usr/bin/lcov --directory build --capture --output-file build/coverage.info --gcov-tool=gcov-4.9
-  ~/bin/lcov/usr/bin/lcov --remove build/coverage.info 'tests/*' '/usr/*' 'src/*hash*' --output-file build/coverage.info --gcov-tool=gcov-4.9
+  ~/bin/lcov/usr/bin/lcov --remove build/coverage.info 'tests/*' '/usr/*' 'src/*hash*' 'src/powers.h' --output-file build/coverage.info --gcov-tool=gcov-4.9
   ~/bin/lcov/usr/bin/lcov --list build/coverage.info --gcov-tool=gcov-4.9
   # upload coverage info
   coveralls-lcov --repo-token ${COVERALLS_TOKEN} build/coverage.info
