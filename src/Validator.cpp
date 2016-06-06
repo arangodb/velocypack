@@ -138,7 +138,11 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
           p += Slice(p).byteSize();
         }
       } else if (byteLength > 0) {
-        validateBufferLength(1 + byteLength + byteLength, length, true);
+        ValueLength nrItemsLength = 0;
+        if (head >= 0x06) {
+          nrItemsLength = byteLength;
+        }
+        validateBufferLength(1 + byteLength + nrItemsLength, length, true);
         ValueLength nrItems = Slice(ptr).length();
         uint8_t const* p = ptr + 1 + byteLength;
         if (!equalSize) {
@@ -166,9 +170,11 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
         
         if (hasIndexTable) {
           // now also validate index table
+          nrItems = Slice(ptr).length();
           for (ValueLength i = 0; i < nrItems; ++i) {
             ValueLength offset = Slice(ptr).getNthOffset(i);
-            if (offset >= length) {
+            if (offset < 1 + byteLength + nrItemsLength ||
+                offset >= Slice(ptr).byteSize() - nrItems * byteLength) {
               throw Exception(Exception::ValidatorInvalidLength, "Array value offset is out of bounds");
             }
             validate(ptr + offset, length - offset, true);
@@ -253,15 +259,43 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
     }
 
     case ValueType::Custom: {
-      if (head >= 0xf4 && head <= 0xf6) {
+      ValueLength byteSize = 0;
+
+      if (head == 0xf0) {
+        byteSize = 1 + 1;
+      } else if (head == 0xf1) {
+        byteSize = 1 + 2;
+      } else if (head == 0xf2) {
+        byteSize = 1 + 4;
+      } else if (head == 0xf3) {
+        byteSize = 1 + 8;
+      } else if (head >= 0xf4 && head <= 0xf6) {
         validateBufferLength(1 + 1, length, true);
+        byteSize = 1 + 1 + readInteger<ValueLength>(ptr + 1, 1);
+        if (byteSize == 1 + 1) {
+          throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
+        }
       } else if (head >= 0xf7 && head <= 0xf9) {
         validateBufferLength(1 + 2, length, true);
+        byteSize = 1 + 2 + readInteger<ValueLength>(ptr + 1, 2); 
+        if (byteSize == 1 + 2) {
+          throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
+        }
       } else if (head >= 0xfa && head <= 0xfc) {
         validateBufferLength(1 + 4, length, true);
+        byteSize = 1 + 4 + readInteger<ValueLength>(ptr + 1, 4); 
+        if (byteSize == 1 + 4) {
+          throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
+        }
       } else if (head >= 0xfd) {
         validateBufferLength(1 + 8, length, true);
+        byteSize = 1 + 8 + readInteger<ValueLength>(ptr + 1, 8); 
+        if (byteSize == 1 + 8) {
+          throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
+        }
       }
+  
+      validateSliceLength(ptr, byteSize, isSubPart);
       break;
     }
   }
