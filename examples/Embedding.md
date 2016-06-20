@@ -9,6 +9,8 @@ It does nothing yet, the only goal is to make this minimal example compile and
 link:
 
 ```cpp
+#define VELOCYPACK_XXHASH 1
+
 #include <velocypack/vpack.h>
 #include <iostream>
 
