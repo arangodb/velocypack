@@ -576,7 +576,7 @@ TEST(IteratorTest, IterateObjectUnsorted) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
   
   ASSERT_TRUE(it.valid());
   key = it.key();
@@ -585,7 +585,7 @@ TEST(IteratorTest, IterateObjectUnsorted) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
   
   ASSERT_TRUE(it.valid());
   key = it.key();
@@ -594,7 +594,7 @@ TEST(IteratorTest, IterateObjectUnsorted) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
 }
 
