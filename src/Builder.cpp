@@ -175,7 +175,7 @@ Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
 }
 
 bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray,
-                                        std::vector<ValueLength>& index) {
+                                        std::vector<ValueLength> const& index) {
   // use compact notation
   ValueLength nLen =
       getVariableValueLength(static_cast<ValueLength>(index.size()));
@@ -349,7 +349,7 @@ Builder& Builder::close() {
   if (isClosed()) {
     throw Exception(Exception::BuilderNeedOpenCompound);
   }
-  ValueLength& tos = _stack.back();
+  ValueLength tos = _stack.back();
   uint8_t const head = _start[tos];
 
   VELOCYPACK_ASSERT(head == 0x06 || head == 0x0b || head == 0x13 ||

@@ -461,7 +461,7 @@ private:
 
   // close for the compact case:
   bool closeCompactArrayOrObject(ValueLength tos, bool isArray,
-                                 std::vector<ValueLength>& index);
+                                 std::vector<ValueLength> const& index);
 
   // close for the array case:
   Builder& closeArray(ValueLength tos, std::vector<ValueLength>& index);

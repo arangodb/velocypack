@@ -63,17 +63,12 @@ TEST(TypesTest, TestNamesArrays) {
 }
 
 TEST(TypesTest, TestNamesObjects) {
-  uint8_t const objects[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
-                             0x0f, 0x10, 0x11, 0x12};
+  uint8_t const objects[] = {0x0a, 0x0b, 0x0c, 0x0d, 0x0e};
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[0]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[1]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[2]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[3]).type()));
   ASSERT_STREQ("object", valueTypeName(Slice(&objects[4]).type()));
-  ASSERT_STREQ("object", valueTypeName(Slice(&objects[5]).type()));
-  ASSERT_STREQ("object", valueTypeName(Slice(&objects[6]).type()));
-  ASSERT_STREQ("object", valueTypeName(Slice(&objects[7]).type()));
-  ASSERT_STREQ("object", valueTypeName(Slice(&objects[8]).type()));
 }
 
 TEST(TypesTest, TestInvalidType) {
