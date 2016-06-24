@@ -1373,6 +1373,19 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
         "\"bark\":3,\"foo\":true}}"), result);
 }
 
+TEST(DumperTest, EmptyAttributeName) {
+  Builder builder;
+  Parser parser(builder);
+  parser.parse(R"({"":123,"a":"abc"})");
+  Slice slice = builder.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink);
+  dumper.dump(&slice);
+  ASSERT_EQ(std::string(R"({"":123,"a":"abc"})"), buffer);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

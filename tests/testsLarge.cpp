@@ -177,6 +177,28 @@ TEST(BuilderTest, ObjectsSizesSorted) {
   }
 }
 
+TEST(ParserTest, EmptyAttributeName) {
+  Builder builder;
+  Parser parser(builder);
+  parser.parse(R"({"":123,"a":"abc"})");
+  Slice s = builder.slice();
+  
+  ASSERT_EQ(2UL, s.length());
+
+  Slice ss = s.get("");
+  ASSERT_FALSE(ss.isNone());
+  ASSERT_TRUE(ss.isInteger());
+  ASSERT_EQ(123L, ss.getInt());
+
+  ss = s.get("a");
+  ASSERT_FALSE(ss.isNone());
+  ASSERT_TRUE(ss.isString());
+  ASSERT_EQ(std::string("abc"), ss.copyString());
+
+  ss = s.get("b");
+  ASSERT_TRUE(ss.isNone());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
