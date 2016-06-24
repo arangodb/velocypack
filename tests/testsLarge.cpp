@@ -145,10 +145,7 @@ TEST(BuilderTest, ObjectsSizesSorted) {
   // The attribute name generated below will use another 10.
 
   for (int i = 0; i < nr; i++) {
-    Options options;
-    options.sortAttributeNames = true;
-
-    Builder b(&options);
+    Builder b;
     b.reserve(byteSizes[i]);
     b.add(Value(ValueType::Object));
     for (ValueLength j = 0; j < nrs[i]; j++) {

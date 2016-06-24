@@ -424,9 +424,7 @@ Builder& Builder::close() {
   tableBase = _pos;
   _pos += offsetSize * index.size();
   // Object
-  if (!options->sortAttributeNames) {
-    _start[tos] = 0x0f;  // unsorted
-  } else if (index.size() >= 2 && options->sortAttributeNames) {
+  if (index.size() >= 2) {
     sortObjectIndex(_start + tos, index);
   }
   for (size_t i = 0; i < index.size(); i++) {
