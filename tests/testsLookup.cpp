@@ -910,9 +910,9 @@ TEST(LookupTest, KeyAtObject) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  ASSERT_EQ("foo", s.keyAt(0).copyString());
-  ASSERT_EQ("bar", s.keyAt(1).copyString());
-  ASSERT_EQ("baz", s.keyAt(2).copyString());
+  ASSERT_EQ("bar", s.keyAt(0).copyString());
+  ASSERT_EQ("baz", s.keyAt(1).copyString());
+  ASSERT_EQ("foo", s.keyAt(2).copyString());
   ASSERT_EQ("qux", s.keyAt(3).copyString());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4), Exception::IndexOutOfBounds);
@@ -997,9 +997,9 @@ TEST(LookupTest, ValueAtObject) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  ASSERT_EQ(1, s.valueAt(0).getInt());
-  ASSERT_EQ(2, s.valueAt(1).getInt());
-  ASSERT_EQ(3, s.valueAt(2).getInt());
+  ASSERT_EQ(2, s.valueAt(0).getInt());
+  ASSERT_EQ(3, s.valueAt(1).getInt());
+  ASSERT_EQ(1, s.valueAt(2).getInt());
   ASSERT_EQ(4, s.valueAt(3).getInt());
 
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(4), Exception::IndexOutOfBounds);

@@ -1581,46 +1581,6 @@ TEST(SliceTest, ObjectCases3) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
-TEST(SliceTest, ObjectCases4) {
-  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x41, 0x61, 0x31, 0x41, 0x62,
-                   0x32, 0x41, 0x63, 0x33, 0x03, 0x06, 0x09};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
-TEST(SliceTest, ObjectCases5) {
-  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x00, 0x00, 0x41, 0x61, 0x31, 0x41,
-                   0x62, 0x32, 0x41, 0x63, 0x33, 0x05, 0x08, 0x0b};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
-TEST(SliceTest, ObjectCases6) {
-  uint8_t buf[] = {0x0f, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-                   0x00, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
-                   0x32, 0x41, 0x63, 0x33, 0x09, 0x0c, 0x0f};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
 TEST(SliceTest, ObjectCases7) {
   uint8_t buf[] = {0x0c, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
                    0x32, 0x41, 0x63, 0x33, 0x05, 0x00, 0x08, 0x00, 0x0b, 0x00};
@@ -1648,33 +1608,6 @@ TEST(SliceTest, ObjectCases8) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
-TEST(SliceTest, ObjectCases9) {
-  uint8_t buf[] = {0x10, 0x00, 0x00, 0x03, 0x00, 0x41, 0x61, 0x31, 0x41, 0x62,
-                   0x32, 0x41, 0x63, 0x33, 0x05, 0x00, 0x08, 0x00, 0x0b, 0x00};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
-TEST(SliceTest, ObjectCases10) {
-  uint8_t buf[] = {0x10, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-                   0x00, 0x41, 0x61, 0x31, 0x41, 0x62, 0x32, 0x41,
-                   0x63, 0x33, 0x09, 0x00, 0x0c, 0x00, 0x0f, 0x00};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
 TEST(SliceTest, ObjectCases11) {
   uint8_t buf[] = {0x0d, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x41,
                    0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
@@ -1689,38 +1622,8 @@ TEST(SliceTest, ObjectCases11) {
   ASSERT_EQ(1LL, ss.getInt());
 }
 
-TEST(SliceTest, ObjectCases12) {
-  uint8_t buf[] = {0x11, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x41,
-                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
-                   0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
 TEST(SliceTest, ObjectCases13) {
   uint8_t buf[] = {0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41,
-                   0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
-                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
-                   0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
-                   0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  buf[1] = sizeof(buf);  // set the bytelength
-  Slice s(buf);
-  ASSERT_TRUE(s.isObject());
-  ASSERT_EQ(3ULL, s.length());
-  ASSERT_EQ(sizeof(buf), s.byteSize());
-  Slice ss = s["a"];
-  ASSERT_TRUE(ss.isSmallInt());
-  ASSERT_EQ(1LL, ss.getInt());
-}
-
-TEST(SliceTest, ObjectCases14) {
-  uint8_t buf[] = {0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41,
                    0x61, 0x31, 0x41, 0x62, 0x32, 0x41, 0x63, 0x33, 0x09, 0x00,
                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
                    0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -2100,42 +2003,15 @@ TEST(SliceTest, NormalizedHashArrayNested) {
   ASSERT_EQ(11101500731480543049ULL, s2.normalizedHash());
 }
 
-TEST(SliceTest, NormalizedHashObject) {
-  Options options;
-
-  options.sortAttributeNames = false;
-  options.buildUnindexedObjects = false;
-  std::shared_ptr<Builder> b1 = Parser::fromJson(
-      "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
-      "\"seven\":7}", &options);
-  Slice s1 = b1->slice();
-  
-  options.sortAttributeNames = false;
-  options.buildUnindexedObjects = true;
-  std::shared_ptr<Builder> b2 = Parser::fromJson(
-      "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
-      "\"seven\":7}", &options);
-  Slice s2 = b2->slice();
-  
-  // hash values differ, but normalized hash values shouldn't!
-  ASSERT_EQ(3104094738535244520ULL, s1.hash());
-  ASSERT_EQ(7052583882019581480ULL, s2.hash());
-
-  ASSERT_EQ(724735390467908482ULL, s1.normalizedHash());
-  ASSERT_EQ(724735390467908482ULL, s2.normalizedHash());
-}
-
 TEST(SliceTest, NormalizedHashObjectOrder) {
   Options options;
 
-  options.sortAttributeNames = true;
   options.buildUnindexedObjects = false;
   std::shared_ptr<Builder> b1 = Parser::fromJson(
       "{\"one\":1,\"two\":2,\"three\":3,\"four\":4,\"five\":5,\"six\":6,"
       "\"seven\":7}", &options);
   Slice s1 = b1->slice();
   
-  options.sortAttributeNames = true;
   options.buildUnindexedObjects = false;
   std::shared_ptr<Builder> b2 = Parser::fromJson(
       "{\"seven\":7,\"six\":6,\"five\":5,\"four\":4,\"three\":3,\"two\":2,\"one\":1}", &options);
@@ -2487,7 +2363,6 @@ TEST(SliceTest, Translate) {
 
   Options options;
   Builder b(&options);
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
 
   b.add(Value(ValueType::Object));
@@ -2504,11 +2379,11 @@ TEST(SliceTest, Translate) {
 
   ASSERT_EQ(7UL, s.length());
   
-  ASSERT_EQ("foo", Slice(s.start() + s.getNthOffset(0)).translate().copyString());
-  ASSERT_EQ("bar", Slice(s.start() + s.getNthOffset(1)).translate().copyString());
-  ASSERT_EQ("baz", Slice(s.start() + s.getNthOffset(2)).translate().copyString());
-  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(3)).translate().copyString(), Exception::InvalidValueType); 
-  ASSERT_EQ("bark", Slice(s.start() + s.getNthOffset(4)).translate().copyString());
+  ASSERT_EQ("bar", Slice(s.start() + s.getNthOffset(0)).translate().copyString());
+  ASSERT_EQ("bark", Slice(s.start() + s.getNthOffset(1)).translate().copyString());
+  ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(2)).translate().copyString(), Exception::InvalidValueType); 
+  ASSERT_EQ("baz", Slice(s.start() + s.getNthOffset(3)).translate().copyString());
+  ASSERT_EQ("foo", Slice(s.start() + s.getNthOffset(4)).translate().copyString());
   ASSERT_EQ("mötör", Slice(s.start() + s.getNthOffset(5)).translate().copyString());
   ASSERT_VELOCYPACK_EXCEPTION(Slice(s.start() + s.getNthOffset(6)).translate().copyString(), Exception::InvalidValueType); 
 
@@ -2592,11 +2467,11 @@ TEST(SliceTest, Translations) {
   ASSERT_TRUE(s.hasKey("quetzal"));
   ASSERT_EQ(21UL, s.get("quetzal").getUInt());
 
-  ASSERT_EQ("foo", s.keyAt(0).copyString());
-  ASSERT_EQ("bar", s.keyAt(1).copyString());
-  ASSERT_EQ("baz", s.keyAt(2).copyString());
-  ASSERT_EQ("bart", s.keyAt(3).copyString());
-  ASSERT_EQ("bark", s.keyAt(4).copyString());
+  ASSERT_EQ("bar", s.keyAt(0).copyString());
+  ASSERT_EQ("bark", s.keyAt(1).copyString());
+  ASSERT_EQ("bart", s.keyAt(2).copyString());
+  ASSERT_EQ("baz", s.keyAt(3).copyString());
+  ASSERT_EQ("foo", s.keyAt(4).copyString());
   ASSERT_EQ("mötör", s.keyAt(5).copyString());
   ASSERT_EQ("mötörhead", s.keyAt(6).copyString());
   ASSERT_EQ("quetzal", s.keyAt(7).copyString());
@@ -2677,14 +2552,14 @@ TEST(SliceTest, TranslationsSubObjects) {
   ASSERT_TRUE(s.get("bark").isObject());
   ASSERT_EQ(5UL, s.get(std::vector<std::string>({"bark", "foo"})).getUInt());
   ASSERT_EQ(6UL, s.get(std::vector<std::string>({"bark", "bar"})).getUInt());
-  ASSERT_EQ("foo", s.keyAt(0).copyString());
-  ASSERT_EQ("bar", s.valueAt(0).keyAt(0).copyString());
-  ASSERT_EQ("baz", s.valueAt(0).keyAt(1).copyString());
-  ASSERT_EQ("bark", s.valueAt(0).keyAt(2).copyString());
-  ASSERT_EQ("bar", s.keyAt(1).copyString());
-  ASSERT_EQ("bark", s.keyAt(2).copyString());
-  ASSERT_EQ("foo", s.valueAt(2).keyAt(0).copyString());
-  ASSERT_EQ("bar", s.valueAt(2).keyAt(1).copyString());
+  ASSERT_EQ("bar", s.keyAt(0).copyString());
+  ASSERT_EQ("bark", s.keyAt(1).copyString());
+  ASSERT_EQ("bar", s.valueAt(1).keyAt(0).copyString());
+  ASSERT_EQ("foo", s.valueAt(1).keyAt(1).copyString());
+  ASSERT_EQ("foo", s.keyAt(2).copyString());
+  ASSERT_EQ("bar", s.valueAt(2).keyAt(0).copyString());
+  ASSERT_EQ("bark", s.valueAt(2).keyAt(1).copyString());
+  ASSERT_EQ("baz", s.valueAt(2).keyAt(2).copyString());
 }
 
 TEST(SliceTest, TranslatedObjectWithoutTranslator) {
@@ -2715,15 +2590,15 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
   scope.revert();
 
   ASSERT_EQ(6UL, s.length());
-  ASSERT_EQ("mötör", s.keyAt(0).copyString());
-  ASSERT_EQ("quetzal", s.keyAt(1).copyString());
+  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(0).copyString(),
+                              Exception::NeedAttributeTranslator);
+  ASSERT_EQ("bart", s.keyAt(1).copyString());
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(2).copyString(),
                               Exception::NeedAttributeTranslator);
   ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(3).copyString(),
                               Exception::NeedAttributeTranslator);
-  ASSERT_VELOCYPACK_EXCEPTION(s.keyAt(4).copyString(),
-                              Exception::NeedAttributeTranslator);
-  ASSERT_EQ("bart", s.keyAt(5).copyString());
+  ASSERT_EQ("mötör", s.keyAt(4).copyString());
+  ASSERT_EQ("quetzal", s.keyAt(5).copyString());
 }
 
 TEST(SliceTest, TranslatedWithCompactNotation) {

@@ -146,18 +146,18 @@ TEST(OutStreamTest, StringifyComplexObject) {
   std::ostringstream result;
   result << s;
 
-  ASSERT_EQ("[Slice object (0x0f), byteSize: 107]", result.str());
+  ASSERT_EQ("[Slice object (0x0b), byteSize: 107]", result.str());
 
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
   std::string prettyResult = Dumper::toString(s, &dumperOptions);
   ASSERT_EQ(std::string(
-                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
-                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
-                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
-                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
-                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
-            prettyResult);
+        "{\n  \"bark\" : [\n    {\n      \"mötör\" : [\n        2,\n        "
+        "3.4,\n        -42.5,\n        true,\n        false,\n        null,\n"
+        "        \"some\\nstring\"\n      ],\n      \"troet\\nmann\" : 1\n    "
+        "}\n  ],"
+        "\n  \"baz\" : [\n    1,\n    2,\n    3,\n    [\n      4\n    ]\n  ],"
+        "\n  \"foo\" : \"bar\"\n}"), prettyResult);
 }
 
 TEST(PrettyDumperTest, SimpleObject) {
@@ -194,13 +194,12 @@ TEST(PrettyDumperTest, ComplexObject) {
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
   std::string result = Dumper::toString(s, &dumperOptions);
-  ASSERT_EQ(std::string(
-                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
-                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
-                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
-                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
-                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
-            result);
+  ASSERT_EQ(std::string("{\n  \"bark\" : [\n    {\n      \"mötör\" : [\n"
+        "        2,\n        3.4,\n        -42.5,\n        true,\n        "
+        "false,\n        null,\n        \"some\\nstring\"\n      ],\n      "
+        "\"troet\\nmann\" : 1\n    }\n  ],\n  \"baz\" : [\n    1,\n    "
+        "2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"foo\" : \"bar\"\n}"),
+      result);
 }
 
 TEST(StreamDumperTest, SimpleObject) {
@@ -256,12 +255,11 @@ TEST(StreamDumperTest, ComplexObject) {
   StringStreamSink sink(&result);
   Dumper dumper(&sink, &dumperOptions);
   dumper.dump(s);
-  ASSERT_EQ(std::string(
-                "{\n  \"foo\" : \"bar\",\n  \"baz\" : [\n    1,\n    2,\n    "
-                "3,\n    [\n      4\n    ]\n  ],\n  \"bark\" : [\n    {\n      "
-                "\"troet\\nmann\" : 1,\n      \"mötör\" : [\n        2,\n      "
-                "  3.4,\n        -42.5,\n        true,\n        false,\n       "
-                " null,\n        \"some\\nstring\"\n      ]\n    }\n  ]\n}"),
+  ASSERT_EQ(std::string("{\n  \"bark\" : [\n    {\n      \"m\xC3\xB6t\xC3\xB6r"
+        "\" : [\n        2,\n        3.4,\n        -42.5,\n        true,"
+        "\n        false,\n        null,\n        \"some\\nstring\"\n      ],"
+        "\n      \"troet\\nmann\" : 1\n    }\n  ],\n  \"baz\" : [\n    1,\n    "
+        "2,\n    3,\n    [\n      4\n    ]\n  ],\n  \"foo\" : \"bar\"\n}"),
             result.str());
 }
 
@@ -1340,7 +1338,10 @@ TEST(StringDumperTest, AttributeTranslations) {
   Slice s(builder->start());
 
   std::string result = Dumper::toString(s, &options);
-  ASSERT_EQ(value, result);
+  ASSERT_EQ(std::string(
+        "{\"bark\":[{\"m\xC3\xB6t\xC3\xB6r\":[2,3.4,-42.5,true,false,null,"
+        "\"some\\nstring\"],\"troet\\nmann\":1}],\"baz\":[1,2,3,[4]],"
+        "\"foo\":\"bar\"}"), result);
 }
 
 TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
@@ -1368,7 +1369,8 @@ TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
   Slice s(builder->start());
 
   std::string result = Dumper::toString(s, &options);
-  ASSERT_EQ(value, result);
+  ASSERT_EQ(std::string("{\"bar\":1,\"foo\":{\"bar\":{\"baz\":\"baz\"},"
+        "\"bark\":3,\"foo\":true}}"), result);
 }
 
 int main(int argc, char* argv[]) {

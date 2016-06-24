@@ -1188,33 +1188,6 @@ TEST(BuilderTest, ObjectSorted) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
-TEST(BuilderTest, ObjectUnsorted) {
-  double value = 2.3;
-  Builder b;
-  b.add(Value(ValueType::Object));
-  b.add("d", Value(uint64_t(1200)));
-  b.add("c", Value(value));
-  b.add("b", Value("abc"));
-  b.add("a", Value(true));
-  b.close();
-
-  uint8_t* result = b.start();
-  ValueLength len = b.size();
-
-  static uint8_t correctResult[] = {
-      0x0f, 0x20, 0x04, 0x41, 0x64, 0x29, 0xb0, 0x04,  // "d": uint(1200) =
-                                                       // 0x4b0
-      0x41, 0x63, 0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      // "c": double(2.3)
-      0x41, 0x62, 0x43, 0x61, 0x62, 0x63,  // "b": "abc"
-      0x41, 0x61, 0x1a,                    // "a": true
-      0x03, 0x08, 0x13, 0x19};
-  dumpDouble(value, correctResult + 11);
-
-  ASSERT_EQ(sizeof(correctResult), len);
-  ASSERT_EQ(0, memcmp(result, correctResult, len));
-}
-
 TEST(BuilderTest, ObjectCompact) {
   double value = 2.3;
   Builder b;
@@ -2179,11 +2152,11 @@ TEST(BuilderTest, AttributeTranslations) {
   ValueLength len = b.size();
 
   static uint8_t correctResult[] = {
-      0x0f, 0x35, 0x08, 0x31, 0x1a, 0x32, 0x19, 0x33, 0x31, 0x44, 0x62,
+      0x0b, 0x35, 0x08, 0x31, 0x1a, 0x32, 0x19, 0x33, 0x31, 0x44, 0x62,
       0x61, 0x72, 0x74, 0x32, 0x34, 0x20, 0x2a, 0x35, 0x20, 0x13, 0x4b,
       0x6d, 0xc3, 0xb6, 0x74, 0xc3, 0xb6, 0x72, 0x68, 0x65, 0x61, 0x64,
       0x20, 0x14, 0x47, 0x71, 0x75, 0x65, 0x74, 0x7a, 0x61, 0x6c, 0x20,
-      0x15, 0x03, 0x05, 0x07, 0x09, 0x0f, 0x12, 0x15, 0x23};
+      0x15, 0x05, 0x0f, 0x09, 0x07, 0x03, 0x12, 0x15, 0x23};
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
@@ -2298,7 +2271,7 @@ TEST(BuilderTest, ObjectBuilder) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\"\n}", b.toString());
+  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\"\n}", b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderNested) {
@@ -2338,7 +2311,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  },\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  }\n}", b.toString());
+  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  },\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  }\n}", b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
@@ -2378,7 +2351,7 @@ TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\",\n  \"hans\" : [\n    \"a\",\n    \"b\"\n  ],\n  \"foobar\" : [\n    1,\n    2\n  ]\n}", b.toString());
+  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : [\n    1,\n    2\n  ],\n  \"hans\" : [\n    \"a\",\n    \"b\"\n  ]\n}", b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderClosed) {
@@ -2400,7 +2373,7 @@ TEST(BuilderTest, ObjectBuilderClosed) {
   } 
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"foo\" : \"aha\",\n  \"bar\" : \"qux\"\n}", b.toString());
+  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\"\n}", b.toString());
 }
 
 TEST(BuilderTest, ArrayBuilder) {
@@ -2712,7 +2685,6 @@ TEST(BuilderTest, AddWithTranslator) {
   AttributeTranslatorScope scope(translator.get());
    
   Options options;
-  options.sortAttributeNames = false;
   options.attributeTranslator = translator.get();
   
   Builder b(&options);
@@ -2726,20 +2698,20 @@ TEST(BuilderTest, AddWithTranslator) {
 
   Slice s = b.slice();
   ASSERT_EQ(5UL, s.length());
-  ASSERT_EQ("foo", s.keyAt(0).copyString());
-  ASSERT_EQ(1UL, s.keyAt(0, false).getUInt());
-  ASSERT_EQ("bar", s.valueAt(0).copyString());
+  ASSERT_EQ("bar", s.keyAt(0).copyString());
+  ASSERT_EQ(2UL, s.keyAt(0, false).getUInt());
+  ASSERT_EQ("baz", s.valueAt(0).copyString());
   
-  ASSERT_EQ("bar", s.keyAt(1).copyString());
-  ASSERT_EQ(2UL, s.keyAt(1, false).getUInt());
-  ASSERT_EQ("baz", s.valueAt(1).copyString());
-  
-  ASSERT_EQ("bark", s.keyAt(2).copyString());
-  ASSERT_EQ(4UL, s.keyAt(2, false).getUInt());
-  ASSERT_EQ("bank", s.valueAt(2).copyString());
+  ASSERT_EQ("bark", s.keyAt(1).copyString());
+  ASSERT_EQ(4UL, s.keyAt(1, false).getUInt());
+  ASSERT_EQ("bank", s.valueAt(1).copyString());
 
-  ASSERT_EQ("bonk", s.keyAt(3).copyString());
-  ASSERT_EQ("b0rk", s.valueAt(3).copyString());
+  ASSERT_EQ("bonk", s.keyAt(2).copyString());
+  ASSERT_EQ("b0rk", s.valueAt(2).copyString());
+  
+  ASSERT_EQ("foo", s.keyAt(3).copyString());
+  ASSERT_EQ(1UL, s.keyAt(3, false).getUInt());
+  ASSERT_EQ("bar", s.valueAt(3).copyString());
   
   ASSERT_EQ("mötör", s.keyAt(4).copyString());
   ASSERT_EQ(5UL, s.keyAt(4, false).getUInt());

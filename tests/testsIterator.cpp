@@ -1073,22 +1073,22 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
   while (it.valid()) {
     switch (it.index()) {
       case 0:
-        ASSERT_EQ("foo", it.key().copyString());
-        break;
-      case 1:
         ASSERT_EQ("bar", it.key().copyString());
         break;
+      case 1:
+        ASSERT_EQ("bark", it.key().copyString());
+        break;
       case 2:
-        ASSERT_EQ("qux", it.key().copyString());
+        ASSERT_EQ("bart", it.key().copyString());
         break;
       case 3:
         ASSERT_EQ("baz", it.key().copyString());
         break;
       case 4:
-        ASSERT_EQ("bark", it.key().copyString());
+        ASSERT_EQ("foo", it.key().copyString());
         break;
       case 5:
-        ASSERT_EQ("bart", it.key().copyString());
+        ASSERT_EQ("qux", it.key().copyString());
         break;
     }
     it.next();

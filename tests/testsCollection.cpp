@@ -108,9 +108,9 @@ TEST(CollectionTest, ObjectKeys1) {
 
   std::vector<std::string> keys = Collection::keys(s);
   ASSERT_EQ(3UL, keys.size());
-  ASSERT_EQ("foo", keys[0]);
-  ASSERT_EQ("bar", keys[1]);
-  ASSERT_EQ("baz", keys[2]);
+  ASSERT_EQ("bar", keys[0]);
+  ASSERT_EQ("baz", keys[1]);
+  ASSERT_EQ("foo", keys[2]);
 }
 
 TEST(CollectionTest, ObjectKeys2) {
@@ -122,9 +122,9 @@ TEST(CollectionTest, ObjectKeys2) {
   std::vector<std::string> keys;
   Collection::keys(s, keys);
   ASSERT_EQ(3UL, keys.size());
-  ASSERT_EQ("foo", keys[0]);
-  ASSERT_EQ("bar", keys[1]);
-  ASSERT_EQ("baz", keys[2]);
+  ASSERT_EQ("bar", keys[0]);
+  ASSERT_EQ("baz", keys[1]);
+  ASSERT_EQ("foo", keys[2]);
 }
 
 TEST(CollectionTest, ObjectKeys3) {
@@ -1799,12 +1799,12 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
-            EXPECT_EQ("foo", key.copyString());
-            EXPECT_TRUE(value.isTrue());
-            break;
-          case 1:
             EXPECT_EQ("bar", key.copyString());
             EXPECT_TRUE(value.isFalse());
+            break;
+          case 1:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isSmallInt() && value.getInt() == 1);
             return false;
           default:
             throw "invalid state";
@@ -1830,13 +1830,13 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrderAbort) {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
-            EXPECT_EQ("foo", key.copyString());
-            EXPECT_TRUE(value.isObject());
+            EXPECT_EQ("bark", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(3UL, value.getUInt());
             break;
           case 1:
-            EXPECT_EQ("baz", key.copyString());
-            EXPECT_TRUE(value.isNumber());
-            EXPECT_EQ(1UL, value.getUInt());
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isObject());
             return false;
           default:
             throw "invalid state";
@@ -1972,32 +1972,32 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrder) {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
-            EXPECT_EQ("foo", key.copyString());
-            EXPECT_TRUE(value.isNumber());
-            EXPECT_EQ(1UL, value.getUInt());
-            break;
-          case 1:
             EXPECT_EQ("bar", key.copyString());
             EXPECT_TRUE(value.isNull());
             break;
-          case 2:
-            EXPECT_EQ("baz", key.copyString());
-            EXPECT_TRUE(value.isTrue());
-            break;
-          case 3:
-            EXPECT_EQ("qux", key.copyString());
-            EXPECT_TRUE(value.isNumber());
-            EXPECT_EQ(23UL, value.getUInt());
-            break;
-          case 4:
+          case 1:
             EXPECT_EQ("quetzal", key.copyString());
             EXPECT_TRUE(value.isNumber());
             EXPECT_EQ(42UL, value.getUInt());
             break;
-          case 5:
+          case 2:
+            EXPECT_EQ("qux", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(23UL, value.getUInt());
+            break;
+          case 3:
             EXPECT_EQ("bark", key.copyString());
             EXPECT_TRUE(value.isObject());
             EXPECT_EQ(2UL, value.length());
+            break;
+          case 4:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isTrue());
+            break;
+          case 5:
+            EXPECT_EQ("foo", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(1UL, value.getUInt());
             break;
           case 6:
             EXPECT_EQ("quux", key.copyString());
@@ -2028,32 +2028,32 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
-            EXPECT_EQ("foo", key.copyString());
-            EXPECT_TRUE(value.isNumber());
-            EXPECT_EQ(1UL, value.getUInt());
-            break;
-          case 1:
             EXPECT_EQ("bar", key.copyString());
             EXPECT_TRUE(value.isNull());
             break;
-          case 2:
-            EXPECT_EQ("baz", key.copyString());
-            EXPECT_TRUE(value.isTrue());
-            break;
-          case 3:
+          case 1:
             EXPECT_EQ("bark", key.copyString());
             EXPECT_TRUE(value.isObject());
             EXPECT_EQ(2UL, value.length());
             break;
-          case 4:
+          case 2:
+            EXPECT_EQ("quetzal", key.copyString());
+            EXPECT_TRUE(value.isNumber());
+            EXPECT_EQ(42UL, value.getUInt());
+            break;
+          case 3:
             EXPECT_EQ("qux", key.copyString());
             EXPECT_TRUE(value.isNumber());
             EXPECT_EQ(23UL, value.getUInt());
             break;
+          case 4:
+            EXPECT_EQ("baz", key.copyString());
+            EXPECT_TRUE(value.isTrue());
+            break;
           case 5:
-            EXPECT_EQ("quetzal", key.copyString());
+            EXPECT_EQ("foo", key.copyString());
             EXPECT_TRUE(value.isNumber());
-            EXPECT_EQ(42UL, value.getUInt());
+            EXPECT_EQ(1UL, value.getUInt());
             break;
           case 6:
             EXPECT_EQ("quux", key.copyString());
