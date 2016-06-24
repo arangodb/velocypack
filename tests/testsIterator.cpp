@@ -85,7 +85,8 @@ TEST(IteratorTest, IterateArrayEmpty) {
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 
-  ASSERT_FALSE(it.next());
+  it.next();
+  ASSERT_FALSE(it.valid());
   
   ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
 }
@@ -104,55 +105,55 @@ TEST(IteratorTest, IterateArray) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNull());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
@@ -210,7 +211,8 @@ TEST(IteratorTest, IterateArrayForward) {
   it.forward(1);
 
   ASSERT_FALSE(it.valid());
-  ASSERT_FALSE(it.next());
+  it.next();
+  ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
@@ -270,7 +272,8 @@ TEST(IteratorTest, IterateCompactArrayForward) {
   it.forward(1);
 
   ASSERT_FALSE(it.valid());
-  ASSERT_FALSE(it.next());
+  it.next();
+  ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
@@ -294,25 +297,25 @@ TEST(IteratorTest, IterateSubArray) {
   ASSERT_TRUE(sub.isNumber());
   ASSERT_EQ(1UL, sub.getUInt());
 
-  ASSERT_TRUE(it2.next());
+  it2.next();
 
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
   ASSERT_TRUE(sub.isNumber());
   ASSERT_EQ(2UL, sub.getUInt());
 
-  ASSERT_TRUE(it2.next());
+  it2.next();
 
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
   ASSERT_TRUE(sub.isNumber());
   ASSERT_EQ(3UL, sub.getUInt());
 
-  ASSERT_FALSE(it2.next());
+  it2.next();
   ASSERT_FALSE(it2.valid());
   ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
@@ -325,18 +328,18 @@ TEST(IteratorTest, IterateSubArray) {
   ASSERT_TRUE(sub.isString());
   ASSERT_EQ("foo", sub.copyString());
 
-  ASSERT_TRUE(it2.next());
+  it2.next();
 
   ASSERT_TRUE(it2.valid());
   sub = it2.value();
   ASSERT_TRUE(sub.isString());
   ASSERT_EQ("bar", sub.copyString());
 
-  ASSERT_FALSE(it2.next());
+  it2.next();
   ASSERT_FALSE(it2.valid());
   ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
 }
@@ -355,55 +358,55 @@ TEST(IteratorTest, IterateArrayUnsorted) {
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(1UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(2UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(3UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNumber());
   ASSERT_EQ(4UL, current.getUInt());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isNull());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("foo", current.copyString());
 
-  ASSERT_TRUE(it.next());
+  it.next();
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
 
-  ASSERT_FALSE(it.next());
+  it.next();
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);

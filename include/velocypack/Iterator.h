@@ -119,9 +119,8 @@ class ArrayIterator {
     return operator*();
   }
 
-  inline bool next() noexcept {
+  inline void next() noexcept {
     operator++();
-    return valid();
   }
 
   inline ValueLength index() const noexcept { return _position; }
