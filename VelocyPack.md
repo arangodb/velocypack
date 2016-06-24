@@ -364,6 +364,8 @@ be stored unsorted like in:
 Note that it is not recommended to encode short arrays with too long
 index tables.
 
+### Special compact objects
+
 We now describe the special type 0x14, which is useful for a
 particularly compact object representation. Note that to some extent
 this goes against the principles of the VelocyPack format, since quick
