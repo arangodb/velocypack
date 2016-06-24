@@ -252,6 +252,8 @@ class Builder {
   // get a const reference to the Builder's Buffer object
   std::shared_ptr<Buffer<uint8_t>> const& buffer() const { return _buffer; }
 
+  // steal the Builder's Buffer object. afterwards the Builder
+  // is unusable
   std::shared_ptr<Buffer<uint8_t>> steal() {
     // After a steal the Builder is broken!
     std::shared_ptr<Buffer<uint8_t>> res = _buffer;
@@ -259,7 +261,7 @@ class Builder {
     _pos = 0;
     return res;
   }
-
+  
   uint8_t const* data() const {
     return _buffer.get()->data();
   }
@@ -283,6 +285,7 @@ class Builder {
   void clear() {
     _pos = 0;
     _stack.clear();
+    _keyWritten = false;
   }
 
   // Return a pointer to the start of the result:
@@ -332,14 +335,17 @@ class Builder {
   // Add a subvalue into an object from a Value:
   uint8_t* add(std::string const& attrName, Value const& sub);
   uint8_t* add(char const* attrName, Value const& sub);
+  uint8_t* add(char const* attrName, size_t attrLength, Value const& sub);
 
   // Add a subvalue into an object from a Slice:
   uint8_t* add(std::string const& attrName, Slice const& sub);
   uint8_t* add(char const* attrName, Slice const& sub);
+  uint8_t* add(char const* attrName, size_t attrLength, Slice const& sub);
 
   // Add a subvalue into an object from a ValuePair:
   uint8_t* add(std::string const& attrName, ValuePair const& sub);
   uint8_t* add(char const* attrName, ValuePair const& sub);
+  uint8_t* add(char const* attrName, size_t attrLength, ValuePair const& sub);
   
   // Add all subkeys and subvalues into an object from an ObjectIterator
   // and leaves open the object intentionally
@@ -365,6 +371,7 @@ class Builder {
       }
     }
     try {
+      checkKeyIsString(Slice(sub).isString());
       auto oldPos = _pos;
       reserveSpace(1 + sizeof(void*));
       // store pointer. this doesn't need to be portable
@@ -502,7 +509,7 @@ private:
     uint64_t x = toUInt64(v);
     reserveSpace(1 + vSize);
     _start[_pos++] = 0x1c;
-    appendLength(x, 8);
+    appendLength<8>(x);
   }
 
   uint8_t* addString(uint64_t strLen) {
@@ -511,7 +518,7 @@ private:
       // long string
       _start[_pos++] = 0xbf;
       // write string length
-      appendLength(strLen, 8);
+      appendLength<8>(strLen);
     } else {
       // short string
       _start[_pos++] = static_cast<uint8_t>(0x40 + strLen);
@@ -627,6 +634,11 @@ private:
   
   template <typename T>
   uint8_t* addInternal(char const* attrName, T const& sub) {
+    return addInternal<T>(attrName, strlen(attrName), sub);
+  }
+  
+  template <typename T>
+  uint8_t* addInternal(char const* attrName, size_t attrLength, T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
@@ -639,8 +651,6 @@ private:
       reportAdd();
       haveReported = true;
     }
-
-    ValueLength attrLength = strlen(attrName);
 
     try {
       if (options->attributeTranslator != nullptr) {
@@ -727,7 +737,8 @@ private:
     _index[depth].push_back(_pos - _stack[depth]);
   }
 
-  void appendLength(ValueLength v, uint64_t n) {
+  template <uint64_t n>
+  void appendLength(ValueLength v) {
     reserveSpace(n);
     for (uint64_t i = 0; i < n; ++i) {
       _start[_pos++] = v & 0xff;

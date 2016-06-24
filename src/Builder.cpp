@@ -33,7 +33,7 @@
 #include "velocypack/Sink.h"
 
 using namespace arangodb::velocypack;
-
+  
 std::string Builder::toString() const {
   Options options;
   options.prettyPrint = true;
@@ -346,7 +346,7 @@ Builder& Builder::close() {
     } else {  // offsetSize == 8
       _start[tos] += 3;
       if (needNrSubs) {
-        appendLength(index.size(), 8);
+        appendLength<8>(index.size());
       }
     }
   }
@@ -478,7 +478,7 @@ uint8_t* Builder::set(Value const& item) {
       reserveSpace(1 + sizeof(double));
       _start[_pos++] = 0x1b;
       memcpy(&x, &v, sizeof(double));
-      appendLength(x, 8);
+      appendLength<8>(x);
       break;
     }
     case ValueType::External: {
@@ -595,32 +595,43 @@ uint8_t* Builder::set(Value const& item) {
       break;
     }
     case ValueType::String: {
-      std::string const* s;
-      std::string value;
       if (ctype == Value::CType::String) {
-        s = item.getString();
+        std::string const* s = item.getString();
+        size_t const size = s->size();
+        if (size <= 126) {
+          // short string
+          reserveSpace(1 + size);
+          _start[_pos++] = static_cast<uint8_t>(0x40 + size);
+          memcpy(_start + _pos, s->c_str(), size);
+        } else {
+          // long string
+          reserveSpace(1 + 8 + size);
+          _start[_pos++] = 0xbf;
+          appendLength<8>(size);
+          memcpy(_start + _pos, s->c_str(), size);
+        }
+        _pos += size;
       } else if (ctype == Value::CType::CharPtr) {
-        value = item.getCharPtr();
-        s = &value;
+        char const* p = item.getCharPtr();
+        size_t const size = strlen(p);
+        if (size <= 126) {
+          // short string
+          reserveSpace(1 + size);
+          _start[_pos++] = static_cast<uint8_t>(0x40 + size);
+          memcpy(_start + _pos, p, size);
+        } else {
+          // long string
+          reserveSpace(1 + 8 + size);
+          _start[_pos++] = 0xbf;
+          appendLength<8>(size);
+          memcpy(_start + _pos, p, size);
+        }
+        _pos += size;
       } else {
         throw Exception(
             Exception::BuilderUnexpectedValue,
             "Must give a string or char const* for ValueType::String");
       }
-      size_t const size = s->size();
-      if (size <= 126) {
-        // short string
-        reserveSpace(1 + size);
-        _start[_pos++] = static_cast<uint8_t>(0x40 + size);
-        memcpy(_start + _pos, s->c_str(), size);
-      } else {
-        // long string
-        reserveSpace(1 + 8 + size);
-        _start[_pos++] = 0xbf;
-        appendLength(size, 8);
-        memcpy(_start + _pos, s->c_str(), size);
-      }
-      _pos += size;
       break;
     }
     case ValueType::Array: {
@@ -710,7 +721,7 @@ uint8_t* Builder::set(ValuePair const& pair) {
       // long string
       reserveSpace(1 + 8 + size);
       _start[_pos++] = 0xbf;
-      appendLength(size, 8);
+      appendLength<8>(size);
       memcpy(_start + _pos, pair.getStart(), checkOverflow(size));
       _pos += size;
     } else {
@@ -788,6 +799,10 @@ uint8_t* Builder::add(char const* attrName, Value const& sub) {
   return addInternal<Value>(attrName, sub);
 }
 
+uint8_t* Builder::add(char const* attrName, size_t attrLength, Value const& sub) {
+  return addInternal<Value>(attrName, attrLength, sub);
+}
+
 uint8_t* Builder::add(std::string const& attrName, ValuePair const& sub) {
   return addInternal<ValuePair>(attrName, sub);
 }
@@ -796,12 +811,20 @@ uint8_t* Builder::add(char const* attrName, ValuePair const& sub) {
   return addInternal<ValuePair>(attrName, sub);
 }
 
+uint8_t* Builder::add(char const* attrName, size_t attrLength, ValuePair const& sub) {
+  return addInternal<ValuePair>(attrName, attrLength, sub);
+}
+
 uint8_t* Builder::add(std::string const& attrName, Slice const& sub) {
   return addInternal<Slice>(attrName, sub);
 }
 
 uint8_t* Builder::add(char const* attrName, Slice const& sub) {
   return addInternal<Slice>(attrName, sub);
+}
+
+uint8_t* Builder::add(char const* attrName, size_t attrLength, Slice const& sub) {
+  return addInternal<Slice>(attrName, attrLength, sub);
 }
   
 // Add all subkeys and subvalues into an object from an ObjectIterator

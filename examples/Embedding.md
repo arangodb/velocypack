@@ -9,6 +9,8 @@ It does nothing yet, the only goal is to make this minimal example compile and
 link:
 
 ```cpp
+#define VELOCYPACK_XXHASH 1
+
 #include <velocypack/vpack.h>
 #include <iostream>
 
@@ -271,3 +273,28 @@ or, when using selective headers:
 Please check the file [exampleAliases.cpp](exampleAliases.cpp)
 for a working example.
 
+Picking a hash function
+-----------------------
+
+Velocypack can use a custom hash function for hashing Slice values. Hashes
+of Slices will be used when using Slices as keys in associative STL containers,
+or more generally, when comparing the contents of two Slice objects. 
+
+By default VelocyPack comes with two hash functions that can be chosen from,
+with the default hash function being xxhash.
+
+The hash function can be changed at compile time by defining `VELOCYPACK_HASH`
+before including the VelocyPack headers. The define must evaluate to a function
+with three parameters:
+
+- void const*: pointer to Slice contents
+- size_t: length of Slice contents in bytes
+- unsigned long long: initial seed for hash function
+
+`VELOCYPACK_HASH` will be defined by Slice.h to the following macro when undefined: 
+``` 
+#define VELOCYPACK_HASH(mem, size, seed) XXH64(mem, size, seed)
+```
+
+Note that when changing the hash function via the `#define` it will be necessary
+to re-compile the VelocyPack library and relink your program to it.

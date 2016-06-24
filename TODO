@@ -26,7 +26,7 @@ Features
 --------
 * implement missing type BCD in Builder, Slice, Parser and Dumper
 * unique/distinct/sort for Arrays
-* optionally validate Slice bounds (framing)
+* optionally validate Slice bounds (framing). Validator is started but not finished
 
 APIs
 ----
