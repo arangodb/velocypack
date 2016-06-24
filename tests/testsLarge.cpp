@@ -132,7 +132,7 @@ TEST(BuilderTest, ObjectsSizesSorted) {
                              (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
                              (4 * GB) / 132};      // 4G <= bytelen
   ValueLength const byteSizes[] = {
-      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
+      1 + 1 + 1 + 1 + 1 * 128,            1 + 8 + 2 * 130,
       1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
       1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
@@ -165,64 +165,10 @@ TEST(BuilderTest, ObjectsSizesSorted) {
 
     Slice s(start);
     checkBuild(s, ValueType::Object, byteSizes[i]);
-    ASSERT_TRUE(0x0b <= *start && *start <= 0x0e);  // Object
-    ASSERT_TRUE(s.isObject());
-    ASSERT_EQ(nrs[i], s.length());
-    ASSERT_TRUE(s["aAAAAAAAA"].isString());
-    ValueLength len;
-    char const* p = s["aAAAAAAAA"].getString(len);
-    ASSERT_EQ(x.size(), len);
-    ASSERT_EQ(x, std::string(p, len));
-  }
-}
-
-TEST(BuilderTest, ObjectsSizesUnsorted) {
-  ValueLength const kB = 1024;
-  ValueLength const GB = 1024 * 1024 * 1024;
-  ValueLength const nrs[] = {1,                    // bytelen < 256
-                             2,                    // 256 <= bytelen < 64k
-                             (64 * kB) / 130,      // 256 <= bytelen < 64k
-                             (64 * kB) / 130 + 1,  // 64k <= bytelen < 4G
-                             (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
-                             (4 * GB) / 132};      // 4G <= bytelen
-  ValueLength const byteSizes[] = {
-      1 + 1 + 1 + 1 * 128,                1 + 8 + 2 * 130,
-      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
-      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
-  int nr = sizeof(nrs) / sizeof(ValueLength);
-
-  std::string x;
-  for (size_t i = 0; i < 118 - 1; i++) {
-    x.push_back('x');
-  }
-  // Now x has length 118-1 and thus will use 118 bytes as an entry in an object
-  // The attribute name generated below will use another 10.
-
-  for (int i = 0; i < nr; i++) {
-    Options options;
-    options.sortAttributeNames = false;
-
-    Builder b(&options);
-    b.reserve(byteSizes[i]);
-    b.add(Value(ValueType::Object));
-    for (ValueLength j = 0; j < nrs[i]; j++) {
-      std::string attrName = "axxxxxxxx";
-      ValueLength n = j;
-      for (int k = 8; k >= 1; k--) {
-        attrName[k] = (n % 26) + 'A';
-        n /= 26;
-      }
-      b.add(attrName, Value(x));
-    }
-    b.close();
-    uint8_t* start = b.start();
-
-    Slice s(start);
-    checkBuild(s, ValueType::Object, byteSizes[i]);
     if (nrs[i] == 1) {
-      ASSERT_TRUE(0x0b <= *start && *start <= 0x0e);  // Object sorted
+      ASSERT_TRUE(*start = 0x14);
     } else {
-      ASSERT_TRUE(0x0f <= *start && *start <= 0x12);  // Object unsorted
+      ASSERT_TRUE(0x0b <= *start && *start <= 0x0e);  // Object
     }
     ASSERT_TRUE(s.isObject());
     ASSERT_EQ(nrs[i], s.length());
