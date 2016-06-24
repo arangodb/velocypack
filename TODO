@@ -9,6 +9,7 @@ Lessons from Cuckoo
 * ObjectIterator: performance
 * 1 element arrays and objects compact
 * refactor close() method
+* findDataOffset reparieren
 
 Documentation
 -------------
