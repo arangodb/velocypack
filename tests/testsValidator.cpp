@@ -146,13 +146,14 @@ TEST(ValidatorTest, ArrayTwoBytesTooShortBytesize1) {
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
-
+/*
 TEST(ValidatorTest, ArrayTwoBytesTooShortBytesize2) {
   std::string const value("\x03\x05\x00", 3);
 
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
+*/
 
 TEST(ValidatorTest, ArrayTwoBytesMultipleMembers) {
   std::string const value("\x03\x06\x00\x18\x18\x18", 6);
