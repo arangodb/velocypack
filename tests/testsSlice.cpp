@@ -2800,6 +2800,26 @@ TEST(SliceTest, Reassign) {
   ASSERT_TRUE(s.getBool());
 }
 
+TEST(SliceTest, TranslateInObjectIterator) {
+  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+
+  translator->add("_key", 1);
+  translator->seal();
+
+  AttributeTranslatorScope scope(translator.get());
+
+  Builder b;
+  b.openObject();
+  b.add("_key", Value(12));
+  b.close();
+
+  Slice s = b.slice();
+  for (auto p : ObjectIterator(s)) {
+    Slice k = p.key;
+    ASSERT_TRUE(k.isString());
+  }
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
