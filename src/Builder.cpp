@@ -940,7 +940,7 @@ uint8_t* Builder::add(ObjectIterator&& sub) {
   }
   auto const oldPos = _pos;
   while (sub.valid()) {
-    add(sub.key());
+    add(sub.key(true));
     add(sub.value());
     sub.next();
   }

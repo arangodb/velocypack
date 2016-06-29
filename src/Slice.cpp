@@ -628,7 +628,7 @@ bool Slice::isEqualString(std::string const& attribute) const {
 Slice Slice::getFromCompactObject(std::string const& attribute) const {
   ObjectIterator it(*this);
   while (it.valid()) {
-    Slice key = it.key();
+    Slice key = it.key(false);
     if (key.makeKey().isEqualString(attribute)) {
       return Slice(key.start() + key.byteSize());
     }
