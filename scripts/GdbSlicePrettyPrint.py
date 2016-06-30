@@ -116,8 +116,12 @@ class SlicePrinter (object):
     return s.decode("utf-8")
      
 def str_lookup_function(val):
-  lookup_tag = val.type.tag
-  if lookup_tag == "arangodb::velocypack::Slice":
+  lookup_type = val.type
+  if lookup_type.tag == "arangodb::velocypack::Slice" or \
+     lookup_type == "arangodb::velocypack::Slice":
+    return SlicePrinter(val)
+  if str(lookup_type).find("velocypack::Slice") >= 0 or \
+     str(lookup_type).find("VPackSlice") >= 0:
     return SlicePrinter(val)
   return None
 
