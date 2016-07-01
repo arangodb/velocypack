@@ -74,116 +74,18 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
     }
 
     case ValueType::Array: {
-      ValueLength byteLength = 0;
-      bool equalSize = false;
-      bool hasIndexTable = false;
-
-      if (head >= 0x02 && head <= 0x05) {
-        // Array without index table, with 1-8 bytes bytelength, all values with same length
-        byteLength = 1ULL << (static_cast<ValueLength>(head) - 0x02);
-        equalSize = true;
-      } else if (head >= 0x06 && head <= 0x09) {
-        // Array with index table, with 1-8 bytes bytelength
-        byteLength = 1ULL << (static_cast<ValueLength>(head) - 0x06);
-        hasIndexTable = true;
-      } 
-      
-      if (head == 0x13) {
-        // compact Array without index table
-        validateBufferLength(2, length, true);
-        uint8_t const* p = ptr + 1;
-        uint8_t const* e = p + length;
-        ValueLength shifter = 0;
-        while (true) {
-          uint8_t c = *p;
-          byteLength += (c & 0x7f) << shifter;
-          shifter += 7;
-          ++p;
-          if (!(c & 0x80)) {
-            break;
-          }
-          if (p == e) {
-            throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
-          }
-        }
-        if (byteLength > length || byteLength < 4) {
-          throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
-        }
-        uint8_t const* data = p;
-        p = ptr + byteLength - 1;
-        ValueLength nrItems = 0;
-        shifter = 0;
-        while (true) {
-          uint8_t c = *p;
-          nrItems += (c & 0x7f) << shifter;
-          shifter += 7;
-          --p;
-          if (!(c & 0x80)) {
-            break;
-          }
-          if (p == ptr + byteLength) {
-            throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
-          }
-        } 
-        if (nrItems == 0) {
-          throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
-        }
-        ++p;
-        
-        // validate the array members 
-        e = p;
-        p = data;
-        while (nrItems-- > 0) { 
-          validate(p, e - p, true);
-          p += Slice(p).byteSize();
-        }
-      } else if (byteLength > 0) {
-        ValueLength nrItemsLength = 0;
-        if (head >= 0x06) {
-          nrItemsLength = byteLength;
-        }
-        validateBufferLength(1 + byteLength + nrItemsLength, length, true);
-        ValueLength nrItems = Slice(ptr).length();
-        uint8_t const* p = ptr + 1 + byteLength;
-        if (!equalSize) {
-          p += byteLength;
-        }
-        uint8_t const* e = ptr + length;
-        ValueLength l = 0;
-        while (nrItems > 0) {
-          if (p >= e) {
-            throw Exception(Exception::ValidatorInvalidLength, "Array value is out of bounds");
-          }
-          // validate sub value
-          validate(p, e - p, true);
-          ValueLength al = Slice(p).byteSize();
-          if (equalSize) {
-            if (l == 0) {
-              l = al;
-            } else if (l != al) {
-              throw Exception(Exception::ValidatorInvalidLength, "Unexpected Array value length");
-            }
-          }
-          p += al;
-          --nrItems;
-        }
-        
-        if (hasIndexTable) {
-          // now also validate index table
-          nrItems = Slice(ptr).length();
-          for (ValueLength i = 0; i < nrItems; ++i) {
-            ValueLength offset = Slice(ptr).getNthOffset(i);
-            if (offset < 1 + byteLength + nrItemsLength ||
-                offset >= Slice(ptr).byteSize() - nrItems * byteLength) {
-              throw Exception(Exception::ValidatorInvalidLength, "Array value offset is out of bounds");
-            }
-            validate(ptr + offset, length - offset, true);
-          }
-        }
-      }
+      validateArray(ptr, length);
       break;
     }
     
+    case ValueType::Object: {
+      validateObject(ptr, length);
+      break;
+    }
+/*
+*/    
+
+/*
     case ValueType::Object: {
       ValueLength byteLength = 0;
       if (head >= 0x0b && head <= 0x0e) {
@@ -242,7 +144,7 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
       }
       break;
     }
-
+*/
     case ValueType::BCD: {
       throw Exception(Exception::NotImplemented);
     }
@@ -303,6 +205,197 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
   // common validation that must happen for all types 
   validateSliceLength(ptr, length, isSubPart);
   return true;
+}
+
+void Validator::validateArray(uint8_t const* ptr, size_t length) const {
+  uint8_t head = *ptr;
+
+  if (head == 0x13U) {
+    // compact array
+    validateCompactArray(ptr, length);
+  } else if (head >= 0x02U && head <= 0x05U) {
+    // array without index table
+    validateUnindexedArray(ptr, length);
+  } else if (head >= 0x06U && head <= 0x09U) {
+    // array with index table
+    validateIndexedArray(ptr, length);
+  } else if (head == 0x01U) {
+    // empty array. always valid
+  }
+}
+
+void Validator::validateCompactArray(uint8_t const* ptr, size_t length) const {
+  // compact Array without index table
+  validateBufferLength(4, length, true);
+
+  uint8_t const* p = ptr + 1;
+  uint8_t const* e = p + length;
+  // read byteLength
+  ValueLength byteSize = 0;
+  ValueLength shifter = 0;
+  while (true) {
+    uint8_t c = *p;
+    byteSize += (c & 0x7fU) << shifter;
+    shifter += 7;
+    ++p;
+    if (!(c & 0x80U)) {
+      break;
+    }
+    if (p == e) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+    }
+  }
+  if (byteSize > length || byteSize < 4) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+  }
+
+  // read nrItems
+  uint8_t const* data = p;
+  p = ptr + byteSize - 1;
+  ValueLength nrItems = 0;
+  shifter = 0;
+  while (true) {
+    uint8_t c = *p;
+    nrItems += (c & 0x7fU) << shifter;
+    shifter += 7;
+    --p;
+    if (!(c & 0x80U)) {
+      break;
+    }
+    if (p == ptr + byteSize) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+    }
+  } 
+  if (nrItems == 0) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
+  }
+  ++p;
+  
+  // validate the array members 
+  e = p;
+  p = data;
+  while (nrItems-- > 0) { 
+    validate(p, e - p, true);
+    p += Slice(p).byteSize();
+  }
+}
+
+void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const {
+  // Array without index table, with 1-8 bytes lengths, all values with same length
+  uint8_t head = *ptr;
+  ValueLength byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x02U);
+  validateBufferLength(1 + byteSizeLength + 1, length, true);
+  ValueLength byteSize = readInteger<ValueLength>(ptr + 1, byteSizeLength);
+  
+  if (byteSize > length) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array length is out of bounds");
+  }
+
+  // look up first member
+  uint8_t const* p = ptr + 1 + byteSizeLength;
+  uint8_t const* e = ptr + 1 + (8 - byteSizeLength);
+  
+  if (e > ptr + byteSize) {
+    e = ptr + byteSize;
+  }
+  while (p < e && *p == '\x00') {
+    ++p;
+  }
+
+  if (p >= e) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array structure is invalid");
+  }
+  
+  validate(p, length - (p - ptr), true);
+  ValueLength itemSize = Slice(p).byteSize();
+  ValueLength nrItems = (byteSize - (p - ptr)) / itemSize; 
+  
+  if (nrItems == 0) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
+  }
+
+  e = ptr + length;
+  while (nrItems > 0) {
+    if (p >= e) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array value is out of bounds");
+    }
+    // validate sub value
+    validate(p, e - p, true);
+    if (Slice(p).byteSize() != itemSize) {
+      // got a sub-object with a different size. this is not allowed
+      throw Exception(Exception::ValidatorInvalidLength, "Unexpected Array value length");
+    }
+    p += itemSize;
+    --nrItems;
+  }
+}
+
+void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
+  // Array with index table, with 1-8 bytes lengths
+  uint8_t head = *ptr;
+  ValueLength byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x06U);
+  validateBufferLength(1 + byteSizeLength + byteSizeLength + 1, length, true);
+  ValueLength byteSize = readInteger<ValueLength>(ptr + 1, byteSizeLength);
+  if (byteSize > length) {
+    throw Exception(Exception::ValidatorInvalidLength, "Array length is out of bounds");
+  }
+
+  ValueLength nrItems;
+  ValueLength dataOffset;
+  uint8_t const* indexTable;
+
+  if (head == 0x09U) {
+    // byte length = 8
+    nrItems = readInteger<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
+    
+    if (nrItems == 0) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
+    }
+
+    indexTable = ptr + byteSize - byteSizeLength - (nrItems * byteSizeLength);
+    if (indexTable < ptr + byteSizeLength) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
+    }
+    
+    dataOffset = 1 + byteSizeLength;
+  } else {
+    // byte length = 1, 2 or 4
+    nrItems = readInteger<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
+    
+    if (nrItems == 0) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
+    }
+    
+    // look up first member
+    uint8_t const* p = ptr + 1 + byteSizeLength + byteSizeLength;
+    uint8_t const* e = ptr + 1 + (8 - byteSizeLength - byteSizeLength);
+    if (e > ptr + byteSize) {
+      e = ptr + byteSize;
+    }
+    while (p < e && *p == '\x00') {
+      ++p;
+    }
+
+    indexTable = ptr + byteSize - (nrItems * byteSizeLength);
+    if (indexTable < ptr + byteSizeLength + byteSizeLength || indexTable < p) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
+    }
+    
+    dataOffset = 1 + byteSizeLength + byteSizeLength;
+  }
+
+  while (nrItems > 0) {
+    ValueLength offset = readInteger<ValueLength>(indexTable, byteSizeLength);
+    if (offset < dataOffset || offset >= indexTable - ptr) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array index table entry is out of bounds");
+    }
+    validate(ptr + offset, length - offset, true);
+    indexTable += byteSizeLength; 
+    --nrItems;
+  }
+}
+
+void Validator::validateObject(uint8_t const* ptr, size_t length) const {
 }
 
 void Validator::validateBufferLength(size_t expected, size_t actual, bool isSubPart) const {
