@@ -64,8 +64,11 @@ class Validator {
   void validateUnindexedArray(uint8_t const* ptr, size_t length) const;
   void validateIndexedArray(uint8_t const* ptr, size_t length) const;
   void validateObject(uint8_t const* ptr, size_t length) const;
+  void validateCompactObject(uint8_t const* ptr, size_t length) const;
+  void validateIndexedObject(uint8_t const* ptr, size_t length) const;
   void validateBufferLength(size_t expected, size_t actual, bool isSubPart) const;
   void validateSliceLength(uint8_t const* ptr, size_t length, bool isSubPart) const;
+  ValueLength readByteSize(uint8_t const*& ptr, uint8_t const* end) const;
 
  public:
   Options const* options;

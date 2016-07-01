@@ -318,9 +318,8 @@ could be desirable to reserve 8 bytes for the byte length and the number
 of subvalues and not fill the gap, even though it turns out later that
 offsets and thus the byte length only uses 2 bytes, say.
 
-There are two special cases: the empty object is simply stored as the
-single byte 0x0a and objects with exactly one element have no offset
-table at all.
+There is one special case: the empty object is simply stored as the
+single byte 0x0a.
 
 There is another exception: For 8-byte numbers the number of subvalues
 is stored behind the INDEXTABLE. This is to get away without moving
@@ -342,15 +341,12 @@ very few attribute names occur or some are repeated very often. The
 standard way to encode such an attribute name table is as a VPack array
 of strings as specified here.
 
-Objects can be stored sorted or unsorted. The sorted object variants
-need to store key/value pairs in order, sorted by bytewise comparions
-of the keys on each nesting level. Sorting has some overhead but will
-allow looking up keys in logarithmic time later. For the unsorted object
-variants, keys can be stored in arbitrary order, so key lookup later
-will require a linear search. Note that only the index table needs to
-be sorted, it is not required that the offsets in these tables are
-increasing. Since the index table resides after the actual subvalues,
-one can build up a complex VPack value by writing linearly.
+Objects are always stored with sorted key/value pairs, sorted by bytewise 
+comparions of the keys on each nesting level. Sorting has some overhead 
+but will allow looking up keys in logarithmic time later. Note that only the 
+index table needs to be sorted, it is not required that the offsets in 
+these tables are increasing. Since the index table resides after the actual 
+subvalues, one can build up a complex VPack value by writing linearly.
 
 Example: the object `{"a": 12, "b": true, "c": "xyz"}` can have the hexdump:
 
