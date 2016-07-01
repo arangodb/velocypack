@@ -887,8 +887,6 @@ TEST(ValidatorTest, ArrayOneByteIndexedTooShort3) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
-
-
 TEST(ValidatorTest, ArrayOneByteIndexedIndexOutOfBounds1) {
   std::string const value("\x06\x05\x01\x18\x04", 5);
 
