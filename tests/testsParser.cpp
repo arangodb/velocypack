@@ -593,6 +593,45 @@ TEST(ParserTest, DoubleNeg) {
   ASSERT_DOUBLE_EQ(-184467440737095516161., s.getDouble());
 }
 
+TEST(ParserTest, DoublePrecision1) {
+  std::string const value("0.3");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_DOUBLE_EQ(0.3, s.getDouble());
+}
+
+TEST(ParserTest, DoublePrecision2) {
+  std::string const value("0.33");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_DOUBLE_EQ(0.33, s.getDouble());
+}
+
+TEST(ParserTest, DoublePrecision3) {
+  std::string const value("0.67");
+
+  Parser parser;
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+  checkBuild(s, ValueType::Double, 9ULL);
+  ASSERT_DOUBLE_EQ(0.67, s.getDouble());
+}
+
 TEST(ParserTest, DoubleBroken1) {
   std::string const value("1234.");
 
