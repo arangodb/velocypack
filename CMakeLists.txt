@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(velocypack)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 option(Maintainer "Build maintainer tools" OFF)
 option(Coverage "Build with coverage" OFF)
