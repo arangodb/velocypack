@@ -36,6 +36,20 @@ class SlicePrinter (object):
         i += 1
       return x
 
+  def readVarUInt(self, raw, forwards):
+    r = 0
+    s = 0
+    while True:
+      i = int(raw[0])
+      r |= ((i & 0x7f) << s)
+      s += 7
+      if forwards:
+        raw += 1
+      else:
+        raw -= 1
+      if i & 0x80 == 0:
+        return r
+
   def findByteLength(self, raw):
     # Raw must be a Value of type uint8_t* pointing to a vpack value
     # This finds the length of the vpack value
@@ -53,7 +67,7 @@ class SlicePrinter (object):
     if typeByte >= 0x0b and typeByte <= 0x0e:  # object
       return self.readUInt(raw+1, typeByte - 0x0a)
     if typeByte >= 0x13 and typeByte <= 0x14:  # compact array or object
-      return self.readVarUInt(raw+1, true)
+      return self.readVarUInt(raw+1, True)
     if typeByte >= 0x0f and typeByte <= 0x12:  # unused
       return 1
     if typeByte == 0x17:   # illegal
@@ -65,7 +79,7 @@ class SlicePrinter (object):
     if typeByte == 0x1c:   # UTC-date
       return 9
     if typeByte == 0x1d:   # external
-      return 9
+      return 0
     if typeByte >= 0x1e and typeByte <= 0x1f:  # minKey, maxKey
       return 1
     if typeByte >= 0x20 and typeByte <= 0x27:  # int
@@ -76,7 +90,7 @@ class SlicePrinter (object):
       return 1
     if typeByte >= 0x40 and typeByte <= 0xbe:  # short string
       return 1 + typeByte - 0x40
-    if typeByte == 0xbf:                      # long string
+    if typeByte == 0xbf:                       # long string
       return 9 + self.readUInt(raw+1, 8)
     if typeByte >= 0xc0 and typeByte <= 0xc7:  # binary blob
       return 1 + typeByte - 0xbf + self.readUInt(raw+1, typeByte - 0xbf)
@@ -107,10 +121,13 @@ class SlicePrinter (object):
   def to_string(self):
     vpack = self.val["_start"]    # uint8_t*
     length = self.findByteLength(vpack)
+    if length == 0:
+      return "External" if int(vpack[0]) == 0x1d else "NoneSlice"
     b = bytearray(length)
     for i in range(0, length):
       b[i] = int(vpack[i])
-    p = subprocess.Popen(["vpack-to-json"], stdin=subprocess.PIPE,
+    p = subprocess.Popen(["vpack-to-json", "--print-non-json"], 
+                                            stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
     s, e = p.communicate(b)
     return s.decode("utf-8")
