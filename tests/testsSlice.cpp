@@ -1079,6 +1079,19 @@ TEST(SliceTest, ArrayEmpty) {
 
   ASSERT_EQ(ValueType::Array, slice.type());
   ASSERT_TRUE(slice.isArray());
+  ASSERT_TRUE(slice.isEmptyArray());
+  ASSERT_EQ(1ULL, slice.byteSize());
+  ASSERT_EQ(0ULL, slice.length());
+}
+
+TEST(SliceTest, ObjectEmpty) {
+  LocalBuffer[0] = 0x0a;
+
+  Slice slice(reinterpret_cast<uint8_t const*>(&LocalBuffer[0]));
+
+  ASSERT_EQ(ValueType::Object, slice.type());
+  ASSERT_TRUE(slice.isObject());
+  ASSERT_TRUE(slice.isEmptyObject());
   ASSERT_EQ(1ULL, slice.byteSize());
   ASSERT_EQ(0ULL, slice.length());
 }
@@ -1326,6 +1339,7 @@ TEST(SliceTest, ArrayCases1) {
   uint8_t buf[] = {0x02, 0x05, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1337,6 +1351,7 @@ TEST(SliceTest, ArrayCases2) {
   uint8_t buf[] = {0x02, 0x06, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1348,6 +1363,7 @@ TEST(SliceTest, ArrayCases3) {
   uint8_t buf[] = {0x02, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1360,6 +1376,7 @@ TEST(SliceTest, ArrayCases4) {
                    0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1371,6 +1388,7 @@ TEST(SliceTest, ArrayCases5) {
   uint8_t buf[] = {0x03, 0x06, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1382,6 +1400,7 @@ TEST(SliceTest, ArrayCases6) {
   uint8_t buf[] = {0x03, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1394,6 +1413,7 @@ TEST(SliceTest, ArrayCases7) {
                    0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1405,6 +1425,7 @@ TEST(SliceTest, ArrayCases8) {
   uint8_t buf[] = {0x04, 0x08, 0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1417,6 +1438,7 @@ TEST(SliceTest, ArrayCases9) {
                    0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1429,6 +1451,7 @@ TEST(SliceTest, ArrayCases10) {
                    0x00, 0x00, 0x00, 0x31, 0x32, 0x33};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1440,6 +1463,7 @@ TEST(SliceTest, ArrayCases11) {
   uint8_t buf[] = {0x06, 0x09, 0x03, 0x31, 0x32, 0x33, 0x03, 0x04, 0x05};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1452,6 +1476,7 @@ TEST(SliceTest, ArrayCases12) {
                    0x32, 0x33, 0x05, 0x06, 0x07};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1464,6 +1489,7 @@ TEST(SliceTest, ArrayCases13) {
                    0x00, 0x31, 0x32, 0x33, 0x09, 0x0a, 0x0b};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1476,6 +1502,7 @@ TEST(SliceTest, ArrayCases14) {
                    0x33, 0x05, 0x00, 0x06, 0x00, 0x07, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1488,6 +1515,7 @@ TEST(SliceTest, ArrayCases15) {
                    0x31, 0x32, 0x33, 0x09, 0x00, 0x0a, 0x00, 0x0b, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1501,6 +1529,7 @@ TEST(SliceTest, ArrayCases16) {
                    0x0a, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1516,6 +1545,7 @@ TEST(SliceTest, ArrayCases17) {
                    0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1528,6 +1558,7 @@ TEST(SliceTest, ArrayCasesCompact) {
 
   Slice s(buf);
   ASSERT_TRUE(s.isArray());
+  ASSERT_FALSE(s.isEmptyArray());
   ASSERT_EQ(5ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s[0];
@@ -1547,6 +1578,7 @@ TEST(SliceTest, ObjectCases1) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1560,6 +1592,7 @@ TEST(SliceTest, ObjectCases2) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1574,6 +1607,7 @@ TEST(SliceTest, ObjectCases3) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1587,6 +1621,7 @@ TEST(SliceTest, ObjectCases7) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1601,6 +1636,7 @@ TEST(SliceTest, ObjectCases8) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1615,6 +1651,7 @@ TEST(SliceTest, ObjectCases11) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1631,6 +1668,7 @@ TEST(SliceTest, ObjectCases13) {
   buf[1] = sizeof(buf);  // set the bytelength
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(3ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
@@ -1643,6 +1681,7 @@ TEST(SliceTest, ObjectCompact) {
                          0x41, 0x63, 0x32, 0x41, 0x64, 0x33, 0x04};
   Slice s(buf);
   ASSERT_TRUE(s.isObject());
+  ASSERT_FALSE(s.isEmptyObject());
   ASSERT_EQ(4ULL, s.length());
   ASSERT_EQ(sizeof(buf), s.byteSize());
   Slice ss = s["a"];
