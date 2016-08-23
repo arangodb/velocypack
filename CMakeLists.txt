@@ -55,7 +55,7 @@ set(VELOCY_SOURCE
     src/fpconv.cpp
 )
 
-#Use xxhash or fasthash?  
+#Use xxhash or fasthash?
 if(HashType STREQUAL "xxhash")
     list(APPEND VELOCY_SOURCE src/xxhash.cpp)
     add_definitions("-DVELOCYPACK_XXHASH=1")
@@ -63,20 +63,12 @@ elseif(HashType STREQUAL "fasthash")
     list(APPEND VELOCY_SOURCE src/fasthash.cpp)
     add_definitions("-DVELOCYPACK_FASTHASH=1")
 else()
-    message(FATAL_ERROR "invalid HashType value. supported values: xxhash or fasthash")    
+    message(FATAL_ERROR "invalid HashType value. supported values: xxhash or fasthash")
 endif()
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(velocypack PRIVATE src)
 target_include_directories(velocypack PUBLIC include)
-
-install(TARGETS velocypack DESTINATION lib)
-install(
-    DIRECTORY   "include/velocypack"
-    DESTINATION include
-)
-include(CPack)
-
 
 if(Maintainer)
     add_executable(buildVersion scripts/build-version.cpp)
@@ -88,7 +80,13 @@ if(Maintainer)
     )
 endif()
 
-
 add_subdirectory(tools)
 add_subdirectory(examples)
 add_subdirectory(tests)
+
+install(TARGETS velocypack DESTINATION lib)
+install(
+    DIRECTORY   "include/velocypack"
+    DESTINATION include
+)
+include(CPack)
