@@ -1,8 +1,6 @@
 # options
-option(BuildExamples "Build examples" ON)
-message(STATUS "Building examples: ${BuildExamples}")
-
-if(BuildExamples)
+message(STATUS "Building examples: ${BuildVelocyPackExamples}")
+if(BuildVelocyPackExamples)
     set(Examples
         exampleAliases
         exampleArrayHandling

@@ -5,6 +5,7 @@ project(velocypack CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
+option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
 option(Coverage "Build with coverage" OFF)
 option(HashType "Hash type (fasthash, xxhash)" OFF)
