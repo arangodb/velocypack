@@ -3,8 +3,8 @@
 #   ~/.gdb/GdbSlicePrettyPrint.py
 # and add the line
 #   source ~/.gdb/GdbSlicePrettyPrint.py
-# to your ~/.gdbinit file. Also make sure the vpack-to-json is in
-# a directory contained in your path.
+# to your ~/.gdbinit file. Also make sure the arangovpack (built with
+# ArangoDB is in a directory contained in your path.
 # Then you can use
 #   p <Slice>
 # in gdb sessions.
@@ -126,9 +126,9 @@ class SlicePrinter (object):
     b = bytearray(length)
     for i in range(0, length):
       b[i] = int(vpack[i])
-    p = subprocess.Popen(["vpack-to-json", "--print-unsupported"], 
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE)
+    p = subprocess.Popen(["arangovpack", "--print-non-json"], 
+                                         stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE)
     s, e = p.communicate(b)
     return s.decode("utf-8")
      
