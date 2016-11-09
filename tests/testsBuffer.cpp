@@ -248,6 +248,46 @@ TEST(BufferTest, SizeAfterReset) {
   ASSERT_TRUE(buffer.empty());
 }
 
+TEST(BufferTest, VectorTest) {
+  std::vector<Buffer<uint8_t>> buffers;
+
+  Builder builder;
+  builder.add(Value("der hund, der ist so bunt"));
+  
+  Slice s = builder.slice();
+  ASSERT_TRUE(s.isString());
+  Buffer<uint8_t> b;
+  b.append(s.start(), s.byteSize());
+
+  buffers.push_back(b);
+  
+  Buffer<uint8_t>& last = buffers.back();
+  Slice copy(last.data());
+  ASSERT_TRUE(copy.isString());
+  ASSERT_TRUE(copy.equals(s));
+  ASSERT_EQ("der hund, der ist so bunt", copy.copyString());
+}
+
+TEST(BufferTest, VectorMoveTest) {
+  std::vector<Buffer<uint8_t>> buffers;
+
+  Builder builder;
+  builder.add(Value("der hund, der ist so bunt"));
+  
+  Slice s = builder.slice();
+  ASSERT_TRUE(s.isString());
+  Buffer<uint8_t> b;
+  b.append(s.start(), s.byteSize());
+
+  buffers.push_back(std::move(b));
+  
+  Buffer<uint8_t>& last = buffers.back();
+  Slice copy(last.data());
+  ASSERT_TRUE(copy.isString());
+  ASSERT_TRUE(copy.equals(s));
+  ASSERT_EQ(0UL, b.byteSize());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
