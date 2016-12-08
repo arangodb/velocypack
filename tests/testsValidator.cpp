@@ -396,6 +396,96 @@ TEST(ValidatorTest, StringShorterThanSpecified) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, StringValidUtf8OneByte) {
+  std::string const value("\x41\x0a", 2);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringValidUtf8TwoBytes) {
+  std::string const value("\x42\xc2\xa2", 3);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringValidUtf8ThreeBytes) {
+  std::string const value("\x43\xe2\x82\xac", 4);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringValidUtf8FourBytes) {
+  std::string const value("\x44\xf0\xa4\xad\xa2", 5);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringInvalidUtf8NoValidation) {
+  std::string const value("\x41\xff", 2);
+
+  Options options;
+  options.validateUtf8Strings = false;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringInvalidUtf8WithValidation1) {
+  std::string const value("\x41\x80", 2);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8WithValidation2) {
+  std::string const value("\x41\xff", 2);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8WithValidation3) {
+  std::string const value("\x42\xff\x70", 3);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8WithValidation4) {
+  std::string const value("\x43\xff\xff\x07", 4);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8WithValidation5) {
+  std::string const value("\x44\xff\xff\xff\x07", 5);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
 TEST(ValidatorTest, LongStringEmpty) {
   std::string const value("\xbf\x00\x00\x00\x00\x00\x00\x00\x00", 9);
 
