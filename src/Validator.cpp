@@ -96,7 +96,7 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
         // can read the entire string length safely
         validateBufferLength(1 + 8, length, true);
         p = ptr + 1 + 8;
-        len = readInteger<ValueLength>(p, 8);
+        len = readIntegerFixed<ValueLength, 8>(p);
       } else {
         p = ptr + 1;
         len = head - 0x40U;
@@ -147,25 +147,25 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
         byteSize = 1 + 8;
       } else if (head >= 0xf4U && head <= 0xf6U) {
         validateBufferLength(1 + 1, length, true);
-        byteSize = 1 + 1 + readInteger<ValueLength>(ptr + 1, 1);
+        byteSize = 1 + 1 + readIntegerNonEmpty<ValueLength>(ptr + 1, 1);
         if (byteSize == 1 + 1) {
           throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
         }
       } else if (head >= 0xf7U && head <= 0xf9U) {
         validateBufferLength(1 + 2, length, true);
-        byteSize = 1 + 2 + readInteger<ValueLength>(ptr + 1, 2); 
+        byteSize = 1 + 2 + readIntegerNonEmpty<ValueLength>(ptr + 1, 2); 
         if (byteSize == 1 + 2) {
           throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
         }
       } else if (head >= 0xfaU && head <= 0xfcU) {
         validateBufferLength(1 + 4, length, true);
-        byteSize = 1 + 4 + readInteger<ValueLength>(ptr + 1, 4); 
+        byteSize = 1 + 4 + readIntegerNonEmpty<ValueLength>(ptr + 1, 4); 
         if (byteSize == 1 + 4) {
           throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
         }
       } else if (head >= 0xfdU) {
         validateBufferLength(1 + 8, length, true);
-        byteSize = 1 + 8 + readInteger<ValueLength>(ptr + 1, 8); 
+        byteSize = 1 + 8 + readIntegerNonEmpty<ValueLength>(ptr + 1, 8); 
         if (byteSize == 1 + 8) {
           throw Exception(Exception::ValidatorInvalidLength, "Invalid size for Custom type");
         }
@@ -204,7 +204,7 @@ void Validator::validateCompactArray(uint8_t const* ptr, size_t length) const {
 
   uint8_t const* p = ptr + 1;
   // read byteLength
-  ValueLength byteSize = ReadVariableLengthValue<false>(p, p + length);
+  ValueLength const byteSize = ReadVariableLengthValue<false>(p, p + length);
   if (byteSize > length || byteSize < 4) {
     throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
   }
@@ -230,9 +230,9 @@ void Validator::validateCompactArray(uint8_t const* ptr, size_t length) const {
 void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const {
   // Array without index table, with 1-8 bytes lengths, all values with same length
   uint8_t head = *ptr;
-  ValueLength byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x02U);
+  ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x02U);
   validateBufferLength(1 + byteSizeLength + 1, length, true);
-  ValueLength byteSize = readInteger<ValueLength>(ptr + 1, byteSizeLength);
+  ValueLength const byteSize = readIntegerNonEmpty<ValueLength>(ptr + 1, byteSizeLength);
   
   if (byteSize > length) {
     throw Exception(Exception::ValidatorInvalidLength, "Array length is out of bounds");
@@ -283,9 +283,10 @@ void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const 
 void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
   // Array with index table, with 1-8 bytes lengths
   uint8_t head = *ptr;
-  ValueLength byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x06U);
+  ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x06U);
   validateBufferLength(1 + byteSizeLength + byteSizeLength + 1, length, true);
-  ValueLength byteSize = readInteger<ValueLength>(ptr + 1, byteSizeLength);
+  ValueLength byteSize = readIntegerNonEmpty<ValueLength>(ptr + 1, byteSizeLength);
+
   if (byteSize > length) {
     throw Exception(Exception::ValidatorInvalidLength, "Array length is out of bounds");
   }
@@ -296,7 +297,7 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
 
   if (head == 0x09U) {
     // byte length = 8
-    nrItems = readInteger<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
+    nrItems = readIntegerNonEmpty<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
     
     if (nrItems == 0) {
       throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
@@ -310,7 +311,7 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
     dataOffset = 1 + byteSizeLength;
   } else {
     // byte length = 1, 2 or 4
-    nrItems = readInteger<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
+    nrItems = readIntegerNonEmpty<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
     
     if (nrItems == 0) {
       throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
@@ -335,7 +336,7 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
   }
 
   while (nrItems > 0) {
-    ValueLength offset = readInteger<ValueLength>(indexTable, byteSizeLength);
+    ValueLength const offset = readIntegerNonEmpty<ValueLength>(indexTable, byteSizeLength);
     if (offset < dataOffset || offset >= static_cast<ValueLength>(indexTable - ptr)) {
       throw Exception(Exception::ValidatorInvalidLength, "Array index table entry is out of bounds");
     }
@@ -365,7 +366,7 @@ void Validator::validateCompactObject(uint8_t const* ptr, size_t length) const {
 
   uint8_t const* p = ptr + 1;
   // read byteLength
-  ValueLength byteSize = ReadVariableLengthValue<false>(p, p + length);
+  ValueLength const byteSize = ReadVariableLengthValue<false>(p, p + length);
   if (byteSize > length || byteSize < 5) {
     throw Exception(Exception::ValidatorInvalidLength, "Object length value is out of bounds");
   }
@@ -400,9 +401,10 @@ void Validator::validateCompactObject(uint8_t const* ptr, size_t length) const {
 void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
   // Object with index table, with 1-8 bytes lengths
   uint8_t head = *ptr;
-  ValueLength byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x0bU);
+  ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x0bU);
   validateBufferLength(1 + byteSizeLength + byteSizeLength + 1, length, true);
-  ValueLength byteSize = readInteger<ValueLength>(ptr + 1, byteSizeLength);
+  ValueLength const byteSize = readIntegerNonEmpty<ValueLength>(ptr + 1, byteSizeLength);
+
   if (byteSize > length) {
     throw Exception(Exception::ValidatorInvalidLength, "Object length is out of bounds");
   }
@@ -413,7 +415,7 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
 
   if (head == 0x12U) {
     // byte length = 8
-    nrItems = readInteger<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
+    nrItems = readIntegerNonEmpty<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
     
     if (nrItems == 0) {
       throw Exception(Exception::ValidatorInvalidLength, "Object nrItems value is invalid");
@@ -427,7 +429,7 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
     dataOffset = 1 + byteSizeLength;
   } else {
     // byte length = 1, 2 or 4
-    nrItems = readInteger<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
+    nrItems = readIntegerNonEmpty<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
     
     if (nrItems == 0) {
       throw Exception(Exception::ValidatorInvalidLength, "Object nrItems value is invalid");
@@ -452,7 +454,7 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
   }
 
   while (nrItems > 0) {
-    ValueLength offset = readInteger<ValueLength>(indexTable, byteSizeLength);
+    ValueLength offset = readIntegerNonEmpty<ValueLength>(indexTable, byteSizeLength);
     if (offset < dataOffset || offset >= static_cast<ValueLength>(indexTable - ptr)) {
       throw Exception(Exception::ValidatorInvalidLength, "Object index table entry is out of bounds");
     }
