@@ -154,133 +154,140 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
-  // treat "-" as stdin
-  std::string infile = infileName;
+  try {
+    // treat "-" as stdin
+    std::string infile = infileName;
 #ifdef __linux__
-  if (infile == "-") {
-    infile = "/proc/self/fd/0";
-  }
+    if (infile == "-") {
+      infile = "/proc/self/fd/0";
+    }
 #endif
 
-  std::string s;
-  std::ifstream ifs(infile, std::ifstream::in);
+    std::string s;
+    std::ifstream ifs(infile, std::ifstream::in);
 
-  if (!ifs.is_open()) {
-    std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
-    return EXIT_FAILURE;
-  }
+    if (!ifs.is_open()) {
+      std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
+      return EXIT_FAILURE;
+    }
 
-  char buffer[4096];
-  while (ifs.good()) {
-    ifs.read(&buffer[0], sizeof(buffer));
-    s.append(buffer, checkOverflow(ifs.gcount()));
-  }
-  ifs.close();
+    char buffer[4096];
+    while (ifs.good()) {
+      ifs.read(&buffer[0], sizeof(buffer));
+      s.append(buffer, checkOverflow(ifs.gcount()));
+    }
+    ifs.close();
 
-  Options options;
-  options.buildUnindexedArrays = compact;
-  options.buildUnindexedObjects = compact;
+    Options options;
+    options.buildUnindexedArrays = compact;
+    options.buildUnindexedObjects = compact;
 
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+    std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
 
-  // compress object keys?
-  if (compress) {
-    size_t compressedOccurrences = 0;
-    std::unordered_map<std::string, size_t> keysFound;
-    buildCompressedKeys(s, keysFound);
+    // compress object keys?
+    if (compress) {
+      size_t compressedOccurrences = 0;
+      std::unordered_map<std::string, size_t> keysFound;
+      buildCompressedKeys(s, keysFound);
 
-    std::vector<std::tuple<uint64_t, std::string, size_t>> stats;
-    size_t requiredLength = 2;
-    uint64_t nextId = 0;
-    for (auto const& it : keysFound) {
-      if (it.second > 1 && it.first.size() >= requiredLength) {
-        translator->add(it.first, ++nextId);
-        stats.emplace_back(std::make_tuple(nextId, it.first, it.second));
+      std::vector<std::tuple<uint64_t, std::string, size_t>> stats;
+      size_t requiredLength = 2;
+      uint64_t nextId = 0;
+      for (auto const& it : keysFound) {
+        if (it.second > 1 && it.first.size() >= requiredLength) {
+          translator->add(it.first, ++nextId);
+          stats.emplace_back(std::make_tuple(nextId, it.first, it.second));
 
-        if (translator->count() == 255) {
-          requiredLength = 3;
+          if (translator->count() == 255) {
+            requiredLength = 3;
+          }
+          compressedOccurrences += it.second;
         }
-        compressedOccurrences += it.second;
+      }
+      translator->seal();
+
+      options.attributeTranslator = translator.get();
+
+      // print statistics
+      if (!toStdOut && compressedOccurrences > 0) {
+        std::cout << compressedOccurrences
+                  << " occurrences of Object keys will be stored compressed:"
+                  << std::endl;
+
+        size_t printed = 0;
+        for (auto const& it : stats) {
+          if (++printed > 20) {
+            std::cout << " - ... " << (stats.size() - printed + 1)
+                      << " Object key(s) follow ..." << std::endl;
+            break;
+          }
+          std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it)
+                    << " (" << std::get<2>(it) << " occurrences)" << std::endl;
+        }
       }
     }
-    translator->seal();
 
-    Options::Defaults.attributeTranslator = translator.get();
-    options.attributeTranslator = translator.get();
+    Parser parser(&options);
+    try {
+      parser.parse(s);
+    } catch (Exception const& ex) {
+      std::cerr << "An exception occurred while parsing infile '" << infile
+                << "': " << ex.what() << std::endl;
+      std::cerr << "Error position: " << parser.errorPos() << std::endl;
+      return EXIT_FAILURE;
+    } catch (...) {
+      std::cerr << "An unknown exception occurred while parsing infile '"
+                << infile << "'" << std::endl;
+      return EXIT_FAILURE;
+    }
 
-    // print statistics
-    if (!toStdOut && compressedOccurrences > 0) {
-      std::cout << compressedOccurrences
-                << " occurrences of Object keys will be stored compressed:"
+    std::ofstream ofs(outfileName, std::ofstream::out);
+
+    if (!ofs.is_open()) {
+      std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    // reset stream
+    if (!toStdOut) {
+      ofs.seekp(0);
+    }
+
+    // write into stream
+    std::shared_ptr<Builder> builder = parser.steal();
+    if (hexDump) {
+      ofs << HexDump(builder->slice()) << std::endl;
+    } else {
+      uint8_t const* start = builder->start();
+      ofs.write(reinterpret_cast<char const*>(start), builder->size());
+    }
+
+    ofs.close();
+
+    if (!toStdOut) {
+      std::cout << "Successfully converted JSON infile '" << infile << "'"
                 << std::endl;
+      std::cout << "JSON Infile size:    " << s.size() << std::endl;
+      std::cout << "VPack Outfile size:  " << builder->size() << std::endl;
 
-      size_t printed = 0;
-      for (auto const& it : stats) {
-        if (++printed > 20) {
-          std::cout << " - ... " << (stats.size() - printed + 1)
-                    << " Object key(s) follow ..." << std::endl;
-          break;
+      if (compress) {
+        if (translator.get()->count() > 0) {
+          std::cout << "Key dictionary size: "
+                    << Slice(translator.get()->builder()->data())
+                          .byteSize() << std::endl;
+        } else {
+          std::cout << "Key dictionary size: 0 (no benefit from compression)"
+                    << std::endl;
         }
-        std::cout << " - #" << std::get<0>(it) << ": " << std::get<1>(it)
-                  << " (" << std::get<2>(it) << " occurrences)" << std::endl;
       }
     }
-  }
 
-  Parser parser(&options);
-  try {
-    parser.parse(s);
-  } catch (Exception const& ex) {
-    std::cerr << "An exception occurred while parsing infile '" << infile
-              << "': " << ex.what() << std::endl;
-    std::cerr << "Error position: " << parser.errorPos() << std::endl;
+    return EXIT_SUCCESS;
+  } catch (std::exception const& ex) {
+    std::cerr << "caught exception: " << ex.what() << std::endl;
     return EXIT_FAILURE;
   } catch (...) {
-    std::cerr << "An unknown exception occurred while parsing infile '"
-              << infile << "'" << std::endl;
+    std::cerr << "caught unknown exception" << std::endl;
     return EXIT_FAILURE;
   }
-
-  std::ofstream ofs(outfileName, std::ofstream::out);
-
-  if (!ofs.is_open()) {
-    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  // reset stream
-  if (!toStdOut) {
-    ofs.seekp(0);
-  }
-
-  // write into stream
-  std::shared_ptr<Builder> builder = parser.steal();
-  if (hexDump) {
-    ofs << HexDump(builder->slice()) << std::endl;
-  } else {
-    uint8_t const* start = builder->start();
-    ofs.write(reinterpret_cast<char const*>(start), builder->size());
-  }
-
-  ofs.close();
-
-  if (!toStdOut) {
-    std::cout << "Successfully converted JSON infile '" << infile << "'"
-              << std::endl;
-    std::cout << "JSON Infile size:    " << s.size() << std::endl;
-    std::cout << "VPack Outfile size:  " << builder->size() << std::endl;
-
-    if (compress) {
-      if (translator.get()->count() > 0) {
-        std::cout << "Key dictionary size: "
-                  << Slice(translator.get()->builder()->data())
-                         .byteSize() << std::endl;
-      } else {
-        std::cout << "Key dictionary size: 0 (no benefit from compression)"
-                  << std::endl;
-      }
-    }
-  }
-
-  return EXIT_SUCCESS;
 }
