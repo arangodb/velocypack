@@ -95,13 +95,14 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
         // long UTF-8 string. must be at least 9 bytes long so we
         // can read the entire string length safely
         validateBufferLength(1 + 8, length, true);
+        len = readIntegerFixed<ValueLength, 8>(ptr + 1);
         p = ptr + 1 + 8;
-        len = readIntegerFixed<ValueLength, 8>(p);
+        validateBufferLength(len + 1 + 8, length, true);
       } else {
-        p = ptr + 1;
         len = head - 0x40U;
+        p = ptr + 1;
+        validateBufferLength(len + 1, length, true);
       }
-      validateBufferLength(length - (p - ptr), length, true);
 
       if (options->validateUtf8Strings && !Utf8Helper::isValidUtf8(p, len)) {
         throw Exception(Exception::InvalidUtf8Sequence);
