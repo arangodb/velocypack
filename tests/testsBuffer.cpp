@@ -288,6 +288,49 @@ TEST(BufferTest, VectorMoveTest) {
   ASSERT_EQ(0UL, b.byteSize());
 }
 
+TEST(BufferTest, PushBackTest) {
+  Buffer<uint8_t> buffer;
+  
+  buffer.push_back('x');
+  ASSERT_EQ(1UL, buffer.size()); 
+}
+
+TEST(BufferTest, AppendUInt8Test) {
+  Buffer<uint8_t> buffer;
+  
+  uint8_t const value[] = "der hund, der ist so bunt";
+  char const* p = reinterpret_cast<char const*>(value);
+  buffer.append(value, std::strlen(p));
+  ASSERT_EQ(std::strlen(p), buffer.size()); 
+}
+
+TEST(BufferTest, AppendCharTest) {
+  Buffer<uint8_t> buffer;
+  
+  char const* value = "der hund, der ist so bunt";
+  buffer.append(value, std::strlen(value));
+  ASSERT_EQ(std::strlen(value), buffer.size()); 
+}
+
+TEST(BufferTest, AppendStringTest) {
+  Buffer<uint8_t> buffer;
+  
+  std::string const value("der hund, der ist so bunt");
+  buffer.append(value);
+  ASSERT_EQ(value.size(), buffer.size()); 
+}
+
+TEST(BufferTest, AppendBufferTest) {
+  Buffer<uint8_t> buffer;
+  
+  Buffer<uint8_t> original;
+  std::string const value("der hund, der ist so bunt");
+  original.append(value);
+
+  buffer.append(original);
+  ASSERT_EQ(original.size(), buffer.size()); 
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

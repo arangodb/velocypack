@@ -171,6 +171,14 @@ class Buffer {
     memcpy(_buffer + _pos, p, checkOverflow(len));
     _pos += len;
   }
+  
+  void append(std::string const& value) {
+    return append(value.c_str(), value.size());
+  }
+  
+  void append(Buffer<T> const& value) {
+    return append(value.data(), value.size());
+  }
 
   void reserve(ValueLength len) {
     if (_pos + len < _alloc) {
