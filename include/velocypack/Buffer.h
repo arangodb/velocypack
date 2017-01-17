@@ -154,6 +154,28 @@ class Buffer {
       initWithNone();
     }
   }
+  
+  inline T& operator[](size_t position) noexcept {
+    return _buffer[position];
+  }
+
+  inline T const& operator[](size_t position) const noexcept {
+    return _buffer[position];
+  }
+  
+  inline T& at(size_t position) {
+    if (position >= _pos) {
+      throw Exception(Exception::IndexOutOfBounds);
+    }
+    return operator[](position);
+  }
+  
+  inline T const& at(size_t position) const {
+    if (position >= _pos) {
+      throw Exception(Exception::IndexOutOfBounds);
+    }
+    return operator[](position);
+  }
 
   inline void push_back(char c) {
     reserve(1);
