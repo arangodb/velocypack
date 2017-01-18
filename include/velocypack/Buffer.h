@@ -142,7 +142,7 @@ class Buffer {
     initWithNone();
   }
 
-  void rewind(ValueLength position) {
+  void resetTo(ValueLength position) {
     if (position >= _alloc) { 
       throw Exception(Exception::IndexOutOfBounds);
     }
