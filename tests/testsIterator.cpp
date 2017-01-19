@@ -321,23 +321,23 @@ TEST(IteratorTest, IterateSubArray) {
   current = it.value();
   ASSERT_TRUE(current.isArray());
 
-  it2 = ArrayIterator(current);
+  ArrayIterator it3(current);
 
-  ASSERT_TRUE(it2.valid());
-  sub = it2.value();
+  ASSERT_TRUE(it3.valid());
+  sub = it3.value();
   ASSERT_TRUE(sub.isString());
   ASSERT_EQ("foo", sub.copyString());
 
-  it2.next();
+  it3.next();
 
-  ASSERT_TRUE(it2.valid());
-  sub = it2.value();
+  ASSERT_TRUE(it3.valid());
+  sub = it3.value();
   ASSERT_TRUE(sub.isString());
   ASSERT_EQ("bar", sub.copyString());
 
-  it2.next();
-  ASSERT_FALSE(it2.valid());
-  ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
+  it3.next();
+  ASSERT_FALSE(it3.valid());
+  ASSERT_VELOCYPACK_EXCEPTION(it3.value(), Exception::IndexOutOfBounds);
 
   it.next();
   ASSERT_FALSE(it.valid());
