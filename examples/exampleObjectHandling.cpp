@@ -1,9 +1,12 @@
 #include <iostream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   // create an object with a few members
   Builder b;
 
@@ -53,4 +56,6 @@ int main(int, char* []) {
     // to continue visiting, return true. to abort visiting, return false
     return true;
   });
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

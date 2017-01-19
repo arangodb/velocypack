@@ -1,9 +1,12 @@
 #include <iostream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   // create an object with a few members
   Builder b;
 
@@ -32,4 +35,6 @@ int main(int, char* []) {
     std::cout << "key: " << it.key.copyString() << ", value: " << it.value
               << std::endl;
   }
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

@@ -1,10 +1,13 @@
 #include <iostream>
 #include <iomanip>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   // this is the JSON string we are going to parse
   std::string const json = "{\"a\":12}";
   std::cout << "Parsing JSON string '" << json << "'" << std::endl;
@@ -28,4 +31,6 @@ int main(int, char* []) {
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
   std::cout << HexDump(b->slice()) << std::endl;
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

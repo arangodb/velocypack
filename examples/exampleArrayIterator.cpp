@@ -1,9 +1,12 @@
 #include <iostream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   // create an array with 10 number members
   Builder b;
 
@@ -27,4 +30,6 @@ int main(int, char* []) {
   for (auto const& it : ArrayIterator(s)) {
     std::cout << it << ", number value: " << it.getUInt() << std::endl;
   }
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

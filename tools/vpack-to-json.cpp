@@ -29,6 +29,7 @@
 #include <fstream>
 
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
@@ -96,6 +97,8 @@ static inline bool isOption(char const* arg, char const* expected) {
 }
 
 int main(int argc, char* argv[]) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
   bool allowFlags = true;
@@ -158,90 +161,82 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
-  try {
-    // treat "-" as stdin
-    std::string infile = infileName;
+  // treat "-" as stdin
+  std::string infile = infileName;
 #ifdef __linux__
-    if (infile == "-") {
-      infile = "/proc/self/fd/0";
-    }
+  if (infile == "-") {
+    infile = "/proc/self/fd/0";
+  }
 #endif
 
-    std::string s;
-    std::ifstream ifs(infile, std::ifstream::in);
+  std::string s;
+  std::ifstream ifs(infile, std::ifstream::in);
 
-    if (!ifs.is_open()) {
-      std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
-      return EXIT_FAILURE;
-    }
-
-    {
-      char buffer[4096];
-      while (ifs.good()) {
-        ifs.read(&buffer[0], sizeof(buffer));
-        s.append(buffer, checkOverflow(ifs.gcount()));
-      }
-    }
-    ifs.close();
-
-    if (hex) {
-      s = convertFromHex(s);
-    }
-
-    Slice const slice(s.c_str());
-
-    Options options;
-    options.prettyPrint = pretty;
-    options.unsupportedTypeBehavior = 
-      (printUnsupported ? Options::ConvertUnsupportedType : Options::FailOnUnsupportedType);
-
-    Buffer<char> buffer(4096);
-    CharBufferSink sink(&buffer);
-    Dumper dumper(&sink, &options);
-
-    try {
-      dumper.dump(slice);
-    } catch (Exception const& ex) {
-      std::cerr << "An exception occurred while processing infile '" << infile
-                << "': " << ex.what() << std::endl;
-      return EXIT_FAILURE;
-    } catch (...) {
-      std::cerr << "An unknown exception occurred while processing infile '"
-                << infile << "'" << std::endl;
-      return EXIT_FAILURE;
-    }
-
-    std::ofstream ofs(outfileName, std::ofstream::out);
-
-    if (!ofs.is_open()) {
-      std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
-      return EXIT_FAILURE;
-    }
-
-    // reset stream
-    if (!toStdOut) {
-      ofs.seekp(0);
-    }
-
-    // write into stream
-    char const* start = buffer.data();
-    ofs.write(start, buffer.size());
-
-    ofs.close();
-
-    if (!toStdOut) {
-      std::cout << "Successfully converted JSON infile '" << infile << "'"
-                << std::endl;
-      std::cout << "VPack Infile size: " << s.size() << std::endl;
-      std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
-    }
-
-    return EXIT_SUCCESS;
-  } catch (std::exception const& ex) {
-    std::cerr << "caught exception: " << ex.what() << std::endl;
-    return EXIT_FAILURE;
-  } catch (...) {
-    std::cerr << "caught unknown exception" << std::endl;
+  if (!ifs.is_open()) {
+    std::cerr << "Cannot read infile '" << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
+
+  {
+    char buffer[4096];
+    while (ifs.good()) {
+      ifs.read(&buffer[0], sizeof(buffer));
+      s.append(buffer, checkOverflow(ifs.gcount()));
+    }
+  }
+  ifs.close();
+
+  if (hex) {
+    s = convertFromHex(s);
+  }
+
+  Slice const slice(s.c_str());
+
+  Options options;
+  options.prettyPrint = pretty;
+  options.unsupportedTypeBehavior = 
+    (printUnsupported ? Options::ConvertUnsupportedType : Options::FailOnUnsupportedType);
+
+  Buffer<char> buffer(4096);
+  CharBufferSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+
+  try {
+    dumper.dump(slice);
+  } catch (Exception const& ex) {
+    std::cerr << "An exception occurred while processing infile '" << infile
+              << "': " << ex.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (...) {
+    std::cerr << "An unknown exception occurred while processing infile '"
+              << infile << "'" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  std::ofstream ofs(outfileName, std::ofstream::out);
+
+  if (!ofs.is_open()) {
+    std::cerr << "Cannot write outfile '" << outfileName << "'" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // reset stream
+  if (!toStdOut) {
+    ofs.seekp(0);
+  }
+
+  // write into stream
+  char const* start = buffer.data();
+  ofs.write(start, buffer.size());
+
+  ofs.close();
+
+  if (!toStdOut) {
+    std::cout << "Successfully converted JSON infile '" << infile << "'"
+              << std::endl;
+    std::cout << "VPack Infile size: " << s.size() << std::endl;
+    std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
+  }
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

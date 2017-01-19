@@ -1,5 +1,6 @@
 #include <iostream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
@@ -44,6 +45,8 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
 };
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   MyCustomTypeHandler handler;
   Options options;
   options.customTypeHandler = &handler;
@@ -96,4 +99,6 @@ int main(int, char* []) {
   // and 'custom3':
   std::cout << "'custom3': byteSize: " << s.get("custom3").byteSize()
             << ", JSON: " << s.get("custom3").toJson() << std::endl;
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

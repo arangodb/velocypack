@@ -1,10 +1,13 @@
 #include <iostream>
 #include <fstream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   Builder b;
 
   // build an object with attribute names "b", "a", "l", "name"
@@ -31,4 +34,6 @@ int main(int, char* []) {
     std::cout << "could not write outfile 'prettified.json': " << ex.what()
               << std::endl;
   }
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

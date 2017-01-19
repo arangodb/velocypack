@@ -1,5 +1,6 @@
 #include <iostream>
 #include "velocypack/vpack.h"
+#include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
 
@@ -35,6 +36,8 @@ static Builder buildObject(Options const* options) {
 }
 
 int main(int, char* []) {
+  VELOCYPACK_GLOBAL_EXCEPTION_TRY
+
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
   // these attribute names will be translated into short integer values
   translator->add("foo", 1);
@@ -60,4 +63,6 @@ int main(int, char* []) {
   std::cout << "Building object without translations:" << std::endl;
   Builder b2 = buildObject(&noTranslatorOptions);
   printObject(b2);
+  
+  VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }
