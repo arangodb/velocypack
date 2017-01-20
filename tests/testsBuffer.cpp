@@ -437,6 +437,35 @@ TEST(BufferTest, SubscriptAtModifyTest) {
   ASSERT_VELOCYPACK_EXCEPTION(buffer.at(0), Exception::IndexOutOfBounds);
 }
 
+TEST(BufferTest, ResetToTest) {
+  Buffer<uint8_t> buffer;
+ 
+  ASSERT_VELOCYPACK_EXCEPTION(buffer.resetTo(256), Exception::IndexOutOfBounds);
+  buffer.resetTo(0);
+  ASSERT_EQ(std::string(), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+
+  buffer.push_back('a');
+  ASSERT_EQ(std::string("a"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+
+  ASSERT_VELOCYPACK_EXCEPTION(buffer.resetTo(256), Exception::IndexOutOfBounds);
+  
+  buffer.resetTo(1);
+  ASSERT_EQ(std::string("a"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+  buffer.resetTo(0);
+  ASSERT_EQ(std::string(), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+  
+  buffer.append("foobar");
+  ASSERT_EQ(std::string("foobar"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+  buffer.resetTo(3);
+
+  ASSERT_EQ(std::string("foo"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+  buffer.resetTo(6);
+  ASSERT_EQ(std::string("foobar"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+  
+  buffer.resetTo(1);
+  ASSERT_EQ(std::string("f"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
