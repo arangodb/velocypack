@@ -42,8 +42,8 @@ TEST(BuilderTest, ConstructWithBufferRef) {
 
   ASSERT_EQ(ValueType::Object, s.type());
   ASSERT_EQ(s.get("test").getUInt(), u);
-//  ASSERT_EQ(ValueType::UInt, s.type());
-//  ASSERT_EQ(u, s.type().getUInt());
+  ASSERT_EQ(ValueType::SmallInt, s.get("test").type());
+  ASSERT_EQ(u, s.get("test").getUInt());
 }
 
 TEST(BuilderTest, AddObjectInArray) {

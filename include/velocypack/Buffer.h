@@ -39,10 +39,10 @@ namespace velocypack {
 template <typename T>
 class Buffer {
  public:
-  Buffer() : _buffer(_local), _alloc(sizeof(_local)), _pos(0) {
+  Buffer() : _buffer(_local), _capacity(sizeof(_local)), _pos(0) {
 #ifdef VELOCYPACK_DEBUG
     // poison memory
-    memset(_buffer, 0xa5, _alloc);
+    memset(_buffer, 0xa5, _capacity);
 #endif
     initWithNone();
   }
@@ -56,10 +56,10 @@ class Buffer {
     if (that._pos > 0) {
       if (that._pos > sizeof(_local)) {
         _buffer = new T[checkOverflow(that._pos)];
-        _alloc = that._pos;
+        _capacity = that._pos;
       }
       else {
-        _alloc = sizeof(_local);
+        _capacity = sizeof(_local);
       }
       memcpy(_buffer, that._buffer, checkOverflow(that._pos));
       _pos = that._pos;
@@ -68,7 +68,7 @@ class Buffer {
 
   Buffer& operator=(Buffer const& that) {
     if (this != &that) {
-      if (that._pos <= _alloc) { 
+      if (that._pos <= _capacity) { 
         // our own buffer is big enough to hold the data
         initWithNone();
         memcpy(_buffer, that._buffer, checkOverflow(that._pos));
@@ -83,7 +83,7 @@ class Buffer {
           delete[] _buffer;
         }
         _buffer = buffer;
-        _alloc = that._pos;
+        _capacity = that._pos;
       }
 
       _pos = that._pos;
@@ -96,9 +96,9 @@ class Buffer {
       memcpy(_buffer, that._buffer, checkOverflow(that._pos));
     } else {
       _buffer = that._buffer;
-      _alloc = that._alloc;
+      _capacity = that._capacity;
       that._buffer = that._local;
-      that._alloc = sizeof(that._local);
+      that._capacity = sizeof(that._local);
     }
     _pos = that._pos;
     that._pos = 0;
@@ -113,9 +113,9 @@ class Buffer {
           delete[] _buffer;
         }
         _buffer = that._buffer;
-        _alloc = that._alloc;
+        _capacity = that._capacity;
         that._buffer = that._local;
-        that._alloc = sizeof(that._local);
+        that._capacity = sizeof(that._local);
       }
       _pos = that._pos;
       that._pos = 0;
@@ -133,7 +133,7 @@ class Buffer {
   inline ValueLength length() const { return _pos; }
   inline ValueLength byteSize() const { return _pos; }
   
-  inline ValueLength capacity() const noexcept { return _alloc; }
+  inline ValueLength capacity() const noexcept { return _capacity; }
 
   std::string toString() const {
     return std::string(reinterpret_cast<char const*>(_buffer), _pos);
@@ -145,7 +145,7 @@ class Buffer {
   }
 
   void resetTo(ValueLength position) {
-    if (position > _alloc) { 
+    if (position > _capacity) { 
       throw Exception(Exception::IndexOutOfBounds);
     }
     _pos = position;
@@ -156,10 +156,10 @@ class Buffer {
     if (_buffer != _local) {
       delete[] _buffer;
       _buffer = _local;
-      _alloc = sizeof(_local);
+      _capacity = sizeof(_local);
 #ifdef VELOCYPACK_DEBUG
       // poison memory
-      memset(_buffer, 0xa5, _alloc);
+      memset(_buffer, 0xa5, _capacity);
 #endif
       initWithNone();
     }
@@ -213,7 +213,7 @@ class Buffer {
   }
 
   void reserve(ValueLength len) {
-    if (_pos + len < _alloc) {
+    if (_pos + len < _capacity) {
       return;
     }
 
@@ -239,7 +239,7 @@ class Buffer {
       delete[] _buffer;
     }
     _buffer = p;
-    _alloc = newLen;
+    _capacity = newLen;
   }
 
   // reserve and zero fill
@@ -257,7 +257,7 @@ class Buffer {
   inline void initWithNone() noexcept { _buffer[0] = '\x00'; }
 
   T* _buffer;
-  ValueLength _alloc;
+  ValueLength _capacity;
   ValueLength _pos;
 
   // an already initialized space for small values
