@@ -1212,7 +1212,7 @@ TEST(BuilderTest, ObjectCompact) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 }
 
-TEST(BuilderTest, ObjectCompactBytesizeBelowThreshold) {
+TEST(BuilderTest, ArrayCompactBytesizeBelowThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
   for (size_t i = 0; i < 124; ++i) {
@@ -1233,7 +1233,7 @@ TEST(BuilderTest, ObjectCompactBytesizeBelowThreshold) {
   ASSERT_EQ(0x7c, result[126]);
 }
 
-TEST(BuilderTest, ObjectCompactBytesizeAboveThreshold) {
+TEST(BuilderTest, ArrayCompactBytesizeAboveThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
   for (size_t i = 0; i < 125; ++i) {
@@ -1255,7 +1255,7 @@ TEST(BuilderTest, ObjectCompactBytesizeAboveThreshold) {
   ASSERT_EQ(0x7d, result[128]);
 }
 
-TEST(BuilderTest, ObjectCompactLengthBelowThreshold) {
+TEST(BuilderTest, ArrayCompactLengthBelowThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
   for (size_t i = 0; i < 127; ++i) {
@@ -1277,7 +1277,7 @@ TEST(BuilderTest, ObjectCompactLengthBelowThreshold) {
   ASSERT_EQ(0x7f, result[511]);
 }
 
-TEST(BuilderTest, ObjectCompactLengthAboveThreshold) {
+TEST(BuilderTest, ArrayCompactLengthAboveThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
   for (size_t i = 0; i < 128; ++i) {
