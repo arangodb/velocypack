@@ -47,8 +47,7 @@ class ArrayIterator {
     if (slice.type() != ValueType::Array) {
       throw Exception(Exception::InvalidValueType, "Expecting Array slice");
     }
-   
-    reset();   
+    reset();
   }
 
   ArrayIterator(ArrayIterator const& other) noexcept
@@ -58,11 +57,12 @@ class ArrayIterator {
         _current(other._current) {}
 
   ArrayIterator& operator=(ArrayIterator const& other) = delete;
+  ArrayIterator& operator=(ArrayIterator&& other) = default;
 
   // prefix ++
   ArrayIterator& operator++() {
     ++_position;
-    if (_position <= _size && _current != nullptr) {
+    if (_position < _size && _current != nullptr) {
       _current += Slice(_current).byteSize();
     } else {
       _current = nullptr;
@@ -167,7 +167,7 @@ class ArrayIterator {
 
  private:
   Slice _slice;
-  ValueLength const _size;
+  ValueLength _size;
   ValueLength _position;
   uint8_t const* _current;
 };
@@ -182,9 +182,12 @@ class ObjectIterator {
 
   ObjectIterator() = delete;
 
-  explicit ObjectIterator(Slice const& slice, bool allowRandomIteration = false)
+  // The useSequentialIteration flag indicates whether or not the iteration
+  // simply jumps from key/value pair to key/value pair without using the
+  // index. The default `false` is to use the index if it is there.
+  explicit ObjectIterator(Slice const& slice, bool useSequentialIteration = false)
       : _slice(slice), _size(_slice.length()), _position(0), _current(nullptr),
-        _allowRandomIteration(allowRandomIteration) {
+        _useSequentialIteration(useSequentialIteration) {
     if (!slice.isObject()) {
       throw Exception(Exception::InvalidValueType, "Expecting Object slice");
     }
@@ -193,7 +196,7 @@ class ObjectIterator {
       auto h = slice.head();
       if (h == 0x14) {
         _current = slice.keyAt(0, false).start();
-      } else if (allowRandomIteration) {
+      } else if (useSequentialIteration) {
         _current = slice.begin() + slice.findDataOffset(h);
       }
     }
@@ -204,14 +207,15 @@ class ObjectIterator {
         _size(other._size),
         _position(other._position),
         _current(other._current),
-        _allowRandomIteration(other._allowRandomIteration) {}
+        _useSequentialIteration(other._useSequentialIteration) {}
 
   ObjectIterator& operator=(ObjectIterator const& other) = delete;
+  ObjectIterator& operator=(ObjectIterator&& other) = default;
 
   // prefix ++
   ObjectIterator& operator++() {
     ++_position;
-    if (_position <= _size && _current != nullptr) {
+    if (_position < _size && _current != nullptr) {
       // skip over key
       _current += Slice(_current).byteSize();
       // skip over value
@@ -303,10 +307,10 @@ class ObjectIterator {
 
  private:
   Slice _slice;
-  ValueLength const _size;
+  ValueLength _size;
   ValueLength _position;
   uint8_t const* _current;
-  bool const _allowRandomIteration;
+  bool _useSequentialIteration;
 };
 
 }  // namespace arangodb::velocypack
