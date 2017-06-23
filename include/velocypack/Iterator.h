@@ -47,8 +47,7 @@ class ArrayIterator {
     if (slice.type() != ValueType::Array) {
       throw Exception(Exception::InvalidValueType, "Expecting Array slice");
     }
-   
-    reset();   
+    reset();
   }
 
   ArrayIterator(ArrayIterator const& other) noexcept
@@ -58,11 +57,12 @@ class ArrayIterator {
         _current(other._current) {}
 
   ArrayIterator& operator=(ArrayIterator const& other) = delete;
+  ArrayIterator& operator=(ArrayIterator&& other) = default;
 
   // prefix ++
   ArrayIterator& operator++() {
     ++_position;
-    if (_position <= _size && _current != nullptr) {
+    if (_position < _size && _current != nullptr) {
       _current += Slice(_current).byteSize();
     } else {
       _current = nullptr;
@@ -167,7 +167,7 @@ class ArrayIterator {
 
  private:
   Slice _slice;
-  ValueLength const _size;
+  ValueLength _size;
   ValueLength _position;
   uint8_t const* _current;
 };
@@ -210,11 +210,12 @@ class ObjectIterator {
         _useSequentialIteration(other._useSequentialIteration) {}
 
   ObjectIterator& operator=(ObjectIterator const& other) = delete;
+  ObjectIterator& operator=(ObjectIterator&& other) = default;
 
   // prefix ++
   ObjectIterator& operator++() {
     ++_position;
-    if (_position <= _size && _current != nullptr) {
+    if (_position < _size && _current != nullptr) {
       // skip over key
       _current += Slice(_current).byteSize();
       // skip over value
@@ -306,10 +307,10 @@ class ObjectIterator {
 
  private:
   Slice _slice;
-  ValueLength const _size;
+  ValueLength _size;
   ValueLength _position;
   uint8_t const* _current;
-  bool const _useSequentialIteration;
+  bool _useSequentialIteration;
 };
 
 }  // namespace arangodb::velocypack

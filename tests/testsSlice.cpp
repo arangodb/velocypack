@@ -259,6 +259,17 @@ TEST(SliceTest, ToJsonString) {
   ASSERT_EQ("\"foobarbaz\"", s.toJson());
 }
 
+TEST(SliceTest, ToJsonArrayEmpty) {
+  std::string const value("[]");
+
+  Parser parser;
+  parser.parse(value);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+  ASSERT_EQ(0x01, s.head());
+  ASSERT_EQ("[]", s.toJson());
+}
+
 TEST(SliceTest, ToJsonArray) {
   std::string const value("[1,2,3,4,5]");
 
@@ -282,6 +293,21 @@ TEST(SliceTest, ToJsonArrayCompact) {
   ASSERT_EQ(0x13, s.head());
 
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
+}
+
+TEST(SliceTest, ToJsonObjectEmpty) {
+  std::string const value("{}");
+
+  Options options;
+  options.buildUnindexedObjects = true;
+
+  Parser parser(&options);
+  parser.parse(value);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+  ASSERT_EQ(0x0a, s.head());
+
+  ASSERT_EQ("{}", s.toJson());
 }
 
 TEST(SliceTest, ToJsonObject) {
