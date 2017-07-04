@@ -130,3 +130,6 @@ We welcome bug fixes and patches from 3rd party contributors!
 Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want 
 to contribute to VelocyPack. Have a look for the tag HELP_WANTED in the issue
 tracker!
+
+We also provide a golang version of VPack in the 
+[go-velocypack repository](https://github.com/arangodb/go-velocypack).
