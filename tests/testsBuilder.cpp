@@ -2768,6 +2768,38 @@ TEST(BuilderTest, EmptyAttributeNamesNotThere) {
   ASSERT_TRUE(ss.isNone());
 }
 
+TEST(BuilderTest, AddHundredNones) {
+  Builder b;
+  b.openArray(false);
+  for (size_t i = 0; i < 100; ++i) {
+    b.add(Slice::noneSlice());
+  }
+  b.close();
+
+  Slice s = b.slice();
+
+  ASSERT_EQ(100UL, s.length());
+  for (size_t i = 0; i < 100; ++i) {
+    ASSERT_EQ(ValueType::None, s.at(i).type());
+  }
+}
+
+TEST(BuilderTest, AddHundredNonesCompact) {
+  Builder b;
+  b.openArray(true);
+  for (size_t i = 0; i < 100; ++i) {
+    b.add(Slice::noneSlice());
+  }
+  b.close();
+
+  Slice s = b.slice();
+
+  ASSERT_EQ(100UL, s.length());
+  for (size_t i = 0; i < 100; ++i) {
+    ASSERT_EQ(ValueType::None, s.at(i).type());
+  }
+}
+
 
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

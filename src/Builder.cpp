@@ -177,6 +177,7 @@ Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
 
 bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray,
                                         std::vector<ValueLength> const& index) {
+
   // use compact notation
   ValueLength nLen =
       getVariableValueLength(static_cast<ValueLength>(index.size()));
@@ -222,30 +223,43 @@ bool Builder::closeCompactArrayOrObject(ValueLength tos, bool isArray,
 }
 
 Builder& Builder::closeArray(ValueLength tos, std::vector<ValueLength>& index) {
+  VELOCYPACK_ASSERT(!index.empty());
+
   // fix head byte in case a compact Array was originally requested:
   _start[tos] = 0x06;
 
   bool needIndexTable = true;
   bool needNrSubs = true;
+
   if (index.size() == 1) {
+    // just one array entry
     needIndexTable = false;
     needNrSubs = false;
   } else if ((_pos - tos) - index[0] == index.size() * (index[1] - index[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
-    bool noTable = true;
+    bool buildIndexTable = false;
     ValueLength const subLen = index[1] - index[0];
     if ((_pos - tos) - index[index.size() - 1] != subLen) {
-      noTable = false;
+      buildIndexTable = true;
     } else {
-      for (size_t i = 1; i < index.size() - 1; i++) {
-        if (index[i + 1] - index[i] != subLen) {
-          noTable = false;
-          break;
+      // check if the first entry in the array is ValueType::None (0x00)
+      if (_start[index[0]] == 0x00) {
+        // in this case, we could not distinguish between a None (0x00) and
+        // the optional padding. so we must build an index table in this
+        // case
+        buildIndexTable = true;
+      } else {
+        for (size_t i = 1; i < index.size() - 1; i++) {
+          if (index[i + 1] - index[i] != subLen) {
+            // different lengths
+            buildIndexTable = true;
+            break;
+          }
         }
       }
     }
-    if (noTable) {
+    if (!buildIndexTable) {
       needIndexTable = false;
       needNrSubs = false;
     }
