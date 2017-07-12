@@ -2885,6 +2885,105 @@ TEST(SliceTest, TranslateInObjectIterator) {
   }
 }
 
+TEST(SliceTest, IsNumber) {
+  Slice s;
+  Builder b;
+
+  // number 0
+  b.clear();
+  b.add(Value(int(0)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_TRUE(s.isNumber<int>());
+  ASSERT_TRUE(s.isNumber<int64_t>());
+  ASSERT_TRUE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_EQ(int(0), s.getNumber<int>());
+  ASSERT_EQ(int64_t(0), s.getNumber<int64_t>());
+  ASSERT_EQ(uint64_t(0), s.getNumber<uint64_t>());
+  ASSERT_EQ(double(0.0), s.getNumber<double>());
+  
+  // positive int
+  b.clear();
+  b.add(Value(int(42)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_TRUE(s.isNumber<int>());
+  ASSERT_TRUE(s.isNumber<int64_t>());
+  ASSERT_TRUE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_EQ(int(42), s.getNumber<int>());
+  ASSERT_EQ(int64_t(42), s.getNumber<int64_t>());
+  ASSERT_EQ(uint64_t(42), s.getNumber<uint64_t>());
+  ASSERT_EQ(double(42.0), s.getNumber<double>());
+ 
+  
+  // negative int
+  b.clear();
+  b.add(Value(int(-2)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_TRUE(s.isNumber<int>());
+  ASSERT_TRUE(s.isNumber<int64_t>());
+  ASSERT_FALSE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_EQ(int(-2), s.getNumber<int>());
+  ASSERT_EQ(int64_t(-2), s.getNumber<int64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(double(-2.0), s.getNumber<double>());
+  
+  
+  // positive big int
+  b.clear();
+  b.add(Value(int64_t(INT64_MAX)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_TRUE(s.isNumber<int64_t>());
+  ASSERT_TRUE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_EQ(int64_t(INT64_MAX), s.getNumber<int64_t>());
+  ASSERT_EQ(uint64_t(INT64_MAX), s.getNumber<uint64_t>());
+  ASSERT_EQ(double(INT64_MAX), s.getNumber<double>());
+  
+  
+  // negative big int
+  b.clear();
+  b.add(Value(int64_t(INT64_MIN)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_TRUE(s.isNumber<int64_t>());
+  ASSERT_FALSE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_EQ(int64_t(INT64_MIN), s.getNumber<int64_t>());
+  ASSERT_VELOCYPACK_EXCEPTION(s.getNumber<uint64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(double(INT64_MIN), s.getNumber<double>());
+  
+  
+  // positive big uint
+  b.clear();
+  b.add(Value(uint64_t(UINT64_MAX)));
+  s = b.slice();
+
+  ASSERT_TRUE(s.isNumber());
+  ASSERT_FALSE(s.isNumber<int64_t>());
+  ASSERT_TRUE(s.isNumber<uint64_t>());
+  ASSERT_TRUE(s.isNumber<double>());
+
+  ASSERT_VELOCYPACK_EXCEPTION(s.getNumber<int64_t>(), Exception::NumberOutOfRange);
+  ASSERT_EQ(uint64_t(UINT64_MAX), s.getNumber<uint64_t>());
+  ASSERT_EQ(double(UINT64_MAX), s.getNumber<double>());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
