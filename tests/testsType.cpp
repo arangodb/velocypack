@@ -29,6 +29,26 @@
 
 #include "tests-common.h"
 
+TEST(TypesTest, TestGroups) {
+  ASSERT_EQ(ValueType::None, valueTypeGroup(ValueType::None));
+  ASSERT_EQ(ValueType::Null, valueTypeGroup(ValueType::Null));
+  ASSERT_EQ(ValueType::Bool, valueTypeGroup(ValueType::Bool));
+  ASSERT_EQ(ValueType::Double, valueTypeGroup(ValueType::Double));
+  ASSERT_EQ(ValueType::String, valueTypeGroup(ValueType::String));
+  ASSERT_EQ(ValueType::Array, valueTypeGroup(ValueType::Array));
+  ASSERT_EQ(ValueType::Object, valueTypeGroup(ValueType::Object));
+  ASSERT_EQ(ValueType::External, valueTypeGroup(ValueType::External));
+  ASSERT_EQ(ValueType::UTCDate, valueTypeGroup(ValueType::UTCDate));
+  ASSERT_EQ(ValueType::Double, valueTypeGroup(ValueType::Int));
+  ASSERT_EQ(ValueType::Double, valueTypeGroup(ValueType::UInt));
+  ASSERT_EQ(ValueType::Double, valueTypeGroup(ValueType::SmallInt));
+  ASSERT_EQ(ValueType::Binary, valueTypeGroup(ValueType::Binary));
+  ASSERT_EQ(ValueType::BCD, valueTypeGroup(ValueType::BCD));
+  ASSERT_EQ(ValueType::MinKey, valueTypeGroup(ValueType::MinKey));
+  ASSERT_EQ(ValueType::MaxKey, valueTypeGroup(ValueType::MaxKey));
+  ASSERT_EQ(ValueType::Custom, valueTypeGroup(ValueType::Custom));
+}
+
 TEST(TypesTest, TestNames) {
   ASSERT_STREQ("none", valueTypeName(ValueType::None));
   ASSERT_STREQ("null", valueTypeName(ValueType::Null));
