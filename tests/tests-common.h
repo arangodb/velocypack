@@ -5,6 +5,7 @@
 #include "velocypack/Buffer.h"
 #include "velocypack/Builder.h"
 #include "velocypack/Collection.h"
+#include "velocypack/Compare.h"
 #include "velocypack/Dumper.h"
 #include "velocypack/Exception.h"
 #include "velocypack/Helpers.h"

@@ -17,6 +17,7 @@ set(Tests
     testsBuilder
     testsCollection
     testsCommon
+    testsCompare
     testsDumper
     testsException
     testsFiles
