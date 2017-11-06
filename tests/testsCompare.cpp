@@ -289,6 +289,32 @@ TEST(CompareTest, Arrays) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[]")->slice(), Parser::fromJson("{\"b\":\"\"}")->slice()));
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[]")->slice(), Parser::fromJson("{\"b\":\"1\"}")->slice()));
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[]")->slice(), Parser::fromJson("{\"b\":[]}")->slice()));
+  
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,2]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,2,4]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,2,3,4]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,2,3,3]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,1,2,3]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,3,2]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[3,2,1]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[2,1,3]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[2,3,1]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[1,2,3]")->slice(), Parser::fromJson("[1,1,1]")->slice()));
+  
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[true,true]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[false,true]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[true,true]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[true]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[true,false,false]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[true,false]")->slice(), Parser::fromJson("[true,false,-1]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"a\",\"b\",\"c\",\"d\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"a\",\"b\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"a\",\"b\",\"d\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"b\",\"b\",\"c\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"b\",\"c\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"b\",\"c\",\"d\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"b\",\"c\",\"a\"]")->slice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"c\",\"b\",\"a\"]")->slice()));
 }
 
 TEST(CompareTest, Objects) {
