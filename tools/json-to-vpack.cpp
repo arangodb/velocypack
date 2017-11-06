@@ -175,7 +175,9 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  char buffer[4096];
+  char buffer[32768];
+  s.reserve(sizeof(buffer));
+
   while (ifs.good()) {
     ifs.read(&buffer[0], sizeof(buffer));
     s.append(buffer, checkOverflow(ifs.gcount()));
@@ -232,6 +234,7 @@ int main(int argc, char* argv[]) {
   Parser parser(&options);
   try {
     parser.parse(s);
+exit(0);
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while parsing infile '" << infile
               << "': " << ex.what() << std::endl;

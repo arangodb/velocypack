@@ -178,7 +178,9 @@ int main(int argc, char* argv[]) {
   }
 
   {
-    char buffer[4096];
+    char buffer[32768];
+    s.reserve(sizeof(buffer));
+
     while (ifs.good()) {
       ifs.read(&buffer[0], sizeof(buffer));
       s.append(buffer, checkOverflow(ifs.gcount()));
@@ -190,7 +192,7 @@ int main(int argc, char* argv[]) {
     s = convertFromHex(s);
   }
 
-  Slice const slice(s.c_str());
+  Slice const slice(s.data());
 
   Options options;
   options.prettyPrint = pretty;
