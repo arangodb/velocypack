@@ -14,7 +14,7 @@ JSON (document stores naturally, but others increasingly as well). It
 is popular, because it is simple, human-readable, and yet surprisingly
 versatile, despite its limitations.
 
-At the same time there are a plethora of alternatives ranging from XML
+At the same time there is a plethora of alternatives ranging from XML
 over Universal Binary JSON, MongoDB's BSON, MessagePack, BJSON (binary
 JSON), Apache Thrift till Google's protocol buffers and ArangoDB's
 shaped JSON.
