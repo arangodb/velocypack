@@ -29,6 +29,24 @@
 
 #include "tests-common.h"
 
+TEST(HexDumpTest, TestPointer) {
+  std::shared_ptr<Builder> b = Parser::fromJson("\"foobar\"");
+  std::ostringstream out;
+  Slice s = b->slice();
+  out << HexDump(&s);
+
+  ASSERT_EQ("0x46 0x66 0x6f 0x6f 0x62 0x61 0x72", out.str());
+  ASSERT_EQ("0x46 0x66 0x6f 0x6f 0x62 0x61 0x72", HexDump(b->slice()).toString());
+}
+
+TEST(HexDumpTest, TestNone) {
+  std::ostringstream out;
+  out << HexDump(Slice::noneSlice());
+
+  ASSERT_EQ("0x00", out.str());
+  ASSERT_EQ("0x00", HexDump(Slice::noneSlice()).toString());
+}
+
 TEST(HexDumpTest, TestNull) {
   std::shared_ptr<Builder> b = Parser::fromJson("null");
   std::ostringstream out;
@@ -54,6 +72,24 @@ TEST(HexDumpTest, TestFalse) {
 
   ASSERT_EQ("0x19", out.str());
   ASSERT_EQ("0x19", HexDump(b->slice()).toString());
+}
+
+TEST(HexDumpTest, TestNumber) {
+  std::shared_ptr<Builder> b = Parser::fromJson("0");
+  std::ostringstream out;
+  out << HexDump(b->slice());
+
+  ASSERT_EQ("0x30", out.str());
+  ASSERT_EQ("0x30", HexDump(b->slice()).toString());
+}
+
+TEST(HexDumpTest, TestString) {
+  std::shared_ptr<Builder> b = Parser::fromJson("\"foobar\"");
+  std::ostringstream out;
+  out << HexDump(b->slice());
+
+  ASSERT_EQ("0x46 0x66 0x6f 0x6f 0x62 0x61 0x72", out.str());
+  ASSERT_EQ("0x46 0x66 0x6f 0x6f 0x62 0x61 0x72", HexDump(b->slice()).toString());
 }
 
 TEST(HexDumpTest, TestArray) {
