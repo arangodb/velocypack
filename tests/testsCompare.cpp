@@ -29,6 +29,26 @@
 
 #include "tests-common.h"
 
+TEST(CompareTest, None) {
+  ASSERT_TRUE(NormalizedCompare::equals(Slice::noneSlice(), Slice::noneSlice()));
+
+  ASSERT_FALSE(NormalizedCompare::equals(Slice::noneSlice(), Parser::fromJson("null")->slice()));
+}
+
+TEST(CompareTest, MinKey) {
+  ASSERT_TRUE(NormalizedCompare::equals(Slice::minKeySlice(), Slice::minKeySlice()));
+
+  ASSERT_FALSE(NormalizedCompare::equals(Slice::minKeySlice(), Slice::maxKeySlice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Slice::minKeySlice(), Parser::fromJson("null")->slice()));
+}
+
+TEST(CompareTest, MaxKey) {
+  ASSERT_TRUE(NormalizedCompare::equals(Slice::maxKeySlice(), Slice::maxKeySlice()));
+
+  ASSERT_FALSE(NormalizedCompare::equals(Slice::maxKeySlice(), Slice::minKeySlice()));
+  ASSERT_FALSE(NormalizedCompare::equals(Slice::maxKeySlice(), Parser::fromJson("null")->slice()));
+}
+
 TEST(CompareTest, Null) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("null")->slice(), Parser::fromJson("null")->slice()));
   
@@ -345,6 +365,15 @@ TEST(CompareTest, Objects) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\"}")->slice(), Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23}}")->slice()));
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\"}")->slice(), Parser::fromJson("{\"one\":{},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\"}")->slice()));
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\"}")->slice(), Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\",\"four\":\"four\"}")->slice()));
+}
+
+TEST(CompareTest, Custom) {
+  Builder b;
+  uint8_t* p = b.add(ValuePair(2ULL, ValueType::Custom));
+  *p++ = 0xf0;
+  *p++ = 0xaa;  
+
+  ASSERT_VELOCYPACK_EXCEPTION(NormalizedCompare::equals(b.slice(), b.slice()), Exception::NotImplemented);
 }
 
 int main(int argc, char* argv[]) {
