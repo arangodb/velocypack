@@ -48,7 +48,14 @@ reference, for arrays and objects see below for details:
                 attribute name, 4-byte bytelen and # subvals
   - 0x0e      : object with 8-byte index table offsets, sorted by
                 attribute name, 8-byte bytelen and # subvals
-  - 0x0f-0x12 : unused
+  - 0x0f      : object with 1-byte index table offsets, not sorted by
+                attribute name, 1-byte bytelen and # subvals
+  - 0x10      : object with 2-byte index table offsets, not sorted by
+                attribute name, 2-byte bytelen and # subvals
+  - 0x11      : object with 4-byte index table offsets, not sorted by
+                attribute name, 4-byte bytelen and # subvals
+  - 0x12      : object with 8-byte index table offsets, not sorted by
+                attribute name, 8-byte bytelen and # subvals
   - 0x13      : compact array, no index table
   - 0x14      : compact object, no index table
   - 0x15-0x16 : reserved
