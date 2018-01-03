@@ -9,7 +9,7 @@ Please follow these guidelines if you want to contribute to VelocyPack:
   Github issue, please file a new one. The new issue should include a clear
   description of the bug and how to reproduce it (including your OS / environment).
 
-* If you want to contribute code, documentation or a  missing feature, please 
+* If you want to contribute code, documentation or a missing feature, please 
   develop and test the feature locally first and then send us a pull request.
   Please note that we require you to sign the [Contributor Agreement](https://www.arangodb.com/documents/cla.pdf)
   before we can accept your pull requests.
