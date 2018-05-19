@@ -39,7 +39,7 @@
 using namespace arangodb::velocypack;
 using VT = arangodb::velocypack::ValueType;
 
-ValueLength const SliceStaticData::FixedTypeLengths[256] = {
+uint8_t const SliceStaticData::FixedTypeLengths[256] = {
     /* 0x00 */ 1,                    /* 0x01 */ 1,
     /* 0x02 */ 0,                    /* 0x03 */ 0,
     /* 0x04 */ 0,                    /* 0x05 */ 0,
@@ -357,7 +357,7 @@ Slice Slice::fromJson(SliceScope& scope, std::string const& json,
 
 // translates an integer key into a string
 Slice Slice::translate() const {
-  if (!isSmallInt() && !isUInt()) {
+  if (VELOCYPACK_UNLIKELY(!isSmallInt() && !isUInt())) {
     throw Exception(Exception::InvalidValueType,
                     "Cannot translate key of this type");
   }
@@ -369,7 +369,7 @@ Slice Slice::translate() const {
 
 // return the value for a UInt object, without checks!
 // returns 0 for invalid values/types
-uint64_t Slice::getUIntUnchecked() const {
+uint64_t Slice::getUIntUnchecked() const noexcept {
   uint8_t const h = head();
   if (h >= 0x28 && h <= 0x2f) {
     // UInt
@@ -380,6 +380,30 @@ uint64_t Slice::getUIntUnchecked() const {
     // Smallint >= 0
     return static_cast<uint64_t>(h - 0x30);
   }
+  return 0;
+}
+
+// return the value for a SmallInt object
+int64_t Slice::getSmallIntUnchecked() const noexcept {
+  uint8_t const h = head();
+
+  if (h >= 0x30 && h <= 0x39) {
+    // Smallint >= 0
+    return static_cast<int64_t>(h - 0x30);
+  }
+
+  if (h >= 0x3a && h <= 0x3f) {
+    // Smallint < 0
+    return static_cast<int64_t>(h - 0x3a) - 6;
+  }
+
+  if ((h >= 0x20 && h <= 0x27) || (h >= 0x28 && h <= 0x2f)) {
+    // Int and UInt
+    // we'll leave it to the compiler to detect the two ranges above are
+    // adjacent
+    return getIntUnchecked();
+  }
+
   return 0;
 }
 
@@ -455,7 +479,7 @@ uint64_t Slice::normalizedHash(uint64_t seed) const {
 // look for the specified attribute inside an Object
 // returns a Slice(ValueType::None) if not found
 Slice Slice::get(std::string const& attribute) const {
-  if (!isObject()) {
+  if (VELOCYPACK_UNLIKELY(!isObject())) {
     throw Exception(Exception::InvalidValueType, "Expecting Object");
   }
 
@@ -490,7 +514,7 @@ Slice Slice::get(std::string const& attribute) const {
     Slice key = Slice(_start + findDataOffset(h));
 
     if (key.isString()) {
-      if (key.isEqualString(attribute)) {
+      if (key.isEqualStringUnchecked(attribute)) {
         return Slice(key.start() + key.byteSize());
       }
       // fall through to returning None Slice below
@@ -512,10 +536,7 @@ Slice Slice::get(std::string const& attribute) const {
   // otherwise we'll always use the linear search
   constexpr ValueLength SortedSearchEntriesThreshold = 4;
 
-  // bool const isSorted = (h >= 0x0b && h <= 0x0e);
   if (n >= SortedSearchEntriesThreshold && (h >= 0x0b && h <= 0x0e)) {
-    // This means, we have to handle the special case n == 1 only
-    // in the linear search!
     switch (offsetSize) {
       case 1:
         return searchObjectKeyBinary<1>(attribute, ieBase, n);
@@ -533,7 +554,7 @@ Slice Slice::get(std::string const& attribute) const {
 }
 
 // return the value for an Int object
-int64_t Slice::getIntUnchecked() const {
+int64_t Slice::getIntUnchecked() const noexcept {
   uint8_t const h = head();
 
   if (h >= 0x20 && h <= 0x27) {
@@ -550,7 +571,7 @@ int64_t Slice::getIntUnchecked() const {
 
   // SmallInt
   VELOCYPACK_ASSERT(h >= 0x30 && h <= 0x3f);
-  return getSmallInt();
+  return getSmallIntUnchecked();
 }
 
 // return the value for an Int object
@@ -571,7 +592,7 @@ int64_t Slice::getInt() const {
 
   if (h >= 0x28 && h <= 0x2f) {
     // UInt
-    uint64_t v = getUInt();
+    uint64_t v = getUIntUnchecked();
     if (v > static_cast<uint64_t>(INT64_MAX)) {
       throw Exception(Exception::NumberOutOfRange);
     }
@@ -580,7 +601,7 @@ int64_t Slice::getInt() const {
 
   if (h >= 0x30 && h <= 0x3f) {
     // SmallInt
-    return getSmallInt();
+    return getSmallIntUnchecked();
   }
 
   throw Exception(Exception::InvalidValueType, "Expecting type Int");
@@ -660,13 +681,37 @@ int Slice::compareString(char const* value, size_t length) const {
   return res;
 }
 
+int Slice::compareStringUnchecked(char const* value, size_t length) const noexcept {
+  ValueLength keyLength;
+  char const* k = getStringUnchecked(keyLength);
+  size_t const compareLength =
+      (std::min)(static_cast<size_t>(keyLength), length);
+  int res = memcmp(k, value, compareLength);
+
+  if (res == 0) {
+    if (keyLength != length) {
+      return (keyLength > length) ? 1 : -1;
+    }
+  }
+  return res;
+}
+
 bool Slice::isEqualString(std::string const& attribute) const {
   ValueLength keyLength;
   char const* k = getString(keyLength);
   if (static_cast<size_t>(keyLength) != attribute.size()) {
     return false;
   }
-  return (memcmp(k, attribute.c_str(), attribute.size()) == 0);
+  return (memcmp(k, attribute.data(), attribute.size()) == 0);
+}
+
+bool Slice::isEqualStringUnchecked(std::string const& attribute) const noexcept {
+  ValueLength keyLength;
+  char const* k = getStringUnchecked(keyLength);
+  if (static_cast<size_t>(keyLength) != attribute.size()) {
+    return false;
+  }
+  return (memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 Slice Slice::getFromCompactObject(std::string const& attribute) const {
@@ -712,7 +757,7 @@ ValueLength Slice::getNthOffset(ValueLength index) const {
     Slice first(_start + dataOffset);
     ValueLength s = first.byteSize();
     if (s == 0) {
-      throw Exception(Exception::InternalError);
+      throw Exception(Exception::InternalError, "Invalid data for compact object");
     }
     n = (end - dataOffset) / s;
   } else if (offsetSize < 8) {
@@ -785,7 +830,7 @@ ValueLength Slice::getNthOffsetFromCompact(ValueLength index) const {
 
   ValueLength end = readVariableValueLength<false>(_start + 1);
   ValueLength n = readVariableValueLength<true>(_start + end - 1);
-  if (index >= n) {
+  if (VELOCYPACK_UNLIKELY(index >= n)) {
     throw Exception(Exception::IndexOutOfBounds);
   }
 
@@ -813,7 +858,7 @@ Slice Slice::searchObjectKeyLinear(std::string const& attribute,
     Slice key(_start + readIntegerNonEmpty<ValueLength>(_start + offset, offsetSize));
 
     if (key.isString()) {
-      if (!key.isEqualString(attribute)) {
+      if (!key.isEqualStringUnchecked(attribute)) {
         continue;
       }
     } else if (key.isSmallInt() || key.isUInt()) {
@@ -856,7 +901,7 @@ Slice Slice::searchObjectKeyBinary(std::string const& attribute,
 
     int res;
     if (key.isString()) {
-      res = key.compareString(attribute);
+      res = key.compareStringUnchecked(attribute.data(), attribute.size());
     } else if (key.isSmallInt() || key.isUInt()) {
       // translate key
       if (!useTranslator) {

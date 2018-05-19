@@ -297,18 +297,6 @@ TEST(BuilderTest, Copy) {
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
 
-TEST(BuilderTest, CopyWithoutOptions) {
-  Builder b;
-  b.options = nullptr;
-
-  try {
-    Builder a(b);
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
-}
-
 TEST(BuilderTest, CopyAssign) {
   Builder b;
   ASSERT_TRUE(b.isEmpty());
@@ -322,19 +310,6 @@ TEST(BuilderTest, CopyAssign) {
   ASSERT_NE(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
-}
-
-TEST(BuilderTest, CopyAssignWithoutOptions) {
-  Builder b;
-  b.options = nullptr;
-
-  Builder a;
-  try {
-    a = b;
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
 }
 
 TEST(BuilderTest, MoveConstructOpenObject) {
@@ -402,18 +377,6 @@ TEST(BuilderTest, MoveNonEmpty) {
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
 
-TEST(BuilderTest, MoveWithoutOptions) {
-  Builder b;
-  b.options = nullptr;
-
-  try {
-    Builder a(std::move(b));
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
-}
-
 TEST(BuilderTest, MoveAssign) {
   Builder b;
   ASSERT_TRUE(b.isEmpty());
@@ -424,7 +387,7 @@ TEST(BuilderTest, MoveAssign) {
   ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_NE(a.buffer().get(), b.buffer().get());
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
@@ -440,22 +403,9 @@ TEST(BuilderTest, MoveAssignNonEmpty) {
   ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_NE(a.buffer().get(), b.buffer().get());
+  ASSERT_EQ(a.buffer().get(), b.buffer().get());
   ASSERT_TRUE(a.buffer().get() != nullptr);
   ASSERT_TRUE(b.buffer().get() != nullptr);
-}
-
-TEST(BuilderTest, MoveAssignWithoutOptions) {
-  Builder b;
-  b.options = nullptr;
-
-  Builder a;
-  try {
-    a = std::move(b);
-    ASSERT_FALSE(true);
-  } catch (Exception const& ex) {
-    ASSERT_EQ(Exception::InternalError, ex.errorCode());
-  }
 }
 
 TEST(BuilderTest, StealBuffer) {

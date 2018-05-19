@@ -29,15 +29,14 @@
 
 #include "tests-common.h"
 
-extern size_t JSONStringCopyC(uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t JSONStringCopyCheckUtf8C(uint8_t* dst, uint8_t const* src,
-                                       size_t limit);
-extern size_t JSONSkipWhiteSpaceC(uint8_t const* ptr, size_t limit);
+namespace arangodb {
+namespace velocypack {
 
-extern size_t (*JSONStringCopy)(uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t (*JSONStringCopyCheckUtf8)(uint8_t* dst, uint8_t const* src,
-                                         size_t limit);
-extern size_t (*JSONSkipWhiteSpace)(uint8_t const* ptr, size_t limit);
+extern void enableNativeStringFunctions();
+extern void enableBuiltinStringFunctions();
+
+}
+}
 
 TEST(ParserTest, CreateWithoutOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Parser(nullptr), Exception::InternalError);
@@ -2409,7 +2408,7 @@ TEST(ParserTest, ExcludeAttributesSubLevel) {
 
 TEST(ParserTest, UseNonSSEStringCopy) {
   // modify global function pointer!
-  JSONStringCopy = JSONStringCopyC;
+  enableBuiltinStringFunctions();
 
   std::string const value(
       "\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
@@ -2428,7 +2427,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string const value("\"the quick brown fox jumped over the lazy dog\"");
 
@@ -2445,7 +2444,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string const value(
       "\"the quick brown\\tfox\\r\\njumped \\\"over\\\" the lazy dog\"");
@@ -2463,7 +2462,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string value;
   value.push_back('"');
@@ -2481,7 +2480,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
 }
 
 TEST(ParserTest, UseNonSSEWhitespaceCheck) {
-  JSONSkipWhiteSpace = JSONSkipWhiteSpaceC;
+  enableBuiltinStringFunctions();
 
   // modify global function pointer!
   std::string const value("\"foo                 bar\"");
