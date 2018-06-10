@@ -68,6 +68,7 @@ elseif(HashType STREQUAL "fasthash")
 else()
     message(FATAL_ERROR "invalid HashType value. supported values: xxhash or fasthash")
 endif()
+message(STATUS "Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(velocypack PRIVATE src)
