@@ -2239,7 +2239,13 @@ TEST(SliceTest, NormalizedHashObject) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
+#ifdef VELOCYPACK_XXHASH
   ASSERT_EQ(15518419071972093120ULL, s1.hash());
+#endif
+#ifdef VELOCYPACK_FASTHASH
+  ASSERT_EQ(6865527808070733846ULL, s1.hash());
+#endif
+
   ASSERT_EQ(4048487509578424242ULL, s2.hash());
 
   ASSERT_EQ(18068466095586825298ULL, s1.normalizedHash());
