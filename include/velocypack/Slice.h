@@ -181,6 +181,13 @@ class Slice {
     }
     return VELOCYPACK_HASH(start(), size, seed);
   }
+  
+  // hashes the binary representation of a value, not using precalculated hash values
+  // this is mainly here for testing purposes
+  inline uint64_t hashSlow(uint64_t seed = defaultSeed) const {
+    size_t const size = checkOverflow(byteSize());
+    return VELOCYPACK_HASH(start(), size, seed);
+  }
 
   // hashes the value, normalizing different representations of
   // arrays, objects and numbers. this function may produce different

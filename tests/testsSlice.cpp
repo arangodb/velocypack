@@ -1937,6 +1937,23 @@ TEST(SliceTest, EqualToDirectInvocationLongStrings) {
   ASSERT_FALSE(comparer(b2->slice(), b1->slice()));
 }
 
+TEST(SliceTest, Hashing) {
+  for (size_t i = 0; i < 256; ++i) {
+    if (SliceStaticData::FixedTypeLengths[i] != 1) {
+      // not a one-byte type
+      continue;
+    }
+    Builder b;
+    uint8_t val = static_cast<uint8_t>(i);
+    b.add(Slice(&val));
+
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash());
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow());
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash(Slice::defaultSeed));
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow(Slice::defaultSeed));
+  }
+}
+
 #ifdef VELOCYPACK_XXHASH
 
 TEST(SliceTest, HashNull) {
