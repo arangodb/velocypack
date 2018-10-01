@@ -110,6 +110,9 @@ class Slice {
   // creates a slice of type Smallint(0)
   static constexpr Slice zeroSlice() noexcept { return Slice("\x30"); }
   
+  // creates a slice of type String, empty
+  static constexpr Slice emptyStringSlice() noexcept { return Slice("\x40"); }
+  
   // creates a slice of type Array, empty
   static constexpr Slice emptyArraySlice() noexcept { return Slice("\x01"); }
   
@@ -179,13 +182,6 @@ class Slice {
       VELOCYPACK_ASSERT(h != 0);
       return h;
     }
-    return VELOCYPACK_HASH(start(), size, seed);
-  }
-  
-  // hashes the binary representation of a value, not using precalculated hash values
-  // this is mainly here for testing purposes
-  inline uint64_t hashSlow(uint64_t seed = defaultSeed) const {
-    size_t const size = checkOverflow(byteSize());
     return VELOCYPACK_HASH(start(), size, seed);
   }
 
