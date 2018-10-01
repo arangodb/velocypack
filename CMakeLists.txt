@@ -50,6 +50,7 @@ set(VELOCY_SOURCE
     src/Options.cpp
     src/Parser.cpp
     src/Slice.cpp
+    src/StringRef.cpp
     src/Utf8Helper.cpp
     src/Validator.cpp
     src/ValueType.cpp
