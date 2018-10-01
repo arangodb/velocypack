@@ -570,7 +570,7 @@ class Builder {
  private:
   inline void checkKeyIsString(bool isString) {
     if (!_stack.empty()) {
-      ValueLength const tos = _stack.back();
+      ValueLength const& tos = _stack.back();
       if (_start[tos] == 0x0b || _start[tos] == 0x14) {
         if (!_keyWritten && !isString) {
           throw Exception(Exception::BuilderKeyMustBeString);
@@ -612,7 +612,7 @@ class Builder {
   uint8_t* addInternal(std::string const& attrName, T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
-      ValueLength& tos = _stack.back();
+      ValueLength const& tos = _stack.back();
       if (_start[tos] != 0x0b && _start[tos] != 0x14) {
         throw Exception(Exception::BuilderNeedOpenObject);
       }
