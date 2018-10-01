@@ -435,7 +435,8 @@ class Slice {
 
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
-  Slice get(std::vector<std::string> const& attributes, 
+  template<typename T>
+  Slice get(std::vector<T> const& attributes, 
             bool resolveExternals = false) const {
     size_t const n = attributes.size();
     if (n == 0) {
@@ -456,29 +457,6 @@ class Slice {
         last = last.resolveExternal();
       }
 
-      if (last.isNone() || (i + 1 < n && !last.isObject())) {
-        return Slice();
-      }
-    }
-
-    return last;
-  }
-  
-  // look for the specified attribute path inside an Object
-  // returns a Slice(ValueType::None) if not found
-  Slice get(std::vector<char const*> const& attributes) const {
-    size_t const n = attributes.size();
-    if (n == 0) {
-      throw Exception(Exception::InvalidAttributePath);
-    }
-
-    // use ourselves as the starting point
-    Slice last = Slice(start());
-    for (size_t i = 0; i < attributes.size(); ++i) {
-      // fetch subattribute
-      last = last.get(attributes[i]);
-
-      // abort as early as possible
       if (last.isNone() || (i + 1 < n && !last.isObject())) {
         return Slice();
       }
