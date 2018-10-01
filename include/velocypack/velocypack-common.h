@@ -30,6 +30,7 @@
 #include <cstdint>
 // for size_t:
 #include <cstring>
+#include <type_traits>
 
 #if defined(__GNUC__) || defined(__GNUG__)
 #define VELOCYPACK_LIKELY(v) __builtin_expect(!!(v), 1)
@@ -177,10 +178,12 @@ static inline int64_t toInt64(uint64_t v) noexcept {
 // specified length, starting at the specified byte offset
 template <typename T, ValueLength length>
 static inline T readIntegerFixed(uint8_t const* start) noexcept {
+  static_assert(std::is_unsigned<T>::value, "result type must be unsigned");
   static_assert(length > 0, "length must be > 0");
+  static_assert(length <= sizeof(T), "length must be <= sizeof(T)");
   uint64_t x = 8;
   uint8_t const* end = start + length;
-  uint64_t value = static_cast<T>(*start++);
+  T value = static_cast<T>(*start++);
   while (start < end) {
     value += static_cast<T>(*start++) << x;
     x += 8;
@@ -189,13 +192,15 @@ static inline T readIntegerFixed(uint8_t const* start) noexcept {
 }
 
 // read an unsigned little endian integer value of the
-// specified length, starting at the specified byte offset
+// specified, non-0 length, starting at the specified byte offset
 template <typename T>
 static inline T readIntegerNonEmpty(uint8_t const* start, ValueLength length) noexcept {
+  static_assert(std::is_unsigned<T>::value, "result type must be unsigned");
   VELOCYPACK_ASSERT(length > 0);
+  VELOCYPACK_ASSERT(length <= sizeof(T));
   uint64_t x = 8;
   uint8_t const* end = start + length;
-  uint64_t value = static_cast<T>(*start++);
+  T value = static_cast<T>(*start++);
   while (start < end) {
     value += static_cast<T>(*start++) << x;
     x += 8;
