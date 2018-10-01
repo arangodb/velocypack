@@ -114,15 +114,6 @@ class Builder {
   bool _keyWritten;  // indicates that in the current object the key
                      // has been written but the value not yet
 
-  // Sort the indices by attribute name:
-  static void doActualSort(std::vector<SortEntry>& entries);
-
-  // Find the actual bytes of the attribute name of the VPack value
-  // at position base, also determine the length len of the attribute.
-  // This takes into account the different possibilities for the format
-  // of attribute names:
-  static uint8_t const* findAttrName(uint8_t const* base, uint64_t& len);
-
   void sortObjectIndexShort(uint8_t* objBase,
                             std::vector<ValueLength>& offsets) const;
 
@@ -130,7 +121,13 @@ class Builder {
                            std::vector<ValueLength>& offsets);
 
   void sortObjectIndex(uint8_t* objBase,
-                       std::vector<ValueLength>& offsets);
+                       std::vector<ValueLength>& offsets) {
+    if (offsets.size() > 32) {
+      sortObjectIndexLong(objBase, offsets);
+    } else {
+      sortObjectIndexShort(objBase, offsets);
+    }
+  }
 
  public:
   Options const* options;
