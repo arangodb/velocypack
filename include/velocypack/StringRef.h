@@ -29,6 +29,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <algorithm>
 #include <string>
 
 #include "velocypack/velocypack-common.h"
