@@ -527,22 +527,14 @@ even number of decimal digits. Note that the mantissa is stored in big
 endian form, to make parsing and dumping efficient. This leads to the
 "unholy nibble problem": When a JSON parser sees the beginning of a
 longish number, it does not know whether an even or odd number of digits
-follow. However, for efficiency reasons it wants to start writing bytes
-to the output as it reads the input. This is, where the exponent comes
-to the rescue, which is illustrated by the following example:
+follow. However, to reduce the amount of allocations the number of
+digits and the parity of the integral part is necessary anyway.
+This can be used to add a leading zero in the representation
+as seen in the following example:
 
     12345 decimal can be encoded as:
 
     0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
-    0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
-
-The former encoding puts a leading 0 in the first byte and uses exponent
-0, the latter encoding directly starts putting two decimal digits in one
-byte and then in the end has to "erase" the trailing 0 by using exponent
--1, encoded by the 4 byte sequence 0xff 0xff 0xff 0xff.
-
-There for the unholy nibble problem is solved and parsing (and indeed
-dumping) can be efficient.
 
 
 ## Custom types
