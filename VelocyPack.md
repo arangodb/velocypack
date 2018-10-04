@@ -91,7 +91,7 @@ reference, for arrays and objects see below for details:
   - 0xc8-0xcf : positive long packed BCD-encoded float, V - 0xc7 bytes follow
                 that encode in a little endian way the length of the
                 mantissa in bytes. Directly after that follow 4 bytes
-                encoding the (power of 10) exponent, by which the mantissa
+                encoding the (power of 100) exponent, by which the mantissa
                 is to be multiplied, stored as little endian two's
                 complement signed 32-bit integer. After that, as many
                 bytes follow as the length information at the beginning
