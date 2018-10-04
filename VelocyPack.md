@@ -99,7 +99,6 @@ reference, for arrays and objects see below for details:
                 big-endian packed BCD
                 Example: 12345 decimal can be encoded as
                          0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
-                      or 0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
   - 0xd0-0xd7 : negative long packed BCD-encoded float, V - 0xcf bytes
                 follow that encode in a little endian way the length of
                 the mantissa in bytes. After that, same as positive long
