@@ -238,6 +238,52 @@ TEST(StreamDumperTest, UseStringStreamTypedef) {
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result.str());
 }
 
+TEST(StreamDumperTest, DumpAttributesInIndexOrder) {
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options dumperOptions;
+  dumperOptions.dumpAttributesInIndexOrder = true;
+  dumperOptions.prettyPrint = false;
+  std::ostringstream result;
+  StringStreamSink sink(&result);
+  Dumper dumper(&sink, &dumperOptions);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\"bark\":[{\"m\xC3\xB6t\xC3\xB6r\":[2,3.4,-42.5,true,"
+        "false,null,\"some\\nstring\"],\"troet\\nmann\":1}],\"baz\":[1,2,3,[4]],\"foo\":\"bar\"}"),
+        result.str());
+}
+
+TEST(StreamDumperTest, DontDumpAttributesInIndexOrder) {
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options dumperOptions;
+  dumperOptions.dumpAttributesInIndexOrder = false;
+  dumperOptions.prettyPrint = false;
+  std::ostringstream result;
+  StringStreamSink sink(&result);
+  Dumper dumper(&sink, &dumperOptions);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+            "\"m\xC3\xB6t\xC3\xB6r\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}"),
+            result.str());
+}
+
 TEST(StreamDumperTest, ComplexObject) {
   std::string const value(
       "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
