@@ -3,7 +3,7 @@
 ///
 /// DISCLAIMER
 ///
-/// Copyright 2015 ArangoDB GmbH, Cologne, Germany
+/// Copyright 2015-2018 ArangoDB GmbH, Cologne, Germany
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@
 #include <cstring>
 
 #include "velocypack/velocypack-common.h"
+#include "velocypack/Utf8Helper.h"
 #include "asm-functions.h"
+#include "asm-utf8check.h"
 
 using namespace arangodb::velocypack;
 
@@ -71,6 +73,10 @@ inline size_t JSONSkipWhiteSpaceC(uint8_t const* src, size_t limit) {
   return limit - (end - src);
 }
 
+inline bool ValidateUtf8StringC(uint8_t const* src, size_t limit) {
+  return Utf8Helper::isValidUtf8(src, static_cast<ValueLength>(limit));
+}
+  
 } // namespace
 
 
@@ -90,11 +96,24 @@ bool hasSSE42() {
   }
   return false;
 }
-
+  
+#ifdef __AVX2__
+bool hasAVX2() {
+  unsigned int eax, ebx, ecx, edx;
+  if (__get_cpuid(7, &eax, &ebx, &ecx, &edx)) {
+    if ((ebx & bit_AVX2) != 0) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
+  
 size_t JSONStringCopySSE42(uint8_t* dst, uint8_t const* src, size_t limit) {
   alignas(16) static char const ranges[17] =
       "\x20\x21\x23\x5b\x5d\xff          ";
   //= "\x01\x1f\"\"\\\\\"\"\"\"\"\"\"\"\"\"";
+
   __m128i const r = _mm_load_si128(reinterpret_cast<__m128i const*>(ranges));
   size_t count = 0;
   int x = 0;
@@ -226,6 +245,36 @@ size_t doInitSkip(uint8_t const* src, size_t limit) {
   return (*JSONSkipWhiteSpace)(src, limit);
 }
 
+#ifdef __AVX2__
+bool ValidateUtf8StringAVX(uint8_t const* src, size_t len) {
+  if (len >= 32) {
+    return validate_utf8_fast_avx(src, len);
+  }
+  return Utf8Helper::isValidUtf8(src, len);
+}
+#endif
+  
+bool ValidateUtf8StringSSE42(uint8_t const* src, size_t len) {
+  if (len >= 16) {
+    return validate_utf8_fast_sse42(src, len);
+  }
+  return Utf8Helper::isValidUtf8(src, len);
+}
+  
+bool doInitValidateUtf8String(uint8_t const* src, size_t limit) {
+#ifdef __AVX2__
+  if (assemblerFunctionsEnabled() && ::hasAVX2()) {
+    ValidateUtf8String = ValidateUtf8StringAVX;
+    return ValidateUtf8StringAVX(src, limit);
+  }
+#endif
+  if (assemblerFunctionsEnabled() && ::hasSSE42()) {
+    ValidateUtf8String = ValidateUtf8StringSSE42;
+  } else {
+    ValidateUtf8String = ::ValidateUtf8StringC;
+  }
+  return (*ValidateUtf8String)(src, limit);
+}
 } // namespace
 
 #else
@@ -246,6 +295,11 @@ size_t doInitSkip(uint8_t const* src, size_t limit) {
   JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceC;
   return JSONSkipWhiteSpace(src, limit);
 }
+  
+bool doInitValidateUtf8String(uint8_t const* src, size_t limit) {
+  ValidateUtf8String = ::ValidateUtf8StringC;
+  return ValidateUtf8StringC(src, limit);
+}
 
 } // namespace
 
@@ -254,6 +308,7 @@ size_t doInitSkip(uint8_t const* src, size_t limit) {
 size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, size_t) = ::doInitCopy;
 size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*, size_t) = ::doInitCopyCheckUtf8;
 size_t (*JSONSkipWhiteSpace)(uint8_t const*, size_t) = ::doInitSkip;
+bool (*ValidateUtf8String)(uint8_t const*, size_t) = ::doInitValidateUtf8String;
 
 void arangodb::velocypack::enableNativeStringFunctions() {
   JSONStringCopy = ::doInitCopy;
@@ -479,7 +534,7 @@ void TestSkipWhiteSpaceCorrectness(uint8_t* src, size_t size) {
 }
 
 void RaceStringCopy(uint8_t* dst, uint8_t* src, size_t size, int repeat,
-                    int& akku) {
+                    uint64_t& akku) {
   size_t copied;
 
   std::cout << "\nNow racing for the repeated full string, "
@@ -529,7 +584,7 @@ void RaceStringCopy(uint8_t* dst, uint8_t* src, size_t size, int repeat,
 }
 
 void RaceStringCopyCheckUtf8(uint8_t* dst, uint8_t* src, size_t size,
-                             int repeat, int& akku) {
+                             int repeat, uint64_t& akku) {
   size_t copied;
 
   std::cout << "\nNow racing for the repeated (check UTF8) full string, "
@@ -600,7 +655,7 @@ void RaceStringCopyCheckUtf8(uint8_t* dst, uint8_t* src, size_t size,
             << (double)size * (double)repeat / totalTime.count() << std::endl;
 }
 
-void RaceSkipWhiteSpace(uint8_t* src, size_t size, int repeat, int& akku) {
+void RaceSkipWhiteSpace(uint8_t* src, size_t size, int repeat, uint64_t& akku) {
   size_t copied;
 
   std::cout << "\nNow racing for the repeated full string...\n" << std::endl;
@@ -658,11 +713,11 @@ int main(int argc, char* argv[]) {
   size_t size = atol(argv[1]);
   int repeat = atoi(argv[2]);
   int docorrectness = atoi(argv[3]);
-  int akku = 0;
+  uint64_t akku = 0;
   std::cout << "Size: " << size << std::endl;
   std::cout << "Repeat:" << repeat << std::endl;
 
-  uint8_t* src = new uint8_t[size + 17];
+  uint8_t* src = new uint8_t[size + 17 + 16];
   uint8_t* dst = new uint8_t[size + 17];
   std::cout << "Src pointer: " << (void*)src << std::endl;
   std::cout << "Dst pointer: " << (void*)dst << std::endl;

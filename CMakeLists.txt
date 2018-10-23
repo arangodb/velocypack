@@ -50,12 +50,14 @@ set(VELOCY_SOURCE
     src/Options.cpp
     src/Parser.cpp
     src/Slice.cpp
+    src/SliceStaticData.cpp
     src/StringRef.cpp
     src/Utf8Helper.cpp
     src/Validator.cpp
     src/ValueType.cpp
     src/Version.cpp
     src/asm-functions.cpp
+    src/asm-utf8check.cpp
     src/fpconv.cpp
 )
 
