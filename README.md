@@ -132,4 +132,8 @@ to contribute to VelocyPack. Have a look for the tag HELP_WANTED in the issue
 tracker!
 
 We also provide a golang version of VPack in the 
-[go-velocypack repository](https://github.com/arangodb/go-velocypack).
+[go-velocypack repository](https://github.com/arangodb/go-velocypack) and a
+Java version in the [java-velocypack](https://github.com/arangodb/java-velocypack).
+
+Additionally, there is a third party VPack implementation for 
+[PHP](https://github.com/martin-schilling/php-velocypack).
