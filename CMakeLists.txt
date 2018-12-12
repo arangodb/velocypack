@@ -8,12 +8,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
 option(Coverage "Build with coverage" OFF)
-option(HashType "Hash type (fasthash, xxhash)" OFF)
 
-#Default to xxhash
-if(HashType STREQUAL "OFF")
-    set(HashType "xxhash")
-endif()
+set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
