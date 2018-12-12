@@ -10,7 +10,6 @@ message(STATUS "Building large tests: ${BuildLargeTests}")
 option(BuildAsmTest "Build assembler test code" OFF)
 message(STATUS "Building assembler test suite: ${BuildAsmTest}")
 
-
 set(Tests
     testsAliases
     testsBuffer

@@ -17,13 +17,11 @@ endif()
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-    #why don't we use release as default?
     set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 if(Coverage)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
@@ -37,7 +35,6 @@ set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization form
 #Compiler Setting
 include(AR_CompilerSettings)
 
-# build version number generator - NICE!
 set(VELOCY_SOURCE
     src/velocypack-common.cpp
     src/AttributeTranslator.cpp
