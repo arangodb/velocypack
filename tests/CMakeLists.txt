@@ -39,9 +39,9 @@ macro(standard_test test_name)
         set(testCpp ${ARGV1})
     endif()
 
+    include_directories(${testName} PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
     add_executable(${testName} ${testCpp})
     target_link_libraries(${testName} gtest velocypack ${CMAKE_THREAD_LIBS_INIT})
-    include_directories(${testName} PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
     add_test(${testName} ${testName})
 endmacro()
 
