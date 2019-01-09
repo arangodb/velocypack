@@ -234,7 +234,6 @@ int main(int argc, char* argv[]) {
   Parser parser(&options);
   try {
     parser.parse(s);
-exit(0);
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while parsing infile '" << infile
               << "': " << ex.what() << std::endl;
