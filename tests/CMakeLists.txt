@@ -56,9 +56,10 @@ if(BuildTests)
         standard_test(${testName})
     endforeach()
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/jsonSample" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
-  if(BuildLargeTests)
-    standard_test(testsLarge)
-  endif()
+
+    if(BuildLargeTests)
+        standard_test(testsLarge)
+    endif()
 endif()
 
 # build AsmTest
