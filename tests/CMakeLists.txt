@@ -50,7 +50,7 @@ if(BuildTests)
     include(CTest)
     enable_testing()
     find_package(Threads REQUIRED)
-    add_subdirectory(googletest/googletest REQUIRED)
+    add_subdirectory(googletest REQUIRED)
 
     foreach(testName ${Tests})
         standard_test(${testName})
