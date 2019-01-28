@@ -1,7 +1,7 @@
 # -*- mode: CMAKE; -*-
 
-cmake_minimum_required(VERSION 2.8)
-project(velocypack CXX)
+cmake_minimum_required(VERSION 3.2)
+project(velocypack CXX C)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
@@ -13,13 +13,11 @@ set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-    #why don't we use release as default?
     set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 if(Coverage)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
@@ -33,7 +31,6 @@ set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization form
 #Compiler Setting
 include(AR_CompilerSettings)
 
-# build version number generator - NICE!
 set(VELOCY_SOURCE
     src/velocypack-common.cpp
     src/AttributeTranslator.cpp

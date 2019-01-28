@@ -25,7 +25,6 @@ if(BuildBench)
       #    message(FATAL_ERROR "rapidjson library not found in subdirectory 'rapidjson'. Please run ./download-rapidjson.sh")
   endif()
 
-
   add_executable(bench bench.cpp)
   target_link_libraries(bench velocypack)
   target_include_directories(bench PRIVATE ${PROJECT_SOURCE_DIR}/rapidjson/include)
