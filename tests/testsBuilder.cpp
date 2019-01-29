@@ -1617,6 +1617,28 @@ TEST(BuilderTest, CustomViaValuePair) {
   ASSERT_EQ(sizeof(correctResult), s.byteSize());
 }
 
+TEST(BuilderTest, CustomValueDisallowed) {
+  char const* p = "\xf4\x2cthe quick brown fox jumped over the lazy dog";
+  
+  Options options;
+  options.disallowCustom = true;
+  Builder b(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Slice(p)),
+      Exception::BuilderCustomDisallowed);
+}
+
+TEST(BuilderTest, CustomPairDisallowed) {
+  char const* p = "\xf4\x2cthe quick brown fox jumped over the lazy dog";
+  
+  Options options;
+  options.disallowCustom = true;
+  Builder b(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(ValuePair(p, strlen(p), ValueType::Custom)),
+      Exception::BuilderCustomDisallowed);
+}
+
 TEST(BuilderTest, InvalidTypeViaValuePair) {
   char const* p = "fail";
 
