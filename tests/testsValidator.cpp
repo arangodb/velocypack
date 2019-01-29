@@ -957,8 +957,6 @@ TEST(ValidatorTest, ArrayTwoBytesPadded) {
 }
 
 TEST(ValidatorTest, ArrayTwoBytesInvalidPaddings) {
-  std::string value;
-
   std::string const value1("\x03\x09\x00\x00\x00\x00\x00\x00\x18", 9);
   std::string const value2("\x03\x08\x00\x00\x00\x00\x00\x18", 8);
   std::string const value3("\x03\x07\x00\x00\x00\x00\x18", 7);
@@ -1044,8 +1042,6 @@ TEST(ValidatorTest, ArrayFourBytesPadded) {
 }
 
 TEST(ValidatorTest, ArrayFourBytesInvalidPaddings) {
-  std::string value;
-
   std::string const value1("\x04\x09\x00\x00\x00\x00\x00\x00\x18", 9);
   std::string const value2("\x04\x08\x00\x00\x00\x00\x00\x18", 8);
   std::string const value3("\x04\x07\x00\x00\x00\x00\x18", 7);
@@ -1172,8 +1168,6 @@ TEST(ValidatorTest, ArrayOneByteIndexedPadding) {
 }
 
 TEST(ValidatorTest, ArrayOneByteIndexedInvalidPaddings) {
-  std::string value;
-
   std::string const value1("\x06\x0a\x01\x00\x00\x00\x00\x00\x18\x08", 10);
   std::string const value2("\x06\x09\x01\x00\x00\x00\x00\x18\x07", 9);
   std::string const value3("\x06\x08\x01\x00\x00\x00\x18\x06", 8);
@@ -1271,8 +1265,6 @@ TEST(ValidatorTest, ArrayTwoBytesIndexedPadded) {
 }
 
 TEST(ValidatorTest, ArrayTwoBytesIndexedInvalidPaddings) {
-  std::string value;
-
   std::string const value1("\x07\x0b\x00\x01\x00\x00\x00\x00\x18\x08\x00", 11);
   std::string const value2("\x07\x0a\x00\x01\x00\x00\x00\x18\x07\x00", 10);
   std::string const value3("\x07\x09\x00\x01\x00\x00\x18\x06\x00", 9);
@@ -1818,6 +1810,28 @@ TEST(ValidatorTest, ObjectOneByte) {
   ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
 }
 
+TEST(ValidatorTest, ObjectOneBytePadding) {
+  std::string const value("\x0b\x0c\x01\x00\x00\x00\x00\x00\x00\x40\x18\x09", 12);
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, ObjectOneByteInvalidPaddings) {
+  std::string const value1("\x0b\x0b\x01\x00\x00\x00\x00\x00\x40\x18\x08", 11);
+  std::string const value2("\x0b\x0a\x01\x00\x00\x00\x00\x40\x18\x07", 10);
+  std::string const value3("\x0b\x09\x01\x00\x00\x00\x40\x18\x06", 9);
+  std::string const value4("\x0b\x08\x01\x00\x00\x40\x18\x05", 8);
+  std::string const value5("\x0b\x07\x01\x00\x40\x18\x04", 7);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value1.c_str(), value1.size()), Exception::ValidatorInvalidLength);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value2.c_str(), value2.size()), Exception::ValidatorInvalidLength);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value3.c_str(), value3.size()), Exception::ValidatorInvalidLength);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value4.c_str(), value4.size()), Exception::ValidatorInvalidLength);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value5.c_str(), value5.size()), Exception::ValidatorInvalidLength);
+}
+
 TEST(ValidatorTest, ObjectOneByteEmpty) {
   std::string const value("\x0b\x03\x00", 3);
 
@@ -1827,6 +1841,60 @@ TEST(ValidatorTest, ObjectOneByteEmpty) {
 
 TEST(ValidatorTest, ObjectOneByteWithExtra) {
   std::string const value("\x0b\x07\x40\x18\x02\x01\x41", 7);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectOneByteTooShort) {
+  std::string const value("\x0b\x06\x01\x40\x18\x03", 6);
+  std::string temp;
+  
+  for (size_t i = 0; i < value.size() - 1; ++i) {
+    temp.push_back(value.at(i));
+
+    Validator validator;
+    ASSERT_VELOCYPACK_EXCEPTION(validator.validate(temp.c_str(), temp.size()), Exception::ValidatorInvalidLength);
+  }
+}
+
+TEST(ValidatorTest, ObjectOneByteNrItemsWrong1) {
+  std::string const value("\x0b\x06\x02\x40\x18\x03", 6);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectOneByteNrItemsWrong2) {
+  std::string const value("\x0b\x08\x01\x40\x18\x40\x18\x03", 8);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectOneByteNrItemsWrong3) {
+  std::string const value("\x0b\x08\x02\x40\x18\x40\x18\x03", 8);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectOneByteNrItemsMatch) {
+  std::string const value("\x0b\x09\x02\x40\x18\x40\x18\x03\x05", 9);
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, ObjectOneByteOnlyKey) {
+  std::string const value("\x0b\x05\x01\x40\x03", 5);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectOneByteStopInKey) {
+  std::string const value("\x0b\x06\x01\x45\x41\x03", 6);
 
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);

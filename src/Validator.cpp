@@ -471,12 +471,19 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
 
     // look up first member
     uint8_t const* p = ptr + 1 + byteSizeLength + byteSizeLength;
-    uint8_t const* e = ptr + 1 + (8 - byteSizeLength - byteSizeLength);
+    uint8_t const* e = p + (8 - byteSizeLength - byteSizeLength);
     if (e > ptr + byteSize) {
       e = ptr + byteSize;
     }
+
     while (p < e && *p == '\x00') {
       ++p;
+    }
+  
+    // check if padding is correct
+    if (p != ptr + 1 + byteSizeLength + byteSizeLength &&
+        p != ptr + 1 + byteSizeLength + byteSizeLength + (8 - byteSizeLength - byteSizeLength)) {
+      throw Exception(Exception::ValidatorInvalidLength, "Object padding is invalid");
     }
 
     indexTable = ptr + byteSize - (nrItems * byteSizeLength);
