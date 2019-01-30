@@ -24,6 +24,9 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <unordered_set>
+#include <memory>
+
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Validator.h"
 #include "velocypack/Exception.h"
@@ -57,7 +60,7 @@ static ValueLength ReadVariableLengthValue(uint8_t const*& p, uint8_t const* end
   return value;
 }
 
-bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) const {
+bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) {
   if (length == 0) {
     throw Exception(Exception::ValidatorInvalidLength, "length 0 is invalid for any VelocyPack value");
   }
@@ -113,12 +116,16 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
     }
 
     case ValueType::Array: {
+      ++_level;
       validateArray(ptr, length);
+      --_level;
       break;
     }
 
     case ValueType::Object: {
+      ++_level;
       validateObject(ptr, length);
+      --_level;
       break;
     }
 
@@ -184,7 +191,7 @@ bool Validator::validate(uint8_t const* ptr, size_t length, bool isSubPart) cons
   return true;
 }
 
-void Validator::validateArray(uint8_t const* ptr, size_t length) const {
+void Validator::validateArray(uint8_t const* ptr, size_t length) {
   uint8_t head = *ptr;
 
   if (head == 0x13U) {
@@ -201,7 +208,7 @@ void Validator::validateArray(uint8_t const* ptr, size_t length) const {
   }
 }
 
-void Validator::validateCompactArray(uint8_t const* ptr, size_t length) const {
+void Validator::validateCompactArray(uint8_t const* ptr, size_t length) {
   // compact Array without index table
   validateBufferLength(4, length, true);
 
@@ -230,7 +237,7 @@ void Validator::validateCompactArray(uint8_t const* ptr, size_t length) const {
   }
 }
 
-void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const {
+void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) {
   // Array without index table, with 1-8 bytes lengths, all values with same length
   uint8_t head = *ptr;
   ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x02U);
@@ -255,13 +262,13 @@ void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const 
   if (p >= ptr + byteSize) {
     throw Exception(Exception::ValidatorInvalidLength, "Array structure is invalid");
   }
-  
+
   // check if padding is correct
   if (p != ptr + 1 + byteSizeLength &&
       p != ptr + 1 + byteSizeLength + (8 - byteSizeLength)) {
     throw Exception(Exception::ValidatorInvalidLength, "Array padding is invalid");
   }
-
+  
   validate(p, length - (p - ptr), true);
   ValueLength itemSize = Slice(p).byteSize();
   if (itemSize == 0) {
@@ -272,8 +279,11 @@ void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const 
   if (nrItems == 0) {
     throw Exception(Exception::ValidatorInvalidLength, "Array nrItems value is invalid");
   }
-
+  // we already validated p, so move it forward
+  p += itemSize;
   e = ptr + length;
+  --nrItems;
+
   while (nrItems > 0) {
     if (p >= e) {
       throw Exception(Exception::ValidatorInvalidLength, "Array value is out of bounds");
@@ -286,10 +296,10 @@ void Validator::validateUnindexedArray(uint8_t const* ptr, size_t length) const 
     }
     p += itemSize;
     --nrItems;
-  }
+  } 
 }
 
-void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
+void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) {
   // Array with index table, with 1-8 bytes lengths
   uint8_t head = *ptr;
   ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x06U);
@@ -301,6 +311,7 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
   }
 
   ValueLength nrItems;
+  ValueLength dataOffset;
   uint8_t const* indexTable;
   uint8_t const* firstMember;
 
@@ -316,7 +327,9 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
     if (indexTable < ptr + byteSizeLength) {
       throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
     }
-    firstMember = ptr + 1 + 8;
+    
+    dataOffset = 1 + byteSizeLength;
+    firstMember = ptr + 1 + byteSizeLength; 
   } else {
     // byte length = 1, 2 or 4
     nrItems = readIntegerNonEmpty<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
@@ -334,50 +347,44 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) const {
     while (p < e && *p == '\x00') {
       ++p;
     }
-  
+
     // check if padding is correct
     if (p != ptr + 1 + byteSizeLength + byteSizeLength &&
         p != ptr + 1 + byteSizeLength + byteSizeLength + (8 - byteSizeLength - byteSizeLength)) {
       throw Exception(Exception::ValidatorInvalidLength, "Array padding is invalid");
     }
-
+  
     indexTable = ptr + byteSize - (nrItems * byteSizeLength);
     if (indexTable < ptr + byteSizeLength + byteSizeLength || indexTable < p) {
       throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
     }
+
+    dataOffset = static_cast<ValueLength>(p - ptr);
     firstMember = p;
   }
-
+   
+  VELOCYPACK_ASSERT(nrItems > 0); 
+  
   ValueLength actualNrItems = 0;
   uint8_t const* member = firstMember;
   while (member < indexTable) {
     validate(member, indexTable - member, true);
-    // find this offset in the indexTable
-    uint8_t const* indexPtr = indexTable;
-    while (true) {
-      if (indexPtr + byteSizeLength > ptr + length) {
-        throw Exception(Exception::ValidatorInvalidLength, "Array item offset not found in index");
-      }
-      ValueLength offset = readIntegerNonEmpty<ValueLength>(indexPtr, byteSizeLength);
-      if (ptr + offset == member) {
-        break ;
-      }
-      indexPtr += byteSizeLength;
+    ValueLength offset = readIntegerNonEmpty<ValueLength>(
+        indexTable + actualNrItems * byteSizeLength, byteSizeLength);
+    if (offset != static_cast<ValueLength>(member - ptr)) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array index table is wrong");
     }
-
+  
     member += Slice(member).byteSize();
-    actualNrItems++;
+    ++actualNrItems;
   }
 
   if (actualNrItems != nrItems) {
-    throw Exception(Exception::ValidatorInvalidLength, "Array has different number of data items than in index");
+    throw Exception(Exception::ValidatorInvalidLength, "Array has more items than in index");
   }
-
-  // At this point the correctness of the index is implicit. There are as many
-  // index entries as items in this array AND every item is in the index.
 }
 
-void Validator::validateObject(uint8_t const* ptr, size_t length) const {
+void Validator::validateObject(uint8_t const* ptr, size_t length) {
   uint8_t head = *ptr;
 
   if (head == 0x14U) {
@@ -391,7 +398,7 @@ void Validator::validateObject(uint8_t const* ptr, size_t length) const {
   }
 }
 
-void Validator::validateCompactObject(uint8_t const* ptr, size_t length) const {
+void Validator::validateCompactObject(uint8_t const* ptr, size_t length) {
   // compact Object without index table
   validateBufferLength(5, length, true);
 
@@ -427,13 +434,14 @@ void Validator::validateCompactObject(uint8_t const* ptr, size_t length) const {
     validate(p, e - p, true);
     p += Slice(p).byteSize();
   }
+
   // finally check if we are now pointing at the end or not
   if (p != e) {
     throw Exception(Exception::ValidatorInvalidLength, "Object has more members than specified");
   }
 }
 
-void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
+void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) {
   // Object with index table, with 1-8 bytes lengths
   uint8_t head = *ptr;
   ValueLength const byteSizeLength = 1ULL << (static_cast<ValueLength>(head) - 0x0bU);
@@ -445,10 +453,12 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
   }
 
   ValueLength nrItems;
+  ValueLength dataOffset;
   uint8_t const* indexTable;
   uint8_t const* firstMember;
 
-  if (head == 0x12U) {
+  //if (head == 0x12U) {
+  if (head == 0x0eU || head == 0x12U) {
     // byte length = 8
     nrItems = readIntegerNonEmpty<ValueLength>(ptr + byteSize - byteSizeLength, byteSizeLength);
 
@@ -460,7 +470,9 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
     if (indexTable < ptr + byteSizeLength) {
       throw Exception(Exception::ValidatorInvalidLength, "Object index table is out of bounds");
     }
-    firstMember = ptr + 1 + 8;
+    
+    dataOffset = 1 + byteSizeLength;
+    firstMember = ptr + byteSize;
   } else {
     // byte length = 1, 2 or 4
     nrItems = readIntegerNonEmpty<ValueLength>(ptr + 1 + byteSizeLength, byteSizeLength);
@@ -475,70 +487,121 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) const {
     if (e > ptr + byteSize) {
       e = ptr + byteSize;
     }
-
     while (p < e && *p == '\x00') {
       ++p;
     }
-  
+
     // check if padding is correct
     if (p != ptr + 1 + byteSizeLength + byteSizeLength &&
         p != ptr + 1 + byteSizeLength + byteSizeLength + (8 - byteSizeLength - byteSizeLength)) {
       throw Exception(Exception::ValidatorInvalidLength, "Object padding is invalid");
     }
-
+  
     indexTable = ptr + byteSize - (nrItems * byteSizeLength);
     if (indexTable < ptr + byteSizeLength + byteSizeLength || indexTable < p) {
       throw Exception(Exception::ValidatorInvalidLength, "Object index table is out of bounds");
     }
 
+    dataOffset = static_cast<ValueLength>(p - ptr);
     firstMember = p;
   }
 
+  VELOCYPACK_ASSERT(nrItems > 0);
+  
+  ValueLength tableBuf[16];    // Fixed space to save offsets found sequentially
+  ValueLength* table = tableBuf;
+  std::unique_ptr<ValueLength[]> tableGuard;
+  std::unique_ptr<std::unordered_set<ValueLength>> offsetSet;
+  if (nrItems > 16) {
+    if (nrItems <= 128) {
+      table = new ValueLength[nrItems];  // throws if bad_alloc
+      tableGuard.reset(table);   // for automatic deletion
+    } else {
+      // if we have even more items, we directly create an unordered_set
+      offsetSet.reset(new std::unordered_set<ValueLength>());
+    }
+  }
   ValueLength actualNrItems = 0;
   uint8_t const* member = firstMember;
   while (member < indexTable) {
     validate(member, indexTable - member, true);
-    // find this offset in the indexTable
-    uint8_t const* indexPtr = indexTable;
-    while (true) {
-      if (indexPtr + byteSizeLength > ptr + length) {
-        throw Exception(Exception::ValidatorInvalidLength, "Object item offset not found in index");
-      }
-      ValueLength offset = readIntegerNonEmpty<ValueLength>(indexPtr, byteSizeLength);
-      if (ptr + offset == member) {
-        break ;
-      }
-      indexPtr += byteSizeLength;
-    }
 
     Slice key(member);
     if (!key.isString() && !key.isInteger()) {
       throw Exception(Exception::ValidatorInvalidLength, "Invalid object key type");
     }
 
-    uint8_t const* value = member + key.byteSize();
+    ValueLength const keySize = key.byteSize();
+    uint8_t const* value = member + keySize;
     if (value >= indexTable) {
-        throw Exception(Exception::ValidatorInvalidLength, "Object value leaking into index table");
+      throw Exception(Exception::ValidatorInvalidLength, "Object value leaking into index table");
     }
     validate(value, indexTable - value, true);
 
-    member += Slice(value).byteSize() + key.byteSize();
-    actualNrItems++;
+    ValueLength offset = static_cast<ValueLength>(member - ptr);
+    if (nrItems <= 128) {
+      table[actualNrItems] = offset;
+    } else {
+      offsetSet->emplace(offset);
+    }
+
+    member += keySize + Slice(value).byteSize();
+    ++actualNrItems;
+
+    if (actualNrItems > nrItems) {
+      throw Exception(Exception::ValidatorInvalidLength, "Object value has more key/value pairs than announced");
+    }
   }
 
-  if (actualNrItems != nrItems) {
-    throw Exception(Exception::ValidatorInvalidLength, "Object has different number of data items than in index");
+  if (actualNrItems < nrItems) {
+    throw Exception(Exception::ValidatorInvalidLength, "Object has fewer items than in index");
+  }
+
+  // Finally verify each offset in the index:
+  if (nrItems <= 128) {
+    for (ValueLength pos = 0; pos < nrItems; ++pos) {
+      ValueLength offset = readIntegerNonEmpty<ValueLength>(
+          indexTable + pos * byteSizeLength, byteSizeLength);
+      // Binary search in sorted index list:
+      ValueLength low = 0;
+      ValueLength high = nrItems;
+      bool found = false;
+      while (low < high) {
+        ValueLength mid = (low + high) / 2;
+        if (offset == table[mid]) {
+          found = true;
+          break;
+        } else if (offset < table[mid]) {
+          high = mid;
+        } else {   // offset > table[mid]
+          low = mid + 1;
+        }
+      }
+      if (!found) {
+        throw Exception(Exception::ValidatorInvalidLength, "Object has invalid index offset");
+      }
+    }
+  } else {
+    for (ValueLength pos = 0; pos < nrItems; ++pos) {
+      ValueLength offset = readIntegerNonEmpty<ValueLength>(
+          indexTable + pos * byteSizeLength, byteSizeLength);
+      auto i = offsetSet->find(offset);
+      if (i == offsetSet->end()) {
+        throw Exception(Exception::ValidatorInvalidLength, "Object has invalid index offset");
+      }
+      offsetSet->erase(i);
+    }
   }
 }
 
-void Validator::validateBufferLength(size_t expected, size_t actual, bool isSubPart) const {
+void Validator::validateBufferLength(size_t expected, size_t actual, bool isSubPart) {
   if ((expected > actual) ||
       (expected != actual && !isSubPart)) {
     throw Exception(Exception::ValidatorInvalidLength, "given buffer length is unequal to actual length of Slice in buffer");
   }
 }
 
-void Validator::validateSliceLength(uint8_t const* ptr, size_t length, bool isSubPart) const {
+void Validator::validateSliceLength(uint8_t const* ptr, size_t length, bool isSubPart) {
   size_t actual = static_cast<size_t>(Slice(ptr).byteSize());
   validateBufferLength(actual, length, isSubPart);
 }

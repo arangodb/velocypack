@@ -72,6 +72,11 @@ static bool parseFile(std::string const& filename) {
   Parser parser;
   try {
     parser.parse(data);
+    auto builder = parser.steal();
+    Slice slice = builder->slice();
+
+    Validator validator;
+    validator.validate(slice.start(), slice.byteSize(), false);
     return true;
   } catch (...) {
     return false;
