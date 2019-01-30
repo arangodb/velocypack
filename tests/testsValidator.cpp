@@ -1647,6 +1647,20 @@ TEST(ValidatorTest, ArrayCompactNrItemsWrong3) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ArrayCompactManyEntries) {
+  Builder b;
+  b.openArray(true);
+  for (size_t i = 0; i < 2048; ++i) {
+    b.add(Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x13'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
 TEST(ValidatorTest, ArrayEqualSize) {
   std::string const value("\x02\x04\x01\x18", 4);
 
@@ -1803,6 +1817,21 @@ TEST(ValidatorTest, ObjectCompactStopInKey) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ObjectCompactManyEntries) {
+  Builder b;
+  b.openObject(true);
+  for (size_t i = 0; i < 2048; ++i) {
+    std::string key = "test" + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x14'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
 TEST(ValidatorTest, ObjectOneByte) {
   std::string const value("\x0b\x06\x01\x40\x18\x03", 6);
 
@@ -1900,6 +1929,36 @@ TEST(ValidatorTest, ObjectOneByteStopInKey) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ObjectOneByteSomeEntries) {
+  Builder b;
+  b.openObject();
+  for (size_t i = 0; i < 8; ++i) {
+    std::string key = "t" + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x0b'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
+TEST(ValidatorTest, ObjectOneByteMoreEntries) {
+  Builder b;
+  b.openObject();
+  for (size_t i = 0; i < 17; ++i) {
+    std::string key = "t" + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x0b'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
 TEST(ValidatorTest, ObjectTwoByte) {
   std::string const value("\x0c\x09\x00\x01\x00\x40\x18\x05\x00", 9);
 
@@ -1993,6 +2052,40 @@ TEST(ValidatorTest, ObjectTwoByteStopInKey) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ObjectTwoByteSomeEntries) {
+  std::string prefix;
+  for (size_t i = 0; i < 100; ++i) {
+    prefix.push_back('x');
+  }
+  Builder b;
+  b.openObject();
+  for (size_t i = 0; i < 8; ++i) {
+    std::string key = prefix + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x0c'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
+TEST(ValidatorTest, ObjectTwoByteMoreEntries) {
+  Builder b;
+  b.openObject();
+  for (size_t i = 0; i < 256; ++i) {
+    std::string key = "test" + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x0c'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
+}
+
 TEST(ValidatorTest, ObjectFourByte) {
   std::string const value("\x0d\x0f\x00\x00\x00\x01\x00\x00\x00\x40\x18\x09\x00\x00\x00", 15);
 
@@ -2066,6 +2159,21 @@ TEST(ValidatorTest, ObjectFourByteStopInKey) {
 
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectFourByteManyEntries) {
+  Builder b;
+  b.openObject();
+  for (size_t i = 0; i < 65536; ++i) {
+    std::string key = "test" + std::to_string(i);
+    b.add(key, Value(i));
+  }
+  b.close();
+
+  ASSERT_EQ(b.slice().head(), '\x0d'); 
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
 }
 
 int main(int argc, char* argv[]) {
