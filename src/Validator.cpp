@@ -311,7 +311,6 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) {
   }
 
   ValueLength nrItems;
-  ValueLength dataOffset;
   uint8_t const* indexTable;
   uint8_t const* firstMember;
 
@@ -328,7 +327,6 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) {
       throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
     }
     
-    dataOffset = 1 + byteSizeLength;
     firstMember = ptr + 1 + byteSizeLength; 
   } else {
     // byte length = 1, 2 or 4
@@ -359,7 +357,6 @@ void Validator::validateIndexedArray(uint8_t const* ptr, size_t length) {
       throw Exception(Exception::ValidatorInvalidLength, "Array index table is out of bounds");
     }
 
-    dataOffset = static_cast<ValueLength>(p - ptr);
     firstMember = p;
   }
    
@@ -453,7 +450,6 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) {
   }
 
   ValueLength nrItems;
-  ValueLength dataOffset;
   uint8_t const* indexTable;
   uint8_t const* firstMember;
 
@@ -471,7 +467,6 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) {
       throw Exception(Exception::ValidatorInvalidLength, "Object index table is out of bounds");
     }
     
-    dataOffset = 1 + byteSizeLength;
     firstMember = ptr + byteSize;
   } else {
     // byte length = 1, 2 or 4
@@ -502,7 +497,6 @@ void Validator::validateIndexedObject(uint8_t const* ptr, size_t length) {
       throw Exception(Exception::ValidatorInvalidLength, "Object index table is out of bounds");
     }
 
-    dataOffset = static_cast<ValueLength>(p - ptr);
     firstMember = p;
   }
 
