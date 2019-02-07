@@ -56,7 +56,7 @@ class ArrayIterator {
     if (_size > 0) {
       VELOCYPACK_ASSERT(head != 0x01); // no empty array allowed here
       if (head == 0x13) {
-        _current = slice.start() + slice.getNthOffsetFromCompact(0);
+        _current = slice.start() + slice.getStartOffsetFromCompact();
       } else {
         _current = slice.begin() + slice.findDataOffset(head);
       }
@@ -168,7 +168,7 @@ class ArrayIterator {
       auto h = _slice.head();
       VELOCYPACK_ASSERT(h != 0x01); // no empty array allowed here
       if (h == 0x13) {
-        _current = _slice.start() + _slice.getNthOffsetFromCompact(0);
+        _current = _slice.start() + _slice.getStartOffsetFromCompact();
       } else {
         _current = _slice.begin() + _slice.findDataOffset(h);
       }
@@ -210,7 +210,7 @@ class ObjectIterator {
     if (_size > 0) {
       VELOCYPACK_ASSERT(head != 0x0a); // no empty object allowed here
       if (head == 0x14) {
-        _current = slice.start() + slice.getNthOffset(0);
+        _current = slice.start() + slice.getStartOffsetFromCompact();
       } else if (useSequentialIteration) {
         _current = slice.begin() + slice.findDataOffset(head);
       }

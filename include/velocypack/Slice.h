@@ -1048,6 +1048,16 @@ class Slice {
 
   // get the offset for the nth member from a compact Array or Object type
   ValueLength getNthOffsetFromCompact(ValueLength index) const;
+  
+  // get the offset for the first member from a compact Array or Object type
+  // it is only valid to call this method for compact Array or Object values with
+  // at least one member!!
+  ValueLength getStartOffsetFromCompact() const {
+    VELOCYPACK_ASSERT(head() == 0x13 || head() == 0x14);
+
+    ValueLength end = readVariableValueLength<false>(_start + 1);
+    return 1 + getVariableValueLength(end);
+  }
 
   constexpr inline ValueLength indexEntrySize(uint8_t head) const noexcept {
     return static_cast<ValueLength>(SliceStaticData::WidthMap[head]);
