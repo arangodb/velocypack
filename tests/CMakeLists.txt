@@ -26,6 +26,7 @@ set(Tests
     testsParser
     testsSlice
     testsSliceContainer
+    testsStringRef
     testsType
     testsValidator
     testsVersion
