@@ -316,6 +316,15 @@ TEST(StringRefTest, Find) {
   }
 }
 
+TEST(StringRefTest, RFind) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef s(value);
+
+  for (size_t i = 0; i < 256; ++i) {
+    ASSERT_EQ(value.rfind(static_cast<char>(i)), s.rfind(static_cast<char>(i)));
+  }
+}
+
 TEST(StringRefTest, Compare) {
   StringRef const s("the-quick-brown-foxx");
 
