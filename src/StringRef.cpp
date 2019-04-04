@@ -41,7 +41,7 @@ void* memrchr(void const* block, int c, size_t size) {
 
     for (p += size - 1; size; p--, size--) {
       if (*p == c) {
-        return static_cast<void*>(p);
+        return const_cast<void*>(static_cast<void const*>(p));
       }
     }
   }
