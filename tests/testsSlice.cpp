@@ -2746,39 +2746,6 @@ TEST(SliceTest, TranslatedInvalidKey) {
   ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
 }
 
-TEST(SliceTest, SliceScope) {
-  SliceScope scope;
-
-  Slice a;
-  Slice b;
-  {
-    a = Slice::fromJson(scope, "\"foobarbazsomevalue\"");
-    {
-      b = Slice::fromJson(scope,
-                          "\"some longer string that hopefully requires a "
-                          "dynamic memory allocation and that hopefully "
-                          "survives even if the Slice object itself goes out "
-                          "of scope - if it does not survive, this test will "
-                          "reveal it. ready? let's check it!\"");
-    }
-    // overwrite stack
-    Slice c(Slice::fromJson(
-        scope, "\"012345678901234567890123456789012345678901234567\""));
-    ASSERT_TRUE(c.isString());
-  }
-
-  ASSERT_TRUE(a.isString());
-  ASSERT_EQ("foobarbazsomevalue", a.copyString());
-
-  ASSERT_TRUE(b.isString());
-  ASSERT_EQ(
-      "some longer string that hopefully requires a dynamic memory allocation "
-      "and that hopefully survives even if the Slice object itself goes out of "
-      "scope - if it does not survive, this test will reveal it. ready? let's "
-      "check it!",
-      b.copyString());
-}
-
 TEST(SliceTest, CustomTypeByteSize) {
   uint8_t example0[] = { 0xf0, 0x00 };
   {

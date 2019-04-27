@@ -8,7 +8,6 @@
 #include "velocypack/Compare.h"
 #include "velocypack/Dumper.h"
 #include "velocypack/Exception.h"
-#include "velocypack/Helpers.h"
 #include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Options.h"

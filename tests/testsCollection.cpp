@@ -718,39 +718,37 @@ TEST(CollectionTest, IndexOfArray) {
   parser.parse(value);
   Slice s(parser.start());
 
-  SliceScope scope;
-
-  ASSERT_EQ(0U, Collection::indexOf(s, Slice::fromJson(scope, ("1"))));
-  ASSERT_EQ(1U, Collection::indexOf(s, Slice::fromJson(scope, ("2"))));
-  ASSERT_EQ(2U, Collection::indexOf(s, Slice::fromJson(scope, ("3"))));
-  ASSERT_EQ(8U, Collection::indexOf(s, Slice::fromJson(scope, ("9"))));
-  ASSERT_EQ(9U, Collection::indexOf(s, Slice::fromJson(scope, ("\"foobar\""))));
-  ASSERT_EQ(13U, Collection::indexOf(s, Slice::fromJson(scope, ("13"))));
-  ASSERT_EQ(14U, Collection::indexOf(s, Slice::fromJson(scope, ("129"))));
+  ASSERT_EQ(0U, Collection::indexOf(s, Parser::fromJson("1")->slice()));
+  ASSERT_EQ(1U, Collection::indexOf(s, Parser::fromJson("2")->slice()));
+  ASSERT_EQ(2U, Collection::indexOf(s, Parser::fromJson("3")->slice()));
+  ASSERT_EQ(8U, Collection::indexOf(s, Parser::fromJson("9")->slice()));
+  ASSERT_EQ(9U, Collection::indexOf(s, Parser::fromJson("\"foobar\"")->slice()));
+  ASSERT_EQ(13U, Collection::indexOf(s, Parser::fromJson("13")->slice()));
+  ASSERT_EQ(14U, Collection::indexOf(s, Parser::fromJson("129")->slice()));
   ASSERT_EQ(15U,
-            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!!\""))));
-  ASSERT_EQ(16U, Collection::indexOf(s, Slice::fromJson(scope, ("141"))));
+            Collection::indexOf(s, Parser::fromJson("\"bazz!!\"")->slice()));
+  ASSERT_EQ(16U, Collection::indexOf(s, Parser::fromJson("141")->slice()));
 
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz\""))));
+            Collection::indexOf(s, Parser::fromJson("\"bazz\"")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("\"bazz!\""))));
+            Collection::indexOf(s, Parser::fromJson("\"bazz!\"")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("\"bart\""))));
+            Collection::indexOf(s, Parser::fromJson("\"bart\"")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("99"))));
+            Collection::indexOf(s, Parser::fromJson("99")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("true"))));
+            Collection::indexOf(s, Parser::fromJson("true")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("false"))));
+            Collection::indexOf(s, Parser::fromJson("false")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("null"))));
+            Collection::indexOf(s, Parser::fromJson("null")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("-1"))));
+            Collection::indexOf(s, Parser::fromJson("-1")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("[]"))));
+            Collection::indexOf(s, Parser::fromJson("[]")->slice()));
   ASSERT_EQ(Collection::NotFound,
-            Collection::indexOf(s, Slice::fromJson(scope, ("{}"))));
+            Collection::indexOf(s, Parser::fromJson("{}")->slice()));
 }
 
 TEST(CollectionTest, AllNonArray) {

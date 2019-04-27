@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
     s = convertFromHex(s);
   }
 
-  Slice const slice(s.data());
+  Slice const slice(reinterpret_cast<uint8_t const*>(s.data()));
 
   Options options;
   options.prettyPrint = pretty;

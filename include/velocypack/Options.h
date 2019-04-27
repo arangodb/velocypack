@@ -72,9 +72,6 @@ struct Options {
   // has no JSON equivalent
   UnsupportedTypeBehavior unsupportedTypeBehavior = FailOnUnsupportedType;
 
-  // callback for excluding attributes from being built by the Parser
-  AttributeExcludeHandler* attributeExcludeHandler = nullptr;
-
   AttributeTranslator* attributeTranslator = nullptr;
 
   // custom type handler used for processing custom types by Dumper and Slicer

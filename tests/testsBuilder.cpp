@@ -1294,7 +1294,7 @@ TEST(BuilderTest, ExternalUTCDate) {
 #else
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
-  Slice sExternal(s.getExternal());
+  Slice sExternal(reinterpret_cast<uint8_t const*>(s.getExternal()));
   ASSERT_EQ(9ULL, sExternal.byteSize());
   ASSERT_EQ(ValueType::UTCDate, sExternal.type());
   ASSERT_EQ(v, sExternal.getUTCDate());
@@ -1316,7 +1316,7 @@ TEST(BuilderTest, ExternalDouble) {
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
 
-  Slice sExternal(s.getExternal());
+  Slice sExternal(reinterpret_cast<uint8_t const*>(s.getExternal()));
   ASSERT_EQ(9ULL, sExternal.byteSize());
   ASSERT_EQ(ValueType::Double, sExternal.type());
   ASSERT_DOUBLE_EQ(v, sExternal.getDouble());
@@ -1338,7 +1338,7 @@ TEST(BuilderTest, ExternalBinary) {
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
 
-  Slice sExternal(s.getExternal());
+  Slice sExternal(reinterpret_cast<uint8_t const*>(s.getExternal()));
   ASSERT_EQ(2 + strlen(p), sExternal.byteSize());
   ASSERT_EQ(ValueType::Binary, sExternal.type());
   ValueLength len;
@@ -1363,7 +1363,7 @@ TEST(BuilderTest, ExternalString) {
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
 
-  Slice sExternal(s.getExternal());
+  Slice sExternal(reinterpret_cast<uint8_t const*>(s.getExternal()));
   ASSERT_EQ(1 + strlen(p), sExternal.byteSize());
   ASSERT_EQ(ValueType::String, sExternal.type());
   ValueLength len;
@@ -1394,7 +1394,7 @@ TEST(BuilderTest, ExternalExternal) {
   ASSERT_EQ(5ULL, s.byteSize());
 #endif
 
-  Slice sExternal(s.getExternal());
+  Slice sExternal(reinterpret_cast<uint8_t const*>(s.getExternal()));
   ASSERT_EQ(ValueType::External, sExternal.type());
 #ifdef VELOCYPACK_64BIT
   ASSERT_EQ(9ULL, sExternal.byteSize());
@@ -1402,7 +1402,7 @@ TEST(BuilderTest, ExternalExternal) {
   ASSERT_EQ(5ULL, sExternal.byteSize());
 #endif
 
-  Slice sExExternal(sExternal.getExternal());
+  Slice sExExternal(reinterpret_cast<uint8_t const*>(sExternal.getExternal()));
   ASSERT_EQ(1 + strlen(p), sExExternal.byteSize());
   ASSERT_EQ(ValueType::String, sExExternal.type());
   ValueLength len;
@@ -1624,7 +1624,7 @@ TEST(BuilderTest, CustomValueDisallowed) {
   options.disallowCustom = true;
   Builder b(&options);
   ASSERT_VELOCYPACK_EXCEPTION(
-      b.add(Slice(p)),
+      b.add(Slice(reinterpret_cast<uint8_t const*>(p))),
       Exception::BuilderCustomDisallowed);
 }
 
