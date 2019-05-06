@@ -338,7 +338,7 @@ class Slice {
   // - 0x08      : array with 4-byte index table entries
   // - 0x09      : array with 8-byte index table entries
   Slice at(ValueLength index) const {
-    if (!isArray()) {
+    if (VELOCYPACK_UNLIKELY(!isArray())) {
       throw Exception(Exception::InvalidValueType, "Expecting type Array");
     }
 
@@ -349,7 +349,7 @@ class Slice {
 
   // return the number of members for an Array or Object object
   ValueLength length() const {
-    if (!isArray() && !isObject()) {
+    if (VELOCYPACK_UNLIKELY(!isArray() && !isObject())) {
       throw Exception(Exception::InvalidValueType,
                       "Expecting type Array or Object");
     }
@@ -406,7 +406,7 @@ class Slice {
   // - 0x12      : object with 8-byte index table entries, not sorted by
   // attribute name
   Slice keyAt(ValueLength index, bool translate = true) const {
-    if (!isObject()) {
+    if (VELOCYPACK_UNLIKELY(!isObject())) {
       throw Exception(Exception::InvalidValueType, "Expecting type Object");
     }
 
@@ -414,7 +414,7 @@ class Slice {
   }
 
   Slice valueAt(ValueLength index) const {
-    if (!isObject()) {
+    if (VELOCYPACK_UNLIKELY(!isObject())) {
       throw Exception(Exception::InvalidValueType, "Expecting type Object");
     }
 
@@ -439,7 +439,7 @@ class Slice {
     }
 
     // use ourselves as the starting point
-    Slice last = Slice(start());
+    Slice last(start());
     if (resolveExternals) {
       last = last.resolveExternal();
     }
@@ -925,8 +925,7 @@ class Slice {
       return false;
     }
 
-    return (memcmp(start(), other.start(),
-                  arangodb::velocypack::checkOverflow(size)) == 0);
+    return (memcmp(start(), other.start(), checkOverflow(size)) == 0);
   }
   
   bool operator==(Slice const& other) const { return equals(other); }
@@ -977,7 +976,7 @@ class Slice {
       ValueLength firstSubOffset = findDataOffset(head);
       Slice first(_start + firstSubOffset);
       ValueLength s = first.byteSize();
-      if (s == 0) {
+      if (VELOCYPACK_UNLIKELY(s == 0)) {
         throw Exception(Exception::InternalError, "Invalid data for Array");
       }
       ValueLength end = readIntegerNonEmpty<ValueLength>(_start + 1, offsetSize);

@@ -290,8 +290,7 @@ typedef Buffer<char> CharBuffer;
 
 template<typename T>
 struct BufferNonDeleter {
-  void operator()(Buffer<T>*) {
-  }
+  void operator()(Buffer<T>*) {}
 };
 
 }  // namespace arangodb::velocypack

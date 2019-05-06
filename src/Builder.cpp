@@ -41,7 +41,7 @@ namespace {
 // at position base, also determine the length len of the attribute.
 // This takes into account the different possibilities for the format
 // of attribute names:
-static uint8_t const* findAttrName(uint8_t const* base, uint64_t& len) {
+uint8_t const* findAttrName(uint8_t const* base, uint64_t& len) {
   uint8_t const b = *base;
   if (b >= 0x40 && b <= 0xbe) {
     // short UTF-8 string
@@ -139,19 +139,6 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
     offsets[i] = _sortEntries[i].offset;
   }
   _sortEntries.clear();
-}
-
-void Builder::removeLast() {
-  if (_stack.empty()) {
-    throw Exception(Exception::BuilderNeedOpenCompound);
-  }
-  ValueLength& tos = _stack.back();
-  std::vector<ValueLength>& index = _index[_stack.size() - 1];
-  if (index.empty()) {
-    throw Exception(Exception::BuilderNeedSubvalue);
-  }
-  resetTo(tos + index.back());
-  index.pop_back();
 }
 
 Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
@@ -492,7 +479,7 @@ bool Builder::hasKey(std::string const& key) const {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   ValueLength const& tos = _stack.back();
-  if (_start[tos] != 0x0b && _start[tos] != 0x14) {
+  if (VELOCYPACK_UNLIKELY(_start[tos] != 0x0b && _start[tos] != 0x14)) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   std::vector<ValueLength> const& index = _index[_stack.size() - 1];
@@ -920,15 +907,13 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
   if (it.size() <= LinearAttributeUniquenessCutoff) {
     std::array<StringRef, LinearAttributeUniquenessCutoff> keys;
     do {
-      // key() guarantees a String as returned type
+      // key(true) guarantees a String as returned type
       StringRef key = it.key(true).stringRef();
       ValueLength index = it.index();
-      if (index > 0) {
-        // compare with all other already looked-at keys
-        for (ValueLength i = 0; i < index; ++i) {
-          if (keys[i].equals(key)) {
-            return false;
-          }
+      // compare with all other already looked-at keys
+      for (ValueLength i = 0; i < index; ++i) {
+        if (VELOCYPACK_UNLIKELY(keys[i].equals(key))) {
+          return false;
         }
       }
       keys[index] = key;
@@ -938,9 +923,9 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
     std::unordered_set<StringRef> keys;
     do {
       Slice const key = it.key(true);
-      // key() guarantees a String as returned type
+      // key(true) guarantees a String as returned type
       VELOCYPACK_ASSERT(key.isString());
-      if (!keys.emplace(key).second) {
+      if (VELOCYPACK_UNLIKELY(!keys.emplace(key).second)) {
         // identical key
         return false;
       }
@@ -954,48 +939,38 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
 
 // Add all subkeys and subvalues into an object from an ObjectIterator
 // and leaves open the object intentionally
-uint8_t* Builder::add(ObjectIterator& sub) {
-  return add(std::move(sub));
-}
-
-uint8_t* Builder::add(ObjectIterator&& sub) {
-  if (_stack.empty()) {
+uint8_t* Builder::add(ObjectIterator const& sub) {
+  if (VELOCYPACK_UNLIKELY(_stack.empty())) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
   ValueLength& tos = _stack.back();
-  if (_start[tos] != 0x0b && _start[tos] != 0x14) {
+  if (VELOCYPACK_UNLIKELY(_start[tos] != 0x0b && _start[tos] != 0x14)) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
-  if (_keyWritten) {
+  if (VELOCYPACK_UNLIKELY(_keyWritten)) {
     throw Exception(Exception::BuilderKeyAlreadyWritten);
   }
   auto const oldPos = _pos;
-  while (sub.valid()) {
-    add(sub.key(true));
-    add(sub.value());
-    sub.next();
+  for (auto const& it : sub) {
+    add(it.key);
+    add(it.value);
   }
   return _start + oldPos;
 }
 
 // Add all subkeys and subvalues into an object from an ArrayIterator
 // and leaves open the array intentionally
-uint8_t* Builder::add(ArrayIterator& sub) {
-  return add(std::move(sub));
-}
-
-uint8_t* Builder::add(ArrayIterator&& sub) {
-  if (_stack.empty()) {
+uint8_t* Builder::add(ArrayIterator const& sub) {
+  if (VELOCYPACK_UNLIKELY(_stack.empty())) {
     throw Exception(Exception::BuilderNeedOpenArray);
   }
   ValueLength& tos = _stack.back();
-  if (_start[tos] != 0x06 && _start[tos] != 0x13) {
+  if (VELOCYPACK_UNLIKELY(_start[tos] != 0x06 && _start[tos] != 0x13)) {
     throw Exception(Exception::BuilderNeedOpenArray);
   }
   auto const oldPos = _pos;
-  while (sub.valid()) {
-    add(sub.value());
-    sub.next();
+  for (auto const& it : sub) {
+    add(it);
   }
   return _start + oldPos;
 }

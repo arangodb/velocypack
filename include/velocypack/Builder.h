@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef VELOCYPACK_BUILDER_H
-#define VELOCYPACK_BUILDER_H
+#define VELOCYPACK_BUILDER_H 1
 
 #include <vector>
 #include <string>
@@ -188,7 +188,7 @@ class Builder {
   }
 
   Builder(Builder&& that) {
-    if (!that.isClosed()) {
+    if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
       throw Exception(Exception::InternalError, "Cannot move an open Builder");
     }
     _buffer = that._buffer;
@@ -206,7 +206,7 @@ class Builder {
   }
 
   Builder& operator=(Builder&& that) {
-    if (!that.isClosed()) {
+    if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
       throw Exception(Exception::InternalError, "Cannot move an open Builder");
     }
     if (this != &that) {
@@ -450,20 +450,14 @@ class Builder {
   
   // Add all subkeys and subvalues into an object from an ObjectIterator
   // and leaves open the object intentionally
-  uint8_t* add(ObjectIterator& sub);
-  uint8_t* add(ObjectIterator&& sub);
+  uint8_t* add(ObjectIterator const& sub);
 
   // Add all subvalues into an array from an ArrayIterator
   // and leaves open the array intentionally
-  uint8_t* add(ArrayIterator& sub);
-  uint8_t* add(ArrayIterator&& sub);
+  uint8_t* add(ArrayIterator const& sub);
 
   // Seal the innermost array or object:
   Builder& close();
-
-  // Remove last subvalue written to an (unclosed) object or array:
-  // Throws if an error occurs.
-  void removeLast();
 
   // whether or not a specific key is present in an Object value
   bool hasKey(std::string const& key) const;
@@ -592,7 +586,7 @@ class Builder {
     if (!_stack.empty()) {
       ValueLength const& tos = _stack.back();
       if (_start[tos] == 0x0b || _start[tos] == 0x14) {
-        if (!_keyWritten && !isString) {
+        if (VELOCYPACK_UNLIKELY(!_keyWritten && !isString)) {
           throw Exception(Exception::BuilderKeyMustBeString);
         }
         _keyWritten = !_keyWritten;
@@ -604,7 +598,7 @@ class Builder {
     if (!_stack.empty()) {
       ValueLength const& tos = _stack.back();
       if (_start[tos] == 0x0b || _start[tos] == 0x14) {
-        if (!_keyWritten && !item.isString()) {
+        if (VELOCYPACK_UNLIKELY(!_keyWritten && !item.isString())) {
           throw Exception(Exception::BuilderKeyMustBeString);
         }
         _keyWritten = !_keyWritten;
@@ -660,7 +654,7 @@ class Builder {
     bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
-      if (_start[tos] != 0x0b && _start[tos] != 0x14) {
+      if (VELOCYPACK_UNLIKELY(_start[tos] != 0x0b && _start[tos] != 0x14)) {
         throw Exception(Exception::BuilderNeedOpenObject);
       }
       if (VELOCYPACK_UNLIKELY(_keyWritten)) {
@@ -718,7 +712,7 @@ class Builder {
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
       if (!_keyWritten) {
-        if (_start[tos] != 0x06 && _start[tos] != 0x13) {
+        if (VELOCYPACK_UNLIKELY(_start[tos] != 0x06 && _start[tos] != 0x13)) {
           throw Exception(Exception::BuilderNeedOpenArray);
         }
         reportAdd();
