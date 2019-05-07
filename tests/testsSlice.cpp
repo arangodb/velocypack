@@ -1154,11 +1154,11 @@ TEST(SliceTest, StringEmpty) {
 TEST(SliceTest, StringLengths) {
   Builder builder;
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     builder.clear();
 
     std::string temp;
-    for (size_t j = 0; j < i; ++j) {
+    for (std::size_t j = 0; j < i; ++j) {
       temp.push_back('x');
     }
 
@@ -1938,7 +1938,7 @@ TEST(SliceTest, EqualToDirectInvocationLongStrings) {
 }
 
 TEST(SliceTest, Hashing) {
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     if (SliceStaticData::FixedTypeLengths[i] != 1) {
       // not a one-byte type
       continue;

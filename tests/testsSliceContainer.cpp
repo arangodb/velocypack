@@ -95,7 +95,7 @@ TEST(SliceContainerTest, FromSlice) {
 
 TEST(SliceContainerTest, FromSliceLonger) {
   std::string s("[-1");
-  for (size_t i = 0; i < 2000; ++i) {   
+  for (std::size_t i = 0; i < 2000; ++i) {   
     s.push_back(',');
     s.append(std::to_string(i));
   } 

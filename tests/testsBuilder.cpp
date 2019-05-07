@@ -1165,7 +1165,7 @@ TEST(BuilderTest, ObjectCompact) {
 TEST(BuilderTest, ArrayCompactBytesizeBelowThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
-  for (size_t i = 0; i < 124; ++i) {
+  for (std::size_t i = 0; i < 124; ++i) {
     b.add(Value(uint64_t(i % 10)));
   }
   b.close();
@@ -1177,7 +1177,7 @@ TEST(BuilderTest, ArrayCompactBytesizeBelowThreshold) {
 
   ASSERT_EQ(0x13, result[0]);
   ASSERT_EQ(0x7f, result[1]);
-  for (size_t i = 0; i < 124; ++i) {
+  for (std::size_t i = 0; i < 124; ++i) {
     ASSERT_EQ(0x30 + (i % 10), result[2 + i]);
   }
   ASSERT_EQ(0x7c, result[126]);
@@ -1186,7 +1186,7 @@ TEST(BuilderTest, ArrayCompactBytesizeBelowThreshold) {
 TEST(BuilderTest, ArrayCompactBytesizeAboveThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
-  for (size_t i = 0; i < 125; ++i) {
+  for (std::size_t i = 0; i < 125; ++i) {
     b.add(Value(uint64_t(i % 10)));
   }
   b.close();
@@ -1199,7 +1199,7 @@ TEST(BuilderTest, ArrayCompactBytesizeAboveThreshold) {
   ASSERT_EQ(0x13, result[0]);
   ASSERT_EQ(0x81, result[1]);
   ASSERT_EQ(0x01, result[2]);
-  for (size_t i = 0; i < 125; ++i) {
+  for (std::size_t i = 0; i < 125; ++i) {
     ASSERT_EQ(0x30 + (i % 10), result[3 + i]);
   }
   ASSERT_EQ(0x7d, result[128]);
@@ -1208,7 +1208,7 @@ TEST(BuilderTest, ArrayCompactBytesizeAboveThreshold) {
 TEST(BuilderTest, ArrayCompactLengthBelowThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
-  for (size_t i = 0; i < 127; ++i) {
+  for (std::size_t i = 0; i < 127; ++i) {
     b.add(Value("aaa"));
   }
   b.close();
@@ -1221,7 +1221,7 @@ TEST(BuilderTest, ArrayCompactLengthBelowThreshold) {
   ASSERT_EQ(0x13, result[0]);
   ASSERT_EQ(0x80, result[1]);
   ASSERT_EQ(0x04, result[2]);
-  for (size_t i = 0; i < 127; ++i) {
+  for (std::size_t i = 0; i < 127; ++i) {
     ASSERT_EQ(0x43, result[3 + i * 4]);
   }
   ASSERT_EQ(0x7f, result[511]);
@@ -1230,7 +1230,7 @@ TEST(BuilderTest, ArrayCompactLengthBelowThreshold) {
 TEST(BuilderTest, ArrayCompactLengthAboveThreshold) {
   Builder b;
   b.add(Value(ValueType::Array, true));
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     b.add(Value("aaa"));
   }
   b.close();
@@ -1243,7 +1243,7 @@ TEST(BuilderTest, ArrayCompactLengthAboveThreshold) {
   ASSERT_EQ(0x13, result[0]);
   ASSERT_EQ(0x85, result[1]);
   ASSERT_EQ(0x04, result[2]);
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     ASSERT_EQ(0x43, result[3 + i * 4]);
   }
   ASSERT_EQ(0x01, result[515]);
@@ -1484,7 +1484,7 @@ TEST(BuilderTest, Int1Limits) {
                       0x80000000000000LL,
                       arangodb::velocypack::toInt64(0x8000000000000000ULL),
                       0x7fffffffffffffffLL};
-  for (size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
+  for (std::size_t i = 0; i < sizeof(values) / sizeof(int64_t); i++) {
     int64_t v = values[i];
     Builder b;
     b.add(Value(v));
@@ -1497,7 +1497,7 @@ TEST(BuilderTest, Int1Limits) {
 
 TEST(BuilderTest, StringChar) {
   char const* value = "der fuxx ging in den wald und aß pilze";
-  size_t const valueLen = strlen(value);
+  std::size_t const valueLen = strlen(value);
   Builder b;
   b.add(Value(value));
 
@@ -2697,7 +2697,7 @@ TEST(BuilderTest, EmptyAttributeNamesNotThere) {
 TEST(BuilderTest, AddHundredNones) {
   Builder b;
   b.openArray(false);
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     b.add(Slice::noneSlice());
   }
   b.close();
@@ -2705,7 +2705,7 @@ TEST(BuilderTest, AddHundredNones) {
   Slice s = b.slice();
 
   ASSERT_EQ(100UL, s.length());
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     ASSERT_EQ(ValueType::None, s.at(i).type());
   }
 }
@@ -2713,7 +2713,7 @@ TEST(BuilderTest, AddHundredNones) {
 TEST(BuilderTest, AddHundredNonesCompact) {
   Builder b;
   b.openArray(true);
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     b.add(Slice::noneSlice());
   }
   b.close();
@@ -2721,7 +2721,7 @@ TEST(BuilderTest, AddHundredNonesCompact) {
   Slice s = b.slice();
 
   ASSERT_EQ(100UL, s.length());
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     ASSERT_EQ(ValueType::None, s.at(i).type());
   }
 }
@@ -2729,7 +2729,7 @@ TEST(BuilderTest, AddHundredNonesCompact) {
 TEST(BuilderTest, AddThousandNones) {
   Builder b;
   b.openArray(false);
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     b.add(Slice::noneSlice());
   }
   b.close();
@@ -2737,7 +2737,7 @@ TEST(BuilderTest, AddThousandNones) {
   Slice s = b.slice();
 
   ASSERT_EQ(1000UL, s.length());
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     ASSERT_EQ(ValueType::None, s.at(i).type());
   }
 }
@@ -2745,7 +2745,7 @@ TEST(BuilderTest, AddThousandNones) {
 TEST(BuilderTest, AddThousandNonesCompact) {
   Builder b;
   b.openArray(true);
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     b.add(Slice::noneSlice());
   }
   b.close();
@@ -2753,7 +2753,7 @@ TEST(BuilderTest, AddThousandNonesCompact) {
   Slice s = b.slice();
 
   ASSERT_EQ(1000UL, s.length());
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     ASSERT_EQ(ValueType::None, s.at(i).type());
   }
 }

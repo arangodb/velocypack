@@ -45,7 +45,7 @@ TEST(BuilderTest, FixedArraysSizes) {
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 128 - 2; i++) {
+  for (std::size_t i = 0; i < 128 - 2; i++) {
     x.push_back('x');
   }
   // Now x has length 128-2 and thus will use 127 bytes as an entry in an array
@@ -91,7 +91,7 @@ TEST(BuilderTest, ArraysSizes) {
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 128 - 2; i++) {
+  for (std::size_t i = 0; i < 128 - 2; i++) {
     x.push_back('x');
   }
   // Now x has length 128-2 and thus will use 127 bytes as an entry in an array
@@ -138,7 +138,7 @@ TEST(BuilderTest, ObjectsSizesSorted) {
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
-  for (size_t i = 0; i < 118 - 1; i++) {
+  for (std::size_t i = 0; i < 118 - 1; i++) {
     x.push_back('x');
   }
   // Now x has length 118-1 and thus will use 118 bytes as an entry in an object

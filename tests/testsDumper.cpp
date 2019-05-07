@@ -738,7 +738,7 @@ TEST(StringDumperTest, CustomWithCallbackDefaultHandler) {
   b.openObject();
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
-  for (size_t i = 1; i <= 8; i++) {
+  for (std::size_t i = 1; i <= 8; i++) {
     p[i] = i + '@';
   }
   b.close();
@@ -762,7 +762,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   b.openObject();
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
-  for (size_t i = 1; i <= 8; i++) {
+  for (std::size_t i = 1; i <= 8; i++) {
     p[i] = i + '@';
   }
   b.close();
@@ -773,7 +773,7 @@ TEST(StringDumperTest, CustomWithCallback) {
       ASSERT_EQ(0xf3UL, value.head());
       sawCustom = true;
       dumper->sink()->push_back('"');
-      for (size_t i = 1; i <= 8; i++) {
+      for (std::size_t i = 1; i <= 8; i++) {
         dumper->sink()->push_back(value.start()[i]);
       }
       dumper->sink()->push_back('"');

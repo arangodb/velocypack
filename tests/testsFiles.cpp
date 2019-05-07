@@ -56,7 +56,7 @@ static std::string readFile(std::string filename) {
 #endif
   filename = "tests" + separator + "jsonSample" + separator + filename;
 
-  for (size_t i = 0; i < 3; ++i) {
+  for (std::size_t i = 0; i < 3; ++i) {
     try {
       return tryReadFile(filename);
     } catch (...) {

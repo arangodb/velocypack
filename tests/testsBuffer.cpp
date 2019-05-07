@@ -52,7 +52,7 @@ TEST(BufferTest, CreateAndAppendLong) {
   std::string const value("this is a test string");
   Buffer<uint8_t> buffer;
 
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -77,7 +77,7 @@ TEST(BufferTest, CopyConstructLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -104,7 +104,7 @@ TEST(BufferTest, CopyAssignLongValue) {
   std::string const value("this is a test string");
 
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -119,12 +119,12 @@ TEST(BufferTest, CopyAssignDiscardOwnValue) {
   std::string const value("this is a test string");
 
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
   Buffer<char> buffer2;
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     buffer2.append(value.c_str(), value.size());
   }
 
@@ -150,7 +150,7 @@ TEST(BufferTest, MoveConstructLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -177,7 +177,7 @@ TEST(BufferTest, MoveAssignLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -192,12 +192,12 @@ TEST(BufferTest, MoveAssignDiscardOwnValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
   Buffer<char> buffer2;
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     buffer2.append(value.c_str(), value.size());
   }
 

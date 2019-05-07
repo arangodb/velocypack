@@ -82,7 +82,7 @@ TEST(LookupTest, HasKeyShortObjectCompact) {
 
 TEST(LookupTest, HasKeyLongObject) {
   std::string value("{");
-  for (size_t i = 4; i < 1024; ++i) {
+  for (std::size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
       value.append(",");
     }
@@ -114,7 +114,7 @@ TEST(LookupTest, HasKeyLongObject) {
 
 TEST(LookupTest, HasKeyLongObjectCompact) {
   std::string value("{");
-  for (size_t i = 4; i < 1024; ++i) {
+  for (std::size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
       value.append(",");
     }
@@ -453,7 +453,7 @@ TEST(LookupTest, LookupSubattributesCompact) {
 
 TEST(LookupTest, LookupLongObject) {
   std::string value("{");
-  for (size_t i = 4; i < 1024; ++i) {
+  for (std::size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
       value.append(",");
     }
@@ -511,7 +511,7 @@ TEST(LookupTest, LookupLongObject) {
 
 TEST(LookupTest, LookupLongObjectCompact) {
   std::string value("{");
-  for (size_t i = 4; i < 1024; ++i) {
+  for (std::size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
       value.append(",");
     }
@@ -574,7 +574,7 @@ TEST(LookupTest, LookupLongObjectCompact) {
 
 TEST(LookupTest, LookupLongObjectUnsorted) {
   std::string value("{");
-  for (size_t i = 4; i < 1024; ++i) {
+  for (std::size_t i = 4; i < 1024; ++i) {
     if (i > 4) {
       value.append(",");
     }
@@ -632,7 +632,7 @@ TEST(LookupTest, LookupLongObjectUnsorted) {
 
 TEST(LookupTest, LookupLinear) {
   std::string value("{");
-  for (size_t i = 0; i < 4; ++i) {
+  for (std::size_t i = 0; i < 4; ++i) {
     if (i > 0) {
       value.append(",");
     }
@@ -668,7 +668,7 @@ TEST(LookupTest, LookupLinear) {
 
 TEST(LookupTest, LookupBinary) {
   std::string value("{");
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     if (i > 0) {
       value.append(",");
     }
@@ -684,7 +684,7 @@ TEST(LookupTest, LookupBinary) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
@@ -696,7 +696,7 @@ TEST(LookupTest, LookupBinary) {
 
 TEST(LookupTest, LookupBinaryCompact) {
   std::string value("{");
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     if (i > 0) {
       value.append(",");
     }
@@ -717,7 +717,7 @@ TEST(LookupTest, LookupBinaryCompact) {
 
   ASSERT_EQ(0x14, s.head());
 
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
@@ -729,12 +729,12 @@ TEST(LookupTest, LookupBinaryCompact) {
 
 TEST(LookupTest, LookupBinarySamePrefix) {
   std::string value("{");
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     if (i > 0) {
       value.append(",");
     }
     value.append("\"test");
-    for (size_t j = 0; j < i; ++j) {
+    for (std::size_t j = 0; j < i; ++j) {
       value.append("x");
     }
     value.append("\":");
@@ -747,9 +747,9 @@ TEST(LookupTest, LookupBinarySamePrefix) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  for (size_t i = 0; i < 128; ++i) {
+  for (std::size_t i = 0; i < 128; ++i) {
     std::string key = "test";
-    for (size_t j = 0; j < i; ++j) {
+    for (std::size_t j = 0; j < i; ++j) {
       key.append("x");
     }
     Slice v = s.get(key);
@@ -761,7 +761,7 @@ TEST(LookupTest, LookupBinarySamePrefix) {
 
 TEST(LookupTest, LookupBinaryLongObject) {
   std::string value("{");
-  for (size_t i = 0; i < 1127; ++i) {
+  for (std::size_t i = 0; i < 1127; ++i) {
     if (i > 0) {
       value.append(",");
     }
@@ -777,7 +777,7 @@ TEST(LookupTest, LookupBinaryLongObject) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
 
-  for (size_t i = 0; i < 1127; ++i) {
+  for (std::size_t i = 0; i < 1127; ++i) {
     std::string key = "test";
     key.append(std::to_string(i));
     Slice v = s.get(key);
