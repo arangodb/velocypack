@@ -47,6 +47,7 @@ set(VELOCY_SOURCE
     src/StringRef.cpp
     src/Utf8Helper.cpp
     src/Validator.cpp
+    src/Value.cpp
     src/ValueType.cpp
     src/Version.cpp
     src/asm-functions.cpp

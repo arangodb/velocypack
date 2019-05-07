@@ -1056,7 +1056,7 @@ TEST(ValidatorTest, ArrayFourBytesTooShort) {
   std::string const value("\x04\x05\x00\x00\x00\x18", 6);
   std::string temp;
 
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1110,7 +1110,7 @@ TEST(ValidatorTest, ArrayEightBytesTooShortBytesize) {
   std::string const value("\x05\x0a\x00\x00\x00\x00\x00\x00\x00\x00", 10);
   std::string temp;
 
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1186,7 +1186,7 @@ TEST(ValidatorTest, ArrayOneByteIndexedTooShort) {
   std::string const value("\x06\x05\x01\x18\x03", 5);
   std::string temp;
 
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1197,7 +1197,7 @@ TEST(ValidatorTest, ArrayOneByteIndexedTooShort) {
 TEST(ValidatorTest, ArrayOneByteIndexedIndexOutOfBounds) {
   std::string value("\x06\x05\x01\x18\x00", 5);
   
-  for (size_t i = 0; i < value.size() + 10; ++i) {
+  for (std::size_t i = 0; i < value.size() + 10; ++i) {
     if (i == 3) {
       continue;
     }
@@ -1279,7 +1279,7 @@ TEST(ValidatorTest, ArrayTwoByteIndexedTooShort) {
   std::string const value("\x07\x08\x00\x01\x00\x18\x05\x00", 8);
   std::string temp;
 
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1332,7 +1332,7 @@ TEST(ValidatorTest, ArrayTwoByteIndexedInvalidLength7) {
 TEST(ValidatorTest, ArrayTwoByteIndexedIndexOutOfBounds) {
   std::string value("\x07\x08\x00\x01\x00\x18\x00\x00", 8);
   
-  for (size_t i = 0; i < value.size() + 10; ++i) {
+  for (std::size_t i = 0; i < value.size() + 10; ++i) {
     if (i == 5) {
       continue;
     }
@@ -1396,7 +1396,7 @@ TEST(ValidatorTest, ArrayFourByteIndexedTooShort) {
   std::string const value("\x08\x0e\x00\x00\x00\x01\x00\x00\x00\x18\x09\x00\x00\x00", 14);
   std::string temp;
   
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1414,7 +1414,7 @@ TEST(ValidatorTest, ArrayFourByteIndexedInvalidLength) {
 TEST(ValidatorTest, ArrayFourByteIndexedIndexOutOfBounds) {
   std::string value("\x08\x0e\x00\x00\x00\x01\x00\x00\x00\x18\x00\x00\x00\x00", 14);
   
-  for (size_t i = 0; i < value.size() + 10; ++i) {
+  for (std::size_t i = 0; i < value.size() + 10; ++i) {
     if (i == 9) {
       continue;
     }
@@ -1478,7 +1478,7 @@ TEST(ValidatorTest, ArrayEightByteIndexedTooShort) {
   std::string const value("\x09\x1a\x00\x00\x00\x00\x00\x00\x00\x18\x09\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00", 26);
   std::string temp;
 
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1496,7 +1496,7 @@ TEST(ValidatorTest, ArrayEightByteIndexedInvalidLength) {
 TEST(ValidatorTest, ArrayEightByteIndexedIndexOutOfBounds) {
   std::string value("\x09\x1a\x00\x00\x00\x00\x00\x00\x00\x18\x09\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00", 26);
   
-  for (size_t i = 0; i < value.size() + 10; ++i) {
+  for (std::size_t i = 0; i < value.size() + 10; ++i) {
     if (i == 9) {
       continue;
     }
@@ -1650,7 +1650,7 @@ TEST(ValidatorTest, ArrayCompactNrItemsWrong3) {
 TEST(ValidatorTest, ArrayCompactManyEntries) {
   Builder b;
   b.openArray(true);
-  for (size_t i = 0; i < 2048; ++i) {
+  for (std::size_t i = 0; i < 2048; ++i) {
     b.add(Value(i));
   }
   b.close();
@@ -1820,7 +1820,7 @@ TEST(ValidatorTest, ObjectCompactStopInKey) {
 TEST(ValidatorTest, ObjectCompactManyEntries) {
   Builder b;
   b.openObject(true);
-  for (size_t i = 0; i < 2048; ++i) {
+  for (std::size_t i = 0; i < 2048; ++i) {
     std::string key = "test" + std::to_string(i);
     b.add(key, Value(i));
   }
@@ -1879,7 +1879,7 @@ TEST(ValidatorTest, ObjectOneByteTooShort) {
   std::string const value("\x0b\x06\x01\x40\x18\x03", 6);
   std::string temp;
   
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -1932,7 +1932,7 @@ TEST(ValidatorTest, ObjectOneByteStopInKey) {
 TEST(ValidatorTest, ObjectOneByteSomeEntries) {
   Builder b;
   b.openObject();
-  for (size_t i = 0; i < 8; ++i) {
+  for (std::size_t i = 0; i < 8; ++i) {
     std::string key = "t" + std::to_string(i);
     b.add(key, Value(i));
   }
@@ -1947,7 +1947,7 @@ TEST(ValidatorTest, ObjectOneByteSomeEntries) {
 TEST(ValidatorTest, ObjectOneByteMoreEntries) {
   Builder b;
   b.openObject();
-  for (size_t i = 0; i < 17; ++i) {
+  for (std::size_t i = 0; i < 17; ++i) {
     std::string key = "t" + std::to_string(i);
     b.add(key, Value(i));
   }
@@ -2002,7 +2002,7 @@ TEST(ValidatorTest, ObjectTwoByteTooShort) {
   std::string const value("\x0c\x06\x00\x01\x00\x40\x18\x05", 8);
   std::string temp;
   
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -2054,12 +2054,12 @@ TEST(ValidatorTest, ObjectTwoByteStopInKey) {
 
 TEST(ValidatorTest, ObjectTwoByteSomeEntries) {
   std::string prefix;
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     prefix.push_back('x');
   }
   Builder b;
   b.openObject();
-  for (size_t i = 0; i < 8; ++i) {
+  for (std::size_t i = 0; i < 8; ++i) {
     std::string key = prefix + std::to_string(i);
     b.add(key, Value(i));
   }
@@ -2074,7 +2074,7 @@ TEST(ValidatorTest, ObjectTwoByteSomeEntries) {
 TEST(ValidatorTest, ObjectTwoByteMoreEntries) {
   Builder b;
   b.openObject();
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     std::string key = "test" + std::to_string(i);
     b.add(key, Value(i));
   }
@@ -2111,7 +2111,7 @@ TEST(ValidatorTest, ObjectFourByteTooShort) {
   std::string const value("\x0d\x0f\x00\x00\x00\x01\x00\x00\x00\x40\x18\x09\x00\x00\x00", 15);
   std::string temp;
   
-  for (size_t i = 0; i < value.size() - 1; ++i) {
+  for (std::size_t i = 0; i < value.size() - 1; ++i) {
     temp.push_back(value.at(i));
 
     Validator validator;
@@ -2164,7 +2164,7 @@ TEST(ValidatorTest, ObjectFourByteStopInKey) {
 TEST(ValidatorTest, ObjectFourByteManyEntries) {
   Builder b;
   b.openObject();
-  for (size_t i = 0; i < 65536; ++i) {
+  for (std::size_t i = 0; i < 65536; ++i) {
     std::string key = "test" + std::to_string(i);
     b.add(key, Value(i));
   }

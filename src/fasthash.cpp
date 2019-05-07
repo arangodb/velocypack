@@ -36,7 +36,7 @@ static inline uint64_t mix(uint64_t h) {
   return h;
 }
 
-uint64_t fasthash64(const void *buf, size_t len, uint64_t seed) {
+uint64_t fasthash64(const void *buf, std::size_t len, uint64_t seed) {
   const uint64_t m = 0x880355f21e6d1965ULL;
   const uint64_t *pos = (const uint64_t *)buf;
   const uint64_t *end = pos + (len / 8);

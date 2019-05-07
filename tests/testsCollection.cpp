@@ -366,7 +366,7 @@ TEST(CollectionTest, ForEachArray) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   Collection::forEach(s,
                       [&seen](Slice const& slice, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
@@ -395,7 +395,7 @@ TEST(CollectionTest, ForEachArrayAbort) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   Collection::forEach(s, [&seen](Slice const&, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
@@ -416,7 +416,7 @@ TEST(CollectionTest, IterateArrayValues) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t state = 0;
+  std::size_t state = 0;
   Collection::forEach(s, [&state](Slice const& value, ValueLength) -> bool {
     switch (state++) {
       case 0:
@@ -498,7 +498,7 @@ TEST(CollectionTest, FilterArray) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   Builder b = Collection::filter(
       s, [&seen](Slice const& slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -585,7 +585,7 @@ TEST(CollectionTest, FindArrayFirst) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   Slice found = Collection::find(s, [&seen](Slice const&, ValueLength) {
     ++seen;
     return true;
@@ -601,7 +601,7 @@ TEST(CollectionTest, FindArrayLast) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   Slice found = Collection::find(s, [&seen](Slice const&, ValueLength index) {
     ++seen;
     if (index == 2) {
@@ -648,7 +648,7 @@ TEST(CollectionTest, ContainsArrayFirst) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength) {
     ++seen;
     return true;
@@ -662,7 +662,7 @@ TEST(CollectionTest, ContainsArrayLast) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength index) {
     ++seen;
     if (index == 2) {
@@ -785,7 +785,7 @@ TEST(CollectionTest, AllArrayFirstFalse) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_FALSE(
       Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -803,7 +803,7 @@ TEST(CollectionTest, AllArrayLastFalse) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_FALSE(
       Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -824,7 +824,7 @@ TEST(CollectionTest, AllArrayTrue) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_TRUE(
       Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -870,7 +870,7 @@ TEST(CollectionTest, AnyArrayLastTrue) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_TRUE(
       Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -891,7 +891,7 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   ASSERT_TRUE(
       Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
@@ -1223,7 +1223,7 @@ TEST(CollectionTest, KeepNonExistingAttributesUsingSet) {
 
 TEST(CollectionTest, KeepManyAttributes) {
   std::string value("{");
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1238,7 +1238,7 @@ TEST(CollectionTest, KeepManyAttributes) {
   Slice s(b->start());
 
   std::vector<std::string> toKeep;
-  for (size_t i = 0; i < 30; ++i) {
+  for (std::size_t i = 0; i < 30; ++i) {
     std::string key = "test" + std::to_string(i);
     toKeep.push_back(key);
   }
@@ -1248,7 +1248,7 @@ TEST(CollectionTest, KeepManyAttributes) {
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(30U, s.length());
 
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     std::string key = "test" + std::to_string(i);
     if (i < 30) {
       ASSERT_TRUE(s.hasKey(key));
@@ -1365,7 +1365,7 @@ TEST(CollectionTest, RemoveSomeAttributesUsingSet) {
 
 TEST(CollectionTest, RemoveManyAttributes) {
   std::string value("{");
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1380,7 +1380,7 @@ TEST(CollectionTest, RemoveManyAttributes) {
   Slice s(b->start());
 
   std::vector<std::string> toRemove;
-  for (size_t i = 0; i < 30; ++i) {
+  for (std::size_t i = 0; i < 30; ++i) {
     std::string key = "test" + std::to_string(i);
     toRemove.push_back(key);
   }
@@ -1390,7 +1390,7 @@ TEST(CollectionTest, RemoveManyAttributes) {
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(70U, s.length());
 
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     std::string key = "test" + std::to_string(i);
     if (i >= 30) {
       ASSERT_TRUE(s.hasKey(key));

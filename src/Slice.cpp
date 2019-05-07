@@ -376,11 +376,11 @@ int64_t Slice::getSmallInt() const {
 }
 
 int Slice::compareString(StringRef const& value) const {
-  size_t const length = value.size();
+  std::size_t const length = value.size();
   ValueLength keyLength;
   char const* k = getString(keyLength);
-  size_t const compareLength =
-      (std::min)(static_cast<size_t>(keyLength), length);
+  std::size_t const compareLength =
+      (std::min)(static_cast<std::size_t>(keyLength), length);
   int res = memcmp(k, value.data(), compareLength);
 
   if (res == 0) {
@@ -392,11 +392,11 @@ int Slice::compareString(StringRef const& value) const {
 }
 
 int Slice::compareStringUnchecked(StringRef const& value) const noexcept {
-  size_t const length = value.size();
+  std::size_t const length = value.size();
   ValueLength keyLength;
   char const* k = getStringUnchecked(keyLength);
-  size_t const compareLength =
-      (std::min)(static_cast<size_t>(keyLength), length);
+  std::size_t const compareLength =
+      (std::min)(static_cast<std::size_t>(keyLength), length);
   int res = memcmp(k, value.data(), compareLength);
 
   if (res == 0) {
@@ -410,14 +410,14 @@ int Slice::compareStringUnchecked(StringRef const& value) const noexcept {
 bool Slice::isEqualString(StringRef const& attribute) const {
   ValueLength keyLength;
   char const* k = getString(keyLength);
-  return (static_cast<size_t>(keyLength) == attribute.size()) &&
+  return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
           (memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 bool Slice::isEqualStringUnchecked(StringRef const& attribute) const noexcept {
   ValueLength keyLength;
   char const* k = getStringUnchecked(keyLength);
-  return (static_cast<size_t>(keyLength) == attribute.size()) &&
+  return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
           (memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 

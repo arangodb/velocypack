@@ -702,7 +702,7 @@ TEST(IteratorTest, IterateObjectKeys) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t state = 0;
+  std::size_t state = 0;
   ObjectIterator it(s);
 
   while (it.valid()) {
@@ -755,7 +755,7 @@ TEST(IteratorTest, IterateObjectKeysCompact) {
 
   ASSERT_EQ(0x14, s.head());
 
-  size_t state = 0;
+  std::size_t state = 0;
   ObjectIterator it(s);
 
   while (it.valid()) {
@@ -856,7 +856,7 @@ TEST(IteratorTest, EmptyArrayIteratorRangeBasedFor) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(false);
     ASSERT_FALSE(it.isNumber());  // only in here to please the compiler
@@ -871,7 +871,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedFor) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
@@ -887,7 +887,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConst) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto const it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
@@ -903,7 +903,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto const& it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
@@ -924,7 +924,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForCompact) {
 
   ASSERT_EQ(0x13, s.head());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
@@ -940,7 +940,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForEmpty) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
     ASSERT_TRUE(false);
     ASSERT_FALSE(it.value.isNumber());  // only in here to please the compiler
@@ -955,7 +955,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
@@ -979,7 +979,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto const it : ObjectIterator(s)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
@@ -1003,7 +1003,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
   parser.parse(value);
   Slice s(parser.start());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto const& it : ObjectIterator(s)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
@@ -1032,7 +1032,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
 
   ASSERT_EQ(0x14, s.head());
 
-  size_t seen = 0;
+  std::size_t seen = 0;
   for (auto it : ObjectIterator(s)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {

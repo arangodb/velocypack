@@ -253,7 +253,7 @@ TEST(StringRefTest, CharacterAccess) {
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('x', s.back());
 
-  for (size_t i = 0; i < value.size(); ++i) {
+  for (std::size_t i = 0; i < value.size(); ++i) {
     ASSERT_EQ(value[i], s[i]);
     ASSERT_EQ(value.at(i), s.at(i));
   }
@@ -311,7 +311,7 @@ TEST(StringRefTest, Find) {
   std::string const value("the-quick-brown-foxx");
   StringRef s(value);
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     ASSERT_EQ(value.find(static_cast<char>(i)), s.find(static_cast<char>(i)));
   }
 }
@@ -320,7 +320,7 @@ TEST(StringRefTest, RFind) {
   std::string const value("the-quick-brown-foxx");
   StringRef s(value);
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     ASSERT_EQ(value.rfind(static_cast<char>(i)), s.rfind(static_cast<char>(i)));
   }
 }

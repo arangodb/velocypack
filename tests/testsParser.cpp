@@ -1027,7 +1027,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
 
   std::string value;
   value.push_back('"');
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     value.push_back(static_cast<unsigned char>(0x80));
   }
   value.push_back('"');
@@ -1534,7 +1534,7 @@ TEST(ParserTest, BrokenArray3) {
 
 TEST(ParserTest, ShortArrayMembers) {
   std::string value("[");
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1552,7 +1552,7 @@ TEST(ParserTest, ShortArrayMembers) {
   checkBuild(s, ValueType::Array, 1019);
   ASSERT_EQ(255ULL, s.length());
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
@@ -1573,7 +1573,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   single.append(single);  // 1024 bytes
 
   std::string value("[");
-  for (size_t i = 0; i < 65; ++i) {
+  for (std::size_t i = 0; i < 65; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1593,7 +1593,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   checkBuild(s, ValueType::Array, 67154);
   ASSERT_EQ(65ULL, s.length());
 
-  for (size_t i = 0; i < 65; ++i) {
+  for (std::size_t i = 0; i < 65; ++i) {
     Slice ss = s[i];
     checkBuild(ss, ValueType::String, 1033);
     ValueLength len;
@@ -1605,7 +1605,7 @@ TEST(ParserTest, LongArrayFewMembers) {
 
 TEST(ParserTest, LongArrayManyMembers) {
   std::string value("[");
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1623,7 +1623,7 @@ TEST(ParserTest, LongArrayManyMembers) {
   checkBuild(s, ValueType::Array, 1023);
   ASSERT_EQ(256ULL, s.length());
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
@@ -1949,7 +1949,7 @@ TEST(ParserTest, ObjectMissingQuotes) {
 
 TEST(ParserTest, ShortObjectMembers) {
   std::string value("{");
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1976,7 +1976,7 @@ TEST(ParserTest, ShortObjectMembers) {
   checkBuild(s, ValueType::Object, 3059);
   ASSERT_EQ(255ULL, s.length());
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2011,7 +2011,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   single.append(single);  // 1024 bytes
 
   std::string value("{");
-  for (size_t i = 0; i < 64; ++i) {
+  for (std::size_t i = 0; i < 64; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -2039,7 +2039,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   checkBuild(s, ValueType::Object, 66889);
   ASSERT_EQ(64ULL, s.length());
 
-  for (size_t i = 0; i < 64; ++i) {
+  for (std::size_t i = 0; i < 64; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2063,7 +2063,7 @@ TEST(ParserTest, LongObjectFewMembers) {
 
 TEST(ParserTest, LongObjectManyMembers) {
   std::string value("{");
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -2090,7 +2090,7 @@ TEST(ParserTest, LongObjectManyMembers) {
   checkBuild(s, ValueType::Object, 3071);
   ASSERT_EQ(256ULL, s.length());
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2343,7 +2343,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
 
   std::string value;
   value.push_back('"');
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     value.push_back(static_cast<unsigned char>(0x80));
   }
   value.push_back('"');
