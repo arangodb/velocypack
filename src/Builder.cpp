@@ -37,6 +37,20 @@
 using namespace arangodb::velocypack;
 
 namespace {
+  
+// struct used when sorting index tables for objects:
+struct SortEntry {
+  uint8_t const* nameStart;
+  uint64_t nameSize;
+  uint64_t offset;
+};
+
+// thread-local, reusable buffer used for sorting medium to big index entries
+thread_local std::vector<SortEntry> sortEntries; 
+
+// thread-local, reusable set to track usage of duplicate keys
+thread_local std::unordered_set<StringRef> duplicateKeys;
+
 // Find the actual bytes of the attribute name of the VPack value
 // at position base, also determine the length len of the attribute.
 // This takes into account the different possibilities for the format
@@ -229,20 +243,22 @@ void Builder::sortObjectIndexShort(uint8_t* objBase,
 
 void Builder::sortObjectIndexLong(uint8_t* objBase,
                                   std::vector<ValueLength>& offsets) {
-  _sortEntries.clear();
+  // start with clean sheet in case the previous run left something
+  // in the vector (e.g. when bailing out with an exception)
+  sortEntries.clear();
 
   std::size_t const n = offsets.size();
   VELOCYPACK_ASSERT(n > 1);
-  _sortEntries.reserve(n);
+  sortEntries.reserve(n);
   for (std::size_t i = 0; i < n; i++) {
     SortEntry e;
     e.offset = offsets[i];
     e.nameStart = ::findAttrName(objBase + e.offset, e.nameSize);
-    _sortEntries.push_back(e);
+    sortEntries.push_back(e);
   }
-  VELOCYPACK_ASSERT(_sortEntries.size() == n);
-  std::sort(_sortEntries.begin(), _sortEntries.end(), [](SortEntry const& a, 
-                                                         SortEntry const& b) 
+  VELOCYPACK_ASSERT(sortEntries.size() == n);
+  std::sort(sortEntries.begin(), sortEntries.end(), [](SortEntry const& a, 
+                                                       SortEntry const& b) 
 #ifdef VELOCYPACK_64BIT
     noexcept
 #endif
@@ -258,9 +274,10 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
 
   // copy back the sorted offsets
   for (std::size_t i = 0; i < n; i++) {
-    offsets[i] = _sortEntries[i].offset;
+    offsets[i] = sortEntries[i].offset;
   }
-  _sortEntries.clear();
+
+  sortEntries.clear();
 }
 
 Builder& Builder::closeEmptyArrayOrObject(ValueLength tos, bool isArray) {
@@ -1042,17 +1059,21 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
       it.next();
     } while (it.valid());
   } else {
-    std::unordered_set<StringRef> keys;
+    duplicateKeys.clear();
     do {
       Slice const key = it.key(true);
       // key(true) guarantees a String as returned type
       VELOCYPACK_ASSERT(key.isString());
-      if (VELOCYPACK_UNLIKELY(!keys.emplace(key).second)) {
+      if (VELOCYPACK_UNLIKELY(!duplicateKeys.emplace(key).second)) {
         // identical key
         return false;
       }
       it.next();
     } while (it.valid());
+  
+    if (duplicateKeys.size() * sizeof(StringRef) >= 32 * 1024) {
+      duplicateKeys.clear();
+    }
   }
   
   // all keys unique
