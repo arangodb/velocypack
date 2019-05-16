@@ -67,15 +67,15 @@ XXH32        6.8 GB/s            6.0 GB/s
 #ifndef XXHASH_H_5627135585666179
 #define XXHASH_H_5627135585666179 1
 
+#include <cstddef>   /* size_t */
+
 #if defined (__cplusplus)
 extern "C" {
 #endif
 
-
 /* ****************************
 *  Definitions
 ******************************/
-#include <cstddef>   /* size_t */
 typedef enum { XXH_OK=0, XXH_ERROR } XXH_errorcode;
 
 
