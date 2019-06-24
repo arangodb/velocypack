@@ -39,13 +39,15 @@ using namespace arangodb::velocypack;
 ValueLength const Collection::NotFound = UINT64_MAX;
   
 // fully append an array to the builder
-static void appendArray(Builder& builder, Slice const& slice) {
+Builder& Collection::appendArray(Builder& builder, Slice const& slice) {
   ArrayIterator it(slice);
 
   while (it.valid()) {
     builder.add(it.value());
     it.next();
   }
+
+  return builder;
 }
 
 // convert a vector of strings into an unordered_set of strings
@@ -135,6 +137,28 @@ bool Collection::contains(Slice const& slice, Slice const& other) {
   }
 
   return false;
+}
+
+bool Collection::containsObject(Slice const& slice, Slice const& other) {
+  ObjectIterator it(other);
+
+  while (it.valid()) {
+    Slice v = slice.get(it.key(true).stringRef());
+
+    if(v.isNone()) {
+      return false;
+    }
+
+    if(!v.equals(it.value()))
+    {
+      // TODO: recursive comparison (?)
+      return false;
+    }
+
+    it.next();
+  }
+
+  return true;
 }
 
 ValueLength Collection::indexOf(Slice const& slice, Slice const& other) {

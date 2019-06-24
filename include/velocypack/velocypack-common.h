@@ -94,8 +94,10 @@
 #ifdef VELOCYPACK_XXHASH
 // forward for XXH64 function declared elsewhere
 extern "C" unsigned long long XXH64(void const*, std::size_t, unsigned long long);
+extern "C" unsigned int XXH32(const void* input, size_t len, unsigned int seed);
 
 #define VELOCYPACK_HASH(mem, size, seed) XXH64(mem, size, seed)
+#define VELOCYPACK_HASH32(mem, size, seed) XXH32(mem, size, seed)
 #endif
 
 #ifdef VELOCYPACK_FASTHASH

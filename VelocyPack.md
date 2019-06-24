@@ -104,7 +104,8 @@ reference, for arrays and objects see below for details:
                 follow that encode in a little endian way the length of
                 the mantissa in bytes. After that, same as positive long
                 packed BCD-encoded float above.
-  - 0xd8-0xef : reserved
+  - 0xd8-0xed : reserved
+  - 0xee-0xef : value tagging for logical types
   - 0xf0-0xff : custom types
 
 
@@ -544,6 +545,40 @@ byte and then in the end has to "erase" the trailing 0 by using exponent
 
 There for the unholy nibble problem is solved and parsing (and indeed
 dumping) can be efficient.
+
+
+## Tagging
+
+Types 0xee-0xef are used for tagging of values to implement logical
+types.
+
+For example, if type 0x1c did not exist, the database driver could
+serialize a timestamp object (Date in JavaScript, Instant in Java, etc)
+into a Unix timestamp, a 64-bit integer. Assuming the lack of schema,
+upon deserialization it would not be possible to tell an integer from
+a timestamp and deserialize the value accordingly.
+
+Type tagging resolves this by attaching an integer tag to values that
+can then be read when deserializing the value, e.g. that tag=1 is a
+timestamp and the relevant timestamp class should be used.
+
+The tag values are specified separately and applications can also
+specify their own to have the database driver deserialize their specific
+data types into the appropriate classes (including models).
+
+Essentially this is object-relational mapping for parts of documents.
+
+The format of the type is:
+
+    0xee
+    TAG in 1 byte
+    sub VPack value
+
+or
+
+    0xef
+    TAG in 8 bytes
+    sub VPack value
 
 
 ## Custom types

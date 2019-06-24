@@ -89,7 +89,7 @@ class Builder {
 
  public:
   Options const* options;
- 
+
   // create an empty Builder, using default Options 
   Builder();
   
@@ -240,59 +240,117 @@ class Builder {
 
   // Add a subvalue into an object from a Value:
   inline uint8_t* add(std::string const& attrName, Value const& sub) {
-    return addInternal<Value>(attrName, sub);
+    return addInternal<Value>(attrName, 0, sub);
   }
   inline uint8_t* add(StringRef const& attrName, Value const& sub) {
-    return addInternal<Value>(attrName, sub);
+    return addInternal<Value>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, Value const& sub) {
-    return addInternal<Value>(attrName, sub);
+    return addInternal<Value>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, std::size_t attrLength, Value const& sub) {
-    return addInternal<Value>(attrName, attrLength, sub);
+    return addInternal<Value>(attrName, attrLength, 0, sub);
   }
  
   // Add a subvalue into an object from a Slice:
   inline uint8_t* add(std::string const& attrName, Slice const& sub) {
-    return addInternal<Slice>(attrName, sub);
+    return addInternal<Slice>(attrName, 0, sub);
   }
   inline uint8_t* add(StringRef const& attrName, Slice const& sub) {
-    return addInternal<Slice>(attrName, sub);
+    return addInternal<Slice>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, Slice const& sub) {
-    return addInternal<Slice>(attrName, sub);
+    return addInternal<Slice>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, std::size_t attrLength, Slice const& sub) {
-    return addInternal<Slice>(attrName, attrLength, sub);
+    return addInternal<Slice>(attrName, attrLength, 0, sub);
   }
  
   // Add a subvalue into an object from a ValuePair:
   inline uint8_t* add(std::string const& attrName, ValuePair const& sub) {
-    return addInternal<ValuePair>(attrName, sub);
+    return addInternal<ValuePair>(attrName, 0, sub);
   }
   inline uint8_t* add(StringRef const& attrName, ValuePair const& sub) {
-    return addInternal<ValuePair>(attrName, sub);
+    return addInternal<ValuePair>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, ValuePair const& sub) {
-    return addInternal<ValuePair>(attrName, sub);
+    return addInternal<ValuePair>(attrName, 0, sub);
   }
   inline uint8_t* add(char const* attrName, std::size_t attrLength, ValuePair const& sub) {
-    return addInternal<ValuePair>(attrName, attrLength, sub);
+    return addInternal<ValuePair>(attrName, attrLength, 0, sub);
   }
  
   // Add a subvalue into an array from a Value:
   inline uint8_t* add(Value const& sub) {
-    return addInternal<Value>(sub); 
+    return addInternal<Value>(0, sub);
   }
   
   // Add a slice to an array
   inline uint8_t* add(Slice const& sub) {
-    return addInternal<Slice>(sub); 
+    return addInternal<Slice>(0, sub);
   }
 
   // Add a subvalue into an array from a ValuePair:
   inline uint8_t* add(ValuePair const& sub) {
-    return addInternal<ValuePair>(sub);
+    return addInternal<ValuePair>(0, sub);
+  }
+
+
+  // Add a subvalue into an object from a Value:
+  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, Value const& sub) {
+    return addInternal<Value>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, Value const& sub) {
+    return addInternal<Value>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, int64_t tag, Value const& sub) {
+    return addInternal<Value>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Value const& sub) {
+    return addInternal<Value>(attrName, attrLength, tag, sub);
+  }
+
+  // Add a subvalue into an object from a Slice:
+  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, Slice const& sub) {
+    return addInternal<Slice>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, Slice const& sub) {
+    return addInternal<Slice>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, int64_t tag, Slice const& sub) {
+    return addInternal<Slice>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Slice const& sub) {
+    return addInternal<Slice>(attrName, attrLength, tag, sub);
+  }
+
+  // Add a subvalue into an object from a ValuePair:
+  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, ValuePair const& sub) {
+    return addInternal<ValuePair>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, ValuePair const& sub) {
+    return addInternal<ValuePair>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, int64_t tag, ValuePair const& sub) {
+    return addInternal<ValuePair>(attrName, tag, sub);
+  }
+  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, ValuePair const& sub) {
+    return addInternal<ValuePair>(attrName, attrLength, tag, sub);
+  }
+
+  // Add a subvalue into an array from a Value:
+  inline uint8_t* addTagged(int64_t tag, Value const& sub) {
+    return addInternal<Value>(tag, sub);
+  }
+
+  // Add a slice to an array
+  inline uint8_t* addTagged(int64_t tag, Slice const& sub) {
+    return addInternal<Slice>(tag, sub);
+  }
+
+  // Add a subvalue into an array from a ValuePair:
+  inline uint8_t* addTagged(int64_t tag, ValuePair const& sub) {
+    return addInternal<ValuePair>(tag, sub);
   }
 
   // Add an External slice to an array
@@ -468,6 +526,20 @@ class Builder {
     appendLengthUnchecked<vSize>(toUInt64(v));
   }
 
+  void appendTag(uint64_t tag);
+
+  uint8_t* set(uint64_t tag, Value const& item);
+
+  uint8_t* set(Value const& item);
+
+  uint8_t* set(uint64_t tag, ValuePair const& pair);
+
+  uint8_t* set(ValuePair const& pair);
+
+  uint8_t* set(uint64_t tag, Slice const& item);
+
+  uint8_t* set(Slice const& item);
+
   inline void checkKeyIsString(bool isString) {
     if (!_stack.empty()) {
       ValueLength const& tos = _stack.back();
@@ -501,7 +573,7 @@ class Builder {
   }
 
   template <typename T>
-  uint8_t* addInternal(T const& sub) {
+  uint8_t* addInternal(uint64_t tag, T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
       if (!_keyWritten) {
@@ -510,7 +582,7 @@ class Builder {
       }
     }
     try {
-      return set(sub);
+      return set(tag, sub);
     } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
@@ -521,22 +593,26 @@ class Builder {
   }
 
   template <typename T>
-  uint8_t* addInternal(std::string const& attrName, T const& sub) {
-    return addInternal<T>(attrName.data(), attrName.size(), sub);
+  uint8_t* addInternal(std::string const& attrName, uint64_t tag, T const& sub) {
+    return addInternal<T>(attrName.data(), attrName.size(), tag, sub);
   }
   
   template <typename T>
-  uint8_t* addInternal(StringRef const& attrName, T const& sub) {
-    return addInternal<T>(attrName.data(), attrName.size(), sub);
+  uint8_t* addInternal(StringRef const& attrName, uint64_t tag, T const& sub) {
+    return addInternal<T>(attrName.data(), attrName.size(), tag, sub);
   }
 
   template <typename T>
-  uint8_t* addInternal(char const* attrName, T const& sub) {
-    return addInternal<T>(attrName, strlen(attrName), sub);
+  uint8_t* addInternal(char const* attrName, uint64_t tag, T const& sub) {
+    return addInternal<T>(attrName, attrName == nullptr ? 0 : strlen(attrName), tag, sub);
   }
 
   template <typename T>
-  uint8_t* addInternal(char const* attrName, std::size_t attrLength, T const& sub) {
+  uint8_t* addInternal(char const* attrName, std::size_t attrLength, uint64_t tag, T const& sub) {
+	if(attrName == nullptr) {
+	  return addInternal(tag, sub);
+	}
+
     bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength& tos = _stack.back();
@@ -563,14 +639,15 @@ class Builder {
           memcpy(_start + _pos, translated, checkOverflow(l));
           advance(l);
           _keyWritten = true;
-          return set(sub);
+          return set(tag, sub);
         }
         // otherwise fall through to regular behavior
       }
 
-      set(ValuePair(attrName, attrLength, ValueType::String));
-      _keyWritten = true;
-      return set(sub);
+	  set(ValuePair(attrName, attrLength, ValueType::String));
+	  _keyWritten = true;
+
+      return set(tag, sub);
     } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
@@ -617,12 +694,6 @@ class Builder {
       throw;
     }
   }
-
-  uint8_t* set(Value const& item);
-
-  uint8_t* set(ValuePair const& pair);
-
-  uint8_t* set(Slice const& item);
 
   void cleanupAdd() noexcept {
     std::size_t depth = _stack.size() - 1;

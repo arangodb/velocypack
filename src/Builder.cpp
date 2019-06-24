@@ -707,11 +707,31 @@ Slice Builder::getKey(std::string const& key) const {
   return Slice();
 }
 
+void Builder::appendTag(uint64_t tag) {
+  if(tag <= 255) {
+    reserve(1+1);
+    appendByte(0xee);
+    appendLengthUnchecked<1>(tag);
+  } else {
+    reserve(1+8);
+    appendByte(0xef);
+    appendLengthUnchecked<8>(tag);
+  }
+}
+
 uint8_t* Builder::set(Value const& item) {
+  return set(0, item);
+}
+
+uint8_t* Builder::set(uint64_t tag, Value const& item) {
   auto const oldPos = _pos;
   auto ctype = item.cType();
 
   checkKeyIsString(item.valueType() == ValueType::String);
+
+  if(tag != 0) {
+    appendTag(tag);
+  }
 
   // This method builds a single further VPack item at the current
   // append position. If this is an array or object, then an index
@@ -953,6 +973,9 @@ uint8_t* Builder::set(Value const& item) {
     case ValueType::BCD: {
       throw Exception(Exception::NotImplemented);
     }
+    case ValueType::Tagged: {
+      throw Exception(Exception::NotImplemented);
+    }
     case ValueType::Custom: {
       if (options->disallowCustom) {
         // Custom values explicitly disallowed as a security precaution
@@ -969,7 +992,7 @@ uint8_t* Builder::set(Value const& item) {
   return _start + oldPos;
 }
 
-uint8_t* Builder::set(Slice const& item) {
+uint8_t* Builder::set(uint64_t tag, Slice const& item) {
   checkKeyIsString(item);
 
   if (VELOCYPACK_UNLIKELY(options->disallowCustom && item.isCustom())) {
@@ -977,14 +1000,22 @@ uint8_t* Builder::set(Slice const& item) {
     throw Exception(Exception::BuilderCustomDisallowed);
   }
 
-  ValueLength const l = item.byteSize();
+  if(tag != 0) {
+    appendTag(tag);
+  }
+
+  ValueLength const l = item.rawByteSize();
   reserve(l);
-  memcpy(_start + _pos, item.start(), checkOverflow(l));
+  memcpy(_start + _pos, item.rawStart(), checkOverflow(l));
   advance(l);
   return _start + _pos - l;
 }
 
 uint8_t* Builder::set(ValuePair const& pair) {
+  return set(0, pair);
+}
+
+uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {
   // This method builds a single further VPack item at the current
   // append position. This is the case for ValueType::String,
   // ValueType::Binary, or ValueType::Custom, which can be built
@@ -993,6 +1024,10 @@ uint8_t* Builder::set(ValuePair const& pair) {
   auto const oldPos = _pos;
 
   checkKeyIsString(pair.valueType() == ValueType::String);
+
+  if(tag != 0) {
+    appendTag(tag);
+  }
 
   if (pair.valueType() == ValueType::Binary) {
     uint64_t v = pair.getSize();

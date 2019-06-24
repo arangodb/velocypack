@@ -49,6 +49,8 @@ class Buffer {
     initWithNone();
   }
 
+  Buffer(char *data, uint64_t len) noexcept : _buffer((unsigned char*) data), _capacity(len), _size(len), immutable(true) {}
+
   Buffer(Buffer const& that) : Buffer() {
     if (that._size > 0) {
       if (that._size > sizeof(_local)) {
@@ -141,11 +143,13 @@ class Buffer {
   }
 
   void reset() noexcept { 
+    checkImmutable();
     _size = 0;
     initWithNone();
   }
 
   void resetTo(ValueLength position) {
+    checkImmutable();
     if (position > _capacity) { 
       throw Exception(Exception::IndexOutOfBounds);
     }
@@ -154,11 +158,13 @@ class Buffer {
 
   // move internal buffer position one byte ahead
   inline void advance() noexcept {
+    checkImmutable();
     advance(1);
   }
   
   // move internal buffer position n bytes ahead
   inline void advance(std::size_t value) noexcept {
+    checkImmutable();
     VELOCYPACK_ASSERT(_size <= _capacity);
     VELOCYPACK_ASSERT(_size + value <= _capacity);
     _size += value;
@@ -166,12 +172,14 @@ class Buffer {
   
   // move internal buffer position n bytes backward
   inline void rollback(std::size_t value) noexcept {
+    checkImmutable();
     VELOCYPACK_ASSERT(_size <= _capacity);
     VELOCYPACK_ASSERT(_size >= value);
     _size -= value;
   }
 
   void clear() noexcept {
+    checkImmutable();
     _size = 0;
     if (_buffer != _local) {
       delete[] _buffer;
@@ -205,44 +213,61 @@ class Buffer {
   }
 
   inline void push_back(char c) {
+    checkImmutable();
     reserve(1);
     _buffer[_size++] = c;
   }
   
   void append(uint8_t const* p, ValueLength len) {
+    checkImmutable();
     reserve(len);
     memcpy(_buffer + _size, p, checkOverflow(len));
     _size += len;
   }
 
   void append(char const* p, ValueLength len) {
+    checkImmutable();
     reserve(len);
     memcpy(_buffer + _size, p, checkOverflow(len));
     _size += len;
   }
   
   void append(std::string const& value) {
-    return append(value.data(), value.size());
+    append(value.data(), value.size());
   }
   
   void append(Buffer<T> const& value) {
-    return append(value.data(), value.size());
+    append(value.data(), value.size());
   }
 
   // reserves len *extra* bytes of storage space
   // this should probably be renamed to reserveExtra
   inline void reserve(ValueLength len) {
+    checkImmutable();
     VELOCYPACK_ASSERT(_size <= _capacity);
 
     if (_size + len >= _capacity) {
       grow(len);
     }
   }
- 
+
+  void checkImmutable() {
+    if (immutable) {
+      throw Exception(Exception::BuilderNeedOpenCompound);
+    }
+  }
+
+  bool isImmutable() const {
+    return immutable;
+  }
+
  private:
   // initialize Buffer with a None value
-  inline void initWithNone() noexcept { _buffer[0] = '\x00'; }
-  
+  inline void initWithNone() noexcept {
+    checkImmutable();
+    _buffer[0] = '\x00';
+  }
+
   // poison buffer memory, used only for debugging
 #ifdef VELOCYPACK_DEBUG
   inline void poison(T* p, ValueLength length) noexcept {
@@ -253,6 +278,8 @@ class Buffer {
 #endif
 
   void grow(ValueLength len) {
+    checkImmutable();
+
     VELOCYPACK_ASSERT(_size + len >= sizeof(_local));
 
     // need reallocation
@@ -281,6 +308,7 @@ class Buffer {
   T* _buffer;
   ValueLength _capacity;
   ValueLength _size;
+  bool immutable = false;
 
   // an already allocated space for small values
   T _local[192];

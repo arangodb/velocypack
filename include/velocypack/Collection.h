@@ -54,6 +54,8 @@ class Collection {
   Collection(Collection const&) = delete;
   Collection& operator=(Collection const&) = delete;
 
+  static Builder& appendArray(Builder& builder, Slice const& left);
+
   static void forEach(Slice const& slice, Predicate const& predicate);
 
   static void forEach(Slice const* slice, Predicate const& predicate) {
@@ -79,6 +81,8 @@ class Collection {
   }
 
   static bool contains(Slice const& slice, Slice const& other);
+
+  static bool containsObject(Slice const& slice, Slice const& other);
 
   static bool contains(Slice const* slice, Slice const& other) {
     return contains(*slice, other);

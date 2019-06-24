@@ -330,6 +330,12 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     VELOCYPACK_ASSERT(base != nullptr);
   }
 
+  if(options->debugTags && slice->isTagged())
+  {
+    _sink->append(std::to_string(slice->getTagId()));
+    _sink->append(":");
+  }
+
   switch (slice->type()) {
     case ValueType::Null: {
       _sink->append("null", 4);
@@ -444,6 +450,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       break;
     }
 
+    case ValueType::Tagged:
     case ValueType::UTCDate: 
     case ValueType::None: 
     case ValueType::Binary: 

@@ -106,6 +106,9 @@ struct Options {
   // values as a security precaution)
   bool disallowCustom = false;
 
+  // write tags to JSON output
+  bool debugTags = false;
+
   // default options with the above settings
   static Options Defaults;
 };
