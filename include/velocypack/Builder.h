@@ -445,18 +445,23 @@ class Builder {
 
   void addInt(int64_t v) {
     if (v >= 0 && v <= 9) {
+      // SmallInt
       appendByte(static_cast<uint8_t>(0x30 + v));
     } else if (v < 0 && v >= -6) {
+      // SmallInt
       appendByte(static_cast<uint8_t>(0x40 + v));
     } else {
+      // regular int
       appendInt(v, 0x1f);
     }
   }
 
   void addUInt(uint64_t v) {
     if (v <= 9) {
+      // SmallInt
       appendByte(static_cast<uint8_t>(0x30 + v));
     } else {
+      // regular UInt
       appendUInt(v, 0x27);
     }
   }

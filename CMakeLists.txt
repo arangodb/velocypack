@@ -36,6 +36,7 @@ set(VELOCY_SOURCE
     src/AttributeTranslator.cpp
     src/Builder.cpp
     src/Collection.cpp
+    src/Compare.cpp
     src/Dumper.cpp
     src/Exception.cpp
     src/HexDump.cpp

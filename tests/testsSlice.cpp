@@ -1776,7 +1776,7 @@ TEST(SliceTest, EqualToUniqueValues) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1790,7 +1790,7 @@ TEST(SliceTest, EqualToDuplicateValuesNumbers) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1804,7 +1804,7 @@ TEST(SliceTest, EqualToBiggerNumbers) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1819,7 +1819,7 @@ TEST(SliceTest, EqualToDuplicateValuesStrings) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1833,9 +1833,8 @@ TEST(SliceTest, EqualToNull) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("null");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
-  ASSERT_TRUE(s1 == s2);
-  ASSERT_FALSE(s1 != s2);
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToInt) {
@@ -1844,7 +1843,8 @@ TEST(SliceTest, EqualToInt) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToUInt) {
@@ -1853,7 +1853,8 @@ TEST(SliceTest, EqualToUInt) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("128885355");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToDouble) {
@@ -1862,7 +1863,8 @@ TEST(SliceTest, EqualToDouble) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355.353");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToString) {
@@ -1871,7 +1873,8 @@ TEST(SliceTest, EqualToString) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("\"this is a test string\"");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToDirectInvocation) {
@@ -1881,13 +1884,13 @@ TEST(SliceTest, EqualToDirectInvocation) {
   parser.parse(value);
 
   int comparisons = 0;
-  std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {
     ArrayIterator it2(Slice(parser.start()));
     while (it2.valid()) {
       if (it.index() != it2.index()) {
-        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ASSERT_FALSE(it.value().binaryEquals(it2.value()));
+        ASSERT_FALSE(it2.value().binaryEquals(it.value()));
         ++comparisons;
       }
       it2.next();
@@ -1904,13 +1907,13 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
   parser.parse(value);
 
   int comparisons = 0;
-  std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {
     ArrayIterator it2(Slice(parser.start()));
     while (it2.valid()) {
       if (it.index() != it2.index()) {
-        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ASSERT_FALSE(it.value().binaryEquals(it2.value()));
+        ASSERT_FALSE(it2.value().binaryEquals(it.value()));
         ++comparisons;
       }
       it2.next();
@@ -1930,11 +1933,10 @@ TEST(SliceTest, EqualToDirectInvocationLongStrings) {
       "........................................................."
       "longerthan127chars\"");
 
-  std::equal_to<Slice> comparer;
-  ASSERT_TRUE(comparer(b1->slice(), b1->slice()));
-  ASSERT_TRUE(comparer(b2->slice(), b2->slice()));
-  ASSERT_FALSE(comparer(b1->slice(), b2->slice()));
-  ASSERT_FALSE(comparer(b2->slice(), b1->slice()));
+  ASSERT_TRUE(b1->slice().binaryEquals(b1->slice()));
+  ASSERT_TRUE(b2->slice().binaryEquals(b2->slice()));
+  ASSERT_FALSE(b1->slice().binaryEquals(b2->slice()));
+  ASSERT_FALSE(b2->slice().binaryEquals(b1->slice()));
 }
 
 TEST(SliceTest, Hashing) {
