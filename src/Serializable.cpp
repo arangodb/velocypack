@@ -22,31 +22,15 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_SERIALIZABLE_H
-#define VELOCYPACK_SERIALIZABLE_H 1
-
-#include <memory>
-
 #include "velocypack/velocypack-common.h"
+#include "velocypack/Serializable.h"
+#include "velocypack/Builder.h"
 
-namespace arangodb {
-namespace velocypack {
-class Builder;
+using namespace arangodb::velocypack;
 
-class Serializable {
- public:
-  virtual void toVelocyPack(Builder&) const = 0;
-
-  // convenience method
-  std::shared_ptr<Builder> toVelocyPack() const;
-};
-
-struct Serialize {
-  Serialize(Serializable const& sable) : _sable(sable) {}
-  Serializable const& _sable;
-};
-
+// convenience method
+std::shared_ptr<Builder> Serializable::toVelocyPack() const {
+  auto builder = std::make_shared<Builder>();
+  this->toVelocyPack(*builder);
+  return builder;
 }
-}
-
-#endif

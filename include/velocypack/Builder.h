@@ -50,7 +50,6 @@ namespace arangodb {
 namespace velocypack {
 class ArrayIterator;
 class ObjectIterator;
-class Serializable;
 
 class Builder {
   friend class Parser;  // The parser needs access to internals.

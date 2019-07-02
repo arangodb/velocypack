@@ -43,6 +43,7 @@ set(VELOCY_SOURCE
     src/Iterator.cpp
     src/Options.cpp
     src/Parser.cpp
+    src/Serializable.cpp
     src/Slice.cpp
     src/SliceStaticData.cpp
     src/StringRef.cpp
