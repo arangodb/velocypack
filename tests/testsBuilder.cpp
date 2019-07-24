@@ -2758,6 +2758,247 @@ TEST(BuilderTest, AddThousandNonesCompact) {
   }
 }
 
+TEST(BuilderTest, UsePaddingForOneByteArray) {
+  Options options;
+  Builder b(&options);
+
+  auto build = [&b]() {
+    b.clear();
+    b.openArray();
+
+    for (size_t i = 0; i < 20; ++i) {
+      b.add(Value(i));
+    }
+
+    b.close();
+    return b.slice().start();
+  };
+
+  options.paddingBehavior = Options::PaddingBehavior::NoPadding;
+  uint8_t const* data = build();
+
+  ASSERT_EQ(0x06, data[0]);
+  ASSERT_EQ(0x35, data[1]);
+  ASSERT_EQ(0x14, data[2]);
+  ASSERT_EQ(0x30, data[3]);
+  ASSERT_EQ(0x31, data[4]);
+  ASSERT_EQ(0x32, data[5]);
+  ASSERT_EQ(0x33, data[6]);
+  ASSERT_EQ(0x34, data[7]);
+  ASSERT_EQ(0x35, data[8]);
+  
+  options.paddingBehavior = Options::PaddingBehavior::Flexible;
+  data = build();
+
+  ASSERT_EQ(0x06, data[0]);
+  ASSERT_EQ(0x35, data[1]);
+  ASSERT_EQ(0x14, data[2]);
+  ASSERT_EQ(0x30, data[3]);
+  ASSERT_EQ(0x31, data[4]);
+  ASSERT_EQ(0x32, data[5]);
+  ASSERT_EQ(0x33, data[6]);
+  ASSERT_EQ(0x34, data[7]);
+  ASSERT_EQ(0x35, data[8]);
+ 
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  data = build();
+
+  ASSERT_EQ(0x06, data[0]);
+  ASSERT_EQ(0x3b, data[1]);
+  ASSERT_EQ(0x14, data[2]);
+  ASSERT_EQ(0x00, data[3]);
+  ASSERT_EQ(0x00, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+  ASSERT_EQ(0x31, data[10]);
+}
+
+TEST(BuilderTest, UsePaddingForTwoByteArray) {
+  Options options;
+  Builder b(&options);
+
+  auto build = [&b]() {
+    b.clear();
+    b.openArray();
+
+    for (size_t i = 0; i < 260; ++i) {
+      b.add(Value(i));
+    }
+
+    b.close();
+    return b.slice().start();
+  };
+
+  options.paddingBehavior = Options::PaddingBehavior::NoPadding;
+  uint8_t const* data = build();
+
+  ASSERT_EQ(0x07, data[0]);
+  ASSERT_EQ(0x0f, data[1]);
+  ASSERT_EQ(0x04, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x30, data[5]);
+  ASSERT_EQ(0x31, data[6]);
+  ASSERT_EQ(0x32, data[7]);
+  ASSERT_EQ(0x33, data[8]);
+  
+  options.paddingBehavior = Options::PaddingBehavior::Flexible;
+  data = build();
+
+  ASSERT_EQ(0x07, data[0]);
+  ASSERT_EQ(0x13, data[1]);
+  ASSERT_EQ(0x04, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+  ASSERT_EQ(0x31, data[10]);
+
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  data = build();
+
+  ASSERT_EQ(0x07, data[0]);
+  ASSERT_EQ(0x13, data[1]);
+  ASSERT_EQ(0x04, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+  ASSERT_EQ(0x31, data[10]);
+}
+
+TEST(BuilderTest, UsePaddingForOneByteObject) {
+  Options options;
+  Builder b(&options);
+
+  auto build = [&b]() {
+    b.clear();
+    b.openObject();
+
+    for (size_t i = 0; i < 10; ++i) {
+      b.add(Value(std::string("test") + std::to_string(i)));
+      b.add(Value(i));
+    }
+
+    b.close();
+    return b.slice().start();
+  };
+
+  options.paddingBehavior = Options::PaddingBehavior::NoPadding;
+  uint8_t const* data = build();
+
+  ASSERT_EQ(0x0b, data[0]);
+  ASSERT_EQ(0x53, data[1]);
+  ASSERT_EQ(0x0a, data[2]);
+  ASSERT_EQ(0x45, data[3]);
+  ASSERT_EQ(0x74, data[4]);
+  ASSERT_EQ(0x65, data[5]);
+  ASSERT_EQ(0x73, data[6]);
+  ASSERT_EQ(0x74, data[7]);
+  ASSERT_EQ(0x30, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+
+  options.paddingBehavior = Options::PaddingBehavior::Flexible;
+  data = build();
+  
+  ASSERT_EQ(0x0b, data[0]);
+  ASSERT_EQ(0x53, data[1]);
+  ASSERT_EQ(0x0a, data[2]);
+  ASSERT_EQ(0x45, data[3]);
+  ASSERT_EQ(0x74, data[4]);
+  ASSERT_EQ(0x65, data[5]);
+  ASSERT_EQ(0x73, data[6]);
+  ASSERT_EQ(0x74, data[7]);
+  ASSERT_EQ(0x30, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+ 
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  data = build();
+
+  ASSERT_EQ(0x0b, data[0]);
+  ASSERT_EQ(0x59, data[1]);
+  ASSERT_EQ(0x0a, data[2]);
+  ASSERT_EQ(0x00, data[3]);
+  ASSERT_EQ(0x00, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x45, data[9]);
+  ASSERT_EQ(0x74, data[10]);
+}
+
+TEST(BuilderTest, UsePaddingForTwoByteObject) {
+  Options options;
+  Builder b(&options);
+
+  auto build = [&b]() {
+    b.clear();
+    b.openObject();
+
+    for (size_t i = 0; i < 260; ++i) {
+      b.add(Value(std::string("test") + std::to_string(i)));
+      b.add(Value(i));
+    }
+
+    b.close();
+    return b.slice().start();
+  };
+
+  options.paddingBehavior = Options::PaddingBehavior::NoPadding;
+  uint8_t const* data = build();
+
+  ASSERT_EQ(0x0c, data[0]);
+  ASSERT_EQ(0xc1, data[1]);
+  ASSERT_EQ(0x0b, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x45, data[5]);
+  ASSERT_EQ(0x74, data[6]);
+  ASSERT_EQ(0x65, data[7]);
+  ASSERT_EQ(0x73, data[8]);
+  ASSERT_EQ(0x74, data[9]);
+
+  options.paddingBehavior = Options::PaddingBehavior::Flexible;
+  data = build();
+  
+  ASSERT_EQ(0x0c, data[0]);
+  ASSERT_EQ(0xc5, data[1]);
+  ASSERT_EQ(0x0b, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x45, data[9]);
+  ASSERT_EQ(0x74, data[10]);
+ 
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  data = build();
+
+  ASSERT_EQ(0x0c, data[0]);
+  ASSERT_EQ(0xc5, data[1]);
+  ASSERT_EQ(0x0b, data[2]);
+  ASSERT_EQ(0x04, data[3]);
+  ASSERT_EQ(0x01, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x45, data[9]);
+  ASSERT_EQ(0x74, data[10]);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

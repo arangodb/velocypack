@@ -445,40 +445,40 @@ Builder& Builder::closeArray(ValueLength tos, std::vector<ValueLength>& index) {
   }
 
   // Maybe we need to move down data:
-  if (offsetSize == 1) {
+  if (offsetSize == 1 || offsetSize == 2) {
     // check if one of the first entries in the array is ValueType::None 
     // (0x00). in this case, we could not distinguish between a None (0x00) 
     // and the optional padding. so we must prevent the memmove here
-    bool allowMemMove = true;
-    std::size_t const n = (std::min)(std::size_t(6), index.size());
-    for (std::size_t i = 0; i < n; i++) {
-      if (_start[tos + index[i]] == 0x00) {
-        allowMemMove = false;
-        break;
-      }
-    }
+    bool allowMemMove = options->paddingBehavior == Options::PaddingBehavior::NoPadding ||
+                        (offsetSize == 1 && options->paddingBehavior == Options::PaddingBehavior::Flexible);
     if (allowMemMove) {
-      ValueLength targetPos = 3;
-      if (!needIndexTable) {
-        targetPos = 2;
-      }
-      if (_pos > (tos + 9)) {
-        ValueLength len = _pos - (tos + 9);
-        memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
-      }
-      ValueLength const diff = 9 - targetPos;
-      rollback(diff);
-      if (needIndexTable) {
-        std::size_t const n = index.size();
-        for (std::size_t i = 0; i < n; i++) {
-          index[i] -= diff;
+      std::size_t const n = (std::min)(std::size_t(8 - 2 * offsetSize), index.size());
+      for (std::size_t i = 0; i < n; i++) {
+        if (_start[tos + index[i]] == 0x00) {
+          allowMemMove = false;
+          break;
         }
-      }  // Note: if !needIndexTable the index array is now wrong!
+      }
+      if (allowMemMove) {
+        ValueLength targetPos = 1 + 2 * offsetSize;
+        if (!needIndexTable) {
+          targetPos -= offsetSize;
+        }
+        if (_pos > (tos + 9)) {
+          ValueLength len = _pos - (tos + 9);
+          memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
+        }
+        ValueLength const diff = 9 - targetPos;
+        rollback(diff);
+        if (needIndexTable) {
+          std::size_t const n = index.size();
+          for (std::size_t i = 0; i < n; i++) {
+            index[i] -= diff;
+          }
+        }  // Note: if !needIndexTable the index array is now wrong!
+      }
     }
   }
-  // One could move down things in the offsetSize == 2 case as well,
-  // since we only need 4 bytes in the beginning. However, saving these
-  // 4 bytes has been sacrificed on the Altar of Performance.
 
   // Now build the table:
   if (needIndexTable) {
@@ -583,9 +583,20 @@ Builder& Builder::close() {
     // case we would win back 6 bytes but would need one byte per subvalue
     // for the index table
     offsetSize = 1;
-
+    // One could move down things in the offsetSize == 2 case as well,
+    // since we only need 4 bytes in the beginning. However, saving these
+    // 4 bytes has been sacrificed on the Altar of Performance.
+  } else if (_pos - tos + 2 * index.size() <= 0xffff) {
+    offsetSize = 2;
+  } else if (_pos - tos + 4 * index.size() <= 0xffffffffu) {
+    offsetSize = 4;
+  }
+    
+  if (offsetSize < 4 &&
+      (options->paddingBehavior == Options::PaddingBehavior::NoPadding ||
+       (offsetSize == 1 && options->paddingBehavior == Options::PaddingBehavior::Flexible))) {
     // Maybe we need to move down data:
-    ValueLength targetPos = 3;
+    ValueLength targetPos = 1 + 2 * offsetSize;
     if (_pos > (tos + 9)) {
       ValueLength len = _pos - (tos + 9);
       memmove(_start + tos + targetPos, _start + tos + 9, checkOverflow(len));
@@ -596,14 +607,6 @@ Builder& Builder::close() {
     for (std::size_t i = 0; i < n; i++) {
       index[i] -= diff;
     }
-
-    // One could move down things in the offsetSize == 2 case as well,
-    // since we only need 4 bytes in the beginning. However, saving these
-    // 4 bytes has been sacrificed on the Altar of Performance.
-  } else if (_pos - tos + 2 * index.size() <= 0xffff) {
-    offsetSize = 2;
-  } else if (_pos - tos + 4 * index.size() <= 0xffffffffu) {
-    offsetSize = 4;
   }
 
   // Now build the table:
