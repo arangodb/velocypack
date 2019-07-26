@@ -1542,6 +1542,36 @@ TEST(ValidatorTest, ArrayEightByteIndexedRepeatedValues) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ArrayOneByteWithExtraPadding) {
+  Options options;
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  Builder b(&options);
+  b.openArray(false);
+  b.add(Value(1));
+  b.add(Value(2));
+  b.add(Value(3));
+  b.close();
+
+  Slice s = b.slice();
+  uint8_t const* data = s.start();
+
+  ASSERT_EQ(0x05, data[0]);
+  ASSERT_EQ(0x0c, data[1]);
+  ASSERT_EQ(0x00, data[2]);
+  ASSERT_EQ(0x00, data[3]);
+  ASSERT_EQ(0x00, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x31, data[9]);
+  ASSERT_EQ(0x32, data[10]);
+  ASSERT_EQ(0x33, data[11]);
+  
+  Validator validator;
+  ASSERT_TRUE(validator.validate(data, s.byteSize()));
+}
+
 TEST(ValidatorTest, ArrayCompact) {
   std::string const value("\x13\x04\x18\x01", 4);
 

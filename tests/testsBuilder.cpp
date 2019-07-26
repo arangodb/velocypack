@@ -2774,6 +2774,12 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
     return b.slice().start();
   };
 
+  auto test = [&b]() {
+    for (uint64_t i = 0; i < 20; ++i) {
+      ASSERT_EQ(i, b.slice().at(i).getUInt());
+    }
+  };
+
   options.paddingBehavior = Options::PaddingBehavior::NoPadding;
   uint8_t const* data = build();
 
@@ -2786,6 +2792,8 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x33, data[6]);
   ASSERT_EQ(0x34, data[7]);
   ASSERT_EQ(0x35, data[8]);
+
+  test();
   
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
@@ -2799,6 +2807,8 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x33, data[6]);
   ASSERT_EQ(0x34, data[7]);
   ASSERT_EQ(0x35, data[8]);
+  
+  test();
  
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
@@ -2814,6 +2824,8 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x30, data[9]);
   ASSERT_EQ(0x31, data[10]);
+  
+  test();
 }
 
 TEST(BuilderTest, UsePaddingForTwoByteArray) {
@@ -2831,6 +2843,12 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
     b.close();
     return b.slice().start();
   };
+  
+  auto test = [&b]() {
+    for (uint64_t i = 0; i < 260; ++i) {
+      ASSERT_EQ(i, b.slice().at(i).getUInt());
+    }
+  };
 
   options.paddingBehavior = Options::PaddingBehavior::NoPadding;
   uint8_t const* data = build();
@@ -2844,6 +2862,8 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
   ASSERT_EQ(0x31, data[6]);
   ASSERT_EQ(0x32, data[7]);
   ASSERT_EQ(0x33, data[8]);
+
+  test();
   
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
@@ -2860,6 +2880,8 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
   ASSERT_EQ(0x30, data[9]);
   ASSERT_EQ(0x31, data[10]);
 
+  test();
+
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
 
@@ -2874,6 +2896,8 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x30, data[9]);
   ASSERT_EQ(0x31, data[10]);
+
+  test();
 }
 
 TEST(BuilderTest, UsePaddingForEquallySizedArray) {
@@ -2891,6 +2915,12 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
     b.close();
     return b.slice().start();
   };
+  
+  auto test = [&b]() {
+    for (uint64_t i = 0; i < 3; ++i) {
+      ASSERT_EQ(i, b.slice().at(i).getUInt());
+    }
+  };
 
   options.paddingBehavior = Options::PaddingBehavior::NoPadding;
   uint8_t const* data = build();
@@ -2900,6 +2930,8 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
   ASSERT_EQ(0x30, data[2]);
   ASSERT_EQ(0x31, data[3]);
   ASSERT_EQ(0x32, data[4]);
+
+  test();
   
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
@@ -2909,6 +2941,8 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
   ASSERT_EQ(0x30, data[2]);
   ASSERT_EQ(0x31, data[3]);
   ASSERT_EQ(0x32, data[4]);
+
+  test();
  
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
@@ -2925,6 +2959,8 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
   ASSERT_EQ(0x30, data[9]);
   ASSERT_EQ(0x31, data[10]);
   ASSERT_EQ(0x32, data[11]);
+
+  test();
 }
 
 TEST(BuilderTest, UsePaddingForOneByteObject) {
@@ -2943,6 +2979,14 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
     b.close();
     return b.slice().start();
   };
+  
+  auto test = [&b]() {
+    for (uint64_t i = 0; i < 10; ++i) {
+      std::string key = std::string("test") + std::to_string(i);
+      ASSERT_TRUE(b.slice().hasKey(key));
+      ASSERT_EQ(i, b.slice().get(key).getUInt());
+    }
+  };
 
   options.paddingBehavior = Options::PaddingBehavior::NoPadding;
   uint8_t const* data = build();
@@ -2958,6 +3002,8 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
   ASSERT_EQ(0x30, data[8]);
   ASSERT_EQ(0x30, data[9]);
 
+  test();
+
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
   
@@ -2971,6 +3017,8 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
   ASSERT_EQ(0x74, data[7]);
   ASSERT_EQ(0x30, data[8]);
   ASSERT_EQ(0x30, data[9]);
+
+  test();
  
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
@@ -2986,6 +3034,8 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
+  
+  test();
 }
 
 TEST(BuilderTest, UsePaddingForTwoByteObject) {
@@ -3004,6 +3054,14 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
     b.close();
     return b.slice().start();
   };
+  
+  auto test = [&b]() {
+    for (uint64_t i = 0; i < 260; ++i) {
+      std::string key = std::string("test") + std::to_string(i);
+      ASSERT_TRUE(b.slice().hasKey(key));
+      ASSERT_EQ(i, b.slice().get(key).getUInt());
+    }
+  };
 
   options.paddingBehavior = Options::PaddingBehavior::NoPadding;
   uint8_t const* data = build();
@@ -3019,6 +3077,8 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   ASSERT_EQ(0x73, data[8]);
   ASSERT_EQ(0x74, data[9]);
 
+  test();
+
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
   
@@ -3033,6 +3093,8 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
+  
+  test();
  
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
@@ -3048,6 +3110,8 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
+  
+  test();
 }
 
 int main(int argc, char* argv[]) {
