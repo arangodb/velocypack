@@ -444,6 +444,15 @@ Builder& Builder::closeArray(ValueLength tos, std::vector<ValueLength>& index) {
     offsetSize = 8;
   }
 
+  if (offsetSize < 8 &&
+      !needIndexTable && 
+      options->paddingBehavior == Options::PaddingBehavior::UsePadding) {
+    // if we are allowed to use padding, we will pad to 8 bytes anyway. as we are not
+    // using an index table, we can also use type 0x05 for all Arrays without making
+    // things worse space-wise
+    offsetSize = 8;
+  }
+
   // Maybe we need to move down data:
   if (offsetSize == 1 || offsetSize == 2) {
     // check if one of the first entries in the array is ValueType::None 

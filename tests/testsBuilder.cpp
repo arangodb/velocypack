@@ -2876,6 +2876,57 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
   ASSERT_EQ(0x31, data[10]);
 }
 
+TEST(BuilderTest, UsePaddingForEquallySizedArray) {
+  Options options;
+  Builder b(&options);
+
+  auto build = [&b]() {
+    b.clear();
+    b.openArray();
+
+    for (size_t i = 0; i < 3; ++i) {
+      b.add(Value(i));
+    }
+
+    b.close();
+    return b.slice().start();
+  };
+
+  options.paddingBehavior = Options::PaddingBehavior::NoPadding;
+  uint8_t const* data = build();
+
+  ASSERT_EQ(0x02, data[0]);
+  ASSERT_EQ(0x05, data[1]);
+  ASSERT_EQ(0x30, data[2]);
+  ASSERT_EQ(0x31, data[3]);
+  ASSERT_EQ(0x32, data[4]);
+  
+  options.paddingBehavior = Options::PaddingBehavior::Flexible;
+  data = build();
+
+  ASSERT_EQ(0x02, data[0]);
+  ASSERT_EQ(0x05, data[1]);
+  ASSERT_EQ(0x30, data[2]);
+  ASSERT_EQ(0x31, data[3]);
+  ASSERT_EQ(0x32, data[4]);
+ 
+  options.paddingBehavior = Options::PaddingBehavior::UsePadding;
+  data = build();
+
+  ASSERT_EQ(0x05, data[0]);
+  ASSERT_EQ(0x0c, data[1]);
+  ASSERT_EQ(0x00, data[2]);
+  ASSERT_EQ(0x00, data[3]);
+  ASSERT_EQ(0x00, data[4]);
+  ASSERT_EQ(0x00, data[5]);
+  ASSERT_EQ(0x00, data[6]);
+  ASSERT_EQ(0x00, data[7]);
+  ASSERT_EQ(0x00, data[8]);
+  ASSERT_EQ(0x30, data[9]);
+  ASSERT_EQ(0x31, data[10]);
+  ASSERT_EQ(0x32, data[11]);
+}
+
 TEST(BuilderTest, UsePaddingForOneByteObject) {
   Options options;
   Builder b(&options);
