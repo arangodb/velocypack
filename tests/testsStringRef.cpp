@@ -27,6 +27,7 @@
 #include <ostream>
 #include <string>
 #include <iostream>
+#include <regex>
 
 #include "tests-common.h"
 
@@ -385,6 +386,13 @@ TEST(StringRefTest, IteratorStl) {
   });
 
   ASSERT_TRUE(s.equals(result));
+}
+
+TEST(StringRefTest, IteratorRegex) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  ASSERT_TRUE(std::regex_match(s.begin(), s.end(), std::regex("fox")));
 }
 
 TEST(StringRefTest, Equals) {
