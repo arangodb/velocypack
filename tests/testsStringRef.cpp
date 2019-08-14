@@ -353,6 +353,40 @@ TEST(StringRefTest, RFind) {
   }
 }
 
+TEST(StringRefTest, IteratorBeginEnd) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  auto it = s.begin();
+  ASSERT_EQ('t', *it);
+  ++it;
+  ASSERT_EQ('h', *it);
+  ++it;
+  ASSERT_EQ('e', *it);
+  
+  it = s.end();
+  --it;
+  ASSERT_EQ('x', *it);
+  --it;
+  ASSERT_EQ('x', *it);
+  --it;
+  ASSERT_EQ('o', *it);
+  --it;
+  ASSERT_EQ('f', *it);
+}
+
+TEST(StringRefTest, IteratorStl) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  std::string result;
+  std::for_each(s.begin(), s.end(), [&result](char v) {
+      result.push_back(v);
+  });
+
+  ASSERT_TRUE(s.equals(result));
+}
+
 TEST(StringRefTest, Equals) {
   StringRef const s("the-quick-brown-foxx");
 
