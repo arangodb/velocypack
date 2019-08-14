@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <string>
 #include <iosfwd>
+#include <iterator>
 
 #include "velocypack/velocypack-common.h"
 
@@ -41,6 +42,36 @@ class Slice;
 
 class StringRef {
  public:
+  class const_iterator {
+   public:
+    typedef const_iterator self_type;
+    typedef char value_type;
+    typedef char const& reference;
+    typedef char const* pointer;
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef int difference_type;
+    const_iterator(pointer ptr) : _ptr(ptr) {}
+    const_iterator(const_iterator const& rhs) : _ptr(rhs._ptr) {}
+    const_iterator& operator=(const_iterator const& rhs) { _ptr = rhs._ptr; return *this; }
+    self_type operator++() { _ptr++; return *this; }
+    self_type operator--() { _ptr--; return *this; }
+    self_type operator++(int) { self_type i = *this; _ptr++; return i; }
+    self_type operator--(int) { self_type i = *this; _ptr--; return i; }
+    self_type operator+=(int value) { _ptr += value; return *this; }
+    self_type operator-=(int value) { _ptr -= value; return *this; }
+    reference operator*() { return *_ptr; }
+    pointer operator->() { return _ptr; }
+    reference operator[](std::size_t index) { return _ptr[index]; }
+    bool operator==(self_type const& rhs) { return _ptr == rhs._ptr; }
+    bool operator!=(self_type const& rhs) { return _ptr != rhs._ptr; }
+    bool operator>(self_type const& rhs) { return _ptr > rhs._ptr; }
+    bool operator>=(self_type const& rhs) { return _ptr >= rhs._ptr; }
+    bool operator<(self_type const& rhs) { return _ptr < rhs._ptr; }
+    bool operator<=(self_type const& rhs) { return _ptr <= rhs._ptr; }
+   private:
+    pointer _ptr;
+  };
+
   /// @brief create an empty StringRef
   constexpr StringRef() noexcept : _data(""), _length(0) {}
 
@@ -127,20 +158,20 @@ class StringRef {
     return (_length == 0);
   }
  
-  inline std::string::const_iterator begin() const noexcept {
-    return std::string::const_iterator(_data);
+  inline const_iterator begin() const noexcept {
+    return const_iterator(_data);
   }
   
-  inline std::string::const_iterator cbegin() const noexcept {
-    return std::string::const_iterator(_data);
+  inline const_iterator cbegin() const noexcept {
+    return const_iterator(_data);
   }
  
-  inline std::string::const_iterator end() const noexcept {
-    return std::string::const_iterator(_data + _length);
+  inline const_iterator end() const noexcept {
+    return const_iterator(_data + _length);
   }
   
-  inline std::string::const_iterator cend() const noexcept {
-    return std::string::const_iterator(_data + _length);
+  inline const_iterator cend() const noexcept {
+    return const_iterator(_data + _length);
   }
 
   inline char front() const noexcept { return _data[0]; }
