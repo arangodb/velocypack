@@ -382,7 +382,7 @@ TEST(StringRefTest, IteratorStl) {
 
   std::string result;
   std::for_each(s.begin(), s.end(), [&result](char v) {
-      result.push_back(v);
+    result.push_back(v);
   });
 
   ASSERT_TRUE(s.equals(result));
@@ -393,6 +393,14 @@ TEST(StringRefTest, IteratorRegex) {
   StringRef const s(value);
 
   ASSERT_TRUE(std::regex_match(s.begin(), s.end(), std::regex(".*fox.*")));
+}
+
+TEST(StringRefTest, IteratorRegexMatch) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  std::smatch matches;
+  ASSERT_TRUE(std::regex_match(s.begin(), s.end(), matches, std::regex(".*fox.*")));
 }
 
 TEST(StringRefTest, Equals) {
