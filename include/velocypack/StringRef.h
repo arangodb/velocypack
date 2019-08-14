@@ -127,20 +127,20 @@ class StringRef {
     return (_length == 0);
   }
  
-  inline std::string::const_iterator begin() const noexcept {
-    return std::string::const_iterator(_data);
+  inline char const* begin() const noexcept {
+    return _data;
   }
   
-  inline std::string::const_iterator cbegin() const noexcept {
-    return std::string::const_iterator(_data);
+  inline char const* cbegin() const noexcept {
+    return _data;
   }
  
-  inline std::string::const_iterator end() const noexcept {
-    return std::string::const_iterator(_data + _length);
+  inline char const* end() const noexcept {
+    return _data + _length;
   }
   
-  inline std::string::const_iterator cend() const noexcept {
-    return std::string::const_iterator(_data + _length);
+  inline char const* cend() const noexcept {
+    return _data + _length;
   }
 
   inline char front() const noexcept { return _data[0]; }

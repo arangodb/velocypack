@@ -399,7 +399,7 @@ TEST(StringRefTest, IteratorRegexMatch) {
   std::string const value("the-quick-brown-foxx");
   StringRef const s(value);
 
-  std::smatch matches;
+  std::match_results<char const*> matches;
   ASSERT_TRUE(std::regex_match(s.begin(), s.end(), matches, std::regex(".*fox.*")));
 }
 
