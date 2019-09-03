@@ -264,7 +264,7 @@ TEST(BufferTest, VectorTest) {
   Buffer<uint8_t>& last = buffers.back();
   Slice copy(last.data());
   ASSERT_TRUE(copy.isString());
-  ASSERT_TRUE(copy.equals(s));
+  ASSERT_TRUE(copy.binaryEquals(s));
   ASSERT_EQ("der hund, der ist so bunt", copy.copyString());
 }
 
@@ -284,7 +284,7 @@ TEST(BufferTest, VectorMoveTest) {
   Buffer<uint8_t>& last = buffers.back();
   Slice copy(last.data());
   ASSERT_TRUE(copy.isString());
-  ASSERT_TRUE(copy.equals(s));
+  ASSERT_TRUE(copy.binaryEquals(s));
   ASSERT_EQ(0UL, b.byteSize());
 }
 

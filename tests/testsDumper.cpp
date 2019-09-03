@@ -739,7 +739,7 @@ TEST(StringDumperTest, CustomWithCallbackDefaultHandler) {
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
   for (std::size_t i = 1; i <= 8; i++) {
-    p[i] = i + '@';
+    p[i] = uint8_t(i + '@');
   }
   b.close();
 
@@ -763,7 +763,7 @@ TEST(StringDumperTest, CustomWithCallback) {
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
   for (std::size_t i = 1; i <= 8; i++) {
-    p[i] = i + '@';
+    p[i] = uint8_t(i + '@');
   }
   b.close();
 

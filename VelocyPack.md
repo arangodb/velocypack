@@ -116,11 +116,11 @@ Empty arrays are simply a single byte 0x01.
 We next describe the type cases 0x02 to 0x09, see below for the
 special compact type 0x13.
 
-Nonempty arrays look like one of the following:
+Non-empty arrays look like one of the following:
 
     one of 0x02 to 0x05
     BYTELENGTH
-    OPTIONAL UNUSED: 1, 3 or 7 zero bytes
+    OPTIONAL UNUSED: padding
     sub VPack values
 
 or
@@ -128,7 +128,7 @@ or
     0x06
     BYTELENGTH in 1 byte
     NRITEMS in 1 byte
-    OPTIONAL UNUSED: 6 bytes equal to 0
+    OPTIONAL UNUSED: 6 bytes of padding
     sub VPack values
     INDEXTABLE with 1 byte per entry
 
@@ -137,7 +137,7 @@ or
     0x07
     BYTELENGTH in 2 bytes
     NRITEMS in 2 bytes
-    OPTIONAL UNUSED: 4 bytes equal to 0
+    OPTIONAL UNUSED: 4 bytes of padding
     sub VPack values
     INDEXTABLE with 4 byte per entry
 
@@ -157,6 +157,12 @@ or
     INDEXTABLE with 8 byte per entry
     NRITEMS in 8 bytes
 
+If any optional padding is allowed for a type, the padding must consist
+of exactly that many bytes that the length of the padding, the length of
+BYTELENGTH and the length of NRITEMS (if present) sums up to 8. If the
+length of BYTELENGTH is already 8, there is no padding allowed. The
+entire padding must consist of zero bytes (ASCII NUL). 
+
 Numbers (for byte length, number of subvalues and offsets in the
 INDEXTABLE) are little endian unsigned integers, using 1 byte for
 types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
@@ -170,7 +176,7 @@ The INDEXTABLE consists of:
     Offsets are measured from the start of the VPack value.
 
 
-Nonempty arrays of types 0x06 to 0x09 have a small header including
+Non-empty arrays of types 0x06 to 0x09 have a small header including
 their byte length, the number of subvalues, then all the subvalues and
 finally an index table containing offsets to the subvalues. To find the
 index table, find the number of subvalues, then the end, and from that
@@ -180,31 +186,35 @@ For types 0x02 to 0x05 there is no offset table and no number of items.
 The first item begins at address A+2, A+3, A+5 or respectively A+9,
 depending on the type and thus the width of the byte length field. Note
 the following special rule: The actual position of the first subvalue
-is allowed to be further back, provided there are zero bytes at the
-earlier possible positions. For example, if 4 bytes are used for the
-byte length, then the first item may be at A+9, provided A[5], is a
-zero byte. This is to give a program that builds a VPack value the
-opportunity to reserve 8 bytes in the beginning and only later find out
-that fewer bytes suffice to write the byte length. One can determine the
-number of subvalues by finding the first subvalue, its byte length, and
+is allowed to be further back, after some run of padding zero bytes.
+
+For example, if 2 bytes are used for both the byte length (BYTELENGTH),
+then an optional padding of 4 zero bytes is then allowed to follow, and
+the actual VPack subvalues can start at A+9. 
+This is to give a program that builds a VPack value the opportunity to
+reserve 8 bytes in the beginning and only later find out that fewer bytes
+suffice to write the byte length. One can determine the number of
+subvalues by finding the first subvalue, its byte length, and
 dividing the amount of available space by it.
 
 For types 0x06 to 0x09 the offset table describes where the subvalues
 reside. It is not necessary for the subvalues to start immediately after
-the number of subvalues field. As above, it is allowed to start at a
-later position, provided there are zero bytes in the earlier possible
-positions. For example, the first subvalue could be at address A+9,
-although the number of bytes of the byte length and number of subvalues
-is only 2, in that case, A[5] must be a zero byte. This rule is devised,
-because for performance reasons when building the value, it could be
-desirable to reserve 8 bytes for the byte length and number of subvalues
-and not fill the gap, even though it turns out later that offsets and
-thus the byte length only uses 2 bytes, say.
+the number of subvalues field. 
 
-There is one exception for the 8-byte numbers case: In this case the
-number of elements is moved behind the index table. This is to get away
-without moving memory when one has reserved 8 bytes in the beginning
-and later noticed that all 8 bytes are needed for the byte length.
+As above, it is allowed to include optional padding. Again here, any
+padding must consist of a run of consecutive zero bytes (ASCII NUL) and
+must be as long that it fills up the length of BYTELENGTH and the length 
+of NRITEMS to 8.
+
+For example, if both BYTELENGTH and NRITEMS can be expressed using 2 bytes
+each, the sum of their lengths is 4. It is therefore allowed to add 4
+bytes of padding here, so that the first subvalue could be at address A+9.
+
+There is one exception for the 8-byte numbers case (type 0x05): 
+In this case the number of elements is moved behind the index table. 
+This is to get away without moving memory when one has reserved 8 bytes 
+in the beginning and later noticed that all 8 bytes are needed for the
+byte length. For this case it is not allowed to include any padding.
 
 All offsets are measured from base A.
 
@@ -292,7 +302,7 @@ Empty objects are simply a single byte 0x0a.
 We next describe the type cases 0x0b to 0x12, see below for the
 special compact type 0x14.
 
-Nonempty objects look like this:
+Non-empty objects look like this:
 
   one of 0x0b - 0x12
   BYTELENGTH
@@ -313,7 +323,7 @@ The INDEXTABLE consists of:
     above) earlier offsets reside at lower addresses.
     Offsets are measured from the beginning of the VPack value.
 
-Nonempty objects have a small header including their byte length, the
+Non-empty objects have a small header including their byte length, the
 number of subvalues, then all the subvalues and finally an index table
 containing offsets to the subvalues. To find the index table, find
 number of subvalues, then the end, and from that the base of the index
@@ -329,10 +339,10 @@ offsets and thus the byte length only uses 2 bytes, say.
 There is one special case: the empty object is simply stored as the
 single byte 0x0a.
 
-There is another exception: For 8-byte numbers the number of subvalues
-is stored behind the INDEXTABLE. This is to get away without moving
-memory when one has reserved 8 bytes in the beginning and later noticed
-that all 8 bytes are needed for the byte length.
+There is another exception: For 8-byte numbers (0x12) the number of
+subvalues is stored behind the INDEXTABLE. This is to get away without
+moving memory when one has reserved 8 bytes in the beginning and later
+noticed that all 8 bytes are needed for the byte length.
 
 All offsets are measured from base A.
 

@@ -37,12 +37,14 @@ set(VELOCY_SOURCE
     src/AttributeTranslator.cpp
     src/Builder.cpp
     src/Collection.cpp
+    src/Compare.cpp
     src/Dumper.cpp
     src/Exception.cpp
     src/HexDump.cpp
     src/Iterator.cpp
     src/Options.cpp
     src/Parser.cpp
+    src/Serializable.cpp
     src/Slice.cpp
     src/SliceStaticData.cpp
     src/StringRef.cpp

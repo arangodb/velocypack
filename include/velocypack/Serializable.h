@@ -19,35 +19,34 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
-/// @author Jan Steemann
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_VPACK_H
-#define VELOCYPACK_VPACK_H 1
+#ifndef VELOCYPACK_SERIALIZABLE_H
+#define VELOCYPACK_SERIALIZABLE_H 1
+
+#include <memory>
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/AttributeTranslator.h"
-#include "velocypack/Buffer.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Collection.h"
-#include "velocypack/Compare.h"
-#include "velocypack/Dumper.h"
-#include "velocypack/Exception.h"
-#include "velocypack/HexDump.h"
-#include "velocypack/Iterator.h"
-#include "velocypack/Options.h"
-#include "velocypack/Parser.h"
-#include "velocypack/Serializable.h"
-#include "velocypack/Sink.h"
-#include "velocypack/Slice.h"
-#include "velocypack/SliceContainer.h"
-#include "velocypack/StringRef.h"
-#include "velocypack/Utf8Helper.h"
-#include "velocypack/Validator.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
-#include "velocypack/Version.h"
+
+namespace arangodb {
+namespace velocypack {
+class Builder;
+
+class Serializable {
+ public:
+  virtual void toVelocyPack(Builder&) const = 0;
+
+  // convenience method
+  std::shared_ptr<Builder> toVelocyPack() const;
+};
+
+struct Serialize {
+  Serialize(Serializable const& sable) : _sable(sable) {}
+  Serializable const& _sable;
+};
+
+}
+}
 
 #endif

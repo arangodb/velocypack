@@ -17,6 +17,11 @@ if(BuildTools)
   add_executable("vpack-to-json" vpack-to-json.cpp)
   target_link_libraries("vpack-to-json" velocypack)
   install(TARGETS "vpack-to-json" DESTINATION bin)
+  
+  # build vpack-validate.cpp
+  add_executable("vpack-validate" vpack-validate.cpp)
+  target_link_libraries("vpack-validate" velocypack)
+  install(TARGETS "vpack-validate" DESTINATION bin)
 endif()
 
 # build bench.cpp

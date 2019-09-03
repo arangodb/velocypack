@@ -6,7 +6,7 @@ message(STATUS "Building test suite: ${BuildTests}")
 
 option(BuildLargeTests "Build large tests" OFF)
 message(STATUS "Building large tests: ${BuildLargeTests}")
-  
+
 option(BuildAsmTest "Build assembler test code" OFF)
 message(STATUS "Building assembler test suite: ${BuildAsmTest}")
 
@@ -24,6 +24,7 @@ set(Tests
     testsIterator
     testsLookup
     testsParser
+    testsSerializable
     testsSlice
     testsSliceContainer
     testsStringRef

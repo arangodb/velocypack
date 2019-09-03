@@ -27,6 +27,7 @@
 #include <ostream>
 #include <string>
 #include <iostream>
+#include <regex>
 
 #include "tests-common.h"
 
@@ -301,10 +302,38 @@ TEST(StringRefTest, Substr) {
   ASSERT_TRUE(StringRef("x").equals(s.substr(19, 1)));
   ASSERT_TRUE(StringRef("x").equals(s.substr(19, 2)));
   ASSERT_TRUE(StringRef("x").equals(s.substr(19, 1024)));
+  
+  ASSERT_TRUE(StringRef("").equals(s.substr(20, 0)));
+  ASSERT_TRUE(StringRef("").equals(s.substr(20, 1)));
+  ASSERT_TRUE(StringRef("").equals(s.substr(20, 2)));
+  ASSERT_TRUE(StringRef("").equals(s.substr(20, 1024)));
 
-  ASSERT_VELOCYPACK_EXCEPTION(s.substr(20, 0), Exception::IndexOutOfBounds);
-  ASSERT_VELOCYPACK_EXCEPTION(s.substr(20, 1), Exception::IndexOutOfBounds);
-  ASSERT_VELOCYPACK_EXCEPTION(s.substr(20, 1024), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.substr(21, 0), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.substr(21, 1), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(s.substr(21, 1024), Exception::IndexOutOfBounds);
+}
+
+TEST(StringRefTest, PopBack) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef s(value);
+
+  s.pop_back();
+  ASSERT_TRUE(s.equals("the-quick-brown-fox"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals("the-quick-brown-fo"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals("the-quick-brown-f"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals("the-quick-brown-"));
+
+  s = "foo";
+  ASSERT_TRUE(s.equals("foo"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals("fo"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals("f"));
+  s.pop_back();
+  ASSERT_TRUE(s.equals(""));
 }
 
 TEST(StringRefTest, Find) {
@@ -323,6 +352,90 @@ TEST(StringRefTest, RFind) {
   for (std::size_t i = 0; i < 256; ++i) {
     ASSERT_EQ(value.rfind(static_cast<char>(i)), s.rfind(static_cast<char>(i)));
   }
+}
+
+TEST(StringRefTest, IteratorBeginEnd) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  auto it = s.begin();
+  ASSERT_EQ('t', *it);
+  ++it;
+  ASSERT_EQ('h', *it);
+  ++it;
+  ASSERT_EQ('e', *it);
+  
+  it = s.end();
+  --it;
+  ASSERT_EQ('x', *it);
+  --it;
+  ASSERT_EQ('x', *it);
+  --it;
+  ASSERT_EQ('o', *it);
+  --it;
+  ASSERT_EQ('f', *it);
+}
+
+TEST(StringRefTest, IteratorStl) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  std::string result;
+  std::for_each(s.begin(), s.end(), [&result](char v) {
+    result.push_back(v);
+  });
+
+  ASSERT_TRUE(s.equals(result));
+}
+
+TEST(StringRefTest, IteratorRegex) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  ASSERT_TRUE(std::regex_match(s.begin(), s.end(), std::regex(".*fox.*")));
+}
+
+TEST(StringRefTest, IteratorRegexMatch) {
+  std::string const value("the-quick-brown-foxx");
+  StringRef const s(value);
+
+  std::match_results<char const*> matches;
+  ASSERT_TRUE(std::regex_match(s.begin(), s.end(), matches, std::regex(".*fox.*")));
+}
+
+TEST(StringRefTest, Equals) {
+  StringRef const s("the-quick-brown-foxx");
+
+  ASSERT_TRUE(s.equals("the-quick-brown-foxx"));
+  ASSERT_FALSE(s.equals("the-quick-brown-foxx "));
+  ASSERT_FALSE(s.equals("the-quick-brown-foxxy"));
+  ASSERT_FALSE(s.equals("the-quick-brown-fox"));
+  
+  ASSERT_TRUE(s.equals(std::string("the-quick-brown-foxx")));
+  ASSERT_FALSE(s.equals(std::string("the-quick-brown-foxx ")));
+  ASSERT_FALSE(s.equals(std::string("the-quick-brown-foxxy")));
+  ASSERT_FALSE(s.equals(std::string("the-quick-brown-fox")));
+  
+  ASSERT_TRUE(s.equals(StringRef("the-quick-brown-foxx")));
+  ASSERT_FALSE(s.equals(StringRef("the-quick-brown-foxx ")));
+  ASSERT_FALSE(s.equals(StringRef("the-quick-brown-foxxy")));
+  ASSERT_FALSE(s.equals(StringRef("the-quick-brown-fox")));
+}
+
+TEST(StringRefTest, EqualsEmpty) {
+  StringRef const s("");
+
+  ASSERT_TRUE(s.equals(""));
+  ASSERT_FALSE(s.equals(" "));
+  ASSERT_FALSE(s.equals("0"));
+  
+  ASSERT_TRUE(s.equals(std::string("")));
+  ASSERT_FALSE(s.equals(std::string(" ")));
+  ASSERT_FALSE(s.equals(std::string("0")));
+  
+  ASSERT_TRUE(s.equals(StringRef("")));
+  ASSERT_FALSE(s.equals(StringRef(" ")));
+  ASSERT_FALSE(s.equals(StringRef("0")));
 }
 
 TEST(StringRefTest, Compare) {

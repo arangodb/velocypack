@@ -29,27 +29,62 @@
 
 #include "tests-common.h"
 
-TEST(CompareTest, None) {
+TEST(BinaryCompareTest, BasicTypes) {
+  ASSERT_TRUE(BinaryCompare::equals(Slice::noneSlice(), Slice::noneSlice()));
+  ASSERT_FALSE(BinaryCompare::equals(Slice::noneSlice(), Slice::nullSlice()));
+  ASSERT_FALSE(BinaryCompare::equals(Slice::nullSlice(), Slice::noneSlice()));
+
+  ASSERT_TRUE(BinaryCompare::equals(Slice::nullSlice(), Slice::nullSlice()));
+  ASSERT_TRUE(BinaryCompare::equals(Slice::falseSlice(), Slice::falseSlice()));
+  ASSERT_TRUE(BinaryCompare::equals(Slice::trueSlice(), Slice::trueSlice()));
+  ASSERT_FALSE(BinaryCompare::equals(Slice::trueSlice(), Slice::falseSlice()));
+  ASSERT_FALSE(BinaryCompare::equals(Slice::falseSlice(), Slice::trueSlice()));
+ 
+  Builder b1;
+  Builder b2;
+
+  b1.add(Value(int64_t(21)));
+  b2.add(Value(int64_t(21)));
+  ASSERT_TRUE(b1.slice().isInt());
+  ASSERT_TRUE(b2.slice().isInt());
+  ASSERT_TRUE(BinaryCompare::equals(b1.slice(), b2.slice()));
+  
+  b2.clear();
+  b2.add(Value(uint64_t(21)));
+  ASSERT_TRUE(b1.slice().isInt());
+  ASSERT_TRUE(b2.slice().isUInt());
+  ASSERT_FALSE(BinaryCompare::equals(b1.slice(), b2.slice()));
+  
+  b1.clear();
+  b2.clear();
+  b1.add(Value(uint64_t(21)));
+  b2.add(Value(uint64_t(21)));
+  ASSERT_TRUE(b1.slice().isUInt());
+  ASSERT_TRUE(b2.slice().isUInt());
+  ASSERT_TRUE(BinaryCompare::equals(b1.slice(), b2.slice()));
+}
+
+TEST(NormalizedCompareTest, None) {
   ASSERT_TRUE(NormalizedCompare::equals(Slice::noneSlice(), Slice::noneSlice()));
 
   ASSERT_FALSE(NormalizedCompare::equals(Slice::noneSlice(), Parser::fromJson("null")->slice()));
 }
 
-TEST(CompareTest, MinKey) {
+TEST(NormalizedCompareTest, MinKey) {
   ASSERT_TRUE(NormalizedCompare::equals(Slice::minKeySlice(), Slice::minKeySlice()));
 
   ASSERT_FALSE(NormalizedCompare::equals(Slice::minKeySlice(), Slice::maxKeySlice()));
   ASSERT_FALSE(NormalizedCompare::equals(Slice::minKeySlice(), Parser::fromJson("null")->slice()));
 }
 
-TEST(CompareTest, MaxKey) {
+TEST(NormalizedCompareTest, MaxKey) {
   ASSERT_TRUE(NormalizedCompare::equals(Slice::maxKeySlice(), Slice::maxKeySlice()));
 
   ASSERT_FALSE(NormalizedCompare::equals(Slice::maxKeySlice(), Slice::minKeySlice()));
   ASSERT_FALSE(NormalizedCompare::equals(Slice::maxKeySlice(), Parser::fromJson("null")->slice()));
 }
 
-TEST(CompareTest, Null) {
+TEST(NormalizedCompareTest, Null) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("null")->slice(), Parser::fromJson("null")->slice()));
   
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("null")->slice(), Parser::fromJson("false")->slice()));
@@ -72,7 +107,7 @@ TEST(CompareTest, Null) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("null")->slice(), Parser::fromJson("{\"null\":null}")->slice()));
 }
 
-TEST(CompareTest, Bools) {
+TEST(NormalizedCompareTest, Bools) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("false")->slice(), Parser::fromJson("false")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("true")->slice(), Parser::fromJson("true")->slice()));
   
@@ -126,7 +161,7 @@ TEST(CompareTest, Bools) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("true")->slice(), Parser::fromJson("{\"true\":true}")->slice()));
 }
 
-TEST(CompareTest, Numbers) {
+TEST(NormalizedCompareTest, Numbers) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("0")->slice(), Parser::fromJson("0")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("0")->slice(), Parser::fromJson("0.0")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("1")->slice(), Parser::fromJson("1")->slice()));
@@ -213,7 +248,7 @@ TEST(CompareTest, Numbers) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("-1")->slice(), Parser::fromJson("{}")->slice()));
 }
 
-TEST(CompareTest, Strings) {
+TEST(NormalizedCompareTest, Strings) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("\"\"")->slice(), Parser::fromJson("\"\"")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("\" \"")->slice(), Parser::fromJson("\" \"")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("\"  \"")->slice(), Parser::fromJson("\"  \"")->slice()));
@@ -253,7 +288,7 @@ TEST(CompareTest, Strings) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("\"the quick brown fox\"")->slice(), Parser::fromJson("\"the\\tquick\\tbrown\\tfox\"")->slice()));
 }
   
-TEST(CompareTest, Arrays) {
+TEST(NormalizedCompareTest, Arrays) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("[]")->slice(), Parser::fromJson("[]")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("[null]")->slice(), Parser::fromJson("[null]")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("[null, null]")->slice(), Parser::fromJson("[null, null]")->slice()));
@@ -337,7 +372,7 @@ TEST(CompareTest, Arrays) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("[\"a\",\"b\",\"c\"]")->slice(), Parser::fromJson("[\"c\",\"b\",\"a\"]")->slice()));
 }
 
-TEST(CompareTest, Objects) {
+TEST(NormalizedCompareTest, Objects) {
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("{}")->slice(), Parser::fromJson("{}")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("{\"a\":1}")->slice(), Parser::fromJson("{\"a\":1}")->slice()));
   ASSERT_TRUE(NormalizedCompare::equals(Parser::fromJson("{\"a\":1,\"A\":2}")->slice(), Parser::fromJson("{\"a\":1,\"A\":2}")->slice()));
@@ -367,7 +402,7 @@ TEST(CompareTest, Objects) {
   ASSERT_FALSE(NormalizedCompare::equals(Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\"}")->slice(), Parser::fromJson("{\"one\":{\"one-one\":1,\"one-two\":2,\"one-three\":3},\"two\":{\"two-one\":21,\"two-two\":22,\"two-three\":23},\"three\":\"three\",\"four\":\"four\"}")->slice()));
 }
 
-TEST(CompareTest, Custom) {
+TEST(NormalizedCompareTest, Custom) {
   Builder b;
   uint8_t* p = b.add(ValuePair(2ULL, ValueType::Custom));
   *p++ = 0xf0;

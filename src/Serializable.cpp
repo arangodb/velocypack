@@ -19,35 +19,18 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
-/// @author Jan Steemann
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_VPACK_H
-#define VELOCYPACK_VPACK_H 1
-
 #include "velocypack/velocypack-common.h"
-#include "velocypack/AttributeTranslator.h"
-#include "velocypack/Buffer.h"
-#include "velocypack/Builder.h"
-#include "velocypack/Collection.h"
-#include "velocypack/Compare.h"
-#include "velocypack/Dumper.h"
-#include "velocypack/Exception.h"
-#include "velocypack/HexDump.h"
-#include "velocypack/Iterator.h"
-#include "velocypack/Options.h"
-#include "velocypack/Parser.h"
 #include "velocypack/Serializable.h"
-#include "velocypack/Sink.h"
-#include "velocypack/Slice.h"
-#include "velocypack/SliceContainer.h"
-#include "velocypack/StringRef.h"
-#include "velocypack/Utf8Helper.h"
-#include "velocypack/Validator.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
-#include "velocypack/Version.h"
+#include "velocypack/Builder.h"
 
-#endif
+using namespace arangodb::velocypack;
+
+// convenience method
+std::shared_ptr<Builder> Serializable::toVelocyPack() const {
+  auto builder = std::make_shared<Builder>();
+  this->toVelocyPack(*builder);
+  return builder;
+}
