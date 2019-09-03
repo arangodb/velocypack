@@ -134,6 +134,10 @@ std::string Slice::toJson(Options const* options) const {
 }
 
 std::string Slice::toString(Options const* options) const {
+  if(isString()) {
+    return copyString();
+  }
+
   // copy options and set prettyPrint in copy
   Options prettyOptions = *options;
   prettyOptions.prettyPrint = true;
