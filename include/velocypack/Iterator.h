@@ -46,7 +46,7 @@ class ArrayIterator {
     
     uint8_t const head = slice.head();     
 
-    if (VELOCYPACK_UNLIKELY(slice.rawType(head) != ValueType::Array)) {
+    if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Array)) {
       throw Exception(Exception::InvalidValueType, "Expecting Array slice");
     }
 
@@ -174,7 +174,7 @@ class ObjectIterator {
     
     uint8_t const head = slice.head();     
 
-    if (VELOCYPACK_UNLIKELY(slice.rawType(head) != ValueType::Object)) {
+    if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Object)) {
       throw Exception(Exception::InvalidValueType, "Expecting Object slice");
     }
 

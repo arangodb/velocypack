@@ -728,11 +728,12 @@ class Builder {
   uint8_t* set(Slice const& item);
 
   uint8_t* set(uint64_t tag, Serializable const& sable) {
+    auto const oldPos = _pos;
+
     if(tag != 0) {
       appendTag(tag);
     }
 
-    auto const oldPos = _pos;
     sable.toVelocyPack(*this);
     return _start + oldPos;
   }

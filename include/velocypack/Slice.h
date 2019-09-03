@@ -44,8 +44,6 @@
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 
-#include <stdio.h>
-
 namespace arangodb {
 namespace velocypack {
 
@@ -119,8 +117,7 @@ class Slice {
   // creates a slice of type MaxKey
   static constexpr Slice maxKeySlice() noexcept { return Slice(maxKeySliceData); }
 
-  int64_t getTagId() const
-  {
+  int64_t getTagId() const {
     if(isTagged()) {
       if(*_start == 0xee) {
         return readIntegerFixed<ValueLength, 1>(_start + 1);
@@ -135,15 +132,15 @@ class Slice {
   }
 
   constexpr uint8_t tagOffset() const {
-    return SliceStaticData::TypeMap[*_start] == ValueType::Tagged ? (*_start == 0xee ? 2 : (*_start == 0xef ? 9 : /*error*/0)) : 0;
+    return tagOffset(rawStart());
   }
 
-  // pointer to the head byte
+  // pointer to the head byte, including possible tags
   constexpr uint8_t const* rawStart() const noexcept {
     return _start;
   }
 
-  // pointer to the head byte
+  // pointer to the head byte, excluding possible tags
   constexpr uint8_t const* start() const noexcept {
     return _start + tagOffset();
   }
@@ -154,8 +151,11 @@ class Slice {
     return reinterpret_cast<T const*>(start());
   }
 
-  // value of the head byte
+  // value of the head byte (excluding tags)
   constexpr inline uint8_t head() const noexcept { return *start(); }
+
+  // value of the raw head byte (including tags)
+  constexpr inline uint8_t rawHead() const noexcept { return *rawStart(); }
 
   uint8_t const* begin() noexcept { return start(); }
 
@@ -165,17 +165,21 @@ class Slice {
 
   uint8_t const* end() const { return start() + byteSize(); }
 
-  // get the type for the slice
+  // get the type for the slice (excluding tags)
   constexpr inline ValueType type() const noexcept {
-    return SliceStaticData::TypeMap[head()];
+    return type(head());
   }
 
-  // get the type for the slice
-  constexpr inline ValueType rawType(uint8_t h) const noexcept {
-    return SliceStaticData::TypeMap[h];
+  // get the type for the slice (including tags)
+  constexpr inline ValueType rawType() const noexcept {
+    return type(rawHead());
   }
 
+  // get the type name for the slice (excluding tags)
   char const* typeName() const { return valueTypeName(type()); }
+
+  // get the type name for the slice (including tags)
+  char const* rawTypeName() const { return valueTypeName(rawType()); }
 
   // Set new memory position
   void set(uint8_t const* s) { _start = s; }
@@ -215,9 +219,14 @@ class Slice {
     return VELOCYPACK_HASH(start(), static_cast<std::size_t>(stringSliceLength()), seed);
   }
 
-  // check if slice is of the specified type
+  // check if slice is of the specified type (excluding tags)
   constexpr inline bool isType(ValueType t) const noexcept {
     return SliceStaticData::TypeMap[*start()] == t;
+  }
+
+  // check if slice is of the specified type (including tags)
+  constexpr inline bool isRawType(ValueType t) const noexcept {
+    return SliceStaticData::TypeMap[*rawStart()] == t;
   }
 
   // check if slice is a None object
@@ -284,7 +293,7 @@ class Slice {
   constexpr bool isCustom() const noexcept { return isType(ValueType::Custom); }
 
   // check if slice is a Tagged type
-  constexpr bool isTagged() const noexcept { return SliceStaticData::TypeMap[*_start] == ValueType::Tagged; }
+  constexpr bool isTagged() const noexcept { return isRawType(ValueType::Tagged); }
 
   // check if a slice is any number type
   constexpr bool isInteger() const noexcept {
@@ -793,120 +802,16 @@ class Slice {
     return out;
   }
 
+  // get the total byte size for the slice, including the head byte, excluding tags
   ValueLength byteSize() const {
-    return byteSize(head());
+    return byteSize(start());
   }
 
+  // get the total byte size for the slice, including the head byte, including tags
   ValueLength rawByteSize() const {
-    return byteSize(*_start);
+    return byteSize(rawStart());
   }
 
-  // get the total byte size for the slice, including the head byte
-  ValueLength byteSize(uint8_t h) const {
-    // check if the type has a fixed length first
-    ValueLength l = static_cast<ValueLength>(SliceStaticData::FixedTypeLengths[h]);
-    if (l != 0) {
-      // return fixed length
-      return l;
-    }
-
-    // types with dynamic lengths need special treatment:
-    switch (rawType(h)) {
-      case ValueType::Array:
-      case ValueType::Object: {
-        if (h == 0x13 || h == 0x14) {
-          // compact Array or Object
-          return readVariableValueLength<false>(start() + 1);
-        }
-
-        VELOCYPACK_ASSERT(h > 0x01 && h <= 0x0e && h != 0x0a);
-        if (h >= sizeof(SliceStaticData::WidthMap) / sizeof(SliceStaticData::WidthMap[0])) {
-          throw Exception(Exception::InternalError, "invalid Array/Object type");
-        }
-        return readIntegerNonEmpty<ValueLength>(start() + 1,
-                                                SliceStaticData::WidthMap[h]);
-      }
-
-      case ValueType::String: {
-        VELOCYPACK_ASSERT(h == 0xbf);
-
-        if (h < 0xbf) {
-          // we cannot get here, because the FixedTypeLengths lookup
-          // above will have kicked in already. however, the compiler
-          // claims we'll be reading across the bounds of the input
-          // here...
-          return h - 0x40;
-        }
-        
-        // long UTF-8 String
-        return static_cast<ValueLength>(
-            1 + 8 + readIntegerFixed<ValueLength, 8>(start() + 1));
-      }
-
-      case ValueType::Binary: {
-        VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
-        return static_cast<ValueLength>(
-            1 + h - 0xbf + readIntegerNonEmpty<ValueLength>(start() + 1, h - 0xbf));
-      }
-
-      case ValueType::BCD: {
-        if (h <= 0xcf) {
-          // positive BCD
-          VELOCYPACK_ASSERT(h >= 0xc8 && h < 0xcf);
-          return static_cast<ValueLength>(
-              1 + h - 0xc7 + readIntegerNonEmpty<ValueLength>(start() + 1, h - 0xc7));
-        }
-
-        // negative BCD
-        VELOCYPACK_ASSERT(h >= 0xd0 && h < 0xd7);
-        return static_cast<ValueLength>(
-            1 + h - 0xcf + readIntegerNonEmpty<ValueLength>(start() + 1, h - 0xcf));
-      }
-
-      case ValueType::Tagged: {
-        return byteSize(*start()) + tagOffset();
-      }
-
-      case ValueType::Custom: {
-        VELOCYPACK_ASSERT(h >= 0xf4);
-        switch (h) {
-          case 0xf4: 
-          case 0xf5: 
-          case 0xf6: {
-            return 2 + readIntegerFixed<ValueLength, 1>(start() + 1);
-          }
-
-          case 0xf7: 
-          case 0xf8: 
-          case 0xf9:  {
-            return 3 + readIntegerFixed<ValueLength, 2>(start() + 1);
-          }
-          
-          case 0xfa: 
-          case 0xfb: 
-          case 0xfc: {
-            return 5 + readIntegerFixed<ValueLength, 4>(start() + 1);
-          }
-          
-          case 0xfd: 
-          case 0xfe: 
-          case 0xff: {
-            return 9 + readIntegerFixed<ValueLength, 8>(start() + 1);
-          }
-
-          default: {
-            // fallthrough intentional
-          }
-        }
-      }
-      default: {
-        // fallthrough intentional
-      }
-    }
-
-    throw Exception(Exception::InternalError, "Invalid type for byteSize()");
-  }
-  
   ValueLength findDataOffset(uint8_t head) const noexcept {
     // Must be called for a non-empty array or object at start():
     VELOCYPACK_ASSERT(head != 0x01 && head != 0x0a && head <= 0x14);
@@ -1018,11 +923,16 @@ class Slice {
   int64_t getSmallIntUnchecked() const noexcept;
   
  private:
+  // get the type for the slice (including tags)
+  constexpr inline ValueType type(uint8_t h) const noexcept {
+    return SliceStaticData::TypeMap[h];
+  }
+
   // return the number of members for an Array
   // must only be called for Slices that have been validated to be of type Array
   ValueLength arrayLength() const {
     auto const h = head();
-    VELOCYPACK_ASSERT(rawType(h) == ValueType::Array); 
+    VELOCYPACK_ASSERT(type(h) == ValueType::Array);
 
     if (h == 0x01) {
       // special case: empty!
@@ -1061,7 +971,7 @@ class Slice {
   // must only be called for Slices that have been validated to be of type Object
   ValueLength objectLength() const {
     auto const h = head();
-    VELOCYPACK_ASSERT(rawType(h) == ValueType::Object);
+    VELOCYPACK_ASSERT(type(h) == ValueType::Object);
 
     if (h == 0x0a) {
       // special case: empty!
@@ -1151,6 +1061,119 @@ class Slice {
     memcpy(&binary[0], start() + 1, sizeof(char const*));
     return value;
   }
+
+  constexpr uint8_t tagOffset(uint8_t const* _start) const {
+    return SliceStaticData::TypeMap[*_start] == ValueType::Tagged ? (*_start == 0xee ? 2 : (*_start == 0xef ? 9 : throw new Exception(Exception::InternalError, "Invalid tag type ID"))) : 0;
+  }
+
+  // get the total byte size for the slice, including the head byte
+  ValueLength byteSize(uint8_t const* start) const {
+    uint8_t h = *start;
+
+    // check if the type has a fixed length first
+    ValueLength l = static_cast<ValueLength>(SliceStaticData::FixedTypeLengths[h]);
+    if (l != 0) {
+      // return fixed length
+      return l;
+    }
+
+    // types with dynamic lengths need special treatment:
+    switch (type(h)) {
+      case ValueType::Array:
+      case ValueType::Object: {
+        if (h == 0x13 || h == 0x14) {
+          // compact Array or Object
+          return readVariableValueLength<false>(start + 1);
+        }
+
+        VELOCYPACK_ASSERT(h > 0x01 && h <= 0x0e && h != 0x0a);
+        if (h >= sizeof(SliceStaticData::WidthMap) / sizeof(SliceStaticData::WidthMap[0])) {
+          throw Exception(Exception::InternalError, "invalid Array/Object type");
+        }
+        return readIntegerNonEmpty<ValueLength>(start + 1,
+                                                SliceStaticData::WidthMap[h]);
+      }
+
+      case ValueType::String: {
+        VELOCYPACK_ASSERT(h == 0xbf);
+
+        if (h < 0xbf) {
+          // we cannot get here, because the FixedTypeLengths lookup
+          // above will have kicked in already. however, the compiler
+          // claims we'll be reading across the bounds of the input
+          // here...
+          return h - 0x40;
+        }
+
+        // long UTF-8 String
+        return static_cast<ValueLength>(
+            1 + 8 + readIntegerFixed<ValueLength, 8>(start + 1));
+      }
+
+      case ValueType::Binary: {
+        VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
+        return static_cast<ValueLength>(
+            1 + h - 0xbf + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xbf));
+      }
+
+      case ValueType::BCD: {
+        if (h <= 0xcf) {
+          // positive BCD
+          VELOCYPACK_ASSERT(h >= 0xc8 && h < 0xcf);
+          return static_cast<ValueLength>(
+              1 + h - 0xc7 + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xc7));
+        }
+
+        // negative BCD
+        VELOCYPACK_ASSERT(h >= 0xd0 && h < 0xd7);
+        return static_cast<ValueLength>(
+            1 + h - 0xcf + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xcf));
+      }
+
+      case ValueType::Tagged: {
+        return byteSize(start + tagOffset(start)) + tagOffset(start);
+      }
+
+      case ValueType::Custom: {
+        VELOCYPACK_ASSERT(h >= 0xf4);
+        switch (h) {
+          case 0xf4:
+          case 0xf5:
+          case 0xf6: {
+            return 2 + readIntegerFixed<ValueLength, 1>(start + 1);
+          }
+
+          case 0xf7:
+          case 0xf8:
+          case 0xf9:  {
+            return 3 + readIntegerFixed<ValueLength, 2>(start + 1);
+          }
+
+          case 0xfa:
+          case 0xfb:
+          case 0xfc: {
+            return 5 + readIntegerFixed<ValueLength, 4>(start + 1);
+          }
+
+          case 0xfd:
+          case 0xfe:
+          case 0xff: {
+            return 9 + readIntegerFixed<ValueLength, 8>(start + 1);
+          }
+
+          default: {
+            // fallthrough intentional
+          }
+        }
+      }
+      default: {
+        // fallthrough intentional
+      }
+    }
+
+    throw Exception(Exception::InternalError, "Invalid type for byteSize()");
+  }
+
 };
 
 }  // namespace arangodb::velocypack
