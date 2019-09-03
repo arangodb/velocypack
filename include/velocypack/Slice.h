@@ -864,7 +864,7 @@ class Slice {
       }
 
       case ValueType::Tagged: {
-		  return byteSize(*start()) + tagOffset();
+        return byteSize(*start()) + tagOffset();
       }
 
       case ValueType::Custom: {
@@ -1162,7 +1162,7 @@ template <>
 struct hash<arangodb::velocypack::Slice> {
   std::size_t operator()(arangodb::velocypack::Slice const& slice) const {
 #ifdef VELOCYPACK_32BIT
-	return static_cast<size_t>(slice.hash32());
+    return static_cast<size_t>(slice.hash32());
 #else
     return static_cast<std::size_t>(slice.hash());
 #endif

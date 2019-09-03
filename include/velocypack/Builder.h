@@ -629,9 +629,9 @@ class Builder {
 
   template <typename T>
   uint8_t* addInternal(char const* attrName, std::size_t attrLength, uint64_t tag, T const& sub) {
-	if(attrName == nullptr) {
-	  return addInternal(tag, sub);
-	}
+    if(attrName == nullptr) {
+      return addInternal(tag, sub);
+    }
 
     bool haveReported = false;
     if (!_stack.empty()) {
@@ -664,8 +664,8 @@ class Builder {
         // otherwise fall through to regular behavior
       }
 
-	  set(ValuePair(attrName, attrLength, ValueType::String));
-	  _keyWritten = true;
+      set(ValuePair(attrName, attrLength, ValueType::String));
+      _keyWritten = true;
 
       return set(tag, sub);
     } catch (...) {
