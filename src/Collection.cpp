@@ -149,7 +149,7 @@ bool Collection::containsObject(Slice const& slice, Slice const& other) {
       return false;
     }
 
-    if(!v.equals(it.value()))
+    if(!v.binaryEquals(it.value()))
     {
       // TODO: recursive comparison (?)
       return false;

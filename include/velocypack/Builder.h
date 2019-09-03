@@ -283,16 +283,16 @@ class Builder {
 
   // Add a subvalue into an object from a Serializable:
   inline uint8_t* add(std::string const& attrName, Serialize const& sub) {
-    return addInternal<Serializable>(attrName, sub._sable);
+    return addInternal<Serializable>(attrName, 0, sub._sable);
   }
   inline uint8_t* add(StringRef const& attrName, Serialize const& sub) {
-    return addInternal<Serializable>(attrName, sub._sable);
+    return addInternal<Serializable>(attrName, 0, sub._sable);
   }
   inline uint8_t* add(char const* attrName, Serialize const& sub) {
-    return addInternal<Serializable>(attrName, sub._sable);
+    return addInternal<Serializable>(attrName, 0, sub._sable);
   }
   inline uint8_t* add(char const* attrName, std::size_t attrLength, Serialize const& sub) {
-    return addInternal<Serializable>(attrName, attrLength, sub._sable);
+    return addInternal<Serializable>(attrName, attrLength, 0, sub._sable);
   }
 
   // Add a subvalue into an array from a Value:
@@ -310,6 +310,10 @@ class Builder {
     return addInternal<ValuePair>(0, sub);
   }
 
+  // Add a subvalue into an array from a Serializable:
+  inline uint8_t* add(Serialize const& sub) {
+    return addInternal<Serializable>(0, sub._sable);
+  }
 
   // Add a subvalue into an object from a Value:
   inline uint8_t* addTagged(std::string const& attrName, int64_t tag, Value const& sub) {
@@ -352,6 +356,9 @@ class Builder {
   inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, attrLength, tag, sub);
   }
+  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Serialize const& sub) {
+    return addInternal<Serializable>(attrName, attrLength, tag, sub._sable);
+  }
 
   // Add a subvalue into an array from a Value:
   inline uint8_t* addTagged(int64_t tag, Value const& sub) {
@@ -368,9 +375,9 @@ class Builder {
     return addInternal<ValuePair>(tag, sub);
   }
 
-  // Add a subvalue into an array from a Serializable:
-  inline uint8_t* add(Serialize const& sub) {
-    return addInternal<Serializable>(sub._sable);
+  // Add a subvalue into an array from a Serialize:
+  inline uint8_t* addTagged(int64_t tag, Serialize const& sub) {
+    return addInternal<Serializable>(tag, sub._sable);
   }
 
   // Add an External slice to an array
@@ -553,18 +560,6 @@ class Builder {
 
   void appendTag(uint64_t tag);
 
-  uint8_t* set(uint64_t tag, Value const& item);
-
-  uint8_t* set(Value const& item);
-
-  uint8_t* set(uint64_t tag, ValuePair const& pair);
-
-  uint8_t* set(ValuePair const& pair);
-
-  uint8_t* set(uint64_t tag, Slice const& item);
-
-  uint8_t* set(Slice const& item);
-
   inline void checkKeyIsString(bool isString) {
     if (!_stack.empty()) {
       ValueLength const& tos = _stack.back();
@@ -720,10 +715,30 @@ class Builder {
     }
   }
 
-  uint8_t* set(Serializable const& sable) {
+  uint8_t* set(uint64_t tag, Value const& item);
+
+  uint8_t* set(Value const& item);
+
+  uint8_t* set(uint64_t tag, ValuePair const& pair);
+
+  uint8_t* set(ValuePair const& pair);
+
+  uint8_t* set(uint64_t tag, Slice const& item);
+
+  uint8_t* set(Slice const& item);
+
+  uint8_t* set(uint64_t tag, Serializable const& sable) {
+    if(tag != 0) {
+      appendTag(tag);
+    }
+
     auto const oldPos = _pos;
     sable.toVelocyPack(*this);
     return _start + oldPos;
+  }
+
+  uint8_t* set(Serializable const& sable) {
+    return set(0, sable);
   }
 
   void cleanupAdd() noexcept {
