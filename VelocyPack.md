@@ -581,13 +581,13 @@ Essentially this is object-relational mapping for parts of documents.
 The format of the type is:
 
     0xee
-    TAG in 1 byte
+    TAG number in 1 byte
     sub VPack value
 
 or
 
     0xef
-    TAG in 8 bytes
+    TAG number in 8 bytes, little-endian encoding
     sub VPack value
 
 

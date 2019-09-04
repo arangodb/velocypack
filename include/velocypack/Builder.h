@@ -316,67 +316,67 @@ class Builder {
   }
 
   // Add a subvalue into an object from a Value:
-  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, int64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(char const* attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, attrLength, tag, sub);
   }
 
   // Add a subvalue into an object from a Slice:
-  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, int64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(char const* attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, attrLength, tag, sub);
   }
 
   // Add a subvalue into an object from a ValuePair:
-  inline uint8_t* addTagged(std::string const& attrName, int64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(StringRef const& attrName, int64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, int64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(char const* attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, attrLength, tag, sub);
   }
-  inline uint8_t* addTagged(char const* attrName, size_t attrLength, int64_t tag, Serialize const& sub) {
+  inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Serialize const& sub) {
     return addInternal<Serializable>(attrName, attrLength, tag, sub._sable);
   }
 
   // Add a subvalue into an array from a Value:
-  inline uint8_t* addTagged(int64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(uint64_t tag, Value const& sub) {
     return addInternal<Value>(tag, sub);
   }
 
   // Add a slice to an array
-  inline uint8_t* addTagged(int64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(tag, sub);
   }
 
   // Add a subvalue into an array from a ValuePair:
-  inline uint8_t* addTagged(int64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(tag, sub);
   }
 
   // Add a subvalue into an array from a Serialize:
-  inline uint8_t* addTagged(int64_t tag, Serialize const& sub) {
+  inline uint8_t* addTagged(uint64_t tag, Serialize const& sub) {
     return addInternal<Serializable>(tag, sub._sable);
   }
 

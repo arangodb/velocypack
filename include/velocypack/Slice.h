@@ -117,12 +117,12 @@ class Slice {
   // creates a slice of type MaxKey
   static constexpr Slice maxKeySlice() noexcept { return Slice(maxKeySliceData); }
 
-  int64_t getTagId() const {
+  uint64_t getTagId() const {
     if(isTagged()) {
       if(*_start == 0xee) {
-        return readIntegerFixed<ValueLength, 1>(_start + 1);
+        return readIntegerFixed<uint64_t, 1>(_start + 1);
       } else if(*_start == 0xef) {
-        return readIntegerFixed<ValueLength, 8>(_start + 1);
+        return readIntegerFixed<uint64_t, 8>(_start + 1);
       } else {
         throw new Exception(Exception::InternalError, "Invalid tag type ID");
       }
@@ -219,12 +219,12 @@ class Slice {
     return VELOCYPACK_HASH(start(), static_cast<std::size_t>(stringSliceLength()), seed);
   }
 
-  // check if slice is of the specified type (excluding tags)
+  // check if slice is of the specified type (including tags)
   constexpr inline bool isType(ValueType t) const noexcept {
     return SliceStaticData::TypeMap[*start()] == t;
   }
 
-  // check if slice is of the specified type (including tags)
+  // check if slice is of the specified type (excluding tags)
   constexpr inline bool isRawType(ValueType t) const noexcept {
     return SliceStaticData::TypeMap[*rawStart()] == t;
   }
@@ -802,12 +802,12 @@ class Slice {
     return out;
   }
 
-  // get the total byte size for the slice, including the head byte, excluding tags
+  // get the total byte size for the slice, including the head byte, including tags
   ValueLength byteSize() const {
     return byteSize(start());
   }
 
-  // get the total byte size for the slice, including the head byte, including tags
+  // get the total byte size for the slice, including the head byte, excluding tags
   ValueLength rawByteSize() const {
     return byteSize(rawStart());
   }

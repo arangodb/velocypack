@@ -140,7 +140,7 @@ bool Collection::contains(Slice const& slice, Slice const& other) {
 }
 
 bool Collection::containsObject(Slice const& slice, Slice const& other) {
-  ObjectIterator it(other);
+  ObjectIterator it(other, true);
 
   while (it.valid()) {
     Slice v = slice.get(it.key(true).stringRef());
