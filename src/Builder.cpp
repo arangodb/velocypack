@@ -1004,9 +1004,9 @@ uint8_t* Builder::set(uint64_t tag, Slice const& item) {
     appendTag(tag);
   }
 
-  ValueLength const l = item.rawByteSize();
+  ValueLength const l = item.byteSize();
   reserve(l);
-  memcpy(_start + _pos, item.rawStart(), checkOverflow(l));
+  memcpy(_start + _pos, item.start(), checkOverflow(l));
   advance(l);
   return _start + _pos - l;
 }

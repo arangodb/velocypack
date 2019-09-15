@@ -82,8 +82,6 @@ class Collection {
 
   static bool contains(Slice const& slice, Slice const& other);
 
-  static bool containsObject(Slice const& slice, Slice const& other);
-
   static bool contains(Slice const* slice, Slice const& other) {
     return contains(*slice, other);
   }

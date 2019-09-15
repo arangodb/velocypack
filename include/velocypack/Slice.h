@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <functional>
 #include <type_traits>
+#include <list>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
@@ -58,6 +59,7 @@ class Slice {
   friend class ArrayIterator;
   friend class ObjectIterator;
 
+  // This variable should be accessed through the start() method
   uint8_t const* _start;
 
  public:
@@ -117,32 +119,57 @@ class Slice {
   // creates a slice of type MaxKey
   static constexpr Slice maxKeySlice() noexcept { return Slice(maxKeySliceData); }
 
-  uint64_t getTagId() const {
+  constexpr Slice const value() const noexcept {
+    return isTagged() ? Slice(valueStart()) : *this;
+  }
+
+  constexpr uint64_t getFirstTag() const {
+    // always need the actual first byte, so use _start directly
+    return !isTagged() ? 0 :
+             (*_start == 0xee ? readIntegerFixed<uint64_t, 1>(_start + 1) :
+               (*_start == 0xef ? readIntegerFixed<uint64_t, 8>(_start + 1) : /* error */ 0)
+             );
+  }
+
+  std::list<uint64_t> getTags() const {
+    std::list<uint64_t> ret;
+
     if(isTagged()) {
-      if(*_start == 0xee) {
-        return readIntegerFixed<uint64_t, 1>(_start + 1);
-      } else if(*_start == 0xef) {
-        return readIntegerFixed<uint64_t, 8>(_start + 1);
-      } else {
-        throw new Exception(Exception::InternalError, "Invalid tag type ID");
+      // always need the actual first byte, so use _start directly
+      uint8_t const* start = _start;
+
+      while(SliceStaticData::TypeMap[*start] == ValueType::Tagged) {
+        uint64_t offset;
+        uint64_t tag;
+
+        if(*start == 0xee) {
+          tag = readIntegerFixed<uint64_t, 1>(start + 1);
+          offset = 2;
+        } else if(*start == 0xef) {
+          tag = readIntegerFixed<uint64_t, 8>(start + 1);
+          offset = 9;
+        } else {
+          throw new Exception(Exception::InternalError, "Invalid tag type ID");
+        }
+
+        ret.push_back(tag);
+        start += offset;
       }
     }
 
-    return 0;
-  }
-
-  constexpr uint8_t tagOffset() const {
-    return tagOffset(rawStart());
-  }
-
-  // pointer to the head byte, including possible tags
-  constexpr uint8_t const* rawStart() const noexcept {
-    return _start;
+    return ret;
   }
 
   // pointer to the head byte, excluding possible tags
+  uint8_t const* valueStart() const noexcept {
+    // always need the actual first byte, so use _start directly
+    return _start + tagsOffset(_start);
+  }
+
+  // pointer to the head byte, including possible tags
+  // other implementations may exclude tags
   constexpr uint8_t const* start() const noexcept {
-    return _start + tagOffset();
+    return _start;
   }
 
   // pointer to the head byte
@@ -151,35 +178,22 @@ class Slice {
     return reinterpret_cast<T const*>(start());
   }
 
-  // value of the head byte (excluding tags)
+  // value of the head byte
   constexpr inline uint8_t head() const noexcept { return *start(); }
-
-  // value of the raw head byte (including tags)
-  constexpr inline uint8_t rawHead() const noexcept { return *rawStart(); }
 
   uint8_t const* begin() noexcept { return start(); }
 
   constexpr uint8_t const* begin() const noexcept { return start(); }
 
-  uint8_t const* end() { return start() + byteSize(); }
-
   uint8_t const* end() const { return start() + byteSize(); }
 
-  // get the type for the slice (excluding tags)
+  // get the type for the slice
   constexpr inline ValueType type() const noexcept {
     return type(head());
   }
 
-  // get the type for the slice (including tags)
-  constexpr inline ValueType rawType() const noexcept {
-    return type(rawHead());
-  }
-
-  // get the type name for the slice (excluding tags)
+  // get the type name for the slice
   char const* typeName() const { return valueTypeName(type()); }
-
-  // get the type name for the slice (including tags)
-  char const* rawTypeName() const { return valueTypeName(rawType()); }
 
   // Set new memory position
   void set(uint8_t const* s) { _start = s; }
@@ -220,13 +234,9 @@ class Slice {
   }
 
   // check if slice is of the specified type (including tags)
-  constexpr inline bool isType(ValueType t) const noexcept {
+  // other implementations may be excluding tags
+  constexpr inline bool isType(ValueType t) const {
     return SliceStaticData::TypeMap[*start()] == t;
-  }
-
-  // check if slice is of the specified type (excluding tags)
-  constexpr inline bool isRawType(ValueType t) const noexcept {
-    return SliceStaticData::TypeMap[*rawStart()] == t;
   }
 
   // check if slice is a None object
@@ -293,7 +303,7 @@ class Slice {
   constexpr bool isCustom() const noexcept { return isType(ValueType::Custom); }
 
   // check if slice is a Tagged type
-  constexpr bool isTagged() const noexcept { return isRawType(ValueType::Tagged); }
+  constexpr bool isTagged() const noexcept { return isType(ValueType::Tagged); }
 
   // check if a slice is any number type
   constexpr bool isInteger() const noexcept {
@@ -808,26 +818,27 @@ class Slice {
   }
 
   // get the total byte size for the slice, including the head byte, excluding tags
-  ValueLength rawByteSize() const {
-    return byteSize(rawStart());
+  ValueLength valueByteSize() const {
+    return byteSize(start());
   }
 
   ValueLength findDataOffset(uint8_t head) const noexcept {
     // Must be called for a non-empty array or object at start():
     VELOCYPACK_ASSERT(head != 0x01 && head != 0x0a && head <= 0x14);
     unsigned int fsm = SliceStaticData::FirstSubMap[head];
+    uint8_t const* start = this->start();
     if (fsm == 0) {
       // need to calculate the offset by reading the dynamic length
       VELOCYPACK_ASSERT(head == 0x13 || head == 0x14);
-      return 1 + arangodb::velocypack::getVariableValueLength(readVariableValueLength<false>(start() + 1));
+      return 1 + arangodb::velocypack::getVariableValueLength(readVariableValueLength<false>(start + 1));
     }
-    if (fsm <= 2 && start()[2] != 0) {
+    if (fsm <= 2 && start[2] != 0) {
       return 2;
     }
-    if (fsm <= 3 && start()[3] != 0) {
+    if (fsm <= 3 && start[3] != 0) {
       return 3;
     }
-    if (fsm <= 5 && start()[5] != 0) {
+    if (fsm <= 5 && start[5] != 0) {
       return 5;
     }
     return 9;
@@ -941,8 +952,8 @@ class Slice {
 
     if (h == 0x13) {
       // compact Array
-      ValueLength end = readVariableValueLength<false>(_start + 1);
-      return readVariableValueLength<true>(_start + end - 1);
+      ValueLength end = readVariableValueLength<false>(start() + 1);
+      return readVariableValueLength<true>(start() + end - 1);
     }
 
     ValueLength const offsetSize = indexEntrySize(h);
@@ -952,19 +963,19 @@ class Slice {
     if (h <= 0x05) {  // No offset table or length, need to compute:
       VELOCYPACK_ASSERT(h != 0x00 && h != 0x01);
       ValueLength firstSubOffset = findDataOffset(h);
-      Slice first(_start + firstSubOffset);
+      Slice first(start() + firstSubOffset);
       ValueLength s = first.byteSize();
       if (VELOCYPACK_UNLIKELY(s == 0)) {
         throw Exception(Exception::InternalError, "Invalid data for Array");
       }
-      ValueLength end = readIntegerNonEmpty<ValueLength>(_start + 1, offsetSize);
+      ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
       return (end - firstSubOffset) / s;
     } else if (offsetSize < 8) {
-      return readIntegerNonEmpty<ValueLength>(_start + offsetSize + 1, offsetSize);
+      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1, offsetSize);
     }
 
-    ValueLength end = readIntegerNonEmpty<ValueLength>(_start + 1, offsetSize);
-    return readIntegerNonEmpty<ValueLength>(_start + end - offsetSize, offsetSize);
+    ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
+    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
   }
   
   // return the number of members for an Object
@@ -980,19 +991,19 @@ class Slice {
 
     if (h == 0x14) {
       // compact Object
-      ValueLength end = readVariableValueLength<false>(_start + 1);
-      return readVariableValueLength<true>(_start + end - 1);
+      ValueLength end = readVariableValueLength<false>(start() + 1);
+      return readVariableValueLength<true>(start() + end - 1);
     }
 
     ValueLength const offsetSize = indexEntrySize(h);
     VELOCYPACK_ASSERT(offsetSize > 0);
 
     if (offsetSize < 8) {
-      return readIntegerNonEmpty<ValueLength>(_start + offsetSize + 1, offsetSize);
+      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1, offsetSize);
     }
 
-    ValueLength end = readIntegerNonEmpty<ValueLength>(_start + 1, offsetSize);
-    return readIntegerNonEmpty<ValueLength>(_start + end - offsetSize, offsetSize);
+    ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
+    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
   }
 
   // get the total byte size for a String slice, including the head byte
@@ -1035,7 +1046,7 @@ class Slice {
   ValueLength getStartOffsetFromCompact() const {
     VELOCYPACK_ASSERT(head() == 0x13 || head() == 0x14);
 
-    ValueLength end = readVariableValueLength<false>(_start + 1);
+    ValueLength end = readVariableValueLength<false>(start() + 1);
     return 1 + getVariableValueLength(end);
   }
 
@@ -1062,8 +1073,20 @@ class Slice {
     return value;
   }
 
-  constexpr uint8_t tagOffset(uint8_t const* _start) const {
-    return SliceStaticData::TypeMap[*_start] == ValueType::Tagged ? (*_start == 0xee ? 2 : (*_start == 0xef ? 9 : throw new Exception(Exception::InternalError, "Invalid tag type ID"))) : 0;
+  constexpr uint8_t tagOffset(uint8_t const* _start) const noexcept {
+    return SliceStaticData::TypeMap[*_start] == ValueType::Tagged ? (*_start == 0xee ? 2 : (*_start == 0xef ? 9 : /* error */ 0)) : 0;
+  }
+
+  uint8_t tagsOffset(uint8_t const* _start) const noexcept {
+    uint8_t ret = 0;
+
+    while(SliceStaticData::TypeMap[*_start] == ValueType::Tagged) {
+      uint8_t offset = tagOffset(_start);
+      ret += offset;
+      _start += offset;
+    }
+
+    return ret;
   }
 
   // get the total byte size for the slice, including the head byte
@@ -1131,7 +1154,8 @@ class Slice {
       }
 
       case ValueType::Tagged: {
-        return byteSize(start + tagOffset(start)) + tagOffset(start);
+        uint8_t offset = tagsOffset(start);
+        return byteSize(start + offset) + offset;
       }
 
       case ValueType::Custom: {

@@ -624,7 +624,7 @@ class Builder {
 
   template <typename T>
   uint8_t* addInternal(char const* attrName, uint64_t tag, T const& sub) {
-    return addInternal<T>(attrName, attrName == nullptr ? 0 : strlen(attrName), tag, sub);
+    return addInternal<T>(attrName, strlen(attrName), tag, sub);
   }
 
   template <typename T>

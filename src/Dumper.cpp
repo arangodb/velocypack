@@ -332,7 +332,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
   if(options->debugTags && slice->isTagged())
   {
-    _sink->append(std::to_string(slice->getTagId()));
+    _sink->append(std::to_string(slice->getFirstTag()));
     _sink->append(":");
   }
 

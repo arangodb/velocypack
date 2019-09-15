@@ -139,28 +139,6 @@ bool Collection::contains(Slice const& slice, Slice const& other) {
   return false;
 }
 
-bool Collection::containsObject(Slice const& slice, Slice const& other) {
-  ObjectIterator it(other, true);
-
-  while (it.valid()) {
-    Slice v = slice.get(it.key(true).stringRef());
-
-    if(v.isNone()) {
-      return false;
-    }
-
-    if(!v.binaryEquals(it.value()))
-    {
-      // TODO: recursive comparison (?)
-      return false;
-    }
-
-    it.next();
-  }
-
-  return true;
-}
-
 ValueLength Collection::indexOf(Slice const& slice, Slice const& other) {
   ArrayIterator it(slice);
   ValueLength index = 0;
