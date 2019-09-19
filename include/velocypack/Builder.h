@@ -624,11 +624,14 @@ class Builder {
 
   template <typename T>
   uint8_t* addInternal(char const* attrName, uint64_t tag, T const& sub) {
-    return addInternal<T>(attrName, strlen(attrName), tag, sub);
+    // null check for array creation
+    return addInternal<T>(attrName, attrName == nullptr ? 0 : strlen(attrName), tag, sub);
   }
 
   template <typename T>
   uint8_t* addInternal(char const* attrName, std::size_t attrLength, uint64_t tag, T const& sub) {
+    // When attrName is null add an array element instead -- simplifies code
+    // that builds both objects and arrays
     if(attrName == nullptr) {
       return addInternal(tag, sub);
     }

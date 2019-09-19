@@ -95,6 +95,9 @@ class Slice {
   // creates a slice of type Null
   static constexpr Slice nullSlice() noexcept { return Slice(nullSliceData); }
   
+  // creates a slice of type Boolean with the relevant value
+  static constexpr Slice booleanSlice(bool value) noexcept { return value ? trueSlice() : falseSlice(); }
+
   // creates a slice of type Boolean with false value
   static constexpr Slice falseSlice() noexcept { return Slice(falseSliceData); }
 
