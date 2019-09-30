@@ -57,9 +57,7 @@ class Buffer {
     if (that._size > 0) {
       if (that._size > sizeof(_local)) {
         _buffer = static_cast<T*>(malloc(checkOverflow(sizeof(T) * that._size)));
-        if (VELOCYPACK_UNLIKELY(_buffer == nullptr)) {
-          throw std::bad_alloc();
-        }
+        ensureValidPointer(_buffer);
         _capacity = that._size;
       } else {
         _capacity = sizeof(_local);
@@ -79,9 +77,7 @@ class Buffer {
       else {
         // our own buffer is not big enough to hold the data
         T* buffer = static_cast<T*>(malloc(checkOverflow(sizeof(T) * that._size)));
-        if (VELOCYPACK_UNLIKELY(buffer == nullptr)) {
-          throw std::bad_alloc();
-        }
+        ensureValidPointer(buffer);
         buffer[0] = '\x00';
         memcpy(buffer, that._buffer, checkOverflow(that._size));
 
@@ -251,6 +247,12 @@ class Buffer {
  private:
   // initialize Buffer with a None value
   inline void initWithNone() noexcept { _buffer[0] = '\x00'; }
+
+  inline void ensureValidPointer(T* ptr) const {
+    if (VELOCYPACK_UNLIKELY(ptr == nullptr)) {
+      throw std::bad_alloc();
+    }
+  }
   
   // poison buffer memory, used only for debugging
 #ifdef VELOCYPACK_DEBUG
@@ -280,15 +282,11 @@ class Buffer {
     T* p;
     if (_buffer != _local) {
       p = static_cast<T*>(realloc(_buffer, checkOverflow(sizeof(T) * newLen)));
-      if (VELOCYPACK_UNLIKELY(p == nullptr)) {
-        throw std::bad_alloc();
-      }
+      ensureValidPointer(p);
       // realloc will have copied the old data
     } else {
       p = static_cast<T*>(malloc(checkOverflow(sizeof(T) * newLen)));
-      if (VELOCYPACK_UNLIKELY(p == nullptr)) {
-        throw std::bad_alloc();
-      }
+      ensureValidPointer(p);
       // copy existing data into buffer
       memcpy(p, _buffer, checkOverflow(_size));
     }
