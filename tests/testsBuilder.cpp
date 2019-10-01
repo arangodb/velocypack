@@ -317,8 +317,8 @@ TEST(BuilderTest, MoveConstructOpenObject) {
   b.openObject();
   ASSERT_FALSE(b.isClosed());
 
-  Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+  Builder a(std::move(b));
+  ASSERT_FALSE(a.isClosed());
 }
 
 TEST(BuilderTest, MoveConstructOpenArray) {
@@ -326,7 +326,9 @@ TEST(BuilderTest, MoveConstructOpenArray) {
   b.openArray();
   ASSERT_FALSE(b.isClosed());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+  Builder a(std::move(b));
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, MoveAssignOpenObject) {
@@ -335,7 +337,9 @@ TEST(BuilderTest, MoveAssignOpenObject) {
   ASSERT_FALSE(b.isClosed());
 
   Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+  a = std::move(b);
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, MoveAssignOpenArray) {
@@ -344,7 +348,9 @@ TEST(BuilderTest, MoveAssignOpenArray) {
   ASSERT_FALSE(b.isClosed());
 
   Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+  a = std::move(b);
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, Move) {

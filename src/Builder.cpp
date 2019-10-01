@@ -211,28 +211,22 @@ Builder& Builder::operator=(Builder const& that) {
   return *this;
 }
 
-Builder::Builder(Builder&& that) {
-  if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
-    throw Exception(Exception::InternalError, "Cannot move an open Builder");
-  }
-  _buffer = that._buffer;
-  _bufferPtr = _buffer.get();
-  _start = _bufferPtr->data();
-  _pos = that._pos;
-  _stack.clear();
-  _stack.swap(that._stack);
-  _index.clear();
-  _index.swap(that._index);
-  _keyWritten = that._keyWritten;
-  options = that.options;
+Builder::Builder(Builder&& that) noexcept
+    : _buffer(that._buffer),
+      _bufferPtr(_buffer.get()),
+      _start(_bufferPtr->data()),
+      _pos(that._pos),
+      _stack(std::move(that._stack)),
+      _index(std::move(that._index)),
+      _keyWritten(that._keyWritten),
+      options(that.options) {
   that._pos = 0;
+  that._stack.clear();
+  that._index.clear();
   that._keyWritten = false;
 }
 
-Builder& Builder::operator=(Builder&& that) {
-  if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
-    throw Exception(Exception::InternalError, "Cannot move an open Builder");
-  }
+Builder& Builder::operator=(Builder&& that) noexcept {
   if (this != &that) {
     _buffer = that._buffer;
     _bufferPtr = _buffer.get();

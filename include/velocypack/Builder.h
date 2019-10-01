@@ -104,8 +104,8 @@ class Builder {
 
   Builder(Builder const& that);
   Builder& operator=(Builder const& that);
-  Builder(Builder&& that);
-  Builder& operator=(Builder&& that);
+  Builder(Builder&& that) noexcept;
+  Builder& operator=(Builder&& that) noexcept;
 
   // get a const reference to the Builder's Buffer object
   std::shared_ptr<Buffer<uint8_t>> const& buffer() const { return _buffer; }
@@ -114,10 +114,10 @@ class Builder {
   // is unusable
   std::shared_ptr<Buffer<uint8_t>> steal() {
     // After a steal the Builder is broken!
-    std::shared_ptr<Buffer<uint8_t>> res = _buffer;
-    _buffer.reset();
+    std::shared_ptr<Buffer<uint8_t>> res(std::move(_buffer));
     _bufferPtr = nullptr;
     _pos = 0;
+    _keyWritten = false;
     return res;
   }
 
@@ -801,7 +801,7 @@ struct ObjectBuilder final : public BuilderContainer,
     } catch (...) {
       // destructors must not throw. however, we can at least
       // signal something is very wrong in debug mode
-      VELOCYPACK_ASSERT(false);
+      VELOCYPACK_ASSERT(builder->isClosed());
     }
   }
 };
@@ -830,7 +830,7 @@ struct ArrayBuilder final : public BuilderContainer,
     } catch (...) {
       // destructors must not throw. however, we can at least
       // signal something is very wrong in debug mode
-      VELOCYPACK_ASSERT(false);
+      VELOCYPACK_ASSERT(builder->isClosed());
     }
   }
 };
