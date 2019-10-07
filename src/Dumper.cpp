@@ -368,6 +368,15 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
         }
         --_indentation;
         indent();
+      } else if(options->singleLinePrettyPrint) {
+        while (it.valid()) {
+          if (!it.isFirst()) {
+            _sink->push_back(',');
+            _sink->push_back(' ');
+          }
+          dumpValue(it.value(), slice);
+          it.next();
+        }
       } else {
         while (it.valid()) {
           if (!it.isFirst()) {
@@ -401,6 +410,19 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
         }
         --_indentation;
         indent();
+      } else if(options->singleLinePrettyPrint) {
+        while (it.valid()) {
+          if (!it.isFirst()) {
+            _sink->push_back(',');
+            _sink->push_back(' ');
+          }
+          auto current = (*it);
+          dumpValue(current.key, slice);
+          _sink->push_back(':');
+          _sink->push_back(' ');
+          dumpValue(current.value, slice);
+          it.next();
+        }
       } else {
         while (it.valid()) {
           if (!it.isFirst()) {
@@ -419,11 +441,39 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
     case ValueType::Double: {
       double const v = slice->getDouble();
-      if (std::isnan(v) || !std::isfinite(v)) {
-        handleUnsupportedType(slice);
-      } else {
-        appendDouble(v);
+
+      if (std::isnormal(v)) {
+         appendDouble(v);
+         break;
       }
+
+      if (options->unsupportedDoublesAsString) {
+        if (std::isnan(v)) {
+          _sink->push_back('"');
+          _sink->push_back('N');
+          _sink->push_back('a');
+          _sink->push_back('N');
+          _sink->push_back('"');
+          break;
+        } else if (std::isinf(v)) {
+          _sink->push_back('"');
+          if (v == -INFINITY) {
+            _sink->push_back('-');
+          }
+          _sink->push_back('I');
+          _sink->push_back('n');
+          _sink->push_back('f');
+          _sink->push_back('i');
+          _sink->push_back('n');
+          _sink->push_back('i');
+          _sink->push_back('t');
+          _sink->push_back('y');
+          _sink->push_back('"');
+          break;
+        }
+      }
+
+      handleUnsupportedType(slice);
       break;
     }
 

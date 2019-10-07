@@ -71,6 +71,9 @@ struct Options {
   // pretty-print JSON output when dumping with Dumper
   bool prettyPrint = false;
 
+  // pretty-print JSON output when dumping with Dumper, but don't add any newlines
+  bool singleLinePrettyPrint = false;
+
   // keep top-level object/array open when building objects with the Parser
   bool keepTopLevelOpen = false;
 
@@ -96,6 +99,9 @@ struct Options {
   // dump Object attributes in index order (true) or in "undefined"
   // order (false). undefined order may be faster but not deterministic
   bool dumpAttributesInIndexOrder = true;
+
+  // dump NaN as "NaN", Infinity as "Infinity"
+  bool unsupportedDoublesAsString = false;
 
   // disallow using type External (to prevent injection of arbitrary pointer
   // values as a security precaution), validated when object-building via
