@@ -442,7 +442,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     case ValueType::Double: {
       double const v = slice->getDouble();
 
-      if (std::isnormal(v)) {
+      if (!std::isnan(v) && !std::isinf(v)) {
          appendDouble(v);
          break;
       }
