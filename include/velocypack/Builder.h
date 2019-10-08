@@ -551,6 +551,41 @@ class Builder {
     }
   }
 
+  void addBCD(int8_t sign, uint32_t exponent, char* mantissa, uint64_t mantissaLength) {
+    uint64_t byteLen = (mantissaLength + 1) / 4;
+
+    uint64_t n = 0;
+    for(uint64_t x = byteLen; x != 0; x >>= 8) {
+      n++;
+    }
+
+    reserve(1 + n + 4 + byteLen);
+
+    appendByte((sign >= 0 ? 0xc8 : 0xd0) + n - 1);
+
+    uint64_t v = byteLen;
+    for (uint64_t i = 0; i < n; ++i) {
+      appendByteUnchecked(v & 0xff);
+      v >>= 8;
+    }
+
+    appendLengthUnchecked<4>(exponent);
+
+    bool isOdd = mantissaLength % 2 != 0;
+
+    uint64_t i = 0;
+    while (i < mantissaLength) {
+      if (isOdd && i == 0) {
+        appendByte(mantissa[i]);
+        i++;
+        continue;
+      }
+
+      appendByte((mantissa[i] << 4) | mantissa[i+1]);
+      i += 2;
+    }
+  }
+
   void addUTCDate(int64_t v) {
     constexpr uint8_t vSize = sizeof(int64_t);  // is always 8
     reserve(1 + vSize);

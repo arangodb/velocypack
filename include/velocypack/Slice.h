@@ -963,7 +963,23 @@ class Slice {
   // return the value for a SmallInt object, without checks
   // returns 0 for invalid values/types
   int64_t getSmallIntUnchecked() const noexcept;
-  
+
+  uint8_t const* getBCD(int8_t& sign, uint32_t& exponent, ValueLength& mantissaLength) const {
+    if (VELOCYPACK_UNLIKELY(!isBCD())) {
+      throw Exception(Exception::InvalidValueType, "Expecting type BCD");
+    }
+
+    uint64_t type = head();
+    bool positive = type >= 0xc8 && type <= 0xcf;
+    uint8_t mlenlen = type - (positive ? 0xc7 : 0xcf);
+
+    sign = positive ? 1 : -1;
+    exponent = readIntegerFixed<uint32_t, 4>(valueStart() + 1 + mlenlen);
+    mantissaLength = readIntegerNonEmpty<ValueLength>(valueStart() + 1, mlenlen);
+
+    return valueStart() + 1 + mlenlen + 4;
+  }
+
  private:
   // get the type for the slice (including tags)
   constexpr inline ValueType type(uint8_t h) const noexcept {
