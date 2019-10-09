@@ -107,6 +107,13 @@ uint64_t fasthash64(void const*, std::size_t, uint64_t);
 #define VELOCYPACK_HASH(mem, size, seed) fasthash64(mem, size, seed)
 #endif
 
+// memory management definitions
+#ifndef vmalloc
+#define vmalloc(x) malloc(x)
+#define vrealloc(x, s) realloc(x, s)
+#define vfree(x) free(x)
+#endif
+
 namespace arangodb {
 namespace velocypack {
 

@@ -56,7 +56,7 @@ class Buffer {
   Buffer(Buffer const& that) : Buffer() {
     if (that._size > 0) {
       if (that._size > sizeof(_local)) {
-        _buffer = static_cast<T*>(malloc(checkOverflow(sizeof(T) * that._size)));
+        _buffer = static_cast<T*>(vmalloc(checkOverflow(sizeof(T) * that._size)));
         ensureValidPointer(_buffer);
         _capacity = that._size;
       } else {
@@ -76,13 +76,13 @@ class Buffer {
       }
       else {
         // our own buffer is not big enough to hold the data
-        T* buffer = static_cast<T*>(malloc(checkOverflow(sizeof(T) * that._size)));
+        T* buffer = static_cast<T*>(vmalloc(checkOverflow(sizeof(T) * that._size)));
         ensureValidPointer(buffer);
         buffer[0] = '\x00';
         memcpy(buffer, that._buffer, checkOverflow(that._size));
 
         if (_buffer != _local) {
-          free(_buffer);
+          vfree(_buffer);
         }
         _buffer = buffer;
         _capacity = that._size;
@@ -112,7 +112,7 @@ class Buffer {
         memcpy(_buffer, that._buffer, static_cast<std::size_t>(that._size));
       } else {
         if (_buffer != _local) {
-          free(_buffer);
+          vfree(_buffer);
         }
         _buffer = that._buffer;
         _capacity = that._capacity;
@@ -127,7 +127,7 @@ class Buffer {
 
   ~Buffer() { 
     if (_buffer != _local) {
-      free(_buffer);
+      vfree(_buffer);
     }
   }
 
@@ -179,7 +179,7 @@ class Buffer {
   void clear() noexcept {
     _size = 0;
     if (_buffer != _local) {
-      free(_buffer);
+      vfree(_buffer);
       _buffer = _local;
       _capacity = sizeof(_local);
       poison(_buffer, _capacity);
@@ -281,11 +281,11 @@ class Buffer {
     VELOCYPACK_ASSERT(newLen > 0);
     T* p;
     if (_buffer != _local) {
-      p = static_cast<T*>(realloc(_buffer, checkOverflow(sizeof(T) * newLen)));
+      p = static_cast<T*>(vrealloc(_buffer, checkOverflow(sizeof(T) * newLen)));
       ensureValidPointer(p);
       // realloc will have copied the old data
     } else {
-      p = static_cast<T*>(malloc(checkOverflow(sizeof(T) * newLen)));
+      p = static_cast<T*>(vmalloc(checkOverflow(sizeof(T) * newLen)));
       ensureValidPointer(p);
       // copy existing data into buffer
       memcpy(p, _buffer, checkOverflow(_size));
