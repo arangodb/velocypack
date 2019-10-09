@@ -19,22 +19,12 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
-/// @author Jan Steemann
+/// @author Lauri Keel
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef VELOCYPACK_VALUESLICE_H
 #define VELOCYPACK_VALUESLICE_H 1
-
-#include <cstdint>
-#include <cstring>
-#include <string>
-#include <vector>
-#include <iosfwd>
-#include <algorithm>
-#include <functional>
-#include <type_traits>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Slice.h"

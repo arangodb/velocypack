@@ -35,7 +35,6 @@
 #include <algorithm>
 #include <functional>
 #include <type_traits>
-#include <list>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
@@ -59,7 +58,11 @@ class Slice {
   friend class ArrayIterator;
   friend class ObjectIterator;
 
-  // This variable should be accessed through the start() method
+  // _start is the pointer to the first byte of the value. It should always be
+  // accessed through the start() method as that allows subclasses to adjust
+  // the start position should it be necessary. For example, the ValueSlice
+  // class uses this to make tags transparent and behaves as if they did not
+  // exist, unless explicitly queried for.
   uint8_t const* _start;
 
  public:
@@ -134,8 +137,8 @@ class Slice {
              );
   }
 
-  std::list<uint64_t> getTags() const {
-    std::list<uint64_t> ret;
+  std::vector<uint64_t> getTags() const {
+    std::vector<uint64_t> ret;
 
     if(isTagged()) {
       // always need the actual first byte, so use _start directly
@@ -850,7 +853,7 @@ class Slice {
 
   // get the total byte size for the slice, including the head byte, excluding tags
   ValueLength valueByteSize() const {
-    return byteSize(start());
+    return byteSize(valueStart());
   }
 
   ValueLength findDataOffset(uint8_t head) const noexcept {
@@ -1120,17 +1123,17 @@ class Slice {
     return value;
   }
 
-  constexpr uint8_t tagOffset(uint8_t const* _start) const noexcept {
-    return SliceStaticData::TypeMap[*_start] == ValueType::Tagged ? (*_start == 0xee ? 2 : (*_start == 0xef ? 9 : /* error */ 0)) : 0;
+  constexpr uint8_t tagOffset(uint8_t const* start) const noexcept {
+    return SliceStaticData::TypeMap[*start] == ValueType::Tagged ? (*start == 0xee ? 2 : (*start == 0xef ? 9 : /* error */ 0)) : 0;
   }
 
-  uint8_t tagsOffset(uint8_t const* _start) const noexcept {
+  uint8_t tagsOffset(uint8_t const* start) const noexcept {
     uint8_t ret = 0;
 
-    while(SliceStaticData::TypeMap[*_start] == ValueType::Tagged) {
-      uint8_t offset = tagOffset(_start);
+    while(SliceStaticData::TypeMap[*start] == ValueType::Tagged) {
+      uint8_t offset = tagOffset(start);
       ret += offset;
-      _start += offset;
+      start += offset;
     }
 
     return ret;

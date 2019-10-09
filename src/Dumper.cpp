@@ -449,26 +449,14 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
       if (options->unsupportedDoublesAsString) {
         if (std::isnan(v)) {
-          _sink->push_back('"');
-          _sink->push_back('N');
-          _sink->push_back('a');
-          _sink->push_back('N');
-          _sink->push_back('"');
+          _sink->append("\"NaN\"", 5);
           break;
         } else if (std::isinf(v)) {
           _sink->push_back('"');
           if (v == -INFINITY) {
             _sink->push_back('-');
           }
-          _sink->push_back('I');
-          _sink->push_back('n');
-          _sink->push_back('f');
-          _sink->push_back('i');
-          _sink->push_back('n');
-          _sink->push_back('i');
-          _sink->push_back('t');
-          _sink->push_back('y');
-          _sink->push_back('"');
+          _sink->append("Infinity\"", 9);
           break;
         }
       }
