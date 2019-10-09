@@ -124,7 +124,6 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
   return true;
 }
 
-
 } // namespace
   
 // create an empty Builder, using default Options 
@@ -136,7 +135,7 @@ Builder::Builder()
         _keyWritten(false),
         options(&Options::Defaults) {}
  
-// create an empty Builder, with custom Options 
+// create an empty Builder, using custom Options 
 Builder::Builder(Options const* options)
       : _buffer(std::make_shared<Buffer<uint8_t>>()),
         _bufferPtr(_buffer.get()),
@@ -149,6 +148,7 @@ Builder::Builder(Options const* options)
   }
 }
   
+// create an empty Builder, using an existing buffer
 Builder::Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer, Options const* options)
       : _buffer(buffer), 
         _bufferPtr(_buffer.get()), 
@@ -165,20 +165,21 @@ Builder::Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer, Options const* 
   }
 }
   
+// create a Builder that uses an existing Buffer. the Builder will not
+// claim ownership for this Buffer
 Builder::Builder(Buffer<uint8_t>& buffer, Options const* options)
-      : _bufferPtr(nullptr), 
+      : _bufferPtr(&buffer), 
+        _start(_bufferPtr->data()),
         _pos(buffer.size()), 
         _keyWritten(false), 
         options(options) {
-  _buffer.reset(&buffer, BufferNonDeleter<uint8_t>());
-  _bufferPtr = _buffer.get();
-  _start = _bufferPtr->data();
 
   if (VELOCYPACK_UNLIKELY(options == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
 }
   
+// populate a Builder from a Slice
 Builder::Builder(Slice slice, Options const* options)
       : Builder(options) {
   add(slice);
@@ -198,9 +199,18 @@ Builder::Builder(Builder const& that)
 
 Builder& Builder::operator=(Builder const& that) {
   if (this != &that) {
-    _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
-    _bufferPtr = _buffer.get();
-    _start = _bufferPtr->data();
+    if (that._buffer == nullptr) {
+      _buffer.reset();
+      _bufferPtr = that._bufferPtr;
+    } else {
+      _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+      _bufferPtr = _buffer.get();
+    }
+    if (_bufferPtr == nullptr) {
+      _start = nullptr;
+    } else {
+      _start = _bufferPtr->data();
+    }
     _pos = that._pos;
     _stack = that._stack;
     _index = that._index;
@@ -213,33 +223,46 @@ Builder& Builder::operator=(Builder const& that) {
 
 Builder::Builder(Builder&& that) noexcept
     : _buffer(that._buffer),
-      _bufferPtr(_buffer.get()),
-      _start(_bufferPtr->data()),
+      _bufferPtr(nullptr),
+      _start(nullptr),
       _pos(that._pos),
       _stack(std::move(that._stack)),
       _index(std::move(that._index)),
       _keyWritten(that._keyWritten),
       options(that.options) {
-  that._pos = 0;
-  that._stack.clear();
-  that._index.clear();
-  that._keyWritten = false;
+  
+  if (_buffer != nullptr) {
+    _bufferPtr = _buffer.get();
+  } else {
+    _bufferPtr = that._bufferPtr;
+  }
+  if (_bufferPtr != nullptr) {
+    _start = _bufferPtr->data();
+  }
+  that._bufferPtr = nullptr;
+  that.clear();
 }
 
 Builder& Builder::operator=(Builder&& that) noexcept {
   if (this != &that) {
-    _buffer = that._buffer;
-    _bufferPtr = _buffer.get();
-    _start = _bufferPtr->data();
+    _buffer = std::move(that._buffer);
+    if (_buffer != nullptr) {
+      _bufferPtr = _buffer.get();
+    } else {
+      _bufferPtr = that._bufferPtr;
+    }
+    if (_bufferPtr != nullptr) {
+      _start = _bufferPtr->data();
+    } else {
+      _start = nullptr;
+    }
     _pos = that._pos;
-    _stack.clear();
-    _stack.swap(that._stack);
-    _index.clear();
-    _index.swap(that._index);
+    _stack = std::move(that._stack);
+    _index = std::move(that._index);
     _keyWritten = that._keyWritten;
     options = that.options;
-    that._pos = 0;
-    that._keyWritten = false;
+    that._bufferPtr = nullptr;
+    that.clear();
   }
   return *this;
 }
