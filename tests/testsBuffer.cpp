@@ -207,6 +207,40 @@ TEST(BufferTest, MoveAssignDiscardOwnValue) {
   ASSERT_NE(buffer.data(), buffer2.data());
 }
 
+TEST(BufferTest, Clear) {
+  Buffer<uint8_t> buffer;
+
+  buffer.clear();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+
+  buffer.append("foobar", 6);
+
+  buffer.clear();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+
+  for (std::size_t i = 0; i < 256; ++i) {
+    buffer.push_back('x');
+  }
+  
+  ASSERT_EQ(256UL, buffer.size());
+  ASSERT_EQ(256UL, buffer.length());
+  ASSERT_EQ(256UL, buffer.byteSize());
+  ASSERT_FALSE(buffer.empty());
+  
+  buffer.clear();
+  
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+}
+
 TEST(BufferTest, SizeEmpty) {
   Buffer<uint8_t> buffer;
 
@@ -464,6 +498,30 @@ TEST(BufferTest, ResetToTest) {
   
   buffer.resetTo(1);
   ASSERT_EQ(std::string("f"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+}
+
+TEST(BufferTest, BufferNonDeleterTest) {
+  Buffer<uint8_t> buffer;
+  for (std::size_t i = 0; i < 256; ++i) {
+    buffer.push_back('x');
+  }
+
+  {
+    std::shared_ptr<Buffer<uint8_t>> ptr;
+    ptr.reset(&buffer, BufferNonDeleter<uint8_t>());
+
+    buffer.append("test");
+    ptr.reset();
+  }
+
+  ASSERT_EQ(260, buffer.size());
+  
+  // make sure the Buffer is still usable
+  for (std::size_t i = 0; i < 2048; ++i) {
+    buffer.push_back('x');
+  }
+  
+  ASSERT_EQ(2308, buffer.size());
 }
 
 int main(int argc, char* argv[]) {
