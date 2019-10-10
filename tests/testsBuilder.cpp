@@ -414,6 +414,69 @@ TEST(BuilderTest, MoveAssignNonEmpty) {
   ASSERT_TRUE(b.buffer().get() != nullptr);
 }
 
+TEST(BuilderTest, ConstructFromSlice) {
+  Builder b1;
+  b1.openObject();
+  b1.add("foo", Value("bar"));
+  b1.add("bar", Value("baz"));
+  b1.close();
+
+  Builder b2(b1.slice());
+  ASSERT_FALSE(b2.isEmpty());
+  ASSERT_TRUE(b2.isClosed());
+
+  ASSERT_TRUE(b2.slice().isObject());
+  ASSERT_TRUE(b2.slice().hasKey("foo"));
+  ASSERT_TRUE(b2.slice().hasKey("bar"));
+
+  b1.clear();
+  ASSERT_TRUE(b1.isEmpty());
+  
+  ASSERT_FALSE(b2.isEmpty());
+  ASSERT_TRUE(b2.slice().isObject());
+  ASSERT_TRUE(b2.slice().hasKey("foo"));
+  ASSERT_TRUE(b2.slice().hasKey("bar"));
+}
+
+TEST(BuilderTest, UsingEmptySharedPtr) {
+  std::shared_ptr<Buffer<uint8_t>> buffer;
+
+  ASSERT_VELOCYPACK_EXCEPTION(Builder(buffer), Exception::InternalError);
+}
+
+TEST(BuilderTest, UsingExistingBuffer) {
+  Buffer<uint8_t> buffer;
+  Builder b1(buffer);
+  b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
+
+  // copy-construct
+  Builder b2(b1); 
+  ASSERT_TRUE(b2.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b2.slice().copyString());
+
+  // copy-assign
+  Builder b3;
+  b3 = b2; 
+  ASSERT_TRUE(b3.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b3.slice().copyString());
+
+  // move-construct
+  Builder b4(std::move(b3));
+  ASSERT_TRUE(b4.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b4.slice().copyString());
+
+  // move-assign
+  Builder b5;
+  b5 = std::move(b4);
+  ASSERT_TRUE(b5.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b5.slice().copyString());
+
+  b5.clear();
+  b5.add(Value("the-foxx"));
+  ASSERT_TRUE(b5.slice().isString());
+  ASSERT_EQ("the-foxx", b5.slice().copyString());
+}
+
 TEST(BuilderTest, StealBuffer) {
   Builder b;
   b.openArray();
@@ -1652,6 +1715,27 @@ TEST(BuilderTest, InvalidTypeViaValuePair) {
   ASSERT_VELOCYPACK_EXCEPTION(
       b.add(ValuePair(p, strlen(p), ValueType::UTCDate)),
       Exception::BuilderUnexpectedType);
+}
+
+TEST(BuilderTest, CustomValueType) {
+  Options options;
+  options.disallowCustom = true;
+  Builder b(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(ValueType::Custom)),
+      Exception::BuilderCustomDisallowed);
+  
+  options.disallowCustom = false;
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(ValueType::Custom)),
+      Exception::BuilderUnexpectedType);
+}
+
+TEST(BuilderTest, IllegalValueType) {
+  Builder b;
+  b.add(Value(ValueType::Illegal));
+
+  ASSERT_EQ(ValueType::Illegal, b.slice().type());
 }
 
 TEST(BuilderTest, UTCDate) {

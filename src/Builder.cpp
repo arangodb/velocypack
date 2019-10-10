@@ -89,6 +89,7 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
   do {
     // key(true) guarantees a String as returned type
     StringRef key = it.key(true).stringRef();
+
     ValueLength index = it.index();
     // compare with all other already looked-at keys
     for (ValueLength i = 0; i < index; ++i) {
@@ -186,15 +187,25 @@ Builder::Builder(Slice slice, Options const* options)
 }
 
 Builder::Builder(Builder const& that)
-      : _buffer(std::make_shared<Buffer<uint8_t>>(*that._buffer)),
-        _bufferPtr(_buffer.get()),
-        _start(_bufferPtr->data()),
+      : _bufferPtr(nullptr),
+        _start(nullptr),
         _pos(that._pos),
         _stack(that._stack),
         _index(that._index),
         _keyWritten(that._keyWritten),
         options(that.options) {
   VELOCYPACK_ASSERT(options != nullptr);
+
+  if (that._buffer == nullptr) {
+    _bufferPtr = that._bufferPtr;
+  } else {
+    _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+    _bufferPtr = _buffer.get();
+  }
+        
+  if (_bufferPtr != nullptr) {
+    _start = _bufferPtr->data();
+  }
 }
 
 Builder& Builder::operator=(Builder const& that) {
@@ -575,6 +586,13 @@ Builder& Builder::close() {
       (head == 0x06 && options->buildUnindexedArrays) ||
       (head == 0x0b && (options->buildUnindexedObjects || index.size() == 1))) {
     if (closeCompactArrayOrObject(tos, isArray, index)) {
+      // And, if desired, check attribute uniqueness:
+      if (options->checkAttributeUniqueness && 
+          index.size() > 1 &&
+          !checkAttributeUniqueness(Slice(_start + tos))) {
+        // duplicate attribute name!
+        throw Exception(Exception::DuplicateAttributeName);
+      }
       return *this;
     }
     // This might fall through, if closeCompactArrayOrObject gave up!
@@ -1059,7 +1077,7 @@ bool Builder::checkAttributeUniqueness(Slice obj) const {
   VELOCYPACK_ASSERT(options->checkAttributeUniqueness == true);
   VELOCYPACK_ASSERT(obj.isObject());
   VELOCYPACK_ASSERT(obj.length() >= 2);
-
+  
   if (obj.isSorted()) {
     // object attributes are sorted
     return checkAttributeUniquenessSorted(obj);
@@ -1108,7 +1126,7 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
   // will use an std::unordered_set for O(1) lookups but with heap
   // allocations
   ObjectIterator it(obj, true);
-
+    
   if (it.size() <= ::LinearAttributeUniquenessCutoff) {
     return ::checkAttributeUniquenessUnsortedBrute(it);
   }
