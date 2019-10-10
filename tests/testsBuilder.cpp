@@ -477,6 +477,32 @@ TEST(BuilderTest, UsingExistingBuffer) {
   ASSERT_EQ("the-foxx", b5.slice().copyString());
 }
 
+TEST(BuilderTest, AfterStolen) {
+  Builder b1;
+  b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
+
+  // sets the shared_ptr of the Builder's Buffer to nullptr
+  ASSERT_NE(nullptr, b1.steal());
+
+  // copy-construct
+  Builder b2(b1); 
+  ASSERT_EQ(nullptr, b2.steal());
+
+  // copy-assign
+  Builder b3;
+  b3 = b2; 
+  ASSERT_EQ(nullptr, b3.steal());
+
+  // move-construct
+  Builder b4(std::move(b3));
+  ASSERT_EQ(nullptr, b4.steal());
+
+  // move-assign
+  Builder b5;
+  b5 = std::move(b4);
+  ASSERT_EQ(nullptr, b5.steal());
+}
+
 TEST(BuilderTest, StealBuffer) {
   Builder b;
   b.openArray();

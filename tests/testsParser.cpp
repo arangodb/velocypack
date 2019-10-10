@@ -2237,6 +2237,30 @@ TEST(ParserTest, DuplicateAttributesSortedObjects) {
   }
 }
 
+TEST(ParserTest, NoDuplicateAttributesSortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = false;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_TRUE(parser.parse(value) > 0);
+  }
+}
+
 TEST(ParserTest, DuplicateAttributesUnsortedObjects) {
   Options options;
   options.buildUnindexedObjects = true;
@@ -2261,6 +2285,30 @@ TEST(ParserTest, DuplicateAttributesUnsortedObjects) {
     Parser parser(&options);
     ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
                                 Exception::DuplicateAttributeName);
+  }
+}
+
+TEST(ParserTest, NoDuplicateAttributesUnsortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = true;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_TRUE(parser.parse(value) > 0);
   }
 }
 
