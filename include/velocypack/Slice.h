@@ -261,10 +261,21 @@ class Slice {
   // hash values than the binary hash() function
   uint64_t normalizedHash(uint64_t seed = defaultSeed) const;
 
+  // hashes the value, normalizing different representations of
+  // arrays, objects and numbers. this function may produce different
+  // hash values than the binary hash32() function
+  uint32_t normalizedHash32(uint64_t seed = defaultSeed) const;
+
   // hashes the binary representation of a String slice. No check
   // is done if the Slice value is actually of type String
   inline uint64_t hashString(uint64_t seed = defaultSeed) const noexcept {
     return VELOCYPACK_HASH(start(), static_cast<std::size_t>(stringSliceLength()), seed);
+  }
+
+  // hashes the binary representation of a String slice. No check
+  // is done if the Slice value is actually of type String
+  inline uint32_t hashString32(uint64_t seed = defaultSeed) const noexcept {
+    return VELOCYPACK_HASH32(start(), static_cast<std::size_t>(stringSliceLength()), seed);
   }
 
   // check if slice is of the specified type (including tags)

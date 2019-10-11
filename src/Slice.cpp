@@ -189,6 +189,45 @@ uint64_t Slice::normalizedHash(uint64_t seed) const {
   return value;
 }
 
+uint32_t Slice::normalizedHash32(uint64_t seed) const {
+  uint32_t value;
+
+  if (isNumber()) {
+    // upcast integer values to double
+    double v = getNumericValue<double>();
+    value = VELOCYPACK_HASH32(&v, sizeof(v), seed);
+  } else if (isArray()) {
+    // normalize arrays by hashing array length and iterating
+    // over all array members
+    ArrayIterator it(*this);
+    uint64_t const n = it.size() ^ 0xba5bedf00d;
+    value = VELOCYPACK_HASH32(&n, sizeof(n), seed);
+    while (it.valid()) {
+      value ^= it.value().normalizedHash(value);
+      it.next();
+    }
+  } else if (isObject()) {
+    // normalize objects by hashing object length and iterating
+    // over all object members
+    ObjectIterator it(*this, true);
+    uint64_t const n = it.size() ^ 0xf00ba44ba5;
+    uint64_t seed2 = VELOCYPACK_HASH32(&n, sizeof(n), seed);
+    value = seed2;
+    while (it.valid()) {
+      auto current = (*it);
+      uint64_t seed3 = current.key.normalizedHash(seed2);
+      value ^= seed3;
+      value ^= current.value.normalizedHash(seed3);
+      it.next();
+    }
+  } else {
+    // fall back to regular hash function
+    value = hash32(seed);
+  }
+
+  return value;
+}
+
 // look for the specified attribute inside an Object
 // returns a Slice(ValueType::None) if not found
 Slice Slice::get(StringRef const& attribute) const {
