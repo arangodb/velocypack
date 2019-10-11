@@ -2976,6 +2976,38 @@ TEST(SliceTest, IsNumber) {
   ASSERT_EQ(double(UINT64_MAX), s.getNumber<double>());
 }
 
+TEST(SliceTest, ReadTag) {
+  Builder b;
+  b.addTagged(42, Value(5));
+
+  Slice s = b.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 42);
+  ASSERT_EQ(s.getTags().at(0), 42);
+  ASSERT_EQ(s.getTags().size(), 1);
+  ASSERT_EQ(s.value().getInt(), 5);
+  ASSERT_TRUE(s.hasTag(42));
+  ASSERT_FALSE(s.hasTag(49));
+}
+
+TEST(SliceTest, ReadTags) {
+  Builder b;
+  b.addTagged(42, Value(5));
+
+  Builder bb;
+  bb.addTagged(49, b.slice());
+
+  Slice s = bb.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 49);
+  ASSERT_EQ(s.getTags().size(), 2);
+  ASSERT_EQ(s.getTags().at(0), 49);
+  ASSERT_EQ(s.getTags().at(1), 42);
+  ASSERT_TRUE(s.hasTag(42));
+  ASSERT_TRUE(s.hasTag(49));
+  ASSERT_FALSE(s.hasTag(50));
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
