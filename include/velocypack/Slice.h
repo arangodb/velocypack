@@ -57,6 +57,7 @@ class Slice {
   friend class Builder;
   friend class ArrayIterator;
   friend class ObjectIterator;
+  friend class ValueSlice;
 
   // _start is the pointer to the first byte of the value. It should always be
   // accessed through the start() method as that allows subclasses to adjust

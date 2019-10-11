@@ -45,6 +45,10 @@ class ValueSlice : public Slice {
   explicit constexpr ValueSlice(uint8_t const* start) noexcept
       : Slice(start) {}
 
+  // creates a ValueSlice from a Slice
+  explicit constexpr ValueSlice(Slice slice) noexcept
+      : Slice(slice.start()) {}
+
   constexpr Slice const raw() const noexcept {
     return Slice(rawStart());
   }
@@ -55,7 +59,7 @@ class ValueSlice : public Slice {
   }
 
   // pointer to the head byte, excluding tags
-  constexpr uint8_t const* start() const noexcept {
+  uint8_t const* start() const noexcept {
     return valueStart();
   }
 
