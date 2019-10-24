@@ -2,7 +2,9 @@
 
 cmake_minimum_required(VERSION 3.2)
 project(velocypack CXX C)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 option(BuildVelocyPackExamples "Build examples" ON)

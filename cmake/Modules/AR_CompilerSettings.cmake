@@ -2,7 +2,6 @@ include(TargetArch)
 target_architecture(ARCH)
 find_package(SSE)
 
-set(CMAKE_CXX_STANDARD 11)
 # compiler options
 
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -60,7 +59,7 @@ elseif(MSVC)
 else()
   # unknown compiler
   message(STATUS "Compiler type UNKNOWN: ${CMAKE_CXX_COMPILER}")
-  set(BASE_COMPILER_OPTIONS "-std=c++11 -Wall -Wextra")
+  set(BASE_COMPILER_OPTIONS "-Wall -Wextra")
   set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} ${BASE_COMPILER_OPTIONS}")
   set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} ${BASE_COMPILER_OPTIONS} -O0 -g -DVELOCYPACK_DEBUG=1")
   set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL} ${BASE_COMPILER_OPTIONS} -Os")
