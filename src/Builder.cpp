@@ -89,6 +89,7 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
   do {
     // key(true) guarantees a String as returned type
     StringRef key = it.key(true).stringRef();
+
     ValueLength index = it.index();
     // compare with all other already looked-at keys
     for (ValueLength i = 0; i < index; ++i) {
@@ -124,19 +125,9 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
   return true;
 }
 
-
 } // namespace
   
-// create an empty Builder, using default Options 
-Builder::Builder()
-      : _buffer(std::make_shared<Buffer<uint8_t>>()),
-        _bufferPtr(_buffer.get()),
-        _start(_bufferPtr->data()),
-        _pos(0),
-        _keyWritten(false),
-        options(&Options::Defaults) {}
- 
-// create an empty Builder, with custom Options 
+// create an empty Builder, using Options 
 Builder::Builder(Options const* options)
       : _buffer(std::make_shared<Buffer<uint8_t>>()),
         _bufferPtr(_buffer.get()),
@@ -149,9 +140,11 @@ Builder::Builder(Options const* options)
   }
 }
   
+// create an empty Builder, using an existing buffer
 Builder::Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer, Options const* options)
       : _buffer(buffer), 
         _bufferPtr(_buffer.get()), 
+        _start(nullptr),
         _pos(0), 
         _keyWritten(false), 
         options(options) {
@@ -165,42 +158,62 @@ Builder::Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer, Options const* 
   }
 }
   
+// create a Builder that uses an existing Buffer. the Builder will not
+// claim ownership for this Buffer
 Builder::Builder(Buffer<uint8_t>& buffer, Options const* options)
-      : _bufferPtr(nullptr), 
+      : _bufferPtr(&buffer), 
+        _start(_bufferPtr->data()),
         _pos(buffer.size()), 
         _keyWritten(false), 
         options(options) {
-  _buffer.reset(&buffer, BufferNonDeleter<uint8_t>());
-  _bufferPtr = _buffer.get();
-  _start = _bufferPtr->data();
 
   if (VELOCYPACK_UNLIKELY(options == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
 }
   
+// populate a Builder from a Slice
 Builder::Builder(Slice slice, Options const* options)
       : Builder(options) {
   add(slice);
 }
 
 Builder::Builder(Builder const& that)
-      : _buffer(std::make_shared<Buffer<uint8_t>>(*that._buffer)),
-        _bufferPtr(_buffer.get()),
-        _start(_bufferPtr->data()),
+      : _bufferPtr(nullptr),
+        _start(nullptr),
         _pos(that._pos),
         _stack(that._stack),
         _index(that._index),
         _keyWritten(that._keyWritten),
         options(that.options) {
   VELOCYPACK_ASSERT(options != nullptr);
+
+  if (that._buffer == nullptr) {
+    _bufferPtr = that._bufferPtr;
+  } else {
+    _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+    _bufferPtr = _buffer.get();
+  }
+        
+  if (_bufferPtr != nullptr) {
+    _start = _bufferPtr->data();
+  }
 }
 
 Builder& Builder::operator=(Builder const& that) {
   if (this != &that) {
-    _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
-    _bufferPtr = _buffer.get();
-    _start = _bufferPtr->data();
+    if (that._buffer == nullptr) {
+      _buffer.reset();
+      _bufferPtr = that._bufferPtr;
+    } else {
+      _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+      _bufferPtr = _buffer.get();
+    }
+    if (_bufferPtr == nullptr) {
+      _start = nullptr;
+    } else {
+      _start = _bufferPtr->data();
+    }
     _pos = that._pos;
     _stack = that._stack;
     _index = that._index;
@@ -211,41 +224,50 @@ Builder& Builder::operator=(Builder const& that) {
   return *this;
 }
 
-Builder::Builder(Builder&& that) {
-  if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
-    throw Exception(Exception::InternalError, "Cannot move an open Builder");
+Builder::Builder(Builder&& that) noexcept
+    : _buffer(std::move(that._buffer)),
+      _bufferPtr(nullptr),
+      _start(nullptr),
+      _pos(that._pos),
+      _stack(std::move(that._stack)),
+      _index(std::move(that._index)),
+      _keyWritten(that._keyWritten),
+      options(that.options) {
+  
+  if (_buffer != nullptr) {
+    _bufferPtr = _buffer.get();
+  } else {
+    _bufferPtr = that._bufferPtr;
   }
-  _buffer = that._buffer;
-  _bufferPtr = _buffer.get();
-  _start = _bufferPtr->data();
-  _pos = that._pos;
-  _stack.clear();
-  _stack.swap(that._stack);
-  _index.clear();
-  _index.swap(that._index);
-  _keyWritten = that._keyWritten;
-  options = that.options;
-  that._pos = 0;
-  that._keyWritten = false;
+  if (_bufferPtr != nullptr) {
+    _start = _bufferPtr->data();
+  }
+  VELOCYPACK_ASSERT(that._buffer == nullptr);
+  that._bufferPtr = nullptr;
+  that.clear();
 }
 
-Builder& Builder::operator=(Builder&& that) {
-  if (VELOCYPACK_UNLIKELY(!that.isClosed())) {
-    throw Exception(Exception::InternalError, "Cannot move an open Builder");
-  }
+Builder& Builder::operator=(Builder&& that) noexcept {
   if (this != &that) {
-    _buffer = that._buffer;
-    _bufferPtr = _buffer.get();
-    _start = _bufferPtr->data();
+    _buffer = std::move(that._buffer);
+    if (_buffer != nullptr) {
+      _bufferPtr = _buffer.get();
+    } else {
+      _bufferPtr = that._bufferPtr;
+    }
+    if (_bufferPtr != nullptr) {
+      _start = _bufferPtr->data();
+    } else {
+      _start = nullptr;
+    }
     _pos = that._pos;
-    _stack.clear();
-    _stack.swap(that._stack);
-    _index.clear();
-    _index.swap(that._index);
+    _stack = std::move(that._stack);
+    _index = std::move(that._index);
     _keyWritten = that._keyWritten;
     options = that.options;
-    that._pos = 0;
-    that._keyWritten = false;
+    VELOCYPACK_ASSERT(that._buffer == nullptr);
+    that._bufferPtr = nullptr;
+    that.clear();
   }
   return *this;
 }
@@ -558,6 +580,13 @@ Builder& Builder::close() {
       (head == 0x06 && options->buildUnindexedArrays) ||
       (head == 0x0b && (options->buildUnindexedObjects || index.size() == 1))) {
     if (closeCompactArrayOrObject(tos, isArray, index)) {
+      // And, if desired, check attribute uniqueness:
+      if (options->checkAttributeUniqueness && 
+          index.size() > 1 &&
+          !checkAttributeUniqueness(Slice(_start + tos))) {
+        // duplicate attribute name!
+        throw Exception(Exception::DuplicateAttributeName);
+      }
       return *this;
     }
     // This might fall through, if closeCompactArrayOrObject gave up!
@@ -1042,7 +1071,7 @@ bool Builder::checkAttributeUniqueness(Slice obj) const {
   VELOCYPACK_ASSERT(options->checkAttributeUniqueness == true);
   VELOCYPACK_ASSERT(obj.isObject());
   VELOCYPACK_ASSERT(obj.length() >= 2);
-
+  
   if (obj.isSorted()) {
     // object attributes are sorted
     return checkAttributeUniquenessSorted(obj);
@@ -1091,7 +1120,7 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
   // will use an std::unordered_set for O(1) lookups but with heap
   // allocations
   ObjectIterator it(obj, true);
-
+    
   if (it.size() <= ::LinearAttributeUniquenessCutoff) {
     return ::checkAttributeUniquenessUnsortedBrute(it);
   }

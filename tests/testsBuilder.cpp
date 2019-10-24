@@ -317,8 +317,8 @@ TEST(BuilderTest, MoveConstructOpenObject) {
   b.openObject();
   ASSERT_FALSE(b.isClosed());
 
-  Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+  Builder a(std::move(b));
+  ASSERT_FALSE(a.isClosed());
 }
 
 TEST(BuilderTest, MoveConstructOpenArray) {
@@ -326,7 +326,9 @@ TEST(BuilderTest, MoveConstructOpenArray) {
   b.openArray();
   ASSERT_FALSE(b.isClosed());
 
-  ASSERT_VELOCYPACK_EXCEPTION(Builder(std::move(b)), Exception::InternalError);
+  Builder a(std::move(b));
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, MoveAssignOpenObject) {
@@ -335,7 +337,9 @@ TEST(BuilderTest, MoveAssignOpenObject) {
   ASSERT_FALSE(b.isClosed());
 
   Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+  a = std::move(b);
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, MoveAssignOpenArray) {
@@ -344,7 +348,9 @@ TEST(BuilderTest, MoveAssignOpenArray) {
   ASSERT_FALSE(b.isClosed());
 
   Builder a;
-  ASSERT_VELOCYPACK_EXCEPTION(a = std::move(b), Exception::InternalError);
+  a = std::move(b);
+  ASSERT_FALSE(a.isClosed());
+  ASSERT_TRUE(b.isClosed());
 }
 
 TEST(BuilderTest, Move) {
@@ -357,8 +363,8 @@ TEST(BuilderTest, Move) {
   ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() != nullptr);
+  ASSERT_NE(a.buffer().get(), nullptr);
+  ASSERT_EQ(b.buffer().get(),  nullptr);
 }
 
 TEST(BuilderTest, MoveNonEmpty) {
@@ -373,8 +379,8 @@ TEST(BuilderTest, MoveNonEmpty) {
 
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() != nullptr);
+  ASSERT_NE(a.buffer().get(), nullptr);
+  ASSERT_EQ(b.buffer().get(), nullptr);
 }
 
 TEST(BuilderTest, MoveAssign) {
@@ -387,9 +393,8 @@ TEST(BuilderTest, MoveAssign) {
   ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_EQ(a.buffer().get(), b.buffer().get());
-  ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() != nullptr);
+  ASSERT_NE(a.buffer().get(), nullptr);
+  ASSERT_EQ(b.buffer().get(), nullptr);
 }
 
 TEST(BuilderTest, MoveAssignNonEmpty) {
@@ -403,9 +408,97 @@ TEST(BuilderTest, MoveAssignNonEmpty) {
   ASSERT_TRUE(b.isEmpty());
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
-  ASSERT_EQ(a.buffer().get(), b.buffer().get());
-  ASSERT_TRUE(a.buffer().get() != nullptr);
-  ASSERT_TRUE(b.buffer().get() != nullptr);
+  ASSERT_NE(a.buffer().get(), nullptr);
+  ASSERT_EQ(b.buffer().get(), nullptr);
+}
+
+TEST(BuilderTest, ConstructFromSlice) {
+  Builder b1;
+  b1.openObject();
+  b1.add("foo", Value("bar"));
+  b1.add("bar", Value("baz"));
+  b1.close();
+
+  Builder b2(b1.slice());
+  ASSERT_FALSE(b2.isEmpty());
+  ASSERT_TRUE(b2.isClosed());
+
+  ASSERT_TRUE(b2.slice().isObject());
+  ASSERT_TRUE(b2.slice().hasKey("foo"));
+  ASSERT_TRUE(b2.slice().hasKey("bar"));
+
+  b1.clear();
+  ASSERT_TRUE(b1.isEmpty());
+  
+  ASSERT_FALSE(b2.isEmpty());
+  ASSERT_TRUE(b2.slice().isObject());
+  ASSERT_TRUE(b2.slice().hasKey("foo"));
+  ASSERT_TRUE(b2.slice().hasKey("bar"));
+}
+
+TEST(BuilderTest, UsingEmptySharedPtr) {
+  std::shared_ptr<Buffer<uint8_t>> buffer;
+
+  ASSERT_VELOCYPACK_EXCEPTION(Builder(buffer), Exception::InternalError);
+}
+
+TEST(BuilderTest, UsingExistingBuffer) {
+  Buffer<uint8_t> buffer;
+  Builder b1(buffer);
+  b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
+
+  // copy-construct
+  Builder b2(b1); 
+  ASSERT_TRUE(b2.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b2.slice().copyString());
+
+  // copy-assign
+  Builder b3;
+  b3 = b2; 
+  ASSERT_TRUE(b3.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b3.slice().copyString());
+
+  // move-construct
+  Builder b4(std::move(b3));
+  ASSERT_TRUE(b4.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b4.slice().copyString());
+
+  // move-assign
+  Builder b5;
+  b5 = std::move(b4);
+  ASSERT_TRUE(b5.slice().isString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b5.slice().copyString());
+
+  b5.clear();
+  b5.add(Value("the-foxx"));
+  ASSERT_TRUE(b5.slice().isString());
+  ASSERT_EQ("the-foxx", b5.slice().copyString());
+}
+
+TEST(BuilderTest, AfterStolen) {
+  Builder b1;
+  b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
+
+  // sets the shared_ptr of the Builder's Buffer to nullptr
+  ASSERT_NE(nullptr, b1.steal());
+
+  // copy-construct
+  Builder b2(b1); 
+  ASSERT_EQ(nullptr, b2.steal());
+
+  // copy-assign
+  Builder b3;
+  b3 = b2; 
+  ASSERT_EQ(nullptr, b3.steal());
+
+  // move-construct
+  Builder b4(std::move(b3));
+  ASSERT_EQ(nullptr, b4.steal());
+
+  // move-assign
+  Builder b5;
+  b5 = std::move(b4);
+  ASSERT_EQ(nullptr, b5.steal());
 }
 
 TEST(BuilderTest, StealBuffer) {
@@ -1646,6 +1739,27 @@ TEST(BuilderTest, InvalidTypeViaValuePair) {
   ASSERT_VELOCYPACK_EXCEPTION(
       b.add(ValuePair(p, strlen(p), ValueType::UTCDate)),
       Exception::BuilderUnexpectedType);
+}
+
+TEST(BuilderTest, CustomValueType) {
+  Options options;
+  options.disallowCustom = true;
+  Builder b(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(ValueType::Custom)),
+      Exception::BuilderCustomDisallowed);
+  
+  options.disallowCustom = false;
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(Value(ValueType::Custom)),
+      Exception::BuilderUnexpectedType);
+}
+
+TEST(BuilderTest, IllegalValueType) {
+  Builder b;
+  b.add(Value(ValueType::Illegal));
+
+  ASSERT_EQ(ValueType::Illegal, b.slice().type());
 }
 
 TEST(BuilderTest, UTCDate) {

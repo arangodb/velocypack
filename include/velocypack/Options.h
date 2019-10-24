@@ -39,7 +39,7 @@ struct Options;
 class Slice;
 
 struct CustomTypeHandler {
-  virtual ~CustomTypeHandler() {}
+  virtual ~CustomTypeHandler() = default;
   virtual void dump(Slice const&, Dumper*, Slice const&);
   virtual std::string toString(Slice const&, Options const*, Slice const&);
 };
