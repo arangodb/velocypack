@@ -797,7 +797,9 @@ struct ObjectBuilder final : public BuilderContainer,
   }
   ~ObjectBuilder() {
     try {
-      builder->close();
+      if (!builder->isClosed()) {
+        builder->close();
+      }
     } catch (...) {
       // destructors must not throw. however, we can at least
       // signal something is very wrong in debug mode
@@ -826,7 +828,9 @@ struct ArrayBuilder final : public BuilderContainer,
   }
   ~ArrayBuilder() {
     try {
-      builder->close();
+      if (!builder->isClosed()) {
+        builder->close();
+      }
     } catch (...) {
       // destructors must not throw. however, we can at least
       // signal something is very wrong in debug mode
