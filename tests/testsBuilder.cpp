@@ -475,6 +475,25 @@ TEST(BuilderTest, UsingExistingBuffer) {
   ASSERT_EQ("the-foxx", b5.slice().copyString());
 }
 
+TEST(BuilderTest, BufferRef) {
+  Builder b;
+  b.add(Value("the-foxx"));
+
+  auto& ref = b.bufferRef();
+  ASSERT_TRUE(Slice(ref.data()).isEqualString("the-foxx"));
+  
+  auto& ref2 = b.bufferRef();
+  ASSERT_TRUE(Slice(ref2.data()).isEqualString("the-foxx"));
+}
+
+TEST(BuilderTest, BufferRefAfterStolen) {
+  Builder b;
+  b.add(Value("the-foxx"));
+
+  b.steal();
+  ASSERT_VELOCYPACK_EXCEPTION(b.bufferRef(), Exception::InternalError);
+}
+
 TEST(BuilderTest, AfterStolen) {
   Builder b1;
   b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
