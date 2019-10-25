@@ -36,7 +36,7 @@ matrix:
         - ACXX=g++-8
         - ACC=gcc-8
         #build settings
-        - build_type=Release
+        - build_type=Debug
         - SANITIZER=false
         - CXX_STANDARD=11
       addons:
