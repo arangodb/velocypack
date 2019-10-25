@@ -23,5 +23,10 @@ if ${COVERAGE:-false}; then
   lcov --list coverage.info || ferr "failed lcov"
 
   # upload coverage info
-  coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info || ferr "failed coveralls-lcov"
+  if ${COVERALLS_TOKEN:-false}; then
+    coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info || ferr "failed to upload"
+  else
+    # should not be required on github
+    coveralls-lcov coverage.info || ferr "failed to upload"
+  fi
 fi
