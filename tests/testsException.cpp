@@ -85,6 +85,19 @@ TEST(ExceptionTest, TestMessages) {
       Exception::message(static_cast<Exception::ExceptionType>(99999)));
 }
 
+TEST(ExceptionTest, TestStringification) {
+  std::string message;
+  try {
+    Builder b;
+    b.close();
+  } catch (Exception const& ex) {
+    std::stringstream out;
+    out << ex;
+    message = out.str();
+  }
+  ASSERT_EQ("[Exception Need open compound value (Array or Object)]", message);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

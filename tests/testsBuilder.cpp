@@ -442,6 +442,46 @@ TEST(BuilderTest, UsingEmptySharedPtr) {
   ASSERT_VELOCYPACK_EXCEPTION(Builder(buffer), Exception::InternalError);
 }
 
+TEST(BuilderTest, SizeUsingSharedPtr) {
+  auto buffer = std::make_shared<Buffer<uint8_t>>();
+  buffer->append("\x45testi", 6);
+
+  {
+    Builder b(buffer);
+    ASSERT_FALSE(b.isEmpty());
+    ASSERT_TRUE(b.slice().isString());
+    ASSERT_EQ("testi", b.slice().copyString());
+    ASSERT_EQ(6, b.size());
+  }
+  
+  buffer->clear();
+  {
+    Builder b(buffer);
+    ASSERT_TRUE(b.isEmpty());
+    ASSERT_TRUE(b.slice().isNone());
+  }
+}
+
+TEST(BuilderTest, SizeUsingBufferReference) {
+  Buffer<uint8_t> buffer;
+  buffer.append("\x45testi", 6);
+
+  {
+    Builder b(buffer);
+    ASSERT_FALSE(b.isEmpty());
+    ASSERT_TRUE(b.slice().isString());
+    ASSERT_EQ("testi", b.slice().copyString());
+    ASSERT_EQ(6, b.size());
+  }
+
+  buffer.clear();
+  {
+    Builder b(buffer);
+    ASSERT_TRUE(b.isEmpty());
+    ASSERT_TRUE(b.slice().isNone());
+  }
+}
+
 TEST(BuilderTest, UsingExistingBuffer) {
   Buffer<uint8_t> buffer;
   Builder b1(buffer);
@@ -2189,6 +2229,9 @@ TEST(BuilderTest, AttributeTranslations) {
   translator->add("mötör", 5);
   translator->add("quetzalcoatl", 6);
   translator->seal();
+
+  ASSERT_EQ(6, translator->count());
+  ASSERT_NE(nullptr, translator->builder());
 
   AttributeTranslatorScope scope(translator.get());
    
