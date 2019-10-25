@@ -12,22 +12,6 @@ branches:
 
 matrix:
   include:
-    - name: "C++14 build"
-      compiler: g++-8
-      env:
-        - ARCH=amd64
-        #compiler
-        - COMPILER=g++-8
-        - ACXX=g++-8
-        - ACC=gcc-8
-        #build settings
-        - build_type=Release
-        - SANITIZER=false
-        - CXX_STANDARD=14
-      addons:
-        apt:
-          packages: ['gcc-8', 'g++-8', 'cmake']
-
     - name: "C++11 build"
       compiler: g++-8
       env:
@@ -40,6 +24,22 @@ matrix:
         - build_type=Debug
         - SANITIZER=false
         - CXX_STANDARD=11
+      addons:
+        apt:
+          packages: ['gcc-8', 'g++-8', 'cmake']
+
+    - name: "C++14 build"
+      compiler: g++-8
+      env:
+        - ARCH=amd64
+        #compiler
+        - COMPILER=g++-8
+        - ACXX=g++-8
+        - ACC=gcc-8
+        #build settings
+        - build_type=Release
+        - SANITIZER=false
+        - CXX_STANDARD=14
       addons:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
