@@ -2190,6 +2190,9 @@ TEST(BuilderTest, AttributeTranslations) {
   translator->add("quetzalcoatl", 6);
   translator->seal();
 
+  ASSERT_EQ(6, translator->count());
+  ASSERT_NE(nullptr, translator->builder());
+
   AttributeTranslatorScope scope(translator.get());
    
   Options options;
