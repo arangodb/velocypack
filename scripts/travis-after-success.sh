@@ -35,6 +35,8 @@ if ${COVERAGE:-false}; then
            "$project_dir"'/src/*hash*' \
            "$project_dir"'/src/powers.h' \
             --output-file coverage.info || ferr "failed lcov"
+
+  sed -i "s#${project_dir}/##" coverage.info
   lcov --list coverage.info || ferr "failed lcov"
 
   # upload coverage info
