@@ -5,12 +5,18 @@ ferr(){
     exit 1
 }
 
+
 CXX_STANDARD=${CXX_STANDARD:-14}
 COVERAGE=${COVERAGE:-OFF}
 BUILD_TYPE=${BUILD_TYPE:-Release}
 
 if [[ $COVERAGE == "ON" ]]; then
     BUILD_TYPE=Debug
+fi
+
+threads=2
+if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    threads=$(nproc)
 fi
 
 echo "Building with C++ Standard $CXX_STANDARD"
@@ -25,7 +31,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DCoverage=${COVERAGE} \
       -DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
       .. || ferr "failed to configure"
 
-make || ferr "failed to build"
+make -j $threads || ferr "failed to build"
 ctest -V || ferr "failed to run tests"
 sleep 2
 echo Done.
