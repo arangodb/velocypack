@@ -38,6 +38,7 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=false
+        - CXX_STANDARD=11
       addons:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
@@ -53,7 +54,7 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=false
-        - CXX_STANDARD=11
+        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
@@ -70,7 +71,6 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=true
-        - CXX_STANDARD=17
 
     - name: "coverage build"
       if: branch = master

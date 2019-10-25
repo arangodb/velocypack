@@ -7,6 +7,7 @@ ferr(){
 
 
 CXX_STANDARD=${CXX_STANDARD:-14}
+echo "requesting c++ standard ${CXX_STANDARD}"
 COVERAGE=${COVERAGE:-OFF}
 BUILD_TYPE=${BUILD_TYPE:-Release}
 
