@@ -33,6 +33,7 @@ if ${COVERAGE:-false}; then
                "$project_dir"'/examples/*' \
                "$project_dir"'/tools/*' \
                "$project_dir"'/tests/*' \
+               "$project_dir"'/src/*xxh*' \
                "$project_dir"'/src/*hash*' \
                "$project_dir"'/src/powers.h' \
                 --output-file coverage.info || ferr "failed lcov"
