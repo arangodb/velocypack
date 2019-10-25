@@ -32,6 +32,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DCoverage=${COVERAGE} \
       .. || ferr "failed to configure"
 
 make -j $threads || ferr "failed to build"
-ctest -V || ferr "failed to run tests"
+(cd tests && ctest -V) || ferr "failed to run tests"
 sleep 2
 echo Done.
