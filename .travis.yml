@@ -93,7 +93,7 @@ matrix:
         - ./scripts/travis-after-success.sh
 
     - name: "clang build"
-      if: branch = master
+      if: branch = master AND false # diabled beacuse of clang ICE
       compiler: clang++-9
       env:
         - ARCH=amd64
