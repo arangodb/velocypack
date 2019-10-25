@@ -27,10 +27,11 @@ if ${COVERAGE:-false}; then
   lcov --directory "$build_dir" --capture --output-file test_coverage.info || ferr "failed lcov"
   lcov --add-tracefile base_coverage.info --add-tracefile test_coverage.info --output-file coverage.info || ferr "failed lcov"
   lcov --remove coverage.info \
-           "$project_dir"'tests/*' \
-           "$project_dir"'/usr/*' \
-           "$project_dir"'src/*hash*' \
-           "$project_dir"'src/powers.h' \
+           '/usr/*' \
+           'CMakeFiles/*' \
+           "$project_dir"'/tests/*' \
+           "$project_dir"'/src/*hash*' \
+           "$project_dir"'/src/powers.h' \
             --output-file coverage.info || ferr "failed lcov"
   lcov --list coverage.info || ferr "failed lcov"
 
