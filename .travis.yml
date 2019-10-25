@@ -23,6 +23,7 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=false
+        - CXX_STANDARD=14
       addons:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
