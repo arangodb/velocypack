@@ -247,6 +247,21 @@ TEST(StringRefTest, StringRefFromNonStringSlice) {
 }
 #endif
 
+TEST(StringRefTest, StringRefAssignFromStringSlice) {
+  Builder b;
+  b.add(Value("the-quick-brown-foxx"));
+  StringRef s;
+  s = b.slice();
+  
+  ASSERT_TRUE(!s.empty());
+  ASSERT_EQ(20U, s.size());
+  ASSERT_EQ("the-quick-brown-foxx", s.toString());
+
+  ASSERT_TRUE(s.equals(s));
+  ASSERT_EQ(0, s.compare(s));
+  ASSERT_EQ(0, s.compare("the-quick-brown-foxx"));
+}
+
 TEST(StringRefTest, CharacterAccess) {
   std::string const value("the-quick-brown-foxx");
   StringRef s(value);
