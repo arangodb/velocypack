@@ -6,12 +6,14 @@ ferr(){
 }
 
 if ${COVERAGE:-false}; then
+  #prepare
   project_dir="$(readlink -f ..)"
-  build_dir="$(readlink -f .)"
-  echo "coverage base directory $build_dir"
+  build_dir="$project_dir/build"
+
+  echo "coverage build directory $build_dir"
+  cd ${build_dir} || ferr "can not enter build dir"
 
   gem install coveralls-lcov || ferr "failed to install gem"
-  cd build
 
   # clear counters
   lcov --directory "$build_dir" --capture --initial --output-file base_coverage.info || ferr "failed lcov"
