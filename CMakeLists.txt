@@ -2,7 +2,11 @@
 
 cmake_minimum_required(VERSION 3.2)
 project(velocypack CXX C)
-set(CMAKE_CXX_STANDARD 17)
+
+if(NOT CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 14 CACHE BOOL "target C++ standard")
+endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
