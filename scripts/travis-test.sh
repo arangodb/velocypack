@@ -1,14 +1,14 @@
 #!/bin/bash
-
+set -u
 ferr(){
     echo "$@"
     exit 1
 }
 
-${CXX_STANDARD:=14}
-${COVERAGE:=OFF}
+CXX_STANDARD=${CXX_STANDARD:-14}
+COVERAGE=${COVERAGE:-OFF}
+BUILD_TYPE=${BUILD_TYPE:-Release}
 
-${BUILD_TYPE:=Release}
 if [[ $COVERAGE == "ON" ]]; then
     BUILD_TYPE=Debug
 fi
