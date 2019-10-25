@@ -22,8 +22,6 @@ matrix:
         - ACC=gcc-8
         #build settings
         - build_type=Release
-        - tests=ON
-        - examples=ON
         - SANITIZER=false
       addons:
         apt:
@@ -39,8 +37,6 @@ matrix:
         - ACC=gcc-8
         #build settings
         - build_type=Release
-        - tests=ON
-        - examples=ON
         - SANITIZER=false
       addons:
         apt:
@@ -56,8 +52,6 @@ matrix:
         - ACC=gcc-8
         #build settings
         - build_type=Release
-        - tests=ON
-        - examples=ON
         - SANITIZER=false
         - CXX_STANDARD=11
       addons:
@@ -75,8 +69,6 @@ matrix:
         - ACC=gcc-8
         #build settings
         - build_type=Release
-        - tests=ON
-        - examples=ON
         - SANITIZER=true
         - CXX_STANDARD=17
 
@@ -91,14 +83,14 @@ matrix:
         - ACC=gcc-7
         #build settings
         - build_type=Debug
-        - tests=ON
-        - examples=OFF
         - CXXFLAGS="-O0 --coverage"
+        - coverage=true
       addons:
         apt:
           packages: ['gcc-7', 'g++-7', 'lcov', 'cmake']
-          after_success:
-            - ./scripts/travis-after-success.sh
+      script:
+        - ./scripts/travis-test.sh
+        - ./scripts/travis-after-success.sh
 
     - name: "clang build"
       if: branch = master
@@ -127,6 +119,7 @@ install:
     - export CC=$ACC
     - export CXX_STANDARD=${CXX_STANDARD:-14}
     - export BUILD_TYPE=${build_type}
+    - export COVERAGE=${coverage:-false}
     - cmake --version
     - $CXX --version
 
