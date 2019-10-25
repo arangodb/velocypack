@@ -22,7 +22,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DCoverage=${COVERAGE} \
       -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON \
       -DBuildTools=ON -DEnableSSE=OFF \
       -DCMAKE_CXX_COMPILER=$CXX \
-      -DCMAKE_CXX_STANDARD=${CXX_STANDARD}
+      -DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
       .. || ferr "failed to configure"
 
 make || ferr "failed to build"
