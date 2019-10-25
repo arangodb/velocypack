@@ -29,7 +29,8 @@
 #include "tests-common.h"
 
 class SerializableTest : public Serializable {
-public:
+ public:
+  using Serializable::toVelocyPack;
   void toVelocyPack(Builder& b) const override {
     {
       ObjectBuilder ob(&b);
@@ -66,12 +67,22 @@ TEST(SerializableTest, AddObject) {
 TEST(SerializableTest, ToVelocyPack) {
   SerializableTest st;
 
-  Builder b;
-  st.toVelocyPack(b);
-  Slice s = b.slice();
-  ASSERT_TRUE(s.isObject());
-  ASSERT_TRUE(s.hasKey("test"));
-  ASSERT_EQ("serialized!", s.get("test").copyString());
+  {
+    Builder b;
+    st.toVelocyPack(b);
+    Slice s = b.slice();
+    ASSERT_TRUE(s.isObject());
+    ASSERT_TRUE(s.hasKey("test"));
+    ASSERT_EQ("serialized!", s.get("test").copyString());
+  }
+
+  {
+    auto b = st.toVelocyPack();
+    Slice s = b->slice();
+    ASSERT_TRUE(s.isObject());
+    ASSERT_TRUE(s.hasKey("test"));
+    ASSERT_EQ("serialized!", s.get("test").copyString());
+  }
 }
 
 int main(int argc, char* argv[]) {

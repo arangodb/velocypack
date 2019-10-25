@@ -92,10 +92,10 @@ TEST(ExceptionTest, TestStringification) {
     b.close();
   } catch (Exception const& ex) {
     std::stringstream out;
-    out << ex.what();
+    out << ex;
     message = out.str();
   }
-  ASSERT_EQ("Need open compound value (Array or Object)", message);
+  ASSERT_EQ("[Exception Need open compound value (Array or Object)]", message);
 }
 
 int main(int argc, char* argv[]) {
