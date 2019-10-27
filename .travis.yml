@@ -113,7 +113,6 @@ install:
     - export CC=$CC
     - export CXX_STANDARD=${CXX_STANDARD:-14}
     - export BUILD_TYPE=${build_type}
-    - export COVERAGE=${coverage:-"OFF"}
     - cmake --version
     - $CXX --version
 
