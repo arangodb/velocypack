@@ -33,6 +33,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DCoverage=${COVERAGE} \
 
 make -j $threads || ferr "failed to build"
 if ! ${COVERAGE:-false}; then
-    (cd tests && ctest -V) || ferr "failed to run tests"
+    (cd tests && ctest) || ferr "failed to run tests"
 fi
 echo Done.
