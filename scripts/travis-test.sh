@@ -5,4 +5,4 @@ ferr(){
     exit 1
 }
 
-(cd build/tests && ctest -V) || ferr "failed to run tests"
+(cd build/tests && ctest --output-on-failure) || ferr "failed to run tests"
