@@ -13,13 +13,11 @@ branches:
 matrix:
   include:
     - name: "C++11 build"
-      compiler: g++-8
       env:
         - ARCH=amd64
         #compiler
-        - COMPILER=g++-8
-        - ACXX=g++-8
-        - ACC=gcc-8
+        - CXX=g++-8
+        - CC=gcc-8
         #build settings
         - build_type=Debug
         - SANITIZER=false
@@ -29,13 +27,11 @@ matrix:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
     - name: "C++14 build"
-      compiler: g++-8
       env:
         - ARCH=amd64
         #compiler
-        - COMPILER=g++-8
-        - ACXX=g++-8
-        - ACC=gcc-8
+        - CXX=g++-8
+        - CC=gcc-8
         #build settings
         - build_type=Release
         - SANITIZER=false
@@ -45,13 +41,11 @@ matrix:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
     - name: "C++17 build"
-      compiler: g++-8
       env:
         - ARCH=amd64
         #compiler
-        - COMPILER=g++-8
-        - ACXX=g++-8
-        - ACC=gcc-8
+        - CXX=g++-8
+        - CC=gcc-8
         #build settings
         - build_type=Release
         - SANITIZER=false
@@ -62,26 +56,22 @@ matrix:
 
     - name: "address sanitizer build"
       if: branch = master AND false #disabled
-      compiler: g++-8
       env:
         - ARCH=amd64
         #compiler
-        - COMPILER=g++-8
-        - ACXX=g++-8
-        - ACC=gcc-8
+        - CXX=g++-8
+        - CC=gcc-8
         #build settings
         - build_type=Release
         - SANITIZER=true
 
     - name: "coverage build"
       if: branch = master
-      compiler: g++-7
       env:
         - ARCH=amd64
         #compiler
-        - COMPILER=g++-7
-        - ACXX=g++-7
-        - ACC=gcc-7
+        - CXX=g++-7
+        - CC=gcc-7
         #build settings
         - build_type=Debug
         - CXXFLAGS="-O0 --coverage"
@@ -100,8 +90,8 @@ matrix:
         - ARCH=amd64
         #compiler
         - COMPILER=clang++-9
-        - ACXX=clang++-9
-        - ACC=clang-9
+        - CXX=clang++-9
+        - CC=clang-9
         #build settings
         - build_type=Release
         - tests=ON
@@ -119,15 +109,13 @@ matrix:
       osx_image: xcode11.2
       compiler: clang
       env:
-        - ACXX=clang++-9
-        - ACC=clang-9
         - build_type=Release
         - tests=ON
         - examples=ON
 
 install:
-    - export CXX=$ACXX
-    - export CC=$ACC
+    - export CXX=$CXX
+    - export CC=$CC
     - export CXX_STANDARD=${CXX_STANDARD:-14}
     - export BUILD_TYPE=${build_type}
     - export COVERAGE=${coverage:-false}
