@@ -429,7 +429,7 @@ TEST(BuilderTest, ConstructFromSlice) {
 
   b1.clear();
   ASSERT_TRUE(b1.isEmpty());
-  
+
   ASSERT_FALSE(b2.isEmpty());
   ASSERT_TRUE(b2.slice().isObject());
   ASSERT_TRUE(b2.slice().hasKey("foo"));
@@ -453,7 +453,7 @@ TEST(BuilderTest, SizeUsingSharedPtr) {
     ASSERT_EQ("testi", b.slice().copyString());
     ASSERT_EQ(6, b.size());
   }
-  
+
   buffer->clear();
   {
     Builder b(buffer);
@@ -488,13 +488,13 @@ TEST(BuilderTest, UsingExistingBuffer) {
   b1.add(Value("the-quick-brown-fox-jumped-over-the-lazy-dog"));
 
   // copy-construct
-  Builder b2(b1); 
+  Builder b2(b1);
   ASSERT_TRUE(b2.slice().isString());
   ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b2.slice().copyString());
 
   // copy-assign
   Builder b3;
-  b3 = b2; 
+  b3 = b2;
   ASSERT_TRUE(b3.slice().isString());
   ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b3.slice().copyString());
 
@@ -521,7 +521,7 @@ TEST(BuilderTest, BufferRef) {
 
   auto& ref = b.bufferRef();
   ASSERT_TRUE(Slice(ref.data()).isEqualString("the-foxx"));
-  
+
   auto& ref2 = b.bufferRef();
   ASSERT_TRUE(Slice(ref2.data()).isEqualString("the-foxx"));
 }
@@ -542,12 +542,12 @@ TEST(BuilderTest, AfterStolen) {
   ASSERT_NE(nullptr, b1.steal());
 
   // copy-construct
-  Builder b2(b1); 
+  Builder b2(b1);
   ASSERT_EQ(nullptr, b2.steal());
 
   // copy-assign
   Builder b3;
-  b3 = b2; 
+  b3 = b2;
   ASSERT_EQ(nullptr, b3.steal());
 
   // move-construct
@@ -1771,7 +1771,7 @@ TEST(BuilderTest, CustomViaValuePair) {
 
 TEST(BuilderTest, CustomValueDisallowed) {
   char const* p = "\xf4\x2cthe quick brown fox jumped over the lazy dog";
-  
+
   Options options;
   options.disallowCustom = true;
   Builder b(&options);
@@ -1782,7 +1782,7 @@ TEST(BuilderTest, CustomValueDisallowed) {
 
 TEST(BuilderTest, CustomPairDisallowed) {
   char const* p = "\xf4\x2cthe quick brown fox jumped over the lazy dog";
-  
+
   Options options;
   options.disallowCustom = true;
   Builder b(&options);
@@ -1807,7 +1807,7 @@ TEST(BuilderTest, CustomValueType) {
   ASSERT_VELOCYPACK_EXCEPTION(
       b.add(Value(ValueType::Custom)),
       Exception::BuilderCustomDisallowed);
-  
+
   options.disallowCustom = false;
   ASSERT_VELOCYPACK_EXCEPTION(
       b.add(Value(ValueType::Custom)),
@@ -1871,7 +1871,7 @@ TEST(BuilderTest, UTCDateMax) {
 
 TEST(BuilderTest, CustomTypeID) {
   // This is somewhat tautological, nevertheless...
-  static uint8_t const correctResult[] 
+  static uint8_t const correctResult[]
       = {0xf5, 0x0b, 0x2b, 0x78, 0x56, 0x34, 0x12,
          0x45, 0x02, 0x03, 0x05, 0x08, 0x0d};
 
@@ -2234,7 +2234,7 @@ TEST(BuilderTest, AttributeTranslations) {
   ASSERT_NE(nullptr, translator->builder());
 
   AttributeTranslatorScope scope(translator.get());
-   
+
   Options options;
   options.attributeTranslator = translator.get();
 
@@ -2285,7 +2285,7 @@ TEST(BuilderTest, AttributeTranslationsSorted) {
   translator->add("mötör", 5);
   translator->add("quetzalcoatl", 6);
   translator->seal();
-  
+
   AttributeTranslatorScope scope(translator.get());
 
   Options options;
@@ -2393,7 +2393,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
       ASSERT_FALSE(ob2->isClosed());
       ASSERT_FALSE(ob->isClosed());
       ASSERT_FALSE(b.isClosed());
-    
+
       ob2->add("bart", Value("a"));
       ob2->add("zoo", Value("b"));
     }
@@ -2403,7 +2403,7 @@ TEST(BuilderTest, ObjectBuilderNested) {
       ASSERT_FALSE(ob2->isClosed());
       ASSERT_FALSE(ob->isClosed());
       ASSERT_FALSE(b.isClosed());
-    
+
       ob2->add("bark", Value(1));
       ob2->add("bonk", Value(2));
     }
@@ -2433,7 +2433,7 @@ TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
       ASSERT_FALSE(ab2->isClosed());
       ASSERT_FALSE(ob->isClosed());
       ASSERT_FALSE(b.isClosed());
-    
+
       ab2->add(Value("a"));
       ab2->add(Value("b"));
     }
@@ -2443,7 +2443,7 @@ TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
       ASSERT_FALSE(ab2->isClosed());
       ASSERT_FALSE(ob->isClosed());
       ASSERT_FALSE(b.isClosed());
-    
+
       ab2->add(Value(1));
       ab2->add(Value(2));
     }
@@ -2472,7 +2472,7 @@ TEST(BuilderTest, ObjectBuilderClosed) {
     ob->add("bar", Value("qux"));
     b.close(); // manually close the builder
     ASSERT_TRUE(b.isClosed());
-  } 
+  }
   ASSERT_TRUE(b.isClosed());
 
   ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\"\n}", b.toString());
@@ -2494,7 +2494,7 @@ TEST(BuilderTest, ArrayBuilder) {
     ASSERT_FALSE(b.isClosed());
   }
   ASSERT_TRUE(b.isClosed());
-  
+
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
 }
 
@@ -2534,7 +2534,7 @@ TEST(BuilderTest, ArrayBuilderNested) {
     ASSERT_FALSE(b.isClosed());
   }
   ASSERT_TRUE(b.isClosed());
-  
+
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
 }
 
@@ -2556,9 +2556,9 @@ TEST(BuilderTest, ArrayBuilderClosed) {
     b.close(); // manually close the builder
     ASSERT_TRUE(ob->isClosed());
     ASSERT_TRUE(b.isClosed());
-  } 
+  }
   ASSERT_TRUE(b.isClosed());
-  
+
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
 }
 
@@ -2761,7 +2761,7 @@ TEST(BuilderTest, SliceEmpty) {
 TEST(BuilderTest, AddKeyToNonObject) {
   Builder b;
   b.openArray();
-    
+
   ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderNeedOpenObject);
 }
 
@@ -2769,7 +2769,7 @@ TEST(BuilderTest, KeyWritten) {
   Builder b;
   b.openObject();
   b.add(Value("foo"));
-    
+
   ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderKeyAlreadyWritten);
 }
 
@@ -2785,10 +2785,10 @@ TEST(BuilderTest, AddWithTranslator) {
   translator->seal();
 
   AttributeTranslatorScope scope(translator.get());
-   
+
   Options options;
   options.attributeTranslator = translator.get();
-  
+
   Builder b(&options);
   b.openObject();
   b.add(std::string("foo"), Value("bar"));
@@ -2803,18 +2803,18 @@ TEST(BuilderTest, AddWithTranslator) {
   ASSERT_EQ("bar", s.keyAt(0).copyString());
   ASSERT_EQ(2UL, s.keyAt(0, false).getUInt());
   ASSERT_EQ("baz", s.valueAt(0).copyString());
-  
+
   ASSERT_EQ("bark", s.keyAt(1).copyString());
   ASSERT_EQ(4UL, s.keyAt(1, false).getUInt());
   ASSERT_EQ("bank", s.valueAt(1).copyString());
 
   ASSERT_EQ("bonk", s.keyAt(2).copyString());
   ASSERT_EQ("b0rk", s.valueAt(2).copyString());
-  
+
   ASSERT_EQ("foo", s.keyAt(3).copyString());
   ASSERT_EQ(1UL, s.keyAt(3, false).getUInt());
   ASSERT_EQ("bar", s.valueAt(3).copyString());
-  
+
   ASSERT_EQ("mötör", s.keyAt(4).copyString());
   ASSERT_EQ(5UL, s.keyAt(4, false).getUInt());
   ASSERT_EQ("köter", s.valueAt(4).copyString());
@@ -2970,7 +2970,7 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x35, data[8]);
 
   test();
-  
+
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
 
@@ -2983,9 +2983,9 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x33, data[6]);
   ASSERT_EQ(0x34, data[7]);
   ASSERT_EQ(0x35, data[8]);
-  
+
   test();
- 
+
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
 
@@ -3000,7 +3000,7 @@ TEST(BuilderTest, UsePaddingForOneByteArray) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x30, data[9]);
   ASSERT_EQ(0x31, data[10]);
-  
+
   test();
 }
 
@@ -3012,14 +3012,14 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
     b.clear();
     b.openArray();
 
-    for (size_t i = 0; i < 260; ++i) {
+    for (std::uint64_t i = 0; i < 260; ++i) {
       b.add(Value(i));
     }
 
     b.close();
     return b.slice().start();
   };
-  
+
   auto test = [&b]() {
     for (uint64_t i = 0; i < 260; ++i) {
       ASSERT_EQ(i, b.slice().at(i).getUInt());
@@ -3040,7 +3040,7 @@ TEST(BuilderTest, UsePaddingForTwoByteArray) {
   ASSERT_EQ(0x33, data[8]);
 
   test();
-  
+
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
 
@@ -3091,7 +3091,7 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
     b.close();
     return b.slice().start();
   };
-  
+
   auto test = [&b]() {
     for (uint64_t i = 0; i < 3; ++i) {
       ASSERT_EQ(i, b.slice().at(i).getUInt());
@@ -3108,7 +3108,7 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
   ASSERT_EQ(0x32, data[4]);
 
   test();
-  
+
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
 
@@ -3119,7 +3119,7 @@ TEST(BuilderTest, UsePaddingForEquallySizedArray) {
   ASSERT_EQ(0x32, data[4]);
 
   test();
- 
+
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
 
@@ -3155,7 +3155,7 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
     b.close();
     return b.slice().start();
   };
-  
+
   auto test = [&b]() {
     for (uint64_t i = 0; i < 10; ++i) {
       std::string key = std::string("test") + std::to_string(i);
@@ -3182,7 +3182,7 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
 
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
-  
+
   ASSERT_EQ(0x0b, data[0]);
   ASSERT_EQ(0x53, data[1]);
   ASSERT_EQ(0x0a, data[2]);
@@ -3195,7 +3195,7 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
   ASSERT_EQ(0x30, data[9]);
 
   test();
- 
+
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
 
@@ -3210,7 +3210,7 @@ TEST(BuilderTest, UsePaddingForOneByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
-  
+
   test();
 }
 
@@ -3222,7 +3222,7 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
     b.clear();
     b.openObject();
 
-    for (size_t i = 0; i < 260; ++i) {
+    for (std::uint64_t i = 0; i < 260; ++i) {
       b.add(Value(std::string("test") + std::to_string(i)));
       b.add(Value(i));
     }
@@ -3230,7 +3230,7 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
     b.close();
     return b.slice().start();
   };
-  
+
   auto test = [&b]() {
     for (uint64_t i = 0; i < 260; ++i) {
       std::string key = std::string("test") + std::to_string(i);
@@ -3257,7 +3257,7 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
 
   options.paddingBehavior = Options::PaddingBehavior::Flexible;
   data = build();
-  
+
   ASSERT_EQ(0x0c, data[0]);
   ASSERT_EQ(0xc5, data[1]);
   ASSERT_EQ(0x0b, data[2]);
@@ -3269,9 +3269,9 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
-  
+
   test();
- 
+
   options.paddingBehavior = Options::PaddingBehavior::UsePadding;
   data = build();
 
@@ -3286,7 +3286,7 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   ASSERT_EQ(0x00, data[8]);
   ASSERT_EQ(0x45, data[9]);
   ASSERT_EQ(0x74, data[10]);
-  
+
   test();
 }
 
