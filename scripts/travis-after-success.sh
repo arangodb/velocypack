@@ -12,9 +12,24 @@ build_dir="$project_dir/build"
 echo "project directory $project_dir"
 echo "build directory $build_dir"
 cd ${project_dir} || ferr "can not enter build dir"
-gem install coveralls-lcov || ferr "failed to install gem"
 
-LCOV=('lcov' '--directory' "$project_dir")
+if ${CI:-false}; then
+  gem install coveralls-lcov || ferr "failed to install gem"
+fi
+
+CXX=${CXX:='gcc'}
+version=${CXX#*-}
+if [[ -n $version ]]; then
+    version="-$version"
+fi
+GCOV=gcov${version}
+echo "gcov: $GCOV"
+
+LCOV=(
+    'lcov'
+    '--directory' "$project_dir"
+    '--gcov-tool' "$(type -p )"
+)
 
 # clear counters
 "${LCOV[@]}" --capture --initial --output-file base_coverage.info || ferr "failed lcov"

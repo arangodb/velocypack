@@ -71,7 +71,6 @@ matrix:
         #build settings
         - build_type=Debug
         - CXXFLAGS="-O0 --coverage"
-        - coverage=ON
       addons:
         apt:
           packages: ['gcc-7', 'g++-7', 'lcov', 'cmake']

@@ -11,7 +11,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
-option(Coverage "Build with coverage" OFF)
 
 set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
@@ -19,13 +18,10 @@ set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-if(Coverage)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
-set(VELOCYPACK_VERSION "0.0.1" CACHE path "VelocyPack version")
+set(VELOCYPACK_VERSION "0.0.1" CACHE STRING "VelocyPack version")
 set(VELOCYPACK_DISPLAY_NAME "Velocypack")
 set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/velocypack")
 set(VELOCYPACK_CONTACT "hackers@arangodb.org")
