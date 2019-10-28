@@ -11,16 +11,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
-option(Coverage "Build with coverage" OFF)
 
 set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif()
-if(Coverage)
-    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
