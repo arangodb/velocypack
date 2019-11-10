@@ -14,7 +14,6 @@
 #include "velocypack/Parser.h"
 #include "velocypack/Sink.h"
 #include "velocypack/Slice.h"
-#include "velocypack/ValueSlice.h"
 #include "velocypack/SliceContainer.h"
 #include "velocypack/StringRef.h"
 #include "velocypack/Validator.h"
