@@ -91,6 +91,8 @@
 #endif
 #endif
 
+#include "velocypack/velocypack-memory.h"
+
 #ifdef VELOCYPACK_XXHASH
 // forward for XXH64 function declared elsewhere
 extern "C" unsigned long long XXH64(void const*, std::size_t, unsigned long long);
@@ -105,13 +107,6 @@ extern "C" unsigned int XXH32(void const* input, std::size_t len, unsigned int s
 uint64_t fasthash64(void const*, std::size_t, uint64_t);
 
 #define VELOCYPACK_HASH(mem, size, seed) fasthash64(mem, size, seed)
-#endif
-
-// memory management definitions
-#ifndef vmalloc
-#define vmalloc(x) malloc(x)
-#define vrealloc(x, s) realloc(x, s)
-#define vfree(x) free(x)
 #endif
 
 namespace arangodb {

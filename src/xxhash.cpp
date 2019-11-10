@@ -39,6 +39,8 @@
 #ifndef XXHASH_C_01393879
 #define XXHASH_C_01393879
 
+#include "velocypack/velocypack-memory.h"
+
 /* *************************************
 *  Tuning parameters
 ***************************************/
@@ -107,8 +109,8 @@
 /*! Modify the local functions below should you wish to use some other memory routines
 *   for malloc(), free() */
 #include <stdlib.h>
-static void* XXH_malloc(size_t s) { return malloc(s); }
-static void  XXH_free  (void* p)  { free(p); }
+static void* XXH_malloc(size_t s) { return vmalloc(s); }
+static void  XXH_free  (void* p)  { vfree(p); }
 /*! and for memcpy() */
 #include <string.h>
 static void* XXH_memcpy(void* dest, const void* src, size_t size) { return memcpy(dest,src,size); }
