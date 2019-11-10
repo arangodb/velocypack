@@ -1,24 +1,64 @@
-if [ "$CXX" = "/usr/bin/g++-4.9" ]; then
-  gem install coveralls-lcov
-  # install lcov 1.11
-  wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
-  tar xf lcov_1.11.orig.tar.gz
-  make -C lcov-1.11/ install PREFIX=~/bin/lcov
+#!/bin/bash
+set -u
+ferr(){
+    echo "$@"
+    exit 1
+}
 
-  rm -Rf build/*
-  # build again
-  (cd build && cmake -DCoverage=ON -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=OFF -DBuildTools=OFF -DEnableSSE=OFF -DCMAKE_CXX_COMPILER=$CXX ..)
-  (cd build && make)
-  # clear counters
-  ~/bin/lcov/usr/bin/lcov --capture --initial --directory build --output-file build/base_coverage.info --gcov-tool=gcov-4.9
-  ~/bin/lcov/usr/bin/lcov --directory build --zerocounters --gcov-tool=gcov-4.9
-  # run tests
-  (cd build/tests/ && ctest -V)
-  # collect coverage info
-  ~/bin/lcov/usr/bin/lcov --directory build --capture --output-file build/test_coverage.info --gcov-tool=gcov-4.9
-  ~/bin/lcov/usr/bin/lcov --add-tracefile build/base_coverage.info --add-tracefile build/test_coverage.info --output-file build/coverage.info --gcov-tool=gcov-4.9
-  ~/bin/lcov/usr/bin/lcov --remove build/coverage.info 'tests/*' '/usr/*' 'src/*hash*' 'src/powers.h' --output-file build/coverage.info --gcov-tool=gcov-4.9
-  ~/bin/lcov/usr/bin/lcov --list build/coverage.info --gcov-tool=gcov-4.9
-  # upload coverage info
-  coveralls-lcov --repo-token ${COVERALLS_TOKEN} build/coverage.info
+#prepare
+project_dir="$(readlink -f .)"
+build_dir="$project_dir/build"
+
+echo "project directory $project_dir"
+echo "build directory $build_dir"
+cd ${project_dir} || ferr "can not enter build dir"
+
+if ${CI:-false}; then
+  gem install coveralls-lcov || ferr "failed to install gem"
+fi
+
+CXX=${CXX:='gcc'}
+version=${CXX#*-}
+if [[ -n $version ]]; then
+    version="-$version"
+fi
+GCOV=gcov${version}
+echo "gcov: $GCOV"
+
+LCOV=(
+    'lcov'
+    '--directory' "$project_dir"
+    '--gcov-tool' "$(type -p )"
+)
+
+# clear counters
+"${LCOV[@]}" --capture --initial --output-file base_coverage.info || ferr "failed lcov"
+"${LCOV[@]}" --zerocounters || ferr "failed lcov"
+
+# run tests
+(cd "${build_dir}/tests" && ctest -V) || ferr "failed to run tests"
+
+# collect coverage info
+"${LCOV[@]}" --capture --output-file test_coverage.info || ferr "failed lcov"
+"${LCOV[@]}" --add-tracefile base_coverage.info --add-tracefile test_coverage.info --output-file coverage.info || ferr "failed lcov"
+"${LCOV[@]}" --remove coverage.info \
+             '/usr/*' \
+             '*CMakeFiles/*' \
+             "$project_dir"'/examples/*' \
+             "$project_dir"'/tools/*' \
+             "$project_dir"'/tests/*' \
+             "$project_dir"'/src/*xxh*' \
+             "$project_dir"'/src/*hash*' \
+             "$project_dir"'/src/powers.h' \
+              --output-file coverage.info || ferr "failed lcov"
+
+"${LCOV[@]}" --list coverage.info || ferr "failed lcov"
+
+sed -i "s#${project_dir}/##" coverage.info
+# upload coverage info
+if ${COVERALLS_TOKEN:-false}; then
+  coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info || ferr "failed to upload"
+else
+  # should not be required on github
+  coveralls-lcov coverage.info || ferr "failed to upload"
 fi

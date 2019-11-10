@@ -29,8 +29,9 @@
 #include "tests-common.h"
 
 class SerializableTest : public Serializable {
-public:
-  void toVelocyPack(Builder &b) const override {
+ public:
+  using Serializable::toVelocyPack;
+  void toVelocyPack(Builder& b) const override {
     {
       ObjectBuilder ob(&b);
       b.add("test", Value("serialized!"));
@@ -38,8 +39,7 @@ public:
   }
 };
 
-TEST(SerializableTest, AddTest) {
-
+TEST(SerializableTest, Add) {
   SerializableTest st;
 
   Builder b;
@@ -50,8 +50,7 @@ TEST(SerializableTest, AddTest) {
   ASSERT_EQ(s.get("test").copyString(), "serialized!");
 }
 
-TEST(SerializableTest, AddObjectTest) {
-
+TEST(SerializableTest, AddObject) {
   SerializableTest st;
 
   Builder b;
@@ -63,6 +62,27 @@ TEST(SerializableTest, AddObjectTest) {
   ASSERT_EQ(ValueType::Object, s.type());
   Slice t(s.get("key"));
   ASSERT_EQ(t.get("test").copyString(), "serialized!");
+}
+
+TEST(SerializableTest, ToVelocyPack) {
+  SerializableTest st;
+
+  {
+    Builder b;
+    st.toVelocyPack(b);
+    Slice s = b.slice();
+    ASSERT_TRUE(s.isObject());
+    ASSERT_TRUE(s.hasKey("test"));
+    ASSERT_EQ("serialized!", s.get("test").copyString());
+  }
+
+  {
+    auto b = st.toVelocyPack();
+    Slice s = b->slice();
+    ASSERT_TRUE(s.isObject());
+    ASSERT_TRUE(s.hasKey("test"));
+    ASSERT_EQ("serialized!", s.get("test").copyString());
+  }
 }
 
 int main(int argc, char* argv[]) {
