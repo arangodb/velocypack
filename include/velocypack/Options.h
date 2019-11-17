@@ -127,6 +127,12 @@ struct Options {
   // dump NaN as "NaN", Infinity as "Infinity"
   bool unsupportedDoublesAsString = false;
 
+  // dump binary values as hex-encoded strings
+  bool binaryAsHex = false;
+
+  // render dates as integers
+  bool datesAsIntegers = false;
+
   // disallow using type External (to prevent injection of arbitrary pointer
   // values as a security precaution), validated when object-building via
   // Builder and VelocyPack validation using Validator objects

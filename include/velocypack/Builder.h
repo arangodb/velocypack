@@ -381,6 +381,17 @@ class Builder {
   inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, attrLength, tag, sub);
   }
+
+  // Add a subvalue into an object from a Serializable:
+  inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, Serialize const& sub) {
+    return addInternal<Serializable>(attrName, tag, sub._sable);
+  }
+  inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, Serialize const& sub) {
+    return addInternal<Serializable>(attrName, tag, sub._sable);
+  }
+  inline uint8_t* addTagged(char const* attrName, uint64_t tag, Serialize const& sub) {
+    return addInternal<Serializable>(attrName, tag, sub._sable);
+  }
   inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Serialize const& sub) {
     return addInternal<Serializable>(attrName, attrLength, tag, sub._sable);
   }

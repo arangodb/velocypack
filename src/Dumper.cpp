@@ -28,6 +28,7 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Dumper.h"
+#include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/ValueType.h"
 
@@ -488,10 +489,40 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       break;
     }
 
-    case ValueType::Tagged:
-    case ValueType::UTCDate: 
+    case ValueType::Tagged: {
+      dump(slice->value());
+      break;
+    }
+
+    case ValueType::Binary: {
+      if(options->binaryAsHex) {
+        _sink->push_back('"');
+        ValueLength len;
+	    uint8_t const *bin = slice->getBinary(len);
+        for (uint8_t i = 0; i < len; i++) {
+          uint8_t value = *(bin+i);
+          uint8_t x = value / 16;
+          _sink->push_back((x < 10 ? ('0' + x) : ('a' + x - 10)));
+          x = value % 16;
+          _sink->push_back((x < 10 ? ('0' + x) : ('a' + x - 10)));
+        }
+        _sink->push_back('"');
+      } else {
+        handleUnsupportedType(slice);
+      }
+      break;
+    }
+
+    case ValueType::UTCDate: {
+      if(options->datesAsIntegers) {
+        appendUInt(slice->getUTCDate());
+      } else {
+        handleUnsupportedType(slice);
+      }
+      break;
+    }
+
     case ValueType::None: 
-    case ValueType::Binary: 
     case ValueType::Illegal:
     case ValueType::MinKey:
     case ValueType::MaxKey: {
