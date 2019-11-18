@@ -52,11 +52,17 @@ struct SortEntry {
 // reallocations
 constexpr size_t minSortEntriesAllocation = 32;
 
+
+#ifndef NO_THREADLOCALS
+
 // thread-local, reusable buffer used for sorting medium to big index entries
-thread_local std::unique_ptr<std::vector<SortEntry>> sortEntries; 
+thread_local std::unique_ptr<std::vector<SortEntry>> sortEntries;
 
 // thread-local, reusable set to track usage of duplicate keys
 thread_local std::unique_ptr<std::unordered_set<StringRef>> duplicateKeys;
+
+#endif
+
 
 // Find the actual bytes of the attribute name of the VPack value
 // at position base, also determine the length len of the attribute.
@@ -106,16 +112,23 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
 }
 
 bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
+#ifndef NO_THREADLOCALS
+  std::unique_ptr<std::unordered_set<StringRef>>& duplicateKeys = ::duplicateKeys;
+
   if (::duplicateKeys == nullptr) {
     ::duplicateKeys.reset(new std::unordered_set<StringRef>());
   } else {
     ::duplicateKeys->clear();
   }
+#else
+  std::unordered_set<StringRef> *duplicateKeys = new std::unordered_set<StringRef>();
+#endif
+
   do {
     Slice const key = it.key(true);
     // key(true) guarantees a String as returned type
     VELOCYPACK_ASSERT(key.isString());
-    if (VELOCYPACK_UNLIKELY(!::duplicateKeys->emplace(key).second)) {
+    if (VELOCYPACK_UNLIKELY(!duplicateKeys->emplace(key).second)) {
       // identical key
       return false;
     }
@@ -315,6 +328,9 @@ void Builder::sortObjectIndexShort(uint8_t* objBase,
 
 void Builder::sortObjectIndexLong(uint8_t* objBase,
                                   std::vector<ValueLength>& offsets) {
+#ifndef NO_THREADLOCALS
+  std::unique_ptr<std::vector<SortEntry>>& sortEntries = ::sortEntries;
+
   // start with clean sheet in case the previous run left something
   // in the vector (e.g. when bailing out with an exception)
   if (::sortEntries == nullptr) {
@@ -322,19 +338,22 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
   } else {
     ::sortEntries->clear();
   }
+#else
+  std::vector<SortEntry> *sortEntries = new std::vector<SortEntry>();
+#endif
 
   std::size_t const n = offsets.size();
   VELOCYPACK_ASSERT(n > 1);
-  ::sortEntries->reserve(std::max(::minSortEntriesAllocation, n));
+  sortEntries->reserve(std::max(::minSortEntriesAllocation, n));
   for (std::size_t i = 0; i < n; i++) {
     SortEntry e;
     e.offset = offsets[i];
     e.nameStart = ::findAttrName(objBase + e.offset, e.nameSize);
-    ::sortEntries->push_back(e);
+    sortEntries->push_back(e);
   }
-  VELOCYPACK_ASSERT(::sortEntries->size() == n);
-  std::sort(::sortEntries->begin(), ::sortEntries->end(), [](SortEntry const& a, 
-                                                             SortEntry const& b) 
+  VELOCYPACK_ASSERT(sortEntries->size() == n);
+  std::sort(sortEntries->begin(), sortEntries->end(), [](SortEntry const& a,
+                                                         SortEntry const& b)
 #ifdef VELOCYPACK_64BIT
     noexcept
 #endif
@@ -350,7 +369,7 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
 
   // copy back the sorted offsets
   for (std::size_t i = 0; i < n; i++) {
-    offsets[i] = (*::sortEntries)[i].offset;
+    offsets[i] = (*sortEntries)[i].offset;
   }
 }
 
