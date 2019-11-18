@@ -26,11 +26,25 @@
 #ifndef VELOCYPACK_MEMORY_H
 #define VELOCYPACK_MEMORY_H 1
 
+#include <cstdint>
+#include <memory>
+
 // memory management definitions
+
+extern "C" {
+
+extern void* vmalloc(std::size_t size);
+extern void* vrealloc(void* ptr, std::size_t size);
+extern void vfree(void* ptr);
+
 #ifndef vmalloc
-#define vmalloc(x) malloc(x)
-#define vrealloc(x, s) realloc(x, s)
-#define vfree(x) free(x)
+
+#define vmalloc(size) malloc(size)
+#define vrealloc(ptr, size) realloc(ptr, size)
+#define vfree(ptr) free(ptr)
+
 #endif
+
+}
 
 #endif
