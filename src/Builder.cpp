@@ -121,7 +121,7 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
     ::duplicateKeys->clear();
   }
 #else
-  std::unordered_set<StringRef> *duplicateKeys = new std::unordered_set<StringRef>();
+  std::unique_ptr<std::unordered_set<StringRef>> duplicateKeys(new std::unordered_set<StringRef>());
 #endif
 
   do {
@@ -339,7 +339,7 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
     ::sortEntries->clear();
   }
 #else
-  std::vector<SortEntry> *sortEntries = new std::vector<SortEntry>();
+  std::unique_ptr<std::vector<SortEntry>> sortEntries(new std::vector<SortEntry>());
 #endif
 
   std::size_t const n = offsets.size();
