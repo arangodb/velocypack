@@ -989,7 +989,7 @@ class Slice {
   // returns 0 for invalid values/types
   int64_t getSmallIntUnchecked() const noexcept;
 
-  uint8_t const* getBCD(int8_t& sign, uint32_t& exponent, ValueLength& mantissaLength) const {
+  uint8_t const* getBCD(int8_t& sign, int32_t& exponent, ValueLength& mantissaLength) const {
     if (VELOCYPACK_UNLIKELY(!isBCD())) {
       throw Exception(Exception::InvalidValueType, "Expecting type BCD");
     }
@@ -999,7 +999,7 @@ class Slice {
     uint8_t mlenlen = type - (positive ? 0xc7 : 0xcf);
 
     sign = positive ? 1 : -1;
-    exponent = readIntegerFixed<uint32_t, 4>(valueStart() + 1 + mlenlen);
+    exponent = static_cast<int32_t>(readIntegerFixed<uint32_t, 4>(valueStart() + 1 + mlenlen));
     mantissaLength = readIntegerNonEmpty<ValueLength>(valueStart() + 1, mlenlen);
 
     return valueStart() + 1 + mlenlen + 4;

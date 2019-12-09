@@ -587,7 +587,7 @@ class Builder {
     }
   }
 
-  void addBCD(int8_t sign, uint32_t exponent, char* mantissa, uint64_t mantissaLength) {
+  void addBCD(int8_t sign, int32_t exponent, char* mantissa, uint64_t mantissaLength) {
     bool isOdd = mantissaLength % 2 != 0;
     uint64_t byteLen = mantissaLength / 2 + (isOdd ? 1 : 0);
 
@@ -606,7 +606,7 @@ class Builder {
       v >>= 8;
     }
 
-    appendLengthUnchecked<4>(exponent);
+    appendLengthUnchecked<4>(static_cast<uint64_t>(exponent));
 
     uint64_t i = 0;
     while (i < mantissaLength) {
