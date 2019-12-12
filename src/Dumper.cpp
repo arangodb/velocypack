@@ -41,6 +41,74 @@ int fpconv_dtoa(double fp, char dest[24]);
 }
 };
 
+void Dumper::appendInt(int64_t v) {
+  if (v == INT64_MIN) {
+    _sink->append("-9223372036854775808", 20);
+    return;
+  }
+  if (v < 0) {
+    _sink->push_back('-');
+    v = -v;
+  }
+
+  if (1000000000000000000LL <= v) {
+    _sink->push_back('0' + (v / 1000000000000000000LL) % 10);
+  }
+  if (100000000000000000LL <= v) {
+    _sink->push_back('0' + (v / 100000000000000000LL) % 10);
+  }
+  if (10000000000000000LL <= v) {
+    _sink->push_back('0' + (v / 10000000000000000LL) % 10);
+  }
+  if (1000000000000000LL <= v) {
+    _sink->push_back('0' + (v / 1000000000000000LL) % 10);
+  }
+  if (100000000000000LL <= v) {
+    _sink->push_back('0' + (v / 100000000000000LL) % 10);
+  }
+  if (10000000000000LL <= v) {
+    _sink->push_back('0' + (v / 10000000000000LL) % 10);
+  }
+  if (1000000000000LL <= v) {
+    _sink->push_back('0' + (v / 1000000000000LL) % 10);
+  }
+  if (100000000000LL <= v) {
+    _sink->push_back('0' + (v / 100000000000LL) % 10);
+  }
+  if (10000000000LL <= v) {
+    _sink->push_back('0' + (v / 10000000000LL) % 10);
+  }
+  if (1000000000LL <= v) {
+    _sink->push_back('0' + (v / 1000000000LL) % 10);
+  }
+  if (100000000LL <= v) {
+    _sink->push_back('0' + (v / 100000000LL) % 10);
+  }
+  if (10000000LL <= v) {
+    _sink->push_back('0' + (v / 10000000LL) % 10);
+  }
+  if (1000000LL <= v) {
+    _sink->push_back('0' + (v / 1000000LL) % 10);
+  }
+  if (100000LL <= v) {
+    _sink->push_back('0' + (v / 100000LL) % 10);
+  }
+  if (10000LL <= v) {
+    _sink->push_back('0' + (v / 10000LL) % 10);
+  }
+  if (1000LL <= v) {
+    _sink->push_back('0' + (v / 1000LL) % 10);
+  }
+  if (100LL <= v) {
+    _sink->push_back('0' + (v / 100LL) % 10);
+  }
+  if (10LL <= v) {
+    _sink->push_back('0' + (v / 10LL) % 10);
+  }
+
+  _sink->push_back('0' + (v % 10));
+}
+
 void Dumper::appendUInt(uint64_t v) {
   if (10000000000000000000ULL <= v) {
     _sink->push_back('0' + (v / 10000000000000000000ULL) % 10);
@@ -135,71 +203,8 @@ void Dumper::dumpInteger(Slice const* slice) {
     appendUInt(v);
   } else if (slice->isType(ValueType::Int)) {
     int64_t v = slice->getIntUnchecked();
-    if (v == INT64_MIN) {
-      _sink->append("-9223372036854775808", 20);
-      return;
-    }
-    if (v < 0) {
-      _sink->push_back('-');
-      v = -v;
-    }
 
-    if (1000000000000000000LL <= v) {
-      _sink->push_back('0' + (v / 1000000000000000000LL) % 10);
-    }
-    if (100000000000000000LL <= v) {
-      _sink->push_back('0' + (v / 100000000000000000LL) % 10);
-    }
-    if (10000000000000000LL <= v) {
-      _sink->push_back('0' + (v / 10000000000000000LL) % 10);
-    }
-    if (1000000000000000LL <= v) {
-      _sink->push_back('0' + (v / 1000000000000000LL) % 10);
-    }
-    if (100000000000000LL <= v) {
-      _sink->push_back('0' + (v / 100000000000000LL) % 10);
-    }
-    if (10000000000000LL <= v) {
-      _sink->push_back('0' + (v / 10000000000000LL) % 10);
-    }
-    if (1000000000000LL <= v) {
-      _sink->push_back('0' + (v / 1000000000000LL) % 10);
-    }
-    if (100000000000LL <= v) {
-      _sink->push_back('0' + (v / 100000000000LL) % 10);
-    }
-    if (10000000000LL <= v) {
-      _sink->push_back('0' + (v / 10000000000LL) % 10);
-    }
-    if (1000000000LL <= v) {
-      _sink->push_back('0' + (v / 1000000000LL) % 10);
-    }
-    if (100000000LL <= v) {
-      _sink->push_back('0' + (v / 100000000LL) % 10);
-    }
-    if (10000000LL <= v) {
-      _sink->push_back('0' + (v / 10000000LL) % 10);
-    }
-    if (1000000LL <= v) {
-      _sink->push_back('0' + (v / 1000000LL) % 10);
-    }
-    if (100000LL <= v) {
-      _sink->push_back('0' + (v / 100000LL) % 10);
-    }
-    if (10000LL <= v) {
-      _sink->push_back('0' + (v / 10000LL) % 10);
-    }
-    if (1000LL <= v) {
-      _sink->push_back('0' + (v / 1000LL) % 10);
-    }
-    if (100LL <= v) {
-      _sink->push_back('0' + (v / 100LL) % 10);
-    }
-    if (10LL <= v) {
-      _sink->push_back('0' + (v / 10LL) % 10);
-    }
-
-    _sink->push_back('0' + (v % 10));
+    appendInt(v);
   } else if (slice->isType(ValueType::SmallInt)) {
     int64_t v = slice->getSmallIntUnchecked();
     if (v < 0) {
@@ -515,7 +520,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
     case ValueType::UTCDate: {
       if(options->datesAsIntegers) {
-        appendUInt(slice->getUTCDate());
+        appendInt(slice->getUTCDate());
       } else {
         handleUnsupportedType(slice);
       }

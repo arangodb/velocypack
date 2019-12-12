@@ -33,15 +33,15 @@
 
 extern "C" {
 
-extern void* vmalloc(std::size_t size);
-extern void* vrealloc(void* ptr, std::size_t size);
-extern void vfree(void* ptr);
+extern void* velocypack_malloc(std::size_t size);
+extern void* velocypack_realloc(void* ptr, std::size_t size);
+extern void velocypack_free(void* ptr);
 
-#ifndef vmalloc
+#ifndef velocypack_malloc
 
-#define vmalloc(size) malloc(size)
-#define vrealloc(ptr, size) realloc(ptr, size)
-#define vfree(ptr) free(ptr)
+#define velocypack_malloc(size) malloc(size)
+#define velocypack_realloc(ptr, size) realloc(ptr, size)
+#define velocypack_free(ptr) free(ptr)
 
 #endif
 

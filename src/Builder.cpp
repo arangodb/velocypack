@@ -53,7 +53,7 @@ struct SortEntry {
 constexpr size_t minSortEntriesAllocation = 32;
 
 
-#ifndef NO_THREADLOCALS
+#ifndef VELOCYPACK_NO_THREADLOCALS
 
 // thread-local, reusable buffer used for sorting medium to big index entries
 thread_local std::unique_ptr<std::vector<SortEntry>> sortEntries;
@@ -112,7 +112,7 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
 }
 
 bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
-#ifndef NO_THREADLOCALS
+#ifndef VELOCYPACK_NO_THREADLOCALS
   std::unique_ptr<std::unordered_set<StringRef>>& duplicateKeys = ::duplicateKeys;
 
   if (::duplicateKeys == nullptr) {
@@ -328,7 +328,7 @@ void Builder::sortObjectIndexShort(uint8_t* objBase,
 
 void Builder::sortObjectIndexLong(uint8_t* objBase,
                                   std::vector<ValueLength>& offsets) {
-#ifndef NO_THREADLOCALS
+#ifndef VELOCYPACK_NO_THREADLOCALS
   std::unique_ptr<std::vector<SortEntry>>& sortEntries = ::sortEntries;
 
   // start with clean sheet in case the previous run left something
