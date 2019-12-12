@@ -27,6 +27,7 @@ set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/velocypack")
 set(VELOCYPACK_CONTACT "hackers@arangodb.org")
 set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization format")
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #Compiler Setting
 include(AR_CompilerSettings)

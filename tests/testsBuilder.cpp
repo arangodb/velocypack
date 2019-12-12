@@ -3290,6 +3290,44 @@ TEST(BuilderTest, UsePaddingForTwoByteObject) {
   test();
 }
 
+TEST(BuilderTest, Tags) {
+  Builder b;
+  b.openObject();
+  b.add("a", Value(0));
+  b.addTagged("b", 0, Value(0));
+  b.addTagged("c", 1, Value(1));
+  b.close();
+
+  Slice s = b.slice();
+
+  ASSERT_EQ(3UL, s.length());
+
+  ASSERT_FALSE(s.get("a").isTagged());
+  ASSERT_FALSE(s.get("b").isTagged());
+  ASSERT_TRUE(s.get("c").isTagged());
+  ASSERT_FALSE(s.get("c").value().isTagged());
+  ASSERT_EQ(s.get("c").value().getInt(), 1);
+}
+
+TEST(BuilderTest, TagsArray) {
+  Builder b;
+  b.openArray();
+  b.add(Value(0));
+  b.addTagged(0, Value(0));
+  b.addTagged(1, Value(1));
+  b.close();
+
+  Slice s = b.slice();
+
+  ASSERT_EQ(3UL, s.length());
+
+  ASSERT_FALSE(s.at(0).isTagged());
+  ASSERT_FALSE(s.at(1).isTagged());
+  ASSERT_TRUE(s.at(2).isTagged());
+  ASSERT_FALSE(s.at(2).value().isTagged());
+  ASSERT_EQ(s.at(2).value().getInt(), 1);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

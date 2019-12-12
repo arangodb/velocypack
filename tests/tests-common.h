@@ -96,6 +96,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isBCD());
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Illegal:
       ASSERT_FALSE(s.isNone());
@@ -118,6 +119,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isBCD());
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Null:
       ASSERT_FALSE(s.isNone());
@@ -141,6 +143,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Bool:
       ASSERT_FALSE(s.isNone());
@@ -163,6 +166,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Double:
       ASSERT_FALSE(s.isNone());
@@ -186,6 +190,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Array:
       ASSERT_FALSE(s.isNone());
@@ -209,6 +214,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Object:
       ASSERT_FALSE(s.isNone());
@@ -232,6 +238,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::External:
       ASSERT_FALSE(s.isNone());
@@ -255,6 +262,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::UTCDate:
       ASSERT_FALSE(s.isNone());
@@ -278,6 +286,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Int:
       ASSERT_FALSE(s.isNone());
@@ -301,6 +310,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::UInt:
       ASSERT_FALSE(s.isNone());
@@ -324,6 +334,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::SmallInt:
       ASSERT_FALSE(s.isNone());
@@ -347,6 +358,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::String:
       ASSERT_FALSE(s.isNone());
@@ -370,6 +382,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Binary:
       ASSERT_FALSE(s.isNone());
@@ -393,6 +406,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::BCD:
       ASSERT_FALSE(s.isNone());
@@ -416,6 +430,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::MinKey:
       ASSERT_FALSE(s.isNone());
@@ -439,6 +454,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_TRUE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::MaxKey:
       ASSERT_FALSE(s.isNone());
@@ -462,6 +478,7 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_TRUE(s.isMaxKey());
       ASSERT_FALSE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
       break;
     case ValueType::Custom:
       ASSERT_FALSE(s.isNone());
@@ -485,6 +502,31 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
       ASSERT_FALSE(s.isMinKey());
       ASSERT_FALSE(s.isMaxKey());
       ASSERT_TRUE(s.isCustom());
+      ASSERT_FALSE(s.isTagged());
+      break;
+    case ValueType::Tagged:
+      ASSERT_FALSE(s.isNone());
+      ASSERT_FALSE(s.isIllegal());
+      ASSERT_FALSE(s.isNull());
+      ASSERT_FALSE(s.isBool());
+      ASSERT_FALSE(s.isFalse());
+      ASSERT_FALSE(s.isTrue());
+      ASSERT_FALSE(s.isDouble());
+      ASSERT_FALSE(s.isArray());
+      ASSERT_FALSE(s.isObject());
+      ASSERT_FALSE(s.isExternal());
+      ASSERT_FALSE(s.isUTCDate());
+      ASSERT_FALSE(s.isInt());
+      ASSERT_FALSE(s.isUInt());
+      ASSERT_FALSE(s.isSmallInt());
+      ASSERT_FALSE(s.isString());
+      ASSERT_FALSE(s.isBinary());
+      ASSERT_FALSE(s.isNumber());
+      ASSERT_FALSE(s.isBCD());
+      ASSERT_FALSE(s.isMinKey());
+      ASSERT_FALSE(s.isMaxKey());
+      ASSERT_FALSE(s.isCustom());
+      ASSERT_TRUE(s.isTagged());
       break;
   }
 }

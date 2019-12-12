@@ -456,6 +456,21 @@ TEST(CollectionTest, IterateArrayValues) {
   ASSERT_EQ(8U, state);
 }
 
+TEST(CollectionTest, AppendArray) {
+  std::string const value("[1,2,null,true,\"foo\"]");
+
+  Parser parser;
+  parser.parse(value);
+  Slice s(parser.start());
+
+  Builder b;
+  b.openArray();
+  Collection::appendArray(b, s);
+  b.close();
+
+  ASSERT_EQ(b.toJson(), value);
+}
+
 TEST(CollectionTest, FilterNonArray) {
   std::string const value("null");
   Parser parser;
