@@ -556,7 +556,8 @@ Builder& Builder::closeArray(ValueLength tos, std::vector<ValueLength>& index) {
     } else {  // offsetSize == 8
       _start[tos] += 3;
       if (needNrSubs) {
-        appendLength<8>(index.size());
+        reserve(8);
+        appendLengthUnchecked<8>(index.size());
       }
     }
   }
@@ -690,7 +691,8 @@ Builder& Builder::close() {
       _start[tos] += 2;
     } else {  // offsetSize == 8
       _start[tos] += 3;
-      appendLength<8>(index.size());
+      reserve(8);
+      appendLengthUnchecked<8>(index.size());
     }
   }
 

@@ -2991,6 +2991,21 @@ TEST(SliceTest, ReadTag) {
   ASSERT_EQ(s.value().getInt(), 5);
 }
 
+TEST(SliceTest, ReadTag8Bytes) {
+  Builder b;
+  b.addTagged(257, Value(5));
+
+  Slice s = b.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 257);
+  ASSERT_EQ(s.getTags().at(0), 257);
+  ASSERT_EQ(s.getTags().size(), 1);
+  ASSERT_TRUE(s.hasTag(257));
+  ASSERT_FALSE(s.hasTag(49));
+
+  ASSERT_EQ(s.value().getInt(), 5);
+}
+
 TEST(SliceTest, ReadTags) {
   Builder b;
   b.addTagged(42, Value(5));
@@ -3006,6 +3021,26 @@ TEST(SliceTest, ReadTags) {
   ASSERT_EQ(s.getTags().at(1), 42);
   ASSERT_TRUE(s.hasTag(42));
   ASSERT_TRUE(s.hasTag(49));
+  ASSERT_FALSE(s.hasTag(50));
+
+  ASSERT_EQ(s.value().getInt(), 5);
+}
+
+TEST(SliceTest, ReadTags8Bytes) {
+  Builder b;
+  b.addTagged(257, Value(5));
+
+  Builder bb;
+  bb.addTagged(65536, b.slice());
+
+  Slice s = bb.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 65536);
+  ASSERT_EQ(s.getTags().size(), 2);
+  ASSERT_EQ(s.getTags().at(0), 65536);
+  ASSERT_EQ(s.getTags().at(1), 257);
+  ASSERT_TRUE(s.hasTag(257));
+  ASSERT_TRUE(s.hasTag(65536));
   ASSERT_FALSE(s.hasTag(50));
 
   ASSERT_EQ(s.value().getInt(), 5);

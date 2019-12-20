@@ -36,6 +36,18 @@ TEST(BufferTest, CreateEmpty) {
   ASSERT_EQ(0UL, buffer.size());
   ASSERT_EQ(0UL, buffer.length());
   ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+  ASSERT_NE(nullptr, buffer.data());
+}
+
+TEST(BufferTest, CreateEmptyWithSize) {
+  Buffer<uint8_t> buffer(10);
+
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+  ASSERT_NE(nullptr, buffer.data());
 }
 
 TEST(BufferTest, CreateAndAppend) {

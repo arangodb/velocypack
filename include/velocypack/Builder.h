@@ -843,12 +843,6 @@ class Builder {
   }
 
   template <uint64_t n>
-  void appendLength(ValueLength v) {
-    reserve(n);
-    appendLengthUnchecked<n>(v);
-  }
-
-  template <uint64_t n>
   void appendLengthUnchecked(ValueLength v) {
     for (uint64_t i = 0; i < n; ++i) {
       appendByteUnchecked(v & 0xff);
