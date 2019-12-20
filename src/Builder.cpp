@@ -769,19 +769,15 @@ Slice Builder::getKey(std::string const& key) const {
 }
 
 void Builder::appendTag(uint64_t tag) {
-  if(tag <= 255) {
-    reserve(1+1);
+  if (tag <= 255) {
+    reserve(1 + 1);
     appendByte(0xee);
     appendLengthUnchecked<1>(tag);
   } else {
-    reserve(1+8);
+    reserve(1 + 8);
     appendByte(0xef);
     appendLengthUnchecked<8>(tag);
   }
-}
-
-uint8_t* Builder::set(Value const& item) {
-  return set(0, item);
 }
 
 uint8_t* Builder::set(uint64_t tag, Value const& item) {
@@ -790,7 +786,7 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
 
   checkKeyIsString(item.valueType() == ValueType::String);
 
-  if(tag != 0) {
+  if (tag != 0) {
     appendTag(tag);
   }
 
@@ -1070,10 +1066,6 @@ uint8_t* Builder::set(uint64_t tag, Slice const& item) {
   memcpy(_start + _pos, item.start(), checkOverflow(l));
   advance(l);
   return _start + _pos - l;
-}
-
-uint8_t* Builder::set(ValuePair const& pair) {
-  return set(0, pair);
 }
 
 uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {

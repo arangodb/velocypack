@@ -254,7 +254,7 @@ class Builder {
     try {
       set(ValuePair(attrName, attrLength, ValueType::String));
       _keyWritten = true;
-      return set(sub);
+      return set(0, sub);
     } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
@@ -344,12 +344,15 @@ class Builder {
   inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Value const& sub) {
     return addInternal<Value>(attrName, attrLength, tag, sub);
   }
@@ -358,12 +361,15 @@ class Builder {
   inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Slice const& sub) {
     return addInternal<Slice>(attrName, attrLength, tag, sub);
   }
@@ -372,12 +378,15 @@ class Builder {
   inline uint8_t* addTagged(std::string const& attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(StringRef const& attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, tag, sub);
   }
+
   inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, ValuePair const& sub) {
     return addInternal<ValuePair>(attrName, attrLength, tag, sub);
   }
@@ -783,20 +792,26 @@ class Builder {
 
   uint8_t* set(uint64_t tag, Value const& item);
 
-  uint8_t* set(Value const& item);
+  uint8_t* set(Value const& item) {
+    return set(0, item);
+  }
 
   uint8_t* set(uint64_t tag, ValuePair const& pair);
 
-  uint8_t* set(ValuePair const& pair);
+  uint8_t* set(ValuePair const& pair) {
+    return set(0, pair);
+  }
 
   uint8_t* set(uint64_t tag, Slice const& item);
 
-  uint8_t* set(Slice const& item);
+  uint8_t* set(Slice const& item) {
+    return set(0, item);
+  }
 
   uint8_t* set(uint64_t tag, Serializable const& sable) {
     auto const oldPos = _pos;
 
-    if(tag != 0) {
+    if (tag != 0) {
       appendTag(tag);
     }
 
