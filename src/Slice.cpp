@@ -134,7 +134,7 @@ std::string Slice::toJson(Options const* options) const {
 }
 
 std::string Slice::toString(Options const* options) const {
-  if(isString()) {
+  if (isString()) {
     return copyString();
   }
 

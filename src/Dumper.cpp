@@ -336,10 +336,9 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     VELOCYPACK_ASSERT(base != nullptr);
   }
 
-  if(options->debugTags && slice->isTagged())
-  {
+  if (options->debugTags && slice->isTagged()) {
     _sink->append(std::to_string(slice->getFirstTag()));
-    _sink->append(":");
+    _sink->push_back(':');
   }
 
   switch (slice->type()) {
@@ -374,7 +373,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
         }
         --_indentation;
         indent();
-      } else if(options->singleLinePrettyPrint) {
+      } else if (options->singleLinePrettyPrint) {
         while (it.valid()) {
           if (!it.isFirst()) {
             _sink->push_back(',');
@@ -416,7 +415,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
         }
         --_indentation;
         indent();
-      } else if(options->singleLinePrettyPrint) {
+      } else if (options->singleLinePrettyPrint) {
         while (it.valid()) {
           if (!it.isFirst()) {
             _sink->push_back(',');
@@ -500,10 +499,10 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Binary: {
-      if(options->binaryAsHex) {
+      if (options->binaryAsHex) {
         _sink->push_back('"');
         ValueLength len;
-	    uint8_t const *bin = slice->getBinary(len);
+        uint8_t const *bin = slice->getBinary(len);
         for (uint8_t i = 0; i < len; i++) {
           uint8_t value = *(bin+i);
           uint8_t x = value / 16;
@@ -519,7 +518,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::UTCDate: {
-      if(options->datesAsIntegers) {
+      if (options->datesAsIntegers) {
         appendInt(slice->getUTCDate());
       } else {
         handleUnsupportedType(slice);

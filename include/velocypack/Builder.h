@@ -592,7 +592,7 @@ class Builder {
     uint64_t byteLen = mantissaLength / 2 + (isOdd ? 1 : 0);
 
     uint64_t n = 0;
-    for(uint64_t x = byteLen; x != 0; x >>= 8) {
+    for (uint64_t x = byteLen; x != 0; x >>= 8) {
       n++;
     }
 
@@ -606,7 +606,7 @@ class Builder {
       v >>= 8;
     }
 
-    appendLengthUnchecked<4>(static_cast<uint64_t>(exponent));
+    appendLengthUnchecked<4>(static_cast<ValueLength>(exponent));
 
     uint64_t i = 0;
     while (i < mantissaLength) {
