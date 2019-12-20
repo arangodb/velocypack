@@ -769,6 +769,10 @@ Slice Builder::getKey(std::string const& key) const {
 }
 
 void Builder::appendTag(uint64_t tag) {
+  if (options->disallowTags) {
+    // Tagged values explicitly disallowed
+    throw Exception(Exception::BuilderTagsDisallowed);
+  }
   if (tag <= 255) {
     reserve(1 + 1);
     appendByte(0xee);
@@ -1057,7 +1061,7 @@ uint8_t* Builder::set(uint64_t tag, Slice const& item) {
     throw Exception(Exception::BuilderCustomDisallowed);
   }
 
-  if(tag != 0) {
+  if (tag != 0) {
     appendTag(tag);
   }
 
@@ -1078,7 +1082,7 @@ uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {
 
   checkKeyIsString(pair.valueType() == ValueType::String);
 
-  if(tag != 0) {
+  if (tag != 0) {
     appendTag(tag);
   }
 

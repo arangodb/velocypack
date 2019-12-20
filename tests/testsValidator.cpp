@@ -562,6 +562,69 @@ TEST(ValidatorTest, LongStringLongerThanSpecified2) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, TagsAllowed) {
+  std::string value("\xee\x01\x0a", 3);
+
+  Options options;
+  options.disallowTags = false;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+
+  Slice s(reinterpret_cast<uint8_t const*>(value.data()));
+  ASSERT_TRUE(s.isTagged());
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+
+  value.append("\x42" "ab", 3);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, TagsAllowed8Bytes) {
+  std::string value("\xef\x00\x00\x00\x00\x00\x00\x00\x01\x0a", 10);
+
+  Options options;
+  options.disallowTags = false;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+  
+  value.append("\x42" "ab", 3);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, TagsDisallowed) {
+  std::string value("\xee\x01\x0a", 3);
+
+  Options options;
+  options.disallowTags = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::BuilderTagsDisallowed);
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::BuilderTagsDisallowed);
+}
+
+TEST(ValidatorTest, TagsDisallowed8Bytes) {
+  std::string value("\xef\x00\x00\x00\x00\x00\x00\x00\x01\x0a", 10);
+
+  Options options;
+  options.disallowTags = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::BuilderTagsDisallowed);
+  
+  value.pop_back(); // make the value invalid
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::BuilderTagsDisallowed);
+}
+
 TEST(ValidatorTest, ExternalAllowed) {
   std::string const value("\x1d\x00\x00\x00\x00\x00\x00\x00\x00", 9);
 

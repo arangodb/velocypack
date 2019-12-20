@@ -3309,6 +3309,51 @@ TEST(BuilderTest, Tags) {
   ASSERT_EQ(s.get("c").value().getInt(), 1);
 }
 
+TEST(BuilderTest, TagsDisallowed) {
+  Options options;
+  options.disallowTags = true;
+
+  Builder b(&options);
+  b.openObject();
+  b.add("a", Value(0));
+  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 1, Value(0)), Exception::BuilderTagsDisallowed);
+}
+
+TEST(BuilderTest, Tags8Byte) {
+  Builder b;
+  b.openObject();
+  b.add("a", Value(0));
+  b.addTagged("b", 257, Value(0));
+  b.addTagged("c", 123456789, Value(1));
+  b.addTagged("d", 1, Value(2));
+  b.close();
+
+  Slice s = b.slice();
+
+  ASSERT_EQ(4UL, s.length());
+
+  ASSERT_FALSE(s.get("a").isTagged());
+  ASSERT_TRUE(s.get("b").isTagged());
+  ASSERT_TRUE(s.get("c").isTagged());
+  ASSERT_TRUE(s.get("d").isTagged());
+  ASSERT_FALSE(s.get("b").value().isTagged());
+  ASSERT_FALSE(s.get("c").value().isTagged());
+  ASSERT_FALSE(s.get("d").value().isTagged());
+  ASSERT_EQ(s.get("b").value().getInt(), 0);
+  ASSERT_EQ(s.get("c").value().getInt(), 1);
+  ASSERT_EQ(s.get("d").value().getInt(), 2);
+}
+
+TEST(BuilderTest, Tags8ByteDisallowed) {
+  Options options;
+  options.disallowTags = true;
+
+  Builder b(&options);
+  b.openObject();
+  b.add("a", Value(0));
+  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 99999999, Value(0)), Exception::BuilderTagsDisallowed);
+}
+
 TEST(BuilderTest, TagsArray) {
   Builder b;
   b.openArray();

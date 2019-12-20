@@ -72,6 +72,10 @@ TEST(ExceptionTest, TestMessages) {
                Exception::message(Exception::BuilderExternalsDisallowed));
   ASSERT_STREQ("Custom types are not allowed in this configuration",
                Exception::message(Exception::BuilderCustomDisallowed));
+  ASSERT_STREQ("Tagged types are not allowed in this configuration",
+               Exception::message(Exception::BuilderTagsDisallowed));
+  ASSERT_STREQ("BCD types are not allowed in this configuration",
+               Exception::message(Exception::BuilderBCDDisallowed));
   ASSERT_STREQ("Invalid type found in binary data",
                Exception::message(Exception::ValidatorInvalidType));
   ASSERT_STREQ("Invalid length found in binary data",
