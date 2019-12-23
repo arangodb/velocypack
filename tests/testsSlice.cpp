@@ -1951,8 +1951,8 @@ TEST(SliceTest, Hashing) {
 
     ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash());
     ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow());
-    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash(Slice::defaultSeed));
-    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow(Slice::defaultSeed));
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash(Slice::defaultSeed64));
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow(Slice::defaultSeed64));
   }
 }
 
