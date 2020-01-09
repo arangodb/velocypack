@@ -3373,6 +3373,33 @@ TEST(BuilderTest, TagsArray) {
   ASSERT_EQ(s.at(2).value().getInt(), 1);
 }
 
+
+#if __cplusplus >= 201703L
+TEST(BuilderTest, getSharedSlice) {
+  Builder b;
+  b.add(Value(0));
+
+  auto slice = b.slice();
+  ASSERT_EQ(1, b.buffer().use_count());
+  auto sharedSlice = b.sharedSlice();
+  ASSERT_EQ(2, b.buffer().use_count());
+  ASSERT_EQ(2, sharedSlice.buffer().use_count());
+  ASSERT_EQ(slice.start() , sharedSlice.start().get());
+}
+
+TEST(BuilderTest, stealSharedSlice) {
+  Builder b;
+  b.add(Value(0));
+
+  auto slice = b.slice();
+  ASSERT_EQ(1, b.buffer().use_count());
+  auto sharedSlice = std::move(b).sharedSlice();
+  ASSERT_EQ(0, b.buffer().use_count());
+  ASSERT_EQ(1, sharedSlice.buffer().use_count());
+  ASSERT_EQ(slice.start() , sharedSlice.start().get());
+}
+#endif
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

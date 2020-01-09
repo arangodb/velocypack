@@ -30,25 +30,43 @@ std::shared_ptr<uint8_t const> staticSharedNoneBuffer{Slice::noneSliceData,
                                                       [](auto) { /* don't delete the pointer */ }};
 }
 
+void SharedSlice::nullToNone() noexcept {
+  if (VELOCYPACK_UNLIKELY(_start == nullptr)) {
+    _start = staticSharedNoneBuffer;
+  }
+}
+
 Slice SharedSlice::slice() const noexcept { return Slice(_start.get()); }
 
 SharedSlice::SharedSlice(std::shared_ptr<uint8_t const>&& data) noexcept
-    : _start(std::move(data)) {}
+    : _start(std::move(data)) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice(std::shared_ptr<uint8_t const> const& data) noexcept
-    : _start(data) {}
+    : _start(data) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice(std::shared_ptr<Buffer<uint8_t> const>&& buffer) noexcept
-    : _start(std::move(buffer), buffer->data()) {}
+    : _start(std::move(buffer), buffer->data()) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice(std::shared_ptr<Buffer<uint8_t> const> const& buffer) noexcept
-    : _start(buffer, buffer->data()) {}
+    : _start(buffer, buffer->data()) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice(SharedSlice&& sharedPtr, Slice slice) noexcept
-    : _start(sharedPtr._start, slice.start()) {}
+    : _start(sharedPtr._start, slice.start()) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice(SharedSlice const& sharedPtr, Slice slice) noexcept
-    : _start(sharedPtr._start, slice.start()) {}
+    : _start(sharedPtr._start, slice.start()) {
+  nullToNone();
+}
 
 SharedSlice::SharedSlice() noexcept : _start(staticSharedNoneBuffer) {}
 

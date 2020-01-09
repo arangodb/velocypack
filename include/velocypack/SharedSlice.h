@@ -38,8 +38,9 @@ namespace arangodb::velocypack {
  * @brief SharedSlice is similar to a Slice and has the same methods available.
  * The difference is that SharedSlice owns the memory it points to (via a shared_ptr).
  *
- * It will always point to a valid Slice. Even after default construction or
- * after a move it will point to a (static) None-Slice.
+ * It will *always* point to a valid Slice. Even after default construction, or
+ * after a move, or when constructing it with a nullptr, it will point to a
+ * (static) None-Slice.
  *
  * All methods of Slice that return a Slice have an equivalent method here, but
  * return a SharedSlice instead, which shares ownership of the same memory (but
@@ -346,6 +347,8 @@ class SharedSlice {
   [[nodiscard]] std::shared_ptr<T> aliasPtr(T* t) const noexcept {
     return std::shared_ptr<T>(_start, t);
   }
+
+  void nullToNone() noexcept;
 
  private:
   std::shared_ptr<uint8_t const> _start;
