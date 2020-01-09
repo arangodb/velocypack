@@ -41,6 +41,16 @@ namespace arangodb::velocypack {
  * Similarly, all methods of Slice that return a raw pointer have an equivalent
  * method returning a shared_ptr, which also shares memory ownership with
  * SharedSlice.
+ *
+ * Additional methods are
+ *   std::shared_ptr<uint8_t const> const& buffer();
+ * which is an accessor of the underlying buffer pointer, and
+ *   Slice slice();
+ * which returns a normal Slice using the same memory.
+ *
+ * The only method missing, in comparison to Slice, is set(uint8_t const*). If
+ * necessary, it should probably be implemented as
+ * set(std::shared_ptr<uint8_t const>) instead.
  */
 class SharedSlice {
  public:
@@ -104,8 +114,10 @@ class SharedSlice {
 
   [[nodiscard]] char const* typeName() const;
 
-  // I didn't implement set(), it seems to fragile here.
+  // I didn't implement set(), it seems too fragile with its original signature:
   // void set(uint8_t const* s);
+  // If necessary, it should probably be implemented as
+  // void set(std::shared_ptr<uint8_t const>) instead.
 
   [[nodiscard]] uint64_t hash(uint64_t seed = defaultSeed64) const;
 
