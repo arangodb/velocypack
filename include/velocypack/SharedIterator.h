@@ -23,6 +23,10 @@
 #ifndef SRC_SHAREDITERATOR_H
 #define SRC_SHAREDITERATOR_H
 
+#if __cplusplus < 201703L
+#error "This file can only be used with at least C++17. Set CMAKE_CXX_STANDARD=17."
+#endif
+
 #include <velocypack/Iterator.h>
 #include <velocypack/SharedSlice.h>
 

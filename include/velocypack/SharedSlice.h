@@ -23,6 +23,10 @@
 #ifndef SRC_SHAREDSLICE_H
 #define SRC_SHAREDSLICE_H
 
+#if __cplusplus < 201703L
+#error "This file can only be used with at least C++17. Set CMAKE_CXX_STANDARD=17."
+#endif
+
 #include <velocypack/Buffer.h>
 #include <velocypack/Slice.h>
 
@@ -277,9 +281,7 @@ class SharedSlice {
   [[nodiscard]] std::string copyString() const;
 
   [[nodiscard]] StringRef stringRef() const;
-#ifdef VELOCYPACK_HAS_STRING_VIEW
   [[nodiscard]] std::string_view stringView() const;
-#endif
 
   [[nodiscard]] std::shared_ptr<uint8_t const> getBinary(ValueLength& length) const;
 

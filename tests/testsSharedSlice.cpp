@@ -875,13 +875,11 @@ TEST(SharedSliceAgainstSliceTest, stringRef) {
   });
 }
 
-#ifdef VELOCYPACK_HAS_STRING_VIEW
 TEST(SharedSliceAgainstSliceTest, stringView) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
     ASSERT_EQ_EX(slice.stringView(), sharedSlice.stringView());
   });
 }
-#endif
 
 TEST(SharedSliceAgainstSliceTest, getBinary) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
