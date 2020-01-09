@@ -58,6 +58,13 @@ set(VELOCY_SOURCE
     src/fpconv.cpp
 )
 
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    list(APPEND VELOCY_SOURCE
+        src/SharedIterator.cpp
+        src/SharedSlice.cpp
+    )
+endif ()
+
 #Use xxhash or fasthash?
 if(HashType STREQUAL "xxhash")
     list(APPEND VELOCY_SOURCE src/xxhash.cpp)

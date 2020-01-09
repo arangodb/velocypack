@@ -33,6 +33,12 @@ set(Tests
     testsVersion
 )
 
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    list(APPEND Tests
+        testsSharedSlice
+    )
+endif ()
+
 macro(standard_test test_name)
     set(testName ${test_name})
     if("${ARGV1}" STREQUAL "")
