@@ -30,6 +30,18 @@
 
 namespace arangodb::velocypack {
 
+/**
+ * @brief SharedSlice is similar to a Slice and has the same methods available.
+ * The difference is that SharedSlice owns the memory it points to (via a shared_ptr).
+ *
+ * All methods of Slice that return a Slice have an equivalent method here, but
+ * return a SharedSlice instead, which shares ownership of the same memory (but
+ * may point to a different location).
+ *
+ * Similarly, all methods of Slice that return a raw pointer have an equivalent
+ * method returning a shared_ptr, which also shares memory ownership with
+ * SharedSlice.
+ */
 class SharedSlice {
  public:
   explicit SharedSlice(std::shared_ptr<uint8_t const>&& data) noexcept;
