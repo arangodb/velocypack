@@ -34,6 +34,9 @@ namespace arangodb::velocypack {
  * @brief SharedSlice is similar to a Slice and has the same methods available.
  * The difference is that SharedSlice owns the memory it points to (via a shared_ptr).
  *
+ * It will always point to a valid Slice. Even after default construction or
+ * after a move it will point to a (static) None-Slice.
+ *
  * All methods of Slice that return a Slice have an equivalent method here, but
  * return a SharedSlice instead, which shares ownership of the same memory (but
  * may point to a different location).
