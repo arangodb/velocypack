@@ -20,6 +20,8 @@
 /// @author Tobias Gödderz
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "tests-common.h"
+
 #include "gtest/gtest.h"
 
 #include <velocypack/Builder.h>
@@ -1139,20 +1141,6 @@ TEST(SharedSliceAgainstSliceTest, getBCD) {
       ASSERT_EQ(leftMantissaLength, rightMantissaLength);
     }
   });
-}
-
-namespace {
-template<typename T, typename U>
-bool haveSameOwnership(std::shared_ptr<T> const& left, std::shared_ptr<U> const& right) {
-  using cmp_ptr_type = std::shared_ptr<void const>;
-  static thread_local auto owner_less = std::owner_less<cmp_ptr_type>{};
-  return !owner_less(cmp_ptr_type(left), cmp_ptr_type(right)) && !owner_less(cmp_ptr_type(right), cmp_ptr_type(left));
-}
-bool haveSameOwnership(SharedSlice const& leftSlice, SharedSlice const& rightSlice) {
-  auto const& left = leftSlice.buffer();
-  auto const& right = rightSlice.buffer();
-  return haveSameOwnership(left, right);
-}
 }
 
 TEST(SharedSliceRefcountTest, copyConstructor) {

@@ -3373,30 +3373,57 @@ TEST(BuilderTest, TagsArray) {
   ASSERT_EQ(s.at(2).value().getInt(), 1);
 }
 
-
 #if __cplusplus >= 201703L
 TEST(BuilderTest, getSharedSlice) {
-  Builder b;
-  b.add(Value(0));
+  auto const check = [](Builder& b, bool const isSmall) {
+    auto const slice = b.slice();
+    ASSERT_EQ(1, b.buffer().use_count());
+    auto const sharedSlice = b.sharedSlice();
+    ASSERT_EQ(1, b.buffer().use_count());
+    ASSERT_EQ(1, sharedSlice.buffer().use_count());
+    ASSERT_FALSE(haveSameOwnership(b.buffer(), sharedSlice.buffer()));
+    ASSERT_EQ(slice.byteSize(), sharedSlice.byteSize());
+    ASSERT_EQ(0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
+  };
 
-  auto slice = b.slice();
-  ASSERT_EQ(1, b.buffer().use_count());
-  auto sharedSlice = b.sharedSlice();
-  ASSERT_EQ(2, b.buffer().use_count());
-  ASSERT_EQ(2, sharedSlice.buffer().use_count());
-  ASSERT_EQ(slice.start() , sharedSlice.start().get());
+  auto smallBuilder = Builder{};
+  auto largeBuilder = Builder{};
+
+  // A buffer can take slices up to 192 bytes without allocating memory.
+  // This will fit:
+  smallBuilder.add(Value(0));
+  // This will not:
+  largeBuilder.add(Value(std::string(size_t{256}, 'x')));
+
+  check(smallBuilder, true);
+  check(largeBuilder, false);
 }
 
 TEST(BuilderTest, stealSharedSlice) {
-  Builder b;
-  b.add(Value(0));
+  auto const check = [](Builder& b, bool const isSmall) {
+    ASSERT_EQ(isSmall, b.buffer()->usesLocalMemory());
+    auto const bufferCopy = *b.buffer();
+    auto const slice = Slice{bufferCopy.data()};
+    ASSERT_EQ(1, b.buffer().use_count());
+    auto const sharedSlice = std::move(b).sharedSlice();
+    ASSERT_EQ(nullptr, b.buffer());
+    ASSERT_EQ(0, b.buffer().use_count());
+    ASSERT_EQ(1, sharedSlice.buffer().use_count());
+    ASSERT_EQ(slice.byteSize() , sharedSlice.byteSize());
+    ASSERT_EQ(0, memcmp(slice.start() , sharedSlice.start().get(), slice.byteSize()));
+  };
 
-  auto slice = b.slice();
-  ASSERT_EQ(1, b.buffer().use_count());
-  auto sharedSlice = std::move(b).sharedSlice();
-  ASSERT_EQ(0, b.buffer().use_count());
-  ASSERT_EQ(1, sharedSlice.buffer().use_count());
-  ASSERT_EQ(slice.start() , sharedSlice.start().get());
+  auto smallBuilder = Builder{};
+  auto largeBuilder = Builder{};
+
+  // A buffer can take slices up to 192 bytes without allocating memory.
+  // This will fit:
+  smallBuilder.add(Value(0));
+  // This will not:
+  largeBuilder.add(Value(std::string(size_t{256}, 'x')));
+
+  check(smallBuilder, true);
+  check(largeBuilder, false);
 }
 #endif
 
