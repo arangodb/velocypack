@@ -60,7 +60,6 @@ set(VELOCY_SOURCE
 
 if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
     list(APPEND VELOCY_SOURCE
-        src/SharedIterator.cpp
         src/SharedSlice.cpp
     )
 endif ()
