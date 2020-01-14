@@ -64,8 +64,8 @@ class SharedSlice {
  public:
   explicit SharedSlice(std::shared_ptr<uint8_t const>&& data) noexcept;
   explicit SharedSlice(std::shared_ptr<uint8_t const> const& data) noexcept;
-  explicit SharedSlice(std::shared_ptr<Buffer<uint8_t> const>&& buffer) noexcept;
-  explicit SharedSlice(std::shared_ptr<Buffer<uint8_t> const> const& buffer) noexcept;
+  explicit SharedSlice(Buffer<uint8_t>&& buffer) noexcept;
+  explicit SharedSlice(Buffer<uint8_t> const& buffer) noexcept;
 
   // Aliasing constructor
   explicit SharedSlice(SharedSlice&& sharedPtr, Slice slice) noexcept;
@@ -349,6 +349,9 @@ class SharedSlice {
   }
 
   void nullToNone() noexcept;
+
+  std::shared_ptr<uint8_t const> copyBuffer(Buffer<uint8_t> const&);
+  std::shared_ptr<uint8_t const> stealBuffer(Buffer<uint8_t>&&);
 
  private:
   std::shared_ptr<uint8_t const> _start;

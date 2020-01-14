@@ -36,6 +36,27 @@ void SharedSlice::nullToNone() noexcept {
   }
 }
 
+std::shared_ptr<uint8_t const> SharedSlice::copyBuffer(Buffer<uint8_t> const& buffer) {
+  // template<class T> shared_ptr<T> make_shared( std::size_t N );
+  // with T is U[] is only available since C++20 :(
+  // Note that this is invalid pre-C++17: otherwise, we would have to pass a
+  // deleter for [].
+  auto newBuffer = std::shared_ptr<uint8_t[]>(new uint8_t[buffer.byteSize()]);
+  memcpy(newBuffer.get(), buffer.data(), checkOverflow(buffer.byteSize()));
+  return std::static_pointer_cast<uint8_t const>(newBuffer);
+}
+
+std::shared_ptr<uint8_t const> SharedSlice::stealBuffer(Buffer<uint8_t>&& buffer) {
+  // If the buffer doesn't use memory on the heap, we have to copy it.
+  if (buffer.usesLocalMemory()) {
+    return copyBuffer(buffer);
+  }
+  // Buffer uses velocypack_malloc/velocypack_free for memory management
+  return std::shared_ptr<uint8_t const>(buffer.steal(), [](auto ptr) {
+    return velocypack_free(ptr);
+  });
+}
+
 Slice SharedSlice::slice() const noexcept { return Slice(_start.get()); }
 
 SharedSlice::SharedSlice(std::shared_ptr<uint8_t const>&& data) noexcept
@@ -48,13 +69,13 @@ SharedSlice::SharedSlice(std::shared_ptr<uint8_t const> const& data) noexcept
   nullToNone();
 }
 
-SharedSlice::SharedSlice(std::shared_ptr<Buffer<uint8_t> const>&& buffer) noexcept
-    : _start(std::move(buffer), buffer->data()) {
+SharedSlice::SharedSlice(Buffer<uint8_t>&& buffer) noexcept
+    : _start(stealBuffer(std::move(buffer))) {
   nullToNone();
 }
 
-SharedSlice::SharedSlice(std::shared_ptr<Buffer<uint8_t> const> const& buffer) noexcept
-    : _start(buffer, buffer->data()) {
+SharedSlice::SharedSlice(Buffer<uint8_t> const& buffer) noexcept
+    : _start(copyBuffer(buffer)) {
   nullToNone();
 }
 
@@ -84,13 +105,19 @@ std::shared_ptr<uint8_t const> SharedSlice::valueStart() const noexcept {
   return aliasPtr(slice().valueStart());
 }
 
-std::shared_ptr<uint8_t const> SharedSlice::start() const noexcept { return aliasPtr(slice().start()); }
+std::shared_ptr<uint8_t const> SharedSlice::start() const noexcept {
+  return aliasPtr(slice().start());
+}
 
 uint8_t SharedSlice::head() const noexcept { return slice().head(); }
 
-std::shared_ptr<uint8_t const> SharedSlice::begin() const noexcept { return aliasPtr(slice().begin()); }
+std::shared_ptr<uint8_t const> SharedSlice::begin() const noexcept {
+  return aliasPtr(slice().begin());
+}
 
-std::shared_ptr<uint8_t const> SharedSlice::end() const { return aliasPtr(slice().end()); }
+std::shared_ptr<uint8_t const> SharedSlice::end() const {
+  return aliasPtr(slice().end());
+}
 
 ValueType SharedSlice::type() const noexcept { return slice().type(); }
 
