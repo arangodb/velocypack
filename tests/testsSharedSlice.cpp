@@ -1163,7 +1163,6 @@ TEST(SharedSliceRefcountTest, copyConstructor) {
   });
 }
 
-
 TEST(SharedSliceRefcountTest, copyAssignment) {
   SharedSlice sharedSlice;
   forAllTestCases([&](SharedSlice&& sharedSliceRef) {
@@ -1182,6 +1181,35 @@ TEST(SharedSliceRefcountTest, copyAssignment) {
 
     // Both should share the same buffer
     ASSERT_EQ(sharedSliceRef.buffer(), sharedSlice.buffer());
+  });
+}
+
+TEST(SharedSliceRefcountTest, aliasingCopyConstructor) {
+  forAllTestCases([&](SharedSlice&& sharedSliceRef) {
+    // We assume to be the only owner of the referenced buffer
+    ASSERT_EQ(1, sharedSliceRef.buffer().use_count());
+
+    Builder b;
+    b.add(Value(-7));
+
+    auto const slice = b.slice();
+
+    // Execute aliasing copy constructor (nonsensical here - usually, slice
+    // should point into the same memory block)
+    SharedSlice sharedSlice{sharedSliceRef, slice};
+
+    // Use count for both should be two
+    ASSERT_GE(2, sharedSliceRef.buffer().use_count());
+    ASSERT_GE(2, sharedSlice.buffer().use_count());
+
+    // Both should share ownership
+    ASSERT_TRUE(haveSameOwnership(sharedSliceRef, sharedSlice));
+
+    // The aliased copy should point to different memory than the originating
+    // shared slice...
+    ASSERT_NE(sharedSliceRef.buffer(), sharedSlice.buffer());
+    // ... but to the same memory the originating (raw) slice did, instead.
+    ASSERT_EQ(slice.start(), sharedSlice.start().get());
   });
 }
 
@@ -1209,6 +1237,41 @@ TEST(SharedSliceRefcountTest, moveConstructor) {
     // sharedSlice should point to the same buffer as the sharedSliceRef did
     // originally
     ASSERT_EQ(origPointer, sharedSlice.buffer().get());
+  });
+}
+
+TEST(SharedSliceRefcountTest, aliasingMoveConstructor) {
+  forAllTestCases([&](SharedSlice&& sharedSliceRef) {
+    // We assume to be the only owner of the referenced buffer
+    ASSERT_EQ(1, sharedSliceRef.buffer().use_count());
+    auto const origPointer = sharedSliceRef.buffer().get();
+
+    Builder b;
+    b.add(Value(-7));
+
+    auto const slice = b.slice();
+
+    // Execute aliasing move constructor (nonsensical here - usually, slice
+    // should point into the same memory block)
+    SharedSlice sharedSlice{std::move(sharedSliceRef), slice};
+
+    // The passed slice should now point to a valid None slice
+    ASSERT_LE(1, sharedSliceRef.buffer().use_count()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
+    ASSERT_TRUE(sharedSliceRef.isNone());
+    // The underlying buffers should be different
+    ASSERT_NE(sharedSliceRef.buffer(), sharedSlice.buffer());
+
+    // The slices should not share ownership
+    ASSERT_FALSE(haveSameOwnership(sharedSliceRef, sharedSlice));
+
+    // The local sharedSlice should be the only owner of its buffer
+    ASSERT_EQ(1, sharedSlice.buffer().use_count());
+
+    // The aliased copy should point to different memory than the originating
+    // shared slice...
+    ASSERT_NE(origPointer, sharedSlice.buffer().get());
+    // ... but to the same memory the originating (raw) slice did, instead.
+    ASSERT_EQ(slice.start(), sharedSlice.start().get());
   });
 }
 

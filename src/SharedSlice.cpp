@@ -80,7 +80,8 @@ SharedSlice::SharedSlice(Buffer<uint8_t> const& buffer) noexcept
 }
 
 SharedSlice::SharedSlice(SharedSlice&& sharedPtr, Slice slice) noexcept
-    : _start(sharedPtr._start, slice.start()) {
+    : _start(std::move(sharedPtr._start), slice.start()) {
+  sharedPtr._start = staticSharedNoneBuffer;
   nullToNone();
 }
 
