@@ -60,6 +60,7 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=true
+        - CXX_STANDARD=17
 
     - name: "coverage build"
       if: branch = master
@@ -71,6 +72,7 @@ matrix:
         #build settings
         - build_type=Debug
         - CXXFLAGS="-O0 --coverage"
+        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-7', 'g++-7', 'lcov', 'cmake']
@@ -89,6 +91,7 @@ matrix:
         - CC=clang-9
         #build settings
         - build_type=Release
+        - CXX_STANDARD=17
       addons:
         apt:
           sources:
@@ -106,7 +109,7 @@ matrix:
 install:
     - export CXX=$CXX
     - export CC=$CC
-    - export CXX_STANDARD=${CXX_STANDARD:-14}
+    - export CXX_STANDARD=${CXX_STANDARD:-17}
     - export BUILD_TYPE=${build_type}
     - cmake --version
     - $CXX --version
