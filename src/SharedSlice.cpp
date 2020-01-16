@@ -39,11 +39,10 @@ void SharedSlice::nullToNone() noexcept {
 std::shared_ptr<uint8_t const> SharedSlice::copyBuffer(Buffer<uint8_t> const& buffer) {
   // template<class T> shared_ptr<T> make_shared( std::size_t N );
   // with T is U[] is only available since C++20 :(
-  // Note that this is invalid pre-C++17: otherwise, we would have to pass a
-  // deleter for [].
-  auto newBuffer = std::shared_ptr<uint8_t[]>(new uint8_t[buffer.byteSize()]);
+  auto newBuffer = std::shared_ptr<uint8_t>(new uint8_t[buffer.byteSize()],
+                                            [](auto ptr) { delete[] ptr; });
   memcpy(newBuffer.get(), buffer.data(), checkOverflow(buffer.byteSize()));
-  return std::static_pointer_cast<uint8_t const>(newBuffer);
+  return newBuffer;
 }
 
 std::shared_ptr<uint8_t const> SharedSlice::stealBuffer(Buffer<uint8_t>&& buffer) {
