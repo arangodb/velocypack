@@ -24,9 +24,10 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <array>
+#include <iostream>
 #include <ostream>
 #include <string>
-#include <iostream>
 
 #include "tests-common.h"
 
@@ -3371,6 +3372,77 @@ TEST(BuilderTest, TagsArray) {
   ASSERT_TRUE(s.at(2).isTagged());
   ASSERT_FALSE(s.at(2).value().isTagged());
   ASSERT_EQ(s.at(2).value().getInt(), 1);
+}
+
+TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
+  Options options;
+  Builder b(&options);
+
+  auto fill = [&b](std::size_t n) {
+    b.clear();
+    b.openArray();
+    b.add(Slice::noneSlice());
+    for (std::size_t i = 0; i < n; ++i) {
+      b.add(Value(1));
+    }
+    b.add(Value("the-quick-brown-foxx"));
+    b.close();
+  };
+
+  std::array<Options::PaddingBehavior, 3> behaviors = {
+    Options::PaddingBehavior::Flexible,
+    Options::PaddingBehavior::NoPadding,
+    Options::PaddingBehavior::UsePadding
+  };
+    
+  for (auto const& behavior : behaviors) {
+    options.paddingBehavior = behavior;
+    {
+      fill(110);
+      uint8_t const* data = b.slice().start();
+      ASSERT_EQ(6U, data[0]);
+      ASSERT_EQ(253U, data[1]);
+      ASSERT_EQ(112U, data[2]);
+      // padding
+      ASSERT_EQ(0U, data[3]);
+      ASSERT_EQ(0U, data[4]);
+      ASSERT_EQ(0U, data[5]);
+      ASSERT_EQ(0U, data[6]);
+      ASSERT_EQ(0U, data[7]);
+      ASSERT_EQ(0U, data[8]);
+    }
+    
+    {
+      fill(111);
+      uint8_t const* data = b.slice().start();
+      ASSERT_EQ(6U, data[0]);
+      ASSERT_EQ(255U, data[1]);
+      ASSERT_EQ(113U, data[2]);
+      // padding
+      ASSERT_EQ(0U, data[3]);
+      ASSERT_EQ(0U, data[4]);
+      ASSERT_EQ(0U, data[5]);
+      ASSERT_EQ(0U, data[6]);
+      ASSERT_EQ(0U, data[7]);
+      ASSERT_EQ(0U, data[8]);
+    }
+
+    // switch to 2-byte offset sizes
+    {
+      fill(112);
+      uint8_t const* data = b.slice().start();
+      ASSERT_EQ(7U, data[0]);
+      ASSERT_EQ(115U, data[1]);
+      ASSERT_EQ(1U, data[2]);
+      ASSERT_EQ(114U, data[3]);
+      ASSERT_EQ(0U, data[4]);
+      // padding, because of contained None slice
+      ASSERT_EQ(0U, data[5]);
+      ASSERT_EQ(0U, data[6]);
+      ASSERT_EQ(0U, data[7]);
+      ASSERT_EQ(0U, data[8]);
+    }
+  }
 }
 
 #if __cplusplus >= 201703L
