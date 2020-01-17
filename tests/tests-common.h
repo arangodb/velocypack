@@ -535,9 +535,8 @@ static void checkBuild(Slice s, ValueType t, ValueLength byteSize) {
 
 template<typename T, typename U>
 bool haveSameOwnership(std::shared_ptr<T> const& left, std::shared_ptr<U> const& right) {
-  using cmp_ptr_type = std::shared_ptr<void const>;
-  static thread_local auto owner_less = std::owner_less<cmp_ptr_type>{};
-  return !owner_less(cmp_ptr_type(left), cmp_ptr_type(right)) && !owner_less(cmp_ptr_type(right), cmp_ptr_type(left));
+  static thread_local auto owner_less = std::owner_less<void>{};
+  return !owner_less(left, right) && !owner_less(right, left);
 }
 
 inline bool haveSameOwnership(SharedSlice const& leftSlice, SharedSlice const& rightSlice) {
