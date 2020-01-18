@@ -90,15 +90,15 @@ int main(int, char* []) {
 
   // now print 'custom1':
   std::cout << "'custom1': byteSize: " << s.get("custom1").byteSize()
-            << ", JSON: " << s.get("custom1").toJson() << std::endl;
+            << ", JSON: " << s.get("custom1").toJson(&options) << std::endl;
 
   // and 'custom2':
   std::cout << "'custom2': byteSize: " << s.get("custom2").byteSize()
-            << ", JSON: " << s.get("custom2").toJson() << std::endl;
+            << ", JSON: " << s.get("custom2").toJson(&options) << std::endl;
 
   // and 'custom3':
   std::cout << "'custom3': byteSize: " << s.get("custom3").byteSize()
-            << ", JSON: " << s.get("custom3").toJson() << std::endl;
+            << ", JSON: " << s.get("custom3").toJson(&options) << std::endl;
   
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }
