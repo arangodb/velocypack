@@ -26,8 +26,8 @@ using namespace arangodb;
 using namespace arangodb::velocypack;
 
 namespace {
-std::shared_ptr<uint8_t const> staticSharedNoneBuffer{Slice::noneSliceData,
-                                                      [](auto) { /* don't delete the pointer */ }};
+std::shared_ptr<uint8_t const> const staticSharedNoneBuffer{
+    Slice::noneSliceData, [](auto) { /* don't delete the pointer */ }};
 }
 
 void SharedSlice::nullToNone() noexcept {
