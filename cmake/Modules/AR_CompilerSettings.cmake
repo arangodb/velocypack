@@ -42,6 +42,11 @@ elseif(MSVC)
            CMAKE_CXX_FLAGS_RELEASE
            CMAKE_CXX_FLAGS_MINSIZEREL
            CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+
+    # Make MSVC correctly report the C++ version in __cplusplus; without it,
+    # it always reports 199711L (i.e. C++98).
+    set(${flag_var} "${${flag_var}} /Zc:__cplusplus")
+
     if (flag_var MATCHES "DEBUG")
       set(${flag_var} "${${flag_var}} /MTd")
     else ()

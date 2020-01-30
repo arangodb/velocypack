@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(velocypack CXX C)
 
-set(CMAKE_CXX_STANDARD 11 CACHE BOOL "target C++ standard")
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "target C++ standard")
 message(STATUS "Require C++${CMAKE_CXX_STANDARD}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -16,7 +16,7 @@ set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
@@ -57,6 +57,12 @@ set(VELOCY_SOURCE
     src/asm-utf8check.cpp
     src/fpconv.cpp
 )
+
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    list(APPEND VELOCY_SOURCE
+        src/SharedSlice.cpp
+    )
+endif ()
 
 #Use xxhash or fasthash?
 if(HashType STREQUAL "xxhash")
