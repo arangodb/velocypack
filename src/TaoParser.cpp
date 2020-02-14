@@ -19,13 +19,12 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
-/// @author Jan Steemann
+/// @author Colin Hirsch
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/Parser.h"
+#include "velocypack/TaoParser.h"
 
 #include <cstdlib>
 
@@ -33,7 +32,7 @@ namespace arangodb
 {
    namespace velocypack
    {
-      ValueLength Parser::parse( const void * json, const ValueLength size, const bool multi) {
+      ValueLength TaoParser::parse( const void * json, const ValueLength size, const bool multi) {
          if (options->clearBuilderBeforeParse) {
             _e.builder->clear();
          }

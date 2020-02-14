@@ -19,13 +19,12 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
-/// @author Jan Steemann
+/// @author Colin Hirsch
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_PARSER_H
-#define VELOCYPACK_PARSER_H 1
+#ifndef VELOCYPACK_TAOPARSER_H
+#define VELOCYPACK_TAOPARSER_H 1
 
 #include <string>
 #include <cmath>
@@ -42,20 +41,20 @@ namespace velocypack {
    // Parser class with the same interface as before
    // the integration of taocpp/json.
 
-class Parser {
+class TaoParser {
 
    EventsToBuilder _e;
 
  public:
   Options const* options;
 
-  Parser(Parser const&) = delete;
-  Parser(Parser&&) = delete;
-  Parser& operator=(Parser const&) = delete;
-  Parser& operator=(Parser&&) = delete;
-  ~Parser() = default;
+  TaoParser(TaoParser const&) = delete;
+  TaoParser(TaoParser&&) = delete;
+  TaoParser& operator=(TaoParser const&) = delete;
+  TaoParser& operator=(TaoParser&&) = delete;
+  ~TaoParser() = default;
 
-  explicit Parser(Options const* options = &Options::Defaults)
+  explicit TaoParser(Options const* options = &Options::Defaults)
       : options(options) {
     if (options == nullptr) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
@@ -63,7 +62,7 @@ class Parser {
     _e.builder->options = options;
   }
 
-  explicit Parser(std::shared_ptr<Builder>& builder,
+  explicit TaoParser(std::shared_ptr<Builder>& builder,
                   Options const* options = &Options::Defaults)
       : _e(builder),
         options(options) {
@@ -73,7 +72,7 @@ class Parser {
   }
 
   // This method produces a parser that does not own the builder
-  explicit Parser(Builder& builder,
+  explicit TaoParser(Builder& builder,
                   Options const* options = &Options::Defaults)
       : _e( std::shared_ptr< Builder >( &builder, BuilderNonDeleter() ) ),
         options(options) {
@@ -87,7 +86,7 @@ class Parser {
   static std::shared_ptr<Builder> fromJson(
       std::string const& json,
       Options const* options = &Options::Defaults) {
-    Parser parser(options);
+    TaoParser parser(options);
     parser.parse(json);
     return parser.steal();
   }
@@ -95,7 +94,7 @@ class Parser {
   static std::shared_ptr<Builder> fromJson(
       char const* start, size_t size,
       Options const* options = &Options::Defaults) {
-    Parser parser(options);
+    TaoParser parser(options);
     parser.parse(start, size);
     return parser.steal();
   }
@@ -103,7 +102,7 @@ class Parser {
   static std::shared_ptr<Builder> fromJson(
       uint8_t const* start, size_t size,
       Options const* options = &Options::Defaults) {
-    Parser parser(options);
+    TaoParser parser(options);
     parser.parse(start, size);
     return parser.steal();
   }
