@@ -1,194 +1,202 @@
-// Copyright (c) 2016-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2016-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_EVENTS_FROM_VALUE_HPP
-#define TAOCPP_JSON_INCLUDE_EVENTS_FROM_VALUE_HPP
+#ifndef TAO_JSON_EVENTS_FROM_VALUE_HPP
+#define TAO_JSON_EVENTS_FROM_VALUE_HPP
 
 #include <stdexcept>
 
-#include "../value.hpp"
+#include "../basic_value.hpp"
+#include "../internal/format.hpp"
 
-namespace tao
+#include "virtual_ref.hpp"
+
+namespace tao::json::events
 {
-   namespace json
+   // Events producer to generate events from a JSON Value.
+
+   template< auto Recurse, typename Consumer, template< typename... > class Traits >
+   void from_value( Consumer& consumer, const basic_value< Traits >& v )
    {
-      namespace events
-      {
-         // Events producer to generate events from a JSON Value.
+      switch( v.type() ) {
+         case type::UNINITIALIZED:
+            throw std::logic_error( "unable to produce events from uninitialized values" );
 
-         template< typename Consumer, template< typename... > class Traits >
-         void from_value( Consumer& consumer, const basic_value< Traits >& v )
-         {
-            switch( v.type() ) {
-               case type::UNINITIALIZED:
-                  throw std::logic_error( "unable to produce events from uninitialized values" );
+         case type::NULL_:
+            consumer.null();
+            return;
 
-               case type::DISCARDED:
-                  throw std::logic_error( "unable to produce events from discarded values" );
+         case type::BOOLEAN:
+            consumer.boolean( v.get_boolean() );
+            return;
 
-               case type::DESTROYED:
-                  throw std::logic_error( "unable to produce events from destroyed values" );
+         case type::SIGNED:
+            consumer.number( v.get_signed() );
+            return;
 
-               case type::NULL_:
-                  consumer.null();
-                  return;
+         case type::UNSIGNED:
+            consumer.number( v.get_unsigned() );
+            return;
 
-               case type::BOOLEAN:
-                  consumer.boolean( v.unsafe_get_boolean() );
-                  return;
+         case type::DOUBLE:
+            consumer.number( v.get_double() );
+            return;
 
-               case type::SIGNED:
-                  consumer.number( v.unsafe_get_signed() );
-                  return;
+         case type::STRING:
+            consumer.string( v.get_string() );
+            return;
 
-               case type::UNSIGNED:
-                  consumer.number( v.unsafe_get_unsigned() );
-                  return;
+         case type::STRING_VIEW:
+            consumer.string( v.get_string_view() );
+            return;
 
-               case type::DOUBLE:
-                  consumer.number( v.unsafe_get_double() );
-                  return;
+         case type::BINARY:
+            consumer.binary( v.get_binary() );
+            return;
 
-               case type::STRING:
-                  consumer.string( v.unsafe_get_string() );
-                  return;
+         case type::BINARY_VIEW:
+            consumer.binary( v.get_binary_view() );
+            return;
 
-               case type::STRING_VIEW:
-                  consumer.string( v.unsafe_get_string_view() );
-                  return;
-
-               case type::BINARY:
-                  consumer.binary( v.unsafe_get_binary() );
-                  return;
-
-               case type::BINARY_VIEW:
-                  consumer.binary( v.unsafe_get_binary_view() );
-                  return;
-
-               case type::ARRAY: {
-                  const auto& a = v.unsafe_get_array();
-                  const auto s = a.size();
-                  consumer.begin_array( s );
-                  for( const auto& e : a ) {
-                     events::from_value( consumer, e );
-                     consumer.element();
-                  }
-                  consumer.end_array( s );
-                  return;
-               }
-
-               case type::OBJECT: {
-                  const auto& o = v.unsafe_get_object();
-                  const auto s = o.size();
-                  consumer.begin_object( s );
-                  for( const auto& e : o ) {
-                     consumer.key( e.first );
-                     events::from_value( consumer, e.second );
-                     consumer.member();
-                  }
-                  consumer.end_object( s );
-                  return;
-               }
-
-               case type::RAW_PTR:
-                  if( const basic_value< Traits >* p = v.unsafe_get_raw_ptr() ) {
-                     events::from_value( consumer, *p );
-                  }
-                  else {
-                     consumer.null();
-                  }
-                  return;
+         case type::ARRAY: {
+            const auto& a = v.get_array();
+            const auto s = a.size();
+            consumer.begin_array( s );
+            for( const auto& e : a ) {
+               Recurse( consumer, e );
+               consumer.element();
             }
-            throw std::logic_error( "invalid value for tao::json::type" );  // LCOV_EXCL_LINE
+            consumer.end_array( s );
+            return;
          }
 
-         // Events producer to generate events from an rvalue JSON value.
-         // Note: Strings from the source might be moved to the consumer.
-
-         template< typename Consumer, template< typename... > class Traits >
-         void from_value( Consumer& consumer, basic_value< Traits >&& v )
-         {
-            switch( v.type() ) {
-               case type::UNINITIALIZED:
-                  throw std::logic_error( "unable to produce events from uninitialized values" );
-
-               case type::DISCARDED:
-                  throw std::logic_error( "unable to produce events from discarded values" );
-
-               case type::DESTROYED:
-                  throw std::logic_error( "unable to produce events from destroyed values" );
-
-               case type::NULL_:
-                  consumer.null();
-                  return;
-
-               case type::BOOLEAN:
-                  consumer.boolean( v.unsafe_get_boolean() );
-                  return;
-
-               case type::SIGNED:
-                  consumer.number( v.unsafe_get_signed() );
-                  return;
-
-               case type::UNSIGNED:
-                  consumer.number( v.unsafe_get_unsigned() );
-                  return;
-
-               case type::DOUBLE:
-                  consumer.number( v.unsafe_get_double() );
-                  return;
-
-               case type::STRING:
-                  consumer.string( std::move( v.unsafe_get_string() ) );
-                  return;
-
-               case type::STRING_VIEW:
-                  consumer.string( v.unsafe_get_string_view() );
-                  return;
-
-               case type::BINARY:
-                  consumer.binary( std::move( v.unsafe_get_binary() ) );
-                  return;
-
-               case type::BINARY_VIEW:
-                  consumer.binary( v.unsafe_get_binary_view() );
-                  return;
-
-               case type::ARRAY:
-                  consumer.begin_array( v.unsafe_get_array().size() );
-                  for( auto&& e : v.unsafe_get_array() ) {
-                     events::from_value( consumer, std::move( e ) );
-                     consumer.element();
-                  }
-                  consumer.end_array( v.unsafe_get_array().size() );
-                  return;
-
-               case type::OBJECT:
-                  consumer.begin_object( v.unsafe_get_object().size() );
-                  for( auto&& e : v.unsafe_get_object() ) {
-                     consumer.key( e.first );
-                     events::from_value( consumer, std::move( e.second ) );
-                     consumer.member();
-                  }
-                  consumer.end_object( v.unsafe_get_object().size() );
-                  return;
-
-               case type::RAW_PTR:
-                  if( const basic_value< Traits >* p = v.unsafe_get_raw_ptr() ) {
-                     events::from_value( consumer, *p );
-                  }
-                  else {
-                     consumer.null();
-                  }
-                  return;
+         case type::OBJECT: {
+            const auto& o = v.get_object();
+            const auto s = o.size();
+            consumer.begin_object( s );
+            for( const auto& e : o ) {
+               consumer.key( e.first );
+               Recurse( consumer, e.second );
+               consumer.member();
             }
-            throw std::logic_error( "invalid value for tao::json::type" );  // LCOV_EXCL_LINE
+            consumer.end_object( s );
+            return;
          }
 
-      }  // namespace events
+         case type::VALUE_PTR:
+            Recurse( consumer, *v.get_value_ptr() );
+            return;
 
-   }  // namespace json
+         case type::OPAQUE_PTR: {
+            const auto& q = v.get_opaque_ptr();
+            virtual_ref< Consumer > ref( consumer );
+            q.producer( ref, q.data );
+            return;
+         }
 
-}  // namespace tao
+         case type::VALUELESS_BY_EXCEPTION:
+            throw std::logic_error( "unable to produce events from valueless-by-exception value" );
+      }
+      throw std::logic_error( internal::format( "invalid value '", static_cast< std::uint8_t >( v.type() ), "' for tao::json::type" ) );  // LCOV_EXCL_LINE
+   }
+
+   template< typename Consumer, template< typename... > class Traits >
+   void from_value( Consumer& consumer, const basic_value< Traits >& v )
+   {
+      from_value< static_cast< void ( * )( Consumer&, const basic_value< Traits >& ) >( &from_value< Consumer, Traits > ), Consumer, Traits >( consumer, v );
+   }
+
+   // Events producer to generate events from an rvalue JSON value.
+   // Note: Strings from the source might be moved to the consumer.
+
+   template< auto Recurse, typename Consumer, template< typename... > class Traits >
+   void from_value( Consumer& consumer, basic_value< Traits >&& v )
+   {
+      switch( v.type() ) {
+         case type::UNINITIALIZED:
+            throw std::logic_error( "unable to produce events from uninitialized values" );
+
+         case type::NULL_:
+            consumer.null();
+            return;
+
+         case type::BOOLEAN:
+            consumer.boolean( v.get_boolean() );
+            return;
+
+         case type::SIGNED:
+            consumer.number( v.get_signed() );
+            return;
+
+         case type::UNSIGNED:
+            consumer.number( v.get_unsigned() );
+            return;
+
+         case type::DOUBLE:
+            consumer.number( v.get_double() );
+            return;
+
+         case type::STRING:
+            consumer.string( std::move( v.get_string() ) );
+            return;
+
+         case type::STRING_VIEW:
+            consumer.string( v.get_string_view() );
+            return;
+
+         case type::BINARY:
+            consumer.binary( std::move( v.get_binary() ) );
+            return;
+
+         case type::BINARY_VIEW:
+            consumer.binary( v.get_binary_view() );
+            return;
+
+         case type::ARRAY: {
+            const auto& a = v.get_array();
+            const auto s = a.size();
+            consumer.begin_array( s );
+            for( auto&& e : a ) {
+               Recurse( consumer, std::move( e ) );
+               consumer.element();
+            }
+            consumer.end_array( s );
+            return;
+         }
+
+         case type::OBJECT: {
+            const auto& o = v.get_object();
+            const auto s = o.size();
+            consumer.begin_object( s );
+            for( auto&& e : o ) {
+               consumer.key( e.first );
+               Recurse( consumer, std::move( e.second ) );
+               consumer.member();
+            }
+            consumer.end_object( s );
+            return;
+         }
+
+         case type::VALUE_PTR:
+            Recurse( consumer, *v.get_value_ptr() );
+            return;
+
+         case type::OPAQUE_PTR: {
+            const auto& q = v.get_opaque_ptr();
+            virtual_ref< Consumer > ref( consumer );
+            q.producer( ref, q.data );
+            return;
+         }
+      }
+      throw std::logic_error( internal::format( "invalid value '", static_cast< std::uint8_t >( v.type() ), "' for tao::json::type" ) );  // LCOV_EXCL_LINE
+   }
+
+   template< typename Consumer, template< typename... > class Traits >
+   void from_value( Consumer& consumer, basic_value< Traits >&& v )
+   {
+      from_value< static_cast< void ( * )( Consumer&, basic_value< Traits > && ) >( &from_value< Consumer, Traits > ), Consumer, Traits >( consumer, std::move( v ) );
+   }
+
+}  // namespace tao::json::events
 
 #endif

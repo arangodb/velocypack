@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_PLUS_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_PLUS_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_PLUS_HPP
+#define TAO_JSON_PEGTL_INTERNAL_PLUS_HPP
 
 #include <type_traits>
 
@@ -19,43 +19,35 @@
 
 #include "../analysis/generic.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   // While plus<> could easily be implemented with
+   // seq< Rule, Rules ..., star< Rule, Rules ... > > we
+   // provide an explicit implementation to optimise away
+   // the otherwise created input mark.
+
+   template< typename Rule, typename... Rules >
+   struct plus
    {
-      namespace internal
+      using analyze_t = analysis::generic< analysis::rule_type::seq, Rule, Rules..., opt< plus > >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename Input,
+                typename... States >
+      [[nodiscard]] static bool match( Input& in, States&&... st )
       {
-         // While plus<> could easily be implemented with
-         // seq< Rule, Rules ..., star< Rule, Rules ... > > we
-         // provide an explicit implementation to optimise away
-         // the otherwise created input mark.
+         return seq< Rule, Rules... >::template match< A, M, Action, Control >( in, st... ) && star< Rule, Rules... >::template match< A, M, Action, Control >( in, st... );
+      }
+   };
 
-         template< typename Rule, typename... Rules >
-         struct plus
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::SEQ, Rule, Rules..., opt< plus > >;
+   template< typename Rule, typename... Rules >
+   inline constexpr bool skip_control< plus< Rule, Rules... > > = true;
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... > class Action,
-                      template< typename... > class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               return duseltronik< seq< Rule, Rules... >, A, M, Action, Control >::match( in, st... ) && duseltronik< star< Rule, Rules... >, A, M, Action, Control >::match( in, st... );
-            }
-         };
-
-         template< typename Rule, typename... Rules >
-         struct skip_control< plus< Rule, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

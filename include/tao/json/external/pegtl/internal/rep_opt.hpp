@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_REP_OPT_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_REP_OPT_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_REP_OPT_HPP
+#define TAO_JSON_PEGTL_INTERNAL_REP_OPT_HPP
 
 #include "../config.hpp"
 
@@ -15,40 +15,32 @@
 
 #include "../analysis/generic.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< unsigned Max, typename... Rules >
+   struct rep_opt
    {
-      namespace internal
+      using analyze_t = analysis::generic< analysis::rule_type::opt, Rules... >;
+
+      template< apply_mode A,
+                rewind_mode,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename Input,
+                typename... States >
+      [[nodiscard]] static bool match( Input& in, States&&... st )
       {
-         template< unsigned Max, typename... Rules >
-         struct rep_opt
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::OPT, Rules... >;
+         for( unsigned i = 0; ( i != Max ) && duseltronik< seq< Rules... >, A, rewind_mode::required, Action, Control >::match( in, st... ); ++i ) {
+         }
+         return true;
+      }
+   };
 
-            template< apply_mode A,
-                      rewind_mode,
-                      template< typename... > class Action,
-                      template< typename... > class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               for( unsigned i = 0; ( i != Max ) && duseltronik< seq< Rules... >, A, rewind_mode::REQUIRED, Action, Control >::match( in, st... ); ++i ) {
-               }
-               return true;
-            }
-         };
+   template< unsigned Max, typename... Rules >
+   inline constexpr bool skip_control< rep_opt< Max, Rules... > > = true;
 
-         template< unsigned Max, typename... Rules >
-         struct skip_control< rep_opt< Max, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

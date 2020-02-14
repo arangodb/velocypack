@@ -1,40 +1,32 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_EVENTS_PREFER_UNSIGNED_HPP
-#define TAOCPP_JSON_INCLUDE_EVENTS_PREFER_UNSIGNED_HPP
+#ifndef TAO_JSON_EVENTS_PREFER_UNSIGNED_HPP
+#define TAO_JSON_EVENTS_PREFER_UNSIGNED_HPP
 
 #include <cstdint>
 
-namespace tao
+namespace tao::json::events
 {
-   namespace json
+   template< typename Consumer >
+   struct prefer_unsigned
+      : Consumer
    {
-      namespace events
+      using Consumer::Consumer;
+
+      using Consumer::number;
+
+      void number( const std::int64_t v )
       {
-         template< typename Consumer >
-         struct prefer_unsigned
-            : public Consumer
-         {
-            using Consumer::Consumer;
+         if( v >= 0 ) {
+            Consumer::number( std::uint64_t( v ) );
+         }
+         else {
+            Consumer::number( v );
+         }
+      }
+   };
 
-            using Consumer::number;
-
-            void number( const std::int64_t v )
-            {
-               if( v >= 0 ) {
-                  Consumer::number( std::uint64_t( v ) );
-               }
-               else {
-                  Consumer::number( v );
-               }
-            }
-         };
-
-      }  // namespace events
-
-   }  // namespace json
-
-}  // namespace tao
+}  // namespace tao::json::events
 
 #endif

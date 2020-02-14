@@ -1,27 +1,48 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_IF_MUST_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_IF_MUST_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_IF_MUST_HPP
+#define TAO_JSON_PEGTL_INTERNAL_IF_MUST_HPP
 
 #include "../config.hpp"
 
 #include "must.hpp"
-#include "seq.hpp"
+#include "skip_control.hpp"
+#include "trivial.hpp"
 
-namespace tao
+#include "../apply_mode.hpp"
+#include "../rewind_mode.hpp"
+
+#include "../analysis/counted.hpp"
+
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< bool Default, typename Cond, typename... Rules >
+   struct if_must
    {
-      namespace internal
+      using analyze_t = analysis::counted< analysis::rule_type::seq, Default ? 0 : 1, Cond, must< Rules... > >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename Input,
+                typename... States >
+      [[nodiscard]] static bool match( Input& in, States&&... st )
       {
-         template< typename Cond, typename... Thens >
-         using if_must = seq< Cond, must< Thens... > >;
+         if( Control< Cond >::template match< A, M, Action, Control >( in, st... ) ) {
+            (void)( Control< must< Rules > >::template match< A, M, Action, Control >( in, st... ) && ... );
+            return true;
+         }
+         return Default;
+      }
+   };
 
-      }  // namespace internal
+   template< bool Default, typename Cond, typename... Rules >
+   inline constexpr bool skip_control< if_must< Default, Cond, Rules... > > = true;
 
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

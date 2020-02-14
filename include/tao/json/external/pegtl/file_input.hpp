@@ -1,8 +1,8 @@
-// Copyright (c) 2015-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2015-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_FILE_INPUT_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_FILE_INPUT_HPP
+#ifndef TAO_JSON_PEGTL_FILE_INPUT_HPP
+#define TAO_JSON_PEGTL_FILE_INPUT_HPP
 
 #include "config.hpp"
 #include "eol.hpp"
@@ -12,26 +12,33 @@
 #include <unistd.h>  // Required for _POSIX_MAPPED_FILES
 #endif
 
-#if defined( _POSIX_MAPPED_FILES )
+#if defined( _POSIX_MAPPED_FILES ) || defined( _WIN32 )
 #include "mmap_input.hpp"
 #else
 #include "read_input.hpp"
 #endif
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+#if defined( _POSIX_MAPPED_FILES ) || defined( _WIN32 )
+   template< tracking_mode P = tracking_mode::eager, typename Eol = eol::lf_crlf >
+   struct file_input
+      : mmap_input< P, Eol >
    {
-#if defined( _POSIX_MAPPED_FILES )
-      template< tracking_mode P = tracking_mode::IMMEDIATE, typename Eol = eol::lf_crlf >
-      using file_input = mmap_input< P, Eol >;
+      using mmap_input< P, Eol >::mmap_input;
+   };
 #else
-      template< tracking_mode P = tracking_mode::IMMEDIATE, typename Eol = eol::lf_crlf >
-      using file_input = read_input< P, Eol >;
+   template< tracking_mode P = tracking_mode::eager, typename Eol = eol::lf_crlf >
+   struct file_input
+      : read_input< P, Eol >
+   {
+      using read_input< P, Eol >::read_input;
+   };
 #endif
 
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename... Ts >
+   explicit file_input( Ts&&... )->file_input<>;
 
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE
 
 #endif

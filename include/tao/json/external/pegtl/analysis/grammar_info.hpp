@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_GRAMMAR_INFO_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_GRAMMAR_INFO_HPP
+#ifndef TAO_JSON_PEGTL_ANALYSIS_GRAMMAR_INFO_HPP
+#define TAO_JSON_PEGTL_ANALYSIS_GRAMMAR_INFO_HPP
 
 #include <map>
 #include <string>
@@ -13,28 +13,20 @@
 
 #include "rule_info.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   struct grammar_info
    {
-      namespace analysis
+      using map_t = std::map< std::string_view, rule_info >;
+      map_t map;
+
+      template< typename Name >
+      auto insert( const rule_type type )
       {
-         struct grammar_info
-         {
-            using map_t = std::map< std::string, rule_info >;
-            map_t map;
+         return map.try_emplace( internal::demangle< Name >(), rule_info( type ) );
+      }
+   };
 
-            template< typename Name >
-            std::pair< map_t::iterator, bool > insert( const rule_type type )
-            {
-               return map.insert( map_t::value_type( internal::demangle< Name >(), rule_info( type ) ) );
-            }
-         };
-
-      }  // namespace analysis
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 
 #endif

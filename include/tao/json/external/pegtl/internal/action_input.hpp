@@ -1,108 +1,107 @@
-// Copyright (c) 2016-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2016-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_ACTION_INPUT_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_ACTION_INPUT_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_ACTION_INPUT_HPP
+#define TAO_JSON_PEGTL_INTERNAL_ACTION_INPUT_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "iterator.hpp"
 
 #include "../config.hpp"
 #include "../position.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename Input >
+   class action_input
    {
-      namespace internal
+   public:
+      using input_t = Input;
+      using iterator_t = typename Input::iterator_t;
+
+      action_input( const iterator_t& in_begin, const Input& in_input ) noexcept
+         : m_begin( in_begin ),
+           m_input( in_input )
       {
-         inline const char* begin_c_ptr( const char* p ) noexcept
-         {
-            return p;
+      }
+
+      action_input( const action_input& ) = delete;
+      action_input( action_input&& ) = delete;
+
+      ~action_input() = default;
+
+      action_input& operator=( const action_input& ) = delete;
+      action_input& operator=( action_input&& ) = delete;
+
+      [[nodiscard]] const iterator_t& iterator() const noexcept
+      {
+         return m_begin;
+      }
+
+      [[nodiscard]] const Input& input() const noexcept
+      {
+         return m_input;
+      }
+
+      [[nodiscard]] const char* begin() const noexcept
+      {
+         if constexpr( std::is_same_v< iterator_t, const char* > ) {
+            return iterator();
          }
-
-         inline const char* begin_c_ptr( const iterator& it ) noexcept
-         {
-            return it.data;
+         else {
+            return iterator().data;
          }
+      }
 
-         template< typename Input >
-         class action_input
-         {
-         public:
-            using input_t = Input;
-            using iterator_t = typename Input::iterator_t;
+      [[nodiscard]] const char* end() const noexcept
+      {
+         return input().current();
+      }
 
-            action_input( const iterator_t& in_begin, const Input& in_input ) noexcept
-               : m_begin( in_begin ),
-                 m_input( in_input )
-            {
-            }
+      [[nodiscard]] bool empty() const noexcept
+      {
+         return begin() == end();
+      }
 
-            action_input( const action_input& ) = delete;
-            action_input& operator=( const action_input& ) = delete;
+      [[nodiscard]] std::size_t size() const noexcept
+      {
+         return std::size_t( end() - begin() );
+      }
 
-            const iterator_t& iterator() const noexcept
-            {
-               return m_begin;
-            }
+      [[nodiscard]] std::string string() const
+      {
+         return std::string( begin(), size() );
+      }
 
-            const Input& input() const noexcept
-            {
-               return m_input;
-            }
+      [[nodiscard]] std::string_view string_view() const noexcept
+      {
+         return std::string_view( begin(), size() );
+      }
 
-            const char* begin() const noexcept
-            {
-               return begin_c_ptr( iterator() );
-            }
+      [[nodiscard]] char peek_char( const std::size_t offset = 0 ) const noexcept
+      {
+         return begin()[ offset ];
+      }
 
-            const char* end() const noexcept
-            {
-               return input().current();
-            }
+      [[nodiscard]] std::uint8_t peek_uint8( const std::size_t offset = 0 ) const noexcept
+      {
+         return static_cast< std::uint8_t >( peek_char( offset ) );
+      }
 
-            bool empty() const noexcept
-            {
-               return begin() == end();
-            }
+      [[nodiscard]] TAO_JSON_PEGTL_NAMESPACE::position position() const
+      {
+         return input().position( iterator() );  // NOTE: Not efficient with lazy inputs.
+      }
 
-            std::size_t size() const noexcept
-            {
-               return std::size_t( end() - begin() );
-            }
+   protected:
+      const iterator_t m_begin;
+      const Input& m_input;
+   };
 
-            std::string string() const
-            {
-               return std::string( begin(), end() );
-            }
-
-            char peek_char( const std::size_t offset = 0 ) const noexcept
-            {
-               return begin()[ offset ];
-            }
-
-            unsigned char peek_byte( const std::size_t offset = 0 ) const noexcept
-            {
-               return static_cast< unsigned char >( peek_char( offset ) );
-            }
-
-            TAOCPP_JSON_PEGTL_NAMESPACE::position position() const noexcept
-            {
-               return input().position( iterator() );  // NOTE: Not efficient with LAZY inputs.
-            }
-
-         protected:
-            const iterator_t m_begin;
-            const Input& m_input;
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

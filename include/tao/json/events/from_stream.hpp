@@ -1,8 +1,8 @@
-// Copyright (c) 2016-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2016-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_EVENTS_FROM_STREAM_HPP
-#define TAOCPP_JSON_INCLUDE_EVENTS_FROM_STREAM_HPP
+#ifndef TAO_JSON_EVENTS_FROM_STREAM_HPP
+#define TAO_JSON_EVENTS_FROM_STREAM_HPP
 
 #include <istream>
 
@@ -10,32 +10,24 @@
 #include "../external/pegtl/parse.hpp"
 
 #include "../internal/action.hpp"
-#include "../internal/control.hpp"
+#include "../internal/errors.hpp"
 #include "../internal/grammar.hpp"
 
-namespace tao
+namespace tao::json::events
 {
-   namespace json
+   template< typename Consumer >
+   void from_stream( Consumer& consumer, std::istream& stream, const char* source = nullptr, const std::size_t maximum_buffer_size = 4000 )
    {
-      namespace events
-      {
-         template< typename Consumer >
-         void from_stream( Consumer& consumer, std::istream& stream, const char* source = nullptr, const std::size_t maximum_buffer_size = 4000 )
-         {
-            json_pegtl::istream_input<> in( stream, maximum_buffer_size, source ? source : "tao::json::events::from_stream" );
-            json_pegtl::parse< internal::grammar, internal::action, internal::control >( in, consumer );
-         }
+      pegtl::istream_input in( stream, maximum_buffer_size, source ? source : "tao::json::events::from_stream" );
+      pegtl::parse< internal::grammar, internal::action, internal::errors >( in, consumer );
+   }
 
-         template< typename Consumer >
-         void from_stream( Consumer& consumer, std::istream& stream, const std::string& source, const std::size_t maximum_buffer_size = 4000 )
-         {
-            events::from_stream( consumer, stream, source.c_str(), maximum_buffer_size );
-         }
+   template< typename Consumer >
+   void from_stream( Consumer& consumer, std::istream& stream, const std::string& source, const std::size_t maximum_buffer_size = 4000 )
+   {
+      events::from_stream( consumer, stream, source.c_str(), maximum_buffer_size );
+   }
 
-      }  // namespace events
-
-   }  // namespace json
-
-}  // namespace tao
+}  // namespace tao::json::events
 
 #endif

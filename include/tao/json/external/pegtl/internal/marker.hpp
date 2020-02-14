@@ -1,93 +1,82 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_MARKER_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_MARKER_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_MARKER_HPP
+#define TAO_JSON_PEGTL_INTERNAL_MARKER_HPP
 
 #include "../config.hpp"
 #include "../rewind_mode.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename Iterator, rewind_mode M >
+   class marker
    {
-      namespace internal
+   public:
+      static constexpr rewind_mode next_rewind_mode = M;
+
+      explicit marker( const Iterator& /*unused*/ ) noexcept
       {
-         template< typename Iterator, rewind_mode M >
-         class marker
-         {
-         public:
-            static constexpr rewind_mode next_rewind_mode = M;
+      }
 
-            explicit marker( const Iterator& ) noexcept
-            {
-            }
+      marker( const marker& ) = delete;
+      marker( marker&& ) = delete;
 
-            marker( marker&& ) noexcept
-            {
-            }
+      ~marker() = default;
 
-            marker( const marker& ) = delete;
-            void operator=( const marker& ) = delete;
+      void operator=( const marker& ) = delete;
+      void operator=( marker&& ) = delete;
 
-            bool operator()( const bool result ) const noexcept
-            {
-               return result;
-            }
-         };
+      [[nodiscard]] bool operator()( const bool result ) const noexcept
+      {
+         return result;
+      }
+   };
 
-         template< typename Iterator >
-         class marker< Iterator, rewind_mode::REQUIRED >
-         {
-         public:
-            static constexpr rewind_mode next_rewind_mode = rewind_mode::ACTIVE;
+   template< typename Iterator >
+   class marker< Iterator, rewind_mode::required >
+   {
+   public:
+      static constexpr rewind_mode next_rewind_mode = rewind_mode::active;
 
-            explicit marker( Iterator& i ) noexcept
-               : m_saved( i ),
-                 m_input( &i )
-            {
-            }
+      explicit marker( Iterator& i ) noexcept
+         : m_saved( i ),
+           m_input( &i )
+      {
+      }
 
-            marker( marker&& i ) noexcept
-               : m_saved( i.m_saved ),
-                 m_input( i.m_input )
-            {
-               i.m_input = nullptr;
-            }
+      marker( const marker& ) = delete;
+      marker( marker&& ) = delete;
 
-            ~marker() noexcept
-            {
-               if( m_input != nullptr ) {
-                  ( *m_input ) = m_saved;
-               }
-            }
+      ~marker() noexcept
+      {
+         if( m_input != nullptr ) {
+            ( *m_input ) = m_saved;
+         }
+      }
 
-            marker( const marker& ) = delete;
-            void operator=( const marker& ) = delete;
+      void operator=( const marker& ) = delete;
+      void operator=( marker&& ) = delete;
 
-            bool operator()( const bool result ) noexcept
-            {
-               if( result ) {
-                  m_input = nullptr;
-                  return true;
-               }
-               return false;
-            }
+      [[nodiscard]] bool operator()( const bool result ) noexcept
+      {
+         if( result ) {
+            m_input = nullptr;
+            return true;
+         }
+         return false;
+      }
 
-            const Iterator& iterator() const noexcept
-            {
-               return m_saved;
-            }
+      [[nodiscard]] const Iterator& iterator() const noexcept
+      {
+         return m_saved;
+      }
 
-         private:
-            const Iterator m_saved;
-            Iterator* m_input;
-         };
+   private:
+      const Iterator m_saved;
+      Iterator* m_input;
+   };
 
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

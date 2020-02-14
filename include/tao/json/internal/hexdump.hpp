@@ -1,39 +1,31 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_INTERNAL_HEXDUMP_HPP
-#define TAOCPP_JSON_INCLUDE_INTERNAL_HEXDUMP_HPP
+#ifndef TAO_JSON_INTERNAL_HEXDUMP_HPP
+#define TAO_JSON_INTERNAL_HEXDUMP_HPP
 
 #include <sstream>
 
-namespace tao
+namespace tao::json::internal
 {
-   namespace json
+   template< typename T >
+   void hexdump( std::ostream& os, const T& v )
    {
-      namespace internal
-      {
-         template< typename T >
-         void hexdump( std::ostream& os, const T& v )
-         {
-            static const char h[] = "0123456789ABCDEF";
-            for( const auto b : v ) {
-               os.put( h[ static_cast< unsigned char >( b ) >> 4 ] );
-               os.put( h[ static_cast< unsigned char >( b ) & 0xF ] );
-            }
-         }
+      static const char h[] = "0123456789ABCDEF";
+      for( const auto b : v ) {
+         os.put( h[ static_cast< unsigned char >( b ) >> 4 ] );
+         os.put( h[ static_cast< unsigned char >( b ) & 0xF ] );
+      }
+   }
 
-         template< typename T >
-         std::string hexdump( const T& v )
-         {
-            std::ostringstream os;
-            internal::hexdump( os, v );
-            return os.str();
-         }
+   template< typename T >
+   [[nodiscard]] std::string hexdump( const T& v )
+   {
+      std::ostringstream os;
+      internal::hexdump( os, v );
+      return os.str();
+   }
 
-      }  // namespace internal
-
-   }  // namespace json
-
-}  // namespace tao
+}  // namespace tao::json::internal
 
 #endif

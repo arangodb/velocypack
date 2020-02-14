@@ -1,8 +1,8 @@
-// Copyright (c) 2016-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2016-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_DISCARD_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_DISCARD_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_DISCARD_HPP
+#define TAO_JSON_PEGTL_INTERNAL_DISCARD_HPP
 
 #include "../config.hpp"
 
@@ -10,33 +10,24 @@
 
 #include "../analysis/generic.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   struct discard
    {
-      namespace internal
+      using analyze_t = analysis::generic< analysis::rule_type::opt >;
+
+      template< typename Input >
+      [[nodiscard]] static bool match( Input& in ) noexcept
       {
-         struct discard
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::OPT >;
+         static_assert( noexcept( in.discard() ) );
+         in.discard();
+         return true;
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& in )
-            {
-               in.discard();
-               return true;
-            }
-         };
+   template<>
+   inline constexpr bool skip_control< discard > = true;
 
-         template<>
-         struct skip_control< discard > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

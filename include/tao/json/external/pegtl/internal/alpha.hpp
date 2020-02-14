@@ -1,26 +1,18 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_ALPHA_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_ALPHA_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_ALPHA_HPP
+#define TAO_JSON_PEGTL_INTERNAL_ALPHA_HPP
 
 #include "../config.hpp"
 
 #include "peek_char.hpp"
 #include "ranges.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
-   {
-      namespace internal
-      {
-         using alpha = ranges< peek_char, 'a', 'z', 'A', 'Z' >;
+   using alpha = ranges< peek_char, 'a', 'z', 'A', 'Z' >;
 
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

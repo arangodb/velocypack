@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_BYTES_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_BYTES_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_BYTES_HPP
+#define TAO_JSON_PEGTL_INTERNAL_BYTES_HPP
 
 #include "../config.hpp"
 
@@ -10,37 +10,27 @@
 
 #include "../analysis/counted.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< unsigned Num >
+   struct bytes
    {
-      namespace internal
+      using analyze_t = analysis::counted< analysis::rule_type::any, Num >;
+
+      template< typename Input >
+      [[nodiscard]] static bool match( Input& in ) noexcept( noexcept( in.size( 0 ) ) )
       {
-         template< unsigned Num >
-         struct bytes
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::ANY, Num >;
+         if( in.size( Num ) >= Num ) {
+            in.bump( Num );
+            return true;
+         }
+         return false;
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& in )
-            {
-               if( in.size( Num ) >= Num ) {
-                  in.bump( Num );
-                  return true;
-               }
-               return false;
-            }
-         };
+   template< unsigned Num >
+   inline constexpr bool skip_control< bytes< Num > > = true;
 
-         template< unsigned Num >
-         struct skip_control< bytes< Num > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

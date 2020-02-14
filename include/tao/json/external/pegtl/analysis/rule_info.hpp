@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_RULE_INFO_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_RULE_INFO_HPP
+#ifndef TAO_JSON_PEGTL_ANALYSIS_RULE_INFO_HPP
+#define TAO_JSON_PEGTL_ANALYSIS_RULE_INFO_HPP
 
 #include <string>
 #include <vector>
@@ -11,27 +11,19 @@
 
 #include "rule_type.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   struct rule_info
    {
-      namespace analysis
+      explicit rule_info( const rule_type in_type ) noexcept
+         : type( in_type )
       {
-         struct rule_info
-         {
-            explicit rule_info( const rule_type in_type )
-               : type( in_type )
-            {
-            }
+      }
 
-            rule_type type;
-            std::vector< std::string > rules;
-         };
+      rule_type type;
+      std::vector< std::string > rules;
+   };
 
-      }  // namespace analysis
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 
 #endif

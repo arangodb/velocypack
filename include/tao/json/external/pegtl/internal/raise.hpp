@@ -1,10 +1,11 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RAISE_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RAISE_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_RAISE_HPP
+#define TAO_JSON_PEGTL_INTERNAL_RAISE_HPP
 
 #include <cstdlib>
+#include <stdexcept>
 #include <type_traits>
 
 #include "../config.hpp"
@@ -15,43 +16,38 @@
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename T >
+   struct raise
    {
-      namespace internal
-      {
-         template< typename T >
-         struct raise
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::ANY >;
+      using analyze_t = analysis::generic< analysis::rule_type::any >;
 
-            template< apply_mode,
-                      rewind_mode,
-                      template< typename... > class Action,
-                      template< typename... > class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               Control< T >::raise( const_cast< const Input& >( in ), st... );
 #if defined( _MSC_VER )
-               __assume( false );  // LCOV_EXCL_LINE
-#else
-               std::abort();  // LCOV_EXCL_LINE
+#pragma warning( push )
+#pragma warning( disable : 4702 )
 #endif
-            }
-         };
+      template< apply_mode,
+                rewind_mode,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename Input,
+                typename... States >
+      [[nodiscard]] static bool match( Input& in, States&&... st )
+      {
+         Control< T >::raise( static_cast< const Input& >( in ), st... );
+         throw std::logic_error( "code should be unreachable: Control< T >::raise() did not throw an exception" );  // LCOV_EXCL_LINE
+#if defined( _MSC_VER )
+#pragma warning( pop )
+#endif
+      }
+   };
 
-         template< typename T >
-         struct skip_control< raise< T > > : std::true_type
-         {
-         };
+   template< typename T >
+   inline constexpr bool skip_control< raise< T > > = true;
 
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

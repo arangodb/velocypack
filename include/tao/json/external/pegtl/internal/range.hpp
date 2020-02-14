@@ -1,60 +1,51 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RANGE_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RANGE_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_RANGE_HPP
+#define TAO_JSON_PEGTL_INTERNAL_RANGE_HPP
 
 #include "../config.hpp"
 
-#include "bump_help.hpp"
 #include "result_on_found.hpp"
 #include "skip_control.hpp"
 
 #include "../analysis/generic.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< result_on_found R, typename Peek, typename Peek::data_t Lo, typename Peek::data_t Hi >
+   struct range
    {
-      namespace internal
+      static_assert( Lo <= Hi, "invalid range detected" );
+
+      using analyze_t = analysis::generic< analysis::rule_type::any >;
+
+      template< int Eol >
+      static constexpr bool can_match_eol = ( ( ( Lo <= Eol ) && ( Eol <= Hi ) ) == bool( R ) );
+
+      template< typename Input >
+      [[nodiscard]] static bool match( Input& in ) noexcept( noexcept( in.size( Peek::max_input_size ) ) )
       {
-         template< result_on_found R, typename Peek, typename Peek::data_t Lo, typename Peek::data_t Hi >
-         struct range
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::ANY >;
-
-            template< int Eol >
-            struct can_match_eol
-            {
-               static constexpr bool value = ( ( ( Lo <= Eol ) && ( Eol <= Hi ) ) == bool( R ) );
-            };
-
-            template< typename Input >
-            static bool match( Input& in )
-            {
-               using eol_t = typename Input::eol_t;
-
-               if( !in.empty() ) {
-                  if( const auto t = Peek::peek( in ) ) {
-                     if( ( ( Lo <= t.data ) && ( t.data <= Hi ) ) == bool( R ) ) {
-                        bump_impl< can_match_eol< eol_t::ch >::value >::bump( in, t.size );
-                        return true;
-                     }
+         if( const std::size_t s = in.size( Peek::max_input_size ); s >= Peek::min_input_size ) {
+            if( const auto t = Peek::peek( in, s ) ) {
+               if( ( ( Lo <= t.data ) && ( t.data <= Hi ) ) == bool( R ) ) {
+                  if constexpr( can_match_eol< Input::eol_t::ch > ) {
+                     in.bump( t.size );
                   }
+                  else {
+                     in.bump_in_this_line( t.size );
+                  }
+                  return true;
                }
-               return false;
             }
-         };
+         }
+         return false;
+      }
+   };
 
-         template< result_on_found R, typename Peek, typename Peek::data_t Lo, typename Peek::data_t Hi >
-         struct skip_control< range< R, Peek, Lo, Hi > > : std::true_type
-         {
-         };
+   template< result_on_found R, typename Peek, typename Peek::data_t Lo, typename Peek::data_t Hi >
+   inline constexpr bool skip_control< range< R, Peek, Lo, Hi > > = true;
 
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

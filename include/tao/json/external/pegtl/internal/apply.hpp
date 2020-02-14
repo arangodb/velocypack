@@ -1,79 +1,53 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_APPLY_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_APPLY_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_APPLY_HPP
+#define TAO_JSON_PEGTL_INTERNAL_APPLY_HPP
 
 #include "../config.hpp"
 
+#include "apply_single.hpp"
 #include "skip_control.hpp"
-#include "trivial.hpp"
 
 #include "../analysis/counted.hpp"
+#include "../apply_mode.hpp"
+#include "../rewind_mode.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename... Actions >
+   struct apply
    {
-      namespace internal
+      using analyze_t = analysis::counted< analysis::rule_type::any, 0 >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename Input,
+                typename... States >
+      [[nodiscard]] static bool match( Input& in, States&&... st )
       {
-         template< apply_mode A, typename... Actions >
-         struct apply_impl;
-
-         template< typename... Actions >
-         struct apply_impl< apply_mode::ACTION, Actions... >
-         {
-            template< typename Input, typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               using action_t = typename Input::action_t;
-               const action_t i2( in.iterator(), in );  // No data -- range is from begin to begin.
-#ifdef __cpp_fold_expressions
-               ( Actions::apply( i2, st... ), ... );
-#else
-               using swallow = bool[];
-               (void)swallow{ ( Actions::apply( i2, st... ), true )..., true };
+         if constexpr( ( A == apply_mode::action ) && ( sizeof...( Actions ) > 0 ) ) {
+            using action_t = typename Input::action_t;
+            const action_t i2( in.iterator(), in );  // No data -- range is from begin to begin.
+            return ( apply_single< Actions >::match( i2, st... ) && ... );
+         }
+         else {
+#if defined( _MSC_VER )
+            (void)in;
+            (void)( (void)st, ... );
 #endif
-               return true;
-            }
-         };
+            return true;
+         }
+      }
+   };
 
-         template< typename... Actions >
-         struct apply_impl< apply_mode::NOTHING, Actions... >
-         {
-            template< typename Input, typename... States >
-            static bool match( Input&, States&&... )
-            {
-               return true;
-            }
-         };
+   template< typename... Actions >
+   inline constexpr bool skip_control< apply< Actions... > > = true;
 
-         template< typename... Actions >
-         struct apply
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::ANY, 0 >;
-
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... > class Action,
-                      template< typename... > class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               return apply_impl< A, Actions... >::match( in, st... );
-            }
-         };
-
-         template< typename... Actions >
-         struct skip_control< apply< Actions... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

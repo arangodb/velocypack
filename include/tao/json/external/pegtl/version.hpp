@@ -1,13 +1,13 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_VERSION_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_VERSION_HPP
+#ifndef TAO_JSON_PEGTL_VERSION_HPP
+#define TAO_JSON_PEGTL_VERSION_HPP
 
-#define TAOCPP_JSON_PEGTL_VERSION "2.2.0"
+#define TAO_JSON_PEGTL_VERSION "3.0.0"
 
-#define TAOCPP_JSON_PEGTL_VERSION_MAJOR 2
-#define TAOCPP_JSON_PEGTL_VERSION_MINOR 2
-#define TAOCPP_JSON_PEGTL_VERSION_PATCH 0
+#define TAO_JSON_PEGTL_VERSION_MAJOR 3
+#define TAO_JSON_PEGTL_VERSION_MINOR 0
+#define TAO_JSON_PEGTL_VERSION_PATCH 0
 
 #endif

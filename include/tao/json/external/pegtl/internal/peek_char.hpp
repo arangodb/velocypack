@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_PEEK_CHAR_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_PEEK_CHAR_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_PEEK_CHAR_HPP
+#define TAO_JSON_PEGTL_INTERNAL_PEEK_CHAR_HPP
 
 #include <cstddef>
 
@@ -10,28 +10,23 @@
 
 #include "input_pair.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   struct peek_char
    {
-      namespace internal
+      using data_t = char;
+      using pair_t = input_pair< char >;
+
+      static constexpr std::size_t min_input_size = 1;
+      static constexpr std::size_t max_input_size = 1;
+
+      template< typename Input >
+      [[nodiscard]] static pair_t peek( const Input& in, const std::size_t /*unused*/ = 1 ) noexcept
       {
-         struct peek_char
-         {
-            using data_t = char;
-            using pair_t = input_pair< char >;
+         return { in.peek_char(), 1 };
+      }
+   };
 
-            template< typename Input >
-            static pair_t peek( Input& in, const std::size_t o = 0 )
-            {
-               return { in.peek_char( o ), 1 };
-            }
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

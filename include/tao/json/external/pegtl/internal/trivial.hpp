@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_TRIVIAL_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_TRIVIAL_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_TRIVIAL_HPP
+#define TAO_JSON_PEGTL_INTERNAL_TRIVIAL_HPP
 
 #include "../config.hpp"
 
@@ -10,33 +10,23 @@
 
 #include "../analysis/counted.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::internal
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< bool Result >
+   struct trivial
    {
-      namespace internal
+      using analyze_t = analysis::counted< analysis::rule_type::any, unsigned( !Result ) >;
+
+      template< typename Input >
+      [[nodiscard]] static bool match( Input& /*unused*/ ) noexcept
       {
-         template< bool Result >
-         struct trivial
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::ANY, unsigned( !Result ) >;
+         return Result;
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& ) noexcept
-            {
-               return Result;
-            }
-         };
+   template< bool Result >
+   inline constexpr bool skip_control< trivial< Result > > = true;
 
-         template< bool Result >
-         struct skip_control< trivial< Result > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::internal
 
 #endif

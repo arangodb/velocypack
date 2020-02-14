@@ -1,8 +1,8 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_MSGPACK_TO_STREAM_HPP
-#define TAOCPP_JSON_INCLUDE_MSGPACK_TO_STREAM_HPP
+#ifndef TAO_JSON_MSGPACK_TO_STREAM_HPP
+#define TAO_JSON_MSGPACK_TO_STREAM_HPP
 
 #include <ostream>
 
@@ -11,25 +11,17 @@
 #include "../events/from_value.hpp"
 #include "../events/transformer.hpp"
 
-#include "../events/msgpack/to_stream.hpp"
+#include "events/to_stream.hpp"
 
-namespace tao
+namespace tao::json::msgpack
 {
-   namespace json
+   template< template< typename... > class... Transformers, template< typename... > class Traits >
+   void to_stream( std::ostream& os, const basic_value< Traits >& v )
    {
-      namespace msgpack
-      {
-         template< template< typename... > class... Transformers, template< typename... > class Traits >
-         void to_stream( std::ostream& os, const basic_value< Traits >& v )
-         {
-            events::transformer< events::msgpack::to_stream, Transformers... > consumer( os );
-            events::from_value( consumer, v );
-         }
+      json::events::transformer< events::to_stream, Transformers... > consumer( os );
+      json::events::from_value( consumer, v );
+   }
 
-      }  // namespace msgpack
-
-   }  // namespace json
-
-}  // namespace tao
+}  // namespace tao::json::msgpack
 
 #endif

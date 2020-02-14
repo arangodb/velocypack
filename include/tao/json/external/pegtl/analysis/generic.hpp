@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_GENERIC_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_ANALYSIS_GENERIC_HPP
+#ifndef TAO_JSON_PEGTL_ANALYSIS_GENERIC_HPP
+#define TAO_JSON_PEGTL_ANALYSIS_GENERIC_HPP
 
 #include "../config.hpp"
 
@@ -10,30 +10,22 @@
 #include "insert_rules.hpp"
 #include "rule_type.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< rule_type Type, typename... Rules >
+   struct generic
    {
-      namespace analysis
+      template< typename Name >
+      static std::string_view insert( grammar_info& g )
       {
-         template< rule_type Type, typename... Rules >
-         struct generic
-         {
-            template< typename Name >
-            static std::string insert( grammar_info& g )
-            {
-               const auto r = g.insert< Name >( Type );
-               if( r.second ) {
-                  insert_rules< Rules... >::insert( g, r.first->second );
-               }
-               return r.first->first;
-            }
-         };
+         const auto [ it, success ] = g.insert< Name >( Type );
+         if( success ) {
+            insert_rules< Rules... >::insert( g, it->second );
+         }
+         return it->first;
+      }
+   };
 
-      }  // namespace analysis
-
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE::analysis
 
 #endif

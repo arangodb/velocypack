@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_CONTRIB_TRACER_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_CONTRIB_TRACER_HPP
+#ifndef TAO_JSON_PEGTL_CONTRIB_TRACER_HPP
+#define TAO_JSON_PEGTL_CONTRIB_TRACER_HPP
 
 #include <cassert>
 #include <iomanip>
@@ -15,97 +15,144 @@
 
 #include "../internal/demangle.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   namespace internal
    {
-      struct trace_state
+      template< typename Input >
+      void print_current( const Input& in )
       {
-         unsigned rule = 0;
-         unsigned line = 0;
-         std::vector< unsigned > stack;
-      };
+         if( in.empty() ) {
+            std::cerr << "<eof>";
+         }
+         else {
+            const auto c = in.peek_uint8();
+            switch( c ) {
+               case 0:
+                  std::cerr << "<nul> = ";
+                  break;
+               case 9:
+                  std::cerr << "<ht> = ";
+                  break;
+               case 10:
+                  std::cerr << "<lf> = ";
+                  break;
+               case 13:
+                  std::cerr << "<cr> = ";
+                  break;
+               default:
+                  if( isprint( c ) ) {
+                     std::cerr << '\'' << c << "' = ";
+                  }
+            }
+            std::cerr << "(char)" << unsigned( c );
+         }
+      }
 
+   }  // namespace internal
+
+   struct trace_state
+   {
+      unsigned rule = 0;
+      unsigned line = 0;
+      std::vector< unsigned > stack;
+   };
+
+   template< template< typename... > class Base >
+   struct trace
+   {
       template< typename Rule >
-      struct tracer
-         : normal< Rule >
+      struct control
+         : Base< Rule >
       {
          template< typename Input, typename... States >
-         static void start( const Input& in, States&&... )
+         static void start( const Input& in, States&&... st )
          {
-            std::cerr << in.position() << "  start  " << internal::demangle< Rule >() << std::endl;
+            std::cerr << in.position() << "  start  " << internal::demangle< Rule >() << "; current ";
+            print_current( in );
+            std::cerr << std::endl;
+            Base< Rule >::start( in, st... );
          }
 
-         template< typename Input >
-         static void start( const Input& in, trace_state& ts )
+         template< typename Input, typename... States >
+         static void start( const Input& in, trace_state& ts, States&&... st )
          {
-            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ++ts.rule << " " << in.position() << "  start  " << internal::demangle< Rule >() << std::endl;
+            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ++ts.rule << " ";
+            start( in, st... );
             ts.stack.push_back( ts.rule );
          }
 
          template< typename Input, typename... States >
-         static void success( const Input& in, States&&... )
+         static void success( const Input& in, States&&... st )
          {
-            std::cerr << in.position() << " success " << internal::demangle< Rule >() << std::endl;
+            std::cerr << in.position() << " success " << internal::demangle< Rule >() << "; next ";
+            print_current( in );
+            std::cerr << std::endl;
+            Base< Rule >::success( in, st... );
          }
 
-         template< typename Input >
-         static void success( const Input& in, trace_state& ts )
+         template< typename Input, typename... States >
+         static void success( const Input& in, trace_state& ts, States&&... st )
          {
             assert( !ts.stack.empty() );
-            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ts.stack.back() << " " << in.position() << " success " << internal::demangle< Rule >() << std::endl;
+            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ts.stack.back() << " ";
+            success( in, st... );
             ts.stack.pop_back();
          }
 
          template< typename Input, typename... States >
-         static void failure( const Input& in, States&&... )
+         static void failure( const Input& in, States&&... st )
          {
             std::cerr << in.position() << " failure " << internal::demangle< Rule >() << std::endl;
+            Base< Rule >::failure( in, st... );
          }
 
-         template< typename Input >
-         static void failure( const Input& in, trace_state& ts )
+         template< typename Input, typename... States >
+         static void failure( const Input& in, trace_state& ts, States&&... st )
          {
             assert( !ts.stack.empty() );
-            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ts.stack.back() << " " << in.position() << " failure " << internal::demangle< Rule >() << std::endl;
+            std::cerr << std::setw( 6 ) << ++ts.line << " " << std::setw( 6 ) << ts.stack.back() << " ";
+            failure( in, st... );
             ts.stack.pop_back();
          }
 
-         template< template< typename... > class Action, typename Input, typename... States >
-         static void apply0( const Input&, States&&... st )
+         template< template< typename... > class Action, typename Iterator, typename Input, typename... States >
+         static auto apply( const Iterator& begin, const Input& in, States&&... st )
+            -> decltype( Base< Rule >::template apply< Action >( begin, in, st... ) )
          {
-            std::cerr << "apply0 " << internal::demangle< Action< Rule > >() << std::endl;
-            Action< Rule >::apply0( st... );
-         }
-
-         template< template< typename... > class Action, typename Input >
-         static void apply0( const Input&, trace_state& ts )
-         {
-            std::cerr << std::setw( 6 ) << ++ts.line << "        " << internal::demangle< Action< Rule > >() << "::apply0()" << std::endl;
-            Action< Rule >::apply0( ts );
+            std::cerr << in.position() << "  apply  " << internal::demangle< Rule >() << std::endl;
+            return Base< Rule >::template apply< Action >( begin, in, st... );
          }
 
          template< template< typename... > class Action, typename Iterator, typename Input, typename... States >
-         static void apply( const Iterator& begin, const Input& in, States&&... st )
+         static auto apply( const Iterator& begin, const Input& in, trace_state& ts, States&&... st )
+            -> decltype( apply< Action >( begin, in, st... ) )
          {
-            std::cerr << "apply " << internal::demangle< Action< Rule > >() << std::endl;
-            using action_t = typename Input::action_t;
-            const action_t action_input( begin, in );
-            Action< Rule >::apply( action_input, st... );
+            std::cerr << std::setw( 6 ) << ++ts.line << "        ";
+            return apply< Action >( begin, in, st... );
          }
 
-         template< template< typename... > class Action, typename Iterator, typename Input >
-         static void apply( const Iterator& begin, const Input& in, trace_state& ts )
+         template< template< typename... > class Action, typename Input, typename... States >
+         static auto apply0( const Input& in, States&&... st )
+            -> decltype( Base< Rule >::template apply0< Action >( in, st... ) )
          {
-            std::cerr << std::setw( 6 ) << ++ts.line << "        " << internal::demangle< Action< Rule > >() << "::apply()" << std::endl;
-            using action_t = typename Input::action_t;
-            const action_t action_input( begin, in );
-            Action< Rule >::apply( action_input, ts );
+            std::cerr << in.position() << "  apply0 " << internal::demangle< Rule >() << std::endl;
+            return Base< Rule >::template apply0< Action >( in, st... );
+         }
+
+         template< template< typename... > class Action, typename Input, typename... States >
+         static auto apply0( const Input& in, trace_state& ts, States&&... st )
+            -> decltype( apply0< Action >( in, st... ) )
+         {
+            std::cerr << std::setw( 6 ) << ++ts.line << "        ";
+            return apply0< Action >( in, st... );
          }
       };
+   };
 
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename Rule >
+   using tracer = trace< normal >::control< Rule >;
 
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE
 
 #endif

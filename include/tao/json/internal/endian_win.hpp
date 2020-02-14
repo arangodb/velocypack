@@ -1,91 +1,103 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/json/
 
-#ifndef TAOCPP_JSON_INCLUDE_INTERNAL_ENDIAN_WIN_HPP
-#define TAOCPP_JSON_INCLUDE_INTERNAL_ENDIAN_WIN_HPP
+#ifndef TAO_JSON_INTERNAL_ENDIAN_WIN_HPP
+#define TAO_JSON_INTERNAL_ENDIAN_WIN_HPP
 
 #include <cstdint>
 #include <cstring>
 
 #include <stdlib.h>  // TODO: Or is intrin.h the 'more correct' header for the _byteswap_foo() functions?
 
-namespace tao
+namespace tao::json::internal
 {
-   namespace json
+   template< unsigned S >
+   struct to_and_from_le
    {
-      namespace internal
+      template< typename T >
+      [[nodiscard]] static T convert( const T t ) noexcept
       {
-         template< unsigned S >
-         struct to_and_from_le
-         {
-            template< typename T >
-            static T convert( const T t ) noexcept
-            {
-               return t;
-            }
-         };
+         return t;
+      }
+   };
 
-         template< unsigned S >
-         struct to_and_from_be;
+   template< unsigned S >
+   struct to_and_from_be;
 
-         template<>
-         struct to_and_from_be< 1 >
-         {
-            static std::uint8_t convert( const std::uint8_t n ) noexcept
-            {
-               return n;
-            }
-         };
+   template<>
+   struct to_and_from_be< 1 >
+   {
+      [[nodiscard]] static std::int8_t convert( const std::int8_t n ) noexcept
+      {
+         return n;
+      }
 
-         template<>
-         struct to_and_from_be< 2 >
-         {
-            static std::uint16_t convert( const std::uint16_t n ) noexcept
-            {
-               return _byteswap_ushort( n );
-            }
-         };
+      [[nodiscard]] static std::uint8_t convert( const std::uint8_t n ) noexcept
+      {
+         return n;
+      }
+   };
 
-         template<>
-         struct to_and_from_be< 4 >
-         {
-            static float convert( float n ) noexcept
-            {
-               std::uint32_t u;
-               std::memcpy( &u, &n, 4 );
-               u = convert( u );
-               std::memcpy( &n, &u, 4 );
-               return n;
-            }
+   template<>
+   struct to_and_from_be< 2 >
+   {
+      [[nodiscard]] static std::int16_t convert( const std::int16_t n ) noexcept
+      {
+         return std::int16_t( _byteswap_ushort( std::uint16_t( n ) ) );
+      }
 
-            static std::uint32_t convert( const std::uint32_t n ) noexcept
-            {
-               return _byteswap_ulong( n );
-            }
-         };
+      [[nodiscard]] static std::uint16_t convert( const std::uint16_t n ) noexcept
+      {
+         return _byteswap_ushort( n );
+      }
+   };
 
-         template<>
-         struct to_and_from_be< 8 >
-         {
-            static double convert( double n ) noexcept
-            {
-               std::uint64_t u;
-               std::memcpy( &u, &n, 8 );
-               u = convert( u );
-               std::memcpy( &n, &u, 8 );
-               return n;
-            }
+   template<>
+   struct to_and_from_be< 4 >
+   {
+      [[nodiscard]] static float convert( float n ) noexcept
+      {
+         std::uint32_t u;
+         std::memcpy( &u, &n, 4 );
+         u = convert( u );
+         std::memcpy( &n, &u, 4 );
+         return n;
+      }
 
-            static std::uint64_t convert( const std::uint64_t n ) noexcept
-            {
-               return _byteswap_uint64( n );
-            }
-         };
+      [[nodiscard]] static std::int32_t convert( const std::int32_t n ) noexcept
+      {
+         return std::int32_t( _byteswap_ulong( std::uint32_t( n ) ) );
+      }
 
-      }  // namespace internal
+      [[nodiscard]] static std::uint32_t convert( const std::uint32_t n ) noexcept
+      {
+         return _byteswap_ulong( n );
+      }
+   };
 
-   }  // namespace json
+   template<>
+   struct to_and_from_be< 8 >
+   {
+      [[nodiscard]] static double convert( double n ) noexcept
+      {
+         std::uint64_t u;
+         std::memcpy( &u, &n, 8 );
+         u = convert( u );
+         std::memcpy( &n, &u, 8 );
+         return n;
+      }
 
-}  // namespace tao
+      [[nodiscard]] static std::int64_t convert( const std::int64_t n ) noexcept
+      {
+         return std::int64_t( _byteswap_uint64( std::uint64_t( n ) ) );
+      }
+
+      [[nodiscard]] static std::uint64_t convert( const std::uint64_t n ) noexcept
+      {
+         return _byteswap_uint64( n );
+      }
+   };
+
+}  // namespace tao::json::internal
 
 #endif

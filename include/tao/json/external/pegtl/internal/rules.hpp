@@ -1,8 +1,8 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RULES_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_INTERNAL_RULES_HPP
+#ifndef TAO_JSON_PEGTL_INTERNAL_RULES_HPP
+#define TAO_JSON_PEGTL_INTERNAL_RULES_HPP
 
 #include "action.hpp"
 #include "alnum.hpp"
@@ -31,7 +31,6 @@
 #include "list_must.hpp"
 #include "list_tail.hpp"
 #include "list_tail_pad.hpp"
-#include "minus.hpp"
 #include "must.hpp"
 #include "not_at.hpp"
 #include "one.hpp"
@@ -42,6 +41,7 @@
 #include "raise.hpp"
 #include "range.hpp"
 #include "ranges.hpp"
+#include "rematch.hpp"
 #include "rep.hpp"
 #include "rep_min.hpp"
 #include "rep_min_max.hpp"

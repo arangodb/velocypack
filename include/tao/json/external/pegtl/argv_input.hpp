@@ -1,8 +1,8 @@
-// Copyright (c) 2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2017-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_ARGV_INPUT_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_ARGV_INPUT_HPP
+#ifndef TAO_JSON_PEGTL_ARGV_INPUT_HPP
+#define TAO_JSON_PEGTL_ARGV_INPUT_HPP
 
 #include <cstddef>
 #include <sstream>
@@ -14,39 +14,38 @@
 #include "memory_input.hpp"
 #include "tracking_mode.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   namespace internal
    {
-      namespace internal
+      [[nodiscard]] inline std::string make_argv_source( const std::size_t argn )
       {
-         inline std::string make_argv_source( const std::size_t argn )
-         {
-            std::ostringstream os;
-            os << "argv[" << argn << ']';
-            return os.str();
-         }
+         std::ostringstream os;
+         os << "argv[" << argn << ']';
+         return os.str();
+      }
 
-      }  // namespace internal
+   }  // namespace internal
 
-      template< tracking_mode P = tracking_mode::IMMEDIATE, typename Eol = eol::lf_crlf >
-      struct argv_input
-         : public memory_input< P, Eol >
+   template< tracking_mode P = tracking_mode::eager, typename Eol = eol::lf_crlf >
+   struct argv_input
+      : memory_input< P, Eol >
+   {
+      template< typename T >
+      argv_input( char** argv, const std::size_t argn, T&& in_source )
+         : memory_input< P, Eol >( static_cast< const char* >( argv[ argn ] ), std::forward< T >( in_source ) )
       {
-         template< typename T >
-         argv_input( char** argv, const std::size_t argn, T&& in_source )
-            : memory_input< P, Eol >( static_cast< const char* >( argv[ argn ] ), std::forward< T >( in_source ) )
-         {
-         }
+      }
 
-         argv_input( char** argv, const std::size_t argn )
-            : argv_input( argv, argn, internal::make_argv_source( argn ) )
-         {
-         }
-      };
+      argv_input( char** argv, const std::size_t argn )
+         : argv_input( argv, argn, internal::make_argv_source( argn ) )
+      {
+      }
+   };
 
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   template< typename... Ts >
+   argv_input( Ts&&... )->argv_input<>;
 
-}  // namespace tao
+}  // namespace TAO_JSON_PEGTL_NAMESPACE
 
 #endif

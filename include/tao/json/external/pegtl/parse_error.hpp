@@ -1,45 +1,69 @@
-// Copyright (c) 2014-2017 Dr. Colin Hirsch and Daniel Frey
+// Copyright (c) 2014-2020 Dr. Colin Hirsch and Daniel Frey
 // Please see LICENSE for license or visit https://github.com/taocpp/PEGTL/
 
-#ifndef TAOCPP_JSON_PEGTL_INCLUDE_PARSE_ERROR_HPP
-#define TAOCPP_JSON_PEGTL_INCLUDE_PARSE_ERROR_HPP
+#ifndef TAO_JSON_PEGTL_PARSE_ERROR_HPP
+#define TAO_JSON_PEGTL_PARSE_ERROR_HPP
 
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "config.hpp"
 #include "position.hpp"
 
-namespace tao
+namespace TAO_JSON_PEGTL_NAMESPACE
 {
-   namespace TAOCPP_JSON_PEGTL_NAMESPACE
+   struct parse_error
+      : std::runtime_error
    {
-      struct parse_error
-         : public std::runtime_error
+      template< typename Msg >
+      parse_error( Msg&& msg, std::vector< position > in_positions )
+         : std::runtime_error( std::forward< Msg >( msg ) ),
+           positions( std::move( in_positions ) )
       {
-         parse_error( const std::string& msg, std::vector< position >&& in_positions )
-            : std::runtime_error( msg ),
-              positions( std::move( in_positions ) )
-         {
-         }
+      }
 
-         template< typename Input >
-         parse_error( const std::string& msg, const Input& in )
-            : parse_error( msg, in.position() )
-         {
-         }
+      template< typename Msg >
+      parse_error( Msg&& msg, const position& pos )
+         : std::runtime_error( std::forward< Msg >( msg ) ),
+           positions( 1, pos )
+      {
+      }
 
-         parse_error( const std::string& msg, const position& pos )
-            : std::runtime_error( to_string( pos ) + ": " + msg ),
-              positions( 1, pos )
-         {
-         }
+      template< typename Msg >
+      parse_error( Msg&& msg, position&& pos )
+         : std::runtime_error( std::forward< Msg >( msg ) )
+      {
+         positions.emplace_back( std::move( pos ) );
+      }
 
-         std::vector< position > positions;
-      };
+      template< typename Msg, typename Input >
+      parse_error( Msg&& msg, const Input& in )
+         : parse_error( std::forward< Msg >( msg ), in.position() )
+      {
+      }
 
-   }  // namespace TAOCPP_JSON_PEGTL_NAMESPACE
+      std::vector< position > positions;
+   };
 
-}  // namespace tao
+   inline std::ostream& operator<<( std::ostream& o, const parse_error& e )
+   {
+      for( auto it = e.positions.rbegin(); it != e.positions.rend(); ++it ) {
+         o << *it << ": ";
+      }
+      return o << e.what();
+   }
+
+   [[nodiscard]] inline std::string to_string( const parse_error& e )
+   {
+      std::ostringstream o;
+      o << e;
+      return o.str();
+   }
+
+}  // namespace TAO_JSON_PEGTL_NAMESPACE
 
 #endif
