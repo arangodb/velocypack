@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef VELOCYPACK_VALUETYPE_H
-#define VELOCYPACK_VALUETYPE_H
+#define VELOCYPACK_VALUETYPE_H 1
 
 #include <iosfwd>
 
@@ -34,7 +34,7 @@
 namespace arangodb {
 namespace velocypack {
 
-enum class ValueType {
+enum class ValueType : uint8_t {
   None,    // not yet initialized
   Illegal, // illegal value
   Null,    // JSON null
@@ -52,7 +52,8 @@ enum class ValueType {
   String,
   Binary,
   BCD,
-  Custom
+  Custom,
+  Tagged
 };
 
 char const* valueTypeName(ValueType);

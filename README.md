@@ -6,8 +6,8 @@ TravisCI: [![Build Status](https://secure.travis-ci.org/arangodb/velocypack.png?
 Motivation
 ----------
 
-These days, JSON (JavaScript Object Notation, see [ECMA-404]
-(http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf))
+These days, JSON (JavaScript Object Notation, see
+[ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf))
 is used in many cases where data has to be exchanged.
 Lots of protocols between different services use it, databases store
 JSON (document stores naturally, but others increasingly as well). It
@@ -21,7 +21,7 @@ shaped JSON.
 
 When looking into this, we were surprised to find that none of these
 formats manages to combine compactness, platform independence, fast
-access to subobjects and rapid conversion from and to JSON.
+access to sub-objects and rapid conversion from and to JSON.
 
 We have invented VPack because we need a binary format that
 
@@ -29,12 +29,12 @@ We have invented VPack because we need a binary format that
   - is compact
   - covers all of JSON plus dates, integers, binary data and arbitrary
     precision numbers
-  - can be used in a database kernel to access subdocuments for
-    example for indexes, so it must be possible to access subdocuments
+  - can be used in a database kernel to access sub-documents for
+    example for indexes, so it must be possible to access sub-documents
     (array and object members) efficiently
   - can be transferred to JSON and from JSON rapidly
   - avoids too many memory allocations
-  - gives flexibility to assemble objects, such that subobjects reside
+  - gives flexibility to assemble objects, such that sub-objects reside
     in the database in an unchanged way
   - allows to use an external table for frequently used attribute names
   - quickly allows to read off the type and length of a given object
@@ -50,22 +50,22 @@ The other popular formats we looked at have all some deficiency with
 respect to the above list. To name but a few:
 
   - JSON itself lacks some data types (dates and binary data) and does
-    not provide quick subvalue access without parsing. Parsing JSON is
+    not provide quick sub-value access without parsing. Parsing JSON is
     also quite a challenge performance-wise
   - XML is not compact and is not good with binary data, it also lacks
-    quick subvalue access
+    quick sub-value access
   - BSON gets quite a lot right with respect to data types, but is 
-    seriously lacking w.r.t. subvalue access. Furthermore, it is not
-    very compact and quite wasteful spacewise when storing array values
+    seriously lacking w.r.t. sub-value access. Furthermore, it is not
+    very compact and quite wasteful space-wise when storing array values
   - Apache Thrift and Google's Protocol Buffers are not schemaless and 
     self-contained. Their transport format is a serialization that is
-    not good for rapid subvalue access
+    not good for rapid sub-value access
   - MessagePack is probably the closest to our shopping list. It has
     has decent data types and is quite compact. However, we found that 
     one can do better in terms of compactness for some cases. More
-    important for us, MessagePack provides no quick subvalue access
+    important for us, MessagePack provides no quick sub-value access
   - Our own shaped JSON (used in ArangoDB as internal storage format)
-    has very quick subvalue access, but the shape data is kept outside
+    has very quick sub-value access, but the shape data is kept outside
     the actual data, so the shaped values are not self-contained.
     Furthermore, we have run into scalability issues on multi-core
     because of the shared data structures used for interpretation of
@@ -75,7 +75,7 @@ Any new data format must be backed by good C++ classes to allow
 
   - easy and fast parsing from JSON
   - easy and convenient buildup without too many memory allocations
-  - fast access to data and its subobjects (for arrays and objects)
+  - fast access to data and its sub-objects (for arrays and objects)
   - flexible memory management
   - fast dumping to JSON
 
@@ -127,9 +127,13 @@ Contributing
 
 We welcome bug fixes and patches from 3rd party contributors!
 
-Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) if you want 
-to contribute to VelocyPack. Have a look for the tag HELP_WANTED in the issue
-tracker!
+Please follow the guidelines in [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+if you want to contribute to VelocyPack. Have a look for the tag _help wanted_
+in the issue tracker!
 
 We also provide a golang version of VPack in the 
-[go-velocypack repository](https://github.com/arangodb/go-velocypack).
+[go-velocypack repository](https://github.com/arangodb/go-velocypack) and a
+Java version in the [java-velocypack](https://github.com/arangodb/java-velocypack).
+
+Additionally, there is a third party VPack implementation for 
+[PHP](https://github.com/martin-schilling/php-velocypack).

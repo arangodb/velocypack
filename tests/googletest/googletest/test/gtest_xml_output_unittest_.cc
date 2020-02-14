@@ -27,8 +27,6 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Author: eefacm@gmail.com (Sean Mcafee)
-
 // Unit test for Google Test XML output.
 //
 // A user can specify XML output in a Google Test program to run via
@@ -67,6 +65,13 @@ class DisabledTest : public Test {
 
 TEST_F(DisabledTest, DISABLED_test_not_run) {
   FAIL() << "Unexpected failure: Disabled test should not be run";
+}
+
+class SkippedTest : public Test {
+};
+
+TEST_F(SkippedTest, Skipped) {
+  GTEST_SKIP();
 }
 
 TEST(MixedResultTest, Succeeds) {

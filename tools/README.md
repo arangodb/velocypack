@@ -32,7 +32,21 @@ then the following executables will be compiled:
   Further options for *vpack-to-json* are:
   * `--pretty`: generate pretty-printed JSON to improve readability
   * `--no-pretty`: do not generate pretty-printed JSON
+  * `--print-unsupported`: convert non-JSON types into something else
+  * `--no-print-unsupported`: fail when encoutering a non-JSON type
+  * `--hex`: try to turn hex-encoded input into binary vpack
+  * `--validate`: validate input VelocyPack data
+  * `--no-validate`: do not validate input VelocyPack data
 
   On Linux, *vpack-to-json* supports the pseudo filenames `-` and `+` for stdin and
   stdout.
 
+* `vpack-validate`: this tool can be used to validate a VPack value in a file for
+  correctness. The tool expects the (binary) VPack input file it should read from 
+  in its first argument. It will return status code 0 if the VPack is valid, and
+  a non-0 exit code if the VPack is invalid.
+
+  Further options for *vpack-validate* are:
+  * `--hex`: try to turn hex-encoded input into binary vpack
+
+  On Linux, *vpack-validate* supports the pseudo filename `-` for stdin.

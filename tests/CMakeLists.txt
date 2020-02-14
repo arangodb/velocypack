@@ -6,10 +6,9 @@ message(STATUS "Building test suite: ${BuildTests}")
 
 option(BuildLargeTests "Build large tests" OFF)
 message(STATUS "Building large tests: ${BuildLargeTests}")
-  
+
 option(BuildAsmTest "Build assembler test code" OFF)
 message(STATUS "Building assembler test suite: ${BuildAsmTest}")
-
 
 set(Tests
     testsAliases
@@ -25,12 +24,20 @@ set(Tests
     testsIterator
     testsLookup
     testsParser
+    testsSerializable
     testsSlice
     testsSliceContainer
+    testsStringRef
     testsType
     testsValidator
     testsVersion
 )
+
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    list(APPEND Tests
+        testsSharedSlice
+    )
+endif ()
 
 macro(standard_test test_name)
     set(testName ${test_name})
@@ -40,9 +47,9 @@ macro(standard_test test_name)
         set(testCpp ${ARGV1})
     endif()
 
+    include_directories(${testName} PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
     add_executable(${testName} ${testCpp})
     target_link_libraries(${testName} gtest velocypack ${CMAKE_THREAD_LIBS_INIT})
-    include_directories(${testName} PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
     add_test(${testName} ${testName})
 endmacro()
 
@@ -50,16 +57,17 @@ endmacro()
 if(BuildTests)
     include(CTest)
     enable_testing()
-    find_package(Threads)
-    add_subdirectory(googletest/googletest REQUIRED)
+    find_package(Threads REQUIRED)
+    add_subdirectory(googletest REQUIRED)
 
     foreach(testName ${Tests})
         standard_test(${testName})
     endforeach()
     file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/jsonSample" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
-  if(BuildLargeTests)
-    standard_test(testsLarge)
-  endif()
+
+    if(BuildLargeTests)
+        standard_test(testsLarge)
+    endif()
 endif()
 
 # build AsmTest

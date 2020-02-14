@@ -70,6 +70,12 @@ TEST(ExceptionTest, TestMessages) {
                Exception::message(Exception::BuilderUnexpectedValue));
   ASSERT_STREQ("Externals are not allowed in this configuration",
                Exception::message(Exception::BuilderExternalsDisallowed));
+  ASSERT_STREQ("Custom types are not allowed in this configuration",
+               Exception::message(Exception::BuilderCustomDisallowed));
+  ASSERT_STREQ("Tagged types are not allowed in this configuration",
+               Exception::message(Exception::BuilderTagsDisallowed));
+  ASSERT_STREQ("BCD types are not allowed in this configuration",
+               Exception::message(Exception::BuilderBCDDisallowed));
   ASSERT_STREQ("Invalid type found in binary data",
                Exception::message(Exception::ValidatorInvalidType));
   ASSERT_STREQ("Invalid length found in binary data",
@@ -81,6 +87,19 @@ TEST(ExceptionTest, TestMessages) {
   ASSERT_STREQ(
       "Unknown error",
       Exception::message(static_cast<Exception::ExceptionType>(99999)));
+}
+
+TEST(ExceptionTest, TestStringification) {
+  std::string message;
+  try {
+    Builder b;
+    b.close();
+  } catch (Exception const& ex) {
+    std::stringstream out;
+    out << ex;
+    message = out.str();
+  }
+  ASSERT_EQ("[Exception Need open compound value (Array or Object)]", message);
 }
 
 int main(int argc, char* argv[]) {

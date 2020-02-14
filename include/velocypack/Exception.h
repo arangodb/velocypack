@@ -28,7 +28,6 @@
 #define VELOCYPACK_EXCEPTION_H 1
 
 #include <exception>
-#include <string>
 #include <iosfwd>
 
 #include "velocypack/velocypack-common.h"
@@ -37,7 +36,7 @@ namespace arangodb {
 namespace velocypack {
 
 // base exception class
-struct Exception : std::exception {
+class Exception : public virtual std::exception {
  public:
   enum ExceptionType {
     InternalError = 1,
@@ -67,6 +66,9 @@ struct Exception : std::exception {
     BuilderExternalsDisallowed = 37,
     BuilderKeyAlreadyWritten = 38,
     BuilderKeyMustBeString = 39,
+    BuilderCustomDisallowed = 40,
+    BuilderTagsDisallowed = 41,
+    BuilderBCDDisallowed = 42,
 
     ValidatorInvalidLength = 50,
     ValidatorInvalidType = 51,
@@ -75,18 +77,19 @@ struct Exception : std::exception {
   };
 
  private:
-  ExceptionType _type;
-  std::string _msg;
+  ExceptionType const _type;
+  char const* _msg;
 
  public:
-  Exception(ExceptionType type, std::string const& msg)
-      : _type(type), _msg(msg) {}
-
   Exception(ExceptionType type, char const* msg) : _type(type), _msg(msg) {}
 
   explicit Exception(ExceptionType type) : Exception(type, message(type)) {}
+  
+  Exception(Exception const& other) : _type(other._type), _msg(other._msg) {}
+  
+  ~Exception() = default;
 
-  char const* what() const noexcept { return _msg.c_str(); }
+  char const* what() const noexcept { return _msg; }
 
   ExceptionType errorCode() const noexcept { return _type; }
 
@@ -142,6 +145,12 @@ struct Exception : std::exception {
         return "The key of the next key/value pair is already written";
       case BuilderKeyMustBeString:
         return "The key of the next key/value pair must be a string";
+      case BuilderCustomDisallowed:
+        return "Custom types are not allowed in this configuration";
+      case BuilderTagsDisallowed:
+        return "Tagged types are not allowed in this configuration";
+      case BuilderBCDDisallowed:
+        return "BCD types are not allowed in this configuration";
     
       case ValidatorInvalidType:
         return "Invalid type found in binary data";

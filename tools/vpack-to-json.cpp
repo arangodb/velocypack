@@ -56,6 +56,8 @@ static void usage(char* argv[]) {
   std::cout << " --print-unsupported       convert non-JSON types into something else" << std::endl;
   std::cout << " --no-print-unsupported    fail when encoutering a non-JSON type" << std::endl;
   std::cout << " --hex                     try to turn hex-encoded input into binary vpack" << std::endl;
+  std::cout << " --validate                validate input VelocyPack data" << std::endl;
+  std::cout << " --no-validate             don't validate input VelocyPack data" << std::endl;
 }
 
 static std::string convertFromHex(std::string const& value) {
@@ -105,6 +107,7 @@ int main(int argc, char* argv[]) {
   bool pretty = true;
   bool printUnsupported = true;
   bool hex = false;
+  bool validate = true;
 
   int i = 1;
   while (i < argc) {
@@ -122,6 +125,10 @@ int main(int argc, char* argv[]) {
       printUnsupported = false;
     } else if (allowFlags && isOption(p, "--hex")) {
       hex = true;
+    } else if (allowFlags && isOption(p, "--validate")) {
+      validate = true;
+    } else if (allowFlags && isOption(p, "--no-validate")) {
+      validate = false;
     } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
     } else if (infileName == nullptr) {
@@ -191,8 +198,13 @@ int main(int argc, char* argv[]) {
   if (hex) {
     s = convertFromHex(s);
   }
+  
+  if (validate) {
+    Validator validator;
+    validator.validate(reinterpret_cast<uint8_t const*>(s.data()), s.size(), false);
+  }
 
-  Slice const slice(s.data());
+  Slice const slice(reinterpret_cast<uint8_t const*>(s.data()));
 
   Options options;
   options.prettyPrint = pretty;

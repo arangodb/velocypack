@@ -202,6 +202,26 @@ TEST(PrettyDumperTest, ComplexObject) {
       result);
 }
 
+TEST(PrettyDumperTest, ComplexObjectSingleLine) {
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options dumperOptions;
+  dumperOptions.singleLinePrettyPrint = true;
+  std::string result = Dumper::toString(s, &dumperOptions);
+  ASSERT_EQ(std::string("{\"bark\": [{\"mötör\": [2, 3.4, -42.5, true, false, "
+		  "null, \"some\\nstring\"], \"troet\\nmann\": 1}], \"baz\": [1, 2, 3,"
+		  " [4]], \"foo\": \"bar\"}"),
+      result);
+}
+
 TEST(StreamDumperTest, SimpleObject) {
   std::string const value("{\"foo\":\"bar\"}");
 
@@ -236,6 +256,52 @@ TEST(StreamDumperTest, UseStringStreamTypedef) {
   Dumper dumper(&sink, &options);
   dumper.dump(s);
   ASSERT_EQ(std::string("{\n  \"foo\" : \"bar\"\n}"), result.str());
+}
+
+TEST(StreamDumperTest, DumpAttributesInIndexOrder) {
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options dumperOptions;
+  dumperOptions.dumpAttributesInIndexOrder = true;
+  dumperOptions.prettyPrint = false;
+  std::ostringstream result;
+  StringStreamSink sink(&result);
+  Dumper dumper(&sink, &dumperOptions);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\"bark\":[{\"m\xC3\xB6t\xC3\xB6r\":[2,3.4,-42.5,true,"
+        "false,null,\"some\\nstring\"],\"troet\\nmann\":1}],\"baz\":[1,2,3,[4]],\"foo\":\"bar\"}"),
+        result.str());
+}
+
+TEST(StreamDumperTest, DontDumpAttributesInIndexOrder) {
+  std::string const value(
+      "{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+      "\"mötör\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options dumperOptions;
+  dumperOptions.dumpAttributesInIndexOrder = false;
+  dumperOptions.prettyPrint = false;
+  std::ostringstream result;
+  StringStreamSink sink(&result);
+  Dumper dumper(&sink, &dumperOptions);
+  dumper.dump(s);
+  ASSERT_EQ(std::string("{\"foo\":\"bar\",\"baz\":[1,2,3,[4]],\"bark\":[{\"troet\\nmann\":1,"
+            "\"m\xC3\xB6t\xC3\xB6r\":[2,3.4,-42.5,true,false,null,\"some\\nstring\"]}]}"),
+            result.str());
 }
 
 TEST(StreamDumperTest, ComplexObject) {
@@ -692,8 +758,8 @@ TEST(StringDumperTest, CustomWithCallbackDefaultHandler) {
   b.openObject();
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
-  for (size_t i = 1; i <= 8; i++) {
-    p[i] = i + '@';
+  for (std::size_t i = 1; i <= 8; i++) {
+    p[i] = uint8_t(i + '@');
   }
   b.close();
 
@@ -716,8 +782,8 @@ TEST(StringDumperTest, CustomWithCallback) {
   b.openObject();
   uint8_t* p = b.add("_id", ValuePair(9ULL, ValueType::Custom));
   *p = 0xf3;
-  for (size_t i = 1; i <= 8; i++) {
-    p[i] = i + '@';
+  for (std::size_t i = 1; i <= 8; i++) {
+    p[i] = uint8_t(i + '@');
   }
   b.close();
 
@@ -727,7 +793,7 @@ TEST(StringDumperTest, CustomWithCallback) {
       ASSERT_EQ(0xf3UL, value.head());
       sawCustom = true;
       dumper->sink()->push_back('"');
-      for (size_t i = 1; i <= 8; i++) {
+      for (std::size_t i = 1; i <= 8; i++) {
         dumper->sink()->push_back(value.start()[i]);
       }
       dumper->sink()->push_back('"');
@@ -1175,6 +1241,60 @@ TEST(StringDumperTest, UnsupportedTypeDoubleNan) {
   StringSink sink(&buffer);
   Dumper dumper(&sink);
   ASSERT_VELOCYPACK_EXCEPTION(dumper.dump(slice), Exception::NoJsonEquivalent);
+}
+
+TEST(StringDumperTest, DoubleNanAsString) {
+  Options options;
+  options.unsupportedDoublesAsString = true;
+
+  double v = std::nan("1");
+  ASSERT_TRUE(std::isnan(v));
+  Builder b;
+  b.add(Value(v));
+
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("\"NaN\""), buffer);
+}
+
+TEST(StringDumperTest, DoubleInfinityAsString) {
+  Options options;
+  options.unsupportedDoublesAsString = true;
+
+  double v = INFINITY;
+  ASSERT_TRUE(std::isinf(v));
+  Builder b;
+  b.add(Value(v));
+
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("\"Infinity\""), buffer);
+}
+
+TEST(StringDumperTest, DoubleMinusInfinityAsString) {
+  Options options;
+  options.unsupportedDoublesAsString = true;
+
+  double v = -INFINITY;
+  ASSERT_TRUE(std::isinf(v));
+  Builder b;
+  b.add(Value(v));
+
+  Slice slice = b.slice();
+
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  dumper.dump(slice);
+  ASSERT_EQ(std::string("\"-Infinity\""), buffer);
 }
 
 TEST(StringDumperTest, ConvertTypeDoubleNan) {

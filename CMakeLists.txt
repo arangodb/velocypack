@@ -1,62 +1,68 @@
 # -*- mode: CMAKE; -*-
 
-cmake_minimum_required(VERSION 2.8)
-project(velocypack CXX)
-set(CMAKE_CXX_STANDARD 11)
+cmake_minimum_required(VERSION 3.2)
+project(velocypack CXX C)
+
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "target C++ standard")
+message(STATUS "Require C++${CMAKE_CXX_STANDARD}")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
-option(Coverage "Build with coverage" OFF)
-option(HashType "Hash type (fasthash, xxhash)" OFF)
 
-#Default to xxhash
-if(HashType STREQUAL "OFF")
-    set(HashType "xxhash")
-endif()
+set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-    #why don't we use release as default?
-    set(CMAKE_BUILD_TYPE Release CACHE string "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-if(Coverage)
-    set(CMAKE_BUILD_TYPE Debug)
-endif()
-
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
-set(VELOCYPACK_VERSION "0.0.1" CACHE path "VelocyPack version")
+set(VELOCYPACK_VERSION "0.0.1" CACHE STRING "VelocyPack version")
 set(VELOCYPACK_DISPLAY_NAME "Velocypack")
 set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/velocypack")
 set(VELOCYPACK_CONTACT "hackers@arangodb.org")
 set(VELOCYPACK_FRIENDLY_STRING "VelocyPack - A fast & compact serialization format")
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #Compiler Setting
 include(AR_CompilerSettings)
 
-# build version number generator - NICE!
 set(VELOCY_SOURCE
     src/velocypack-common.cpp
     src/AttributeTranslator.cpp
     src/Builder.cpp
     src/Collection.cpp
+    src/Compare.cpp
     src/Dumper.cpp
     src/Exception.cpp
     src/HexDump.cpp
     src/Iterator.cpp
     src/Options.cpp
     src/Parser.cpp
+    src/Serializable.cpp
     src/Slice.cpp
+    src/SliceStaticData.cpp
+    src/StringRef.cpp
     src/Utf8Helper.cpp
     src/Validator.cpp
+    src/Value.cpp
     src/ValueType.cpp
     src/Version.cpp
     src/asm-functions.cpp
+    src/asm-utf8check.cpp
     src/fpconv.cpp
 )
+
+if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
+    list(APPEND VELOCY_SOURCE
+        src/SharedSlice.cpp
+    )
+endif ()
 
 #Use xxhash or fasthash?
 if(HashType STREQUAL "xxhash")
@@ -68,6 +74,7 @@ elseif(HashType STREQUAL "fasthash")
 else()
     message(FATAL_ERROR "invalid HashType value. supported values: xxhash or fasthash")
 endif()
+message(STATUS "Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(velocypack PRIVATE src)

@@ -29,15 +29,14 @@
 
 #include "tests-common.h"
 
-extern size_t JSONStringCopyC(uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t JSONStringCopyCheckUtf8C(uint8_t* dst, uint8_t const* src,
-                                       size_t limit);
-extern size_t JSONSkipWhiteSpaceC(uint8_t const* ptr, size_t limit);
+namespace arangodb {
+namespace velocypack {
 
-extern size_t (*JSONStringCopy)(uint8_t* dst, uint8_t const* src, size_t limit);
-extern size_t (*JSONStringCopyCheckUtf8)(uint8_t* dst, uint8_t const* src,
-                                         size_t limit);
-extern size_t (*JSONSkipWhiteSpace)(uint8_t const* ptr, size_t limit);
+extern void enableNativeStringFunctions();
+extern void enableBuiltinStringFunctions();
+
+}
+}
 
 TEST(ParserTest, CreateWithoutOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Parser(nullptr), Exception::InternalError);
@@ -1028,7 +1027,7 @@ TEST(ParserTest, StringLiteralInvalidUtfValueLongString) {
 
   std::string value;
   value.push_back('"');
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     value.push_back(static_cast<unsigned char>(0x80));
   }
   value.push_back('"');
@@ -1535,7 +1534,7 @@ TEST(ParserTest, BrokenArray3) {
 
 TEST(ParserTest, ShortArrayMembers) {
   std::string value("[");
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1553,7 +1552,7 @@ TEST(ParserTest, ShortArrayMembers) {
   checkBuild(s, ValueType::Array, 1019);
   ASSERT_EQ(255ULL, s.length());
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
@@ -1574,7 +1573,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   single.append(single);  // 1024 bytes
 
   std::string value("[");
-  for (size_t i = 0; i < 65; ++i) {
+  for (std::size_t i = 0; i < 65; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1594,7 +1593,7 @@ TEST(ParserTest, LongArrayFewMembers) {
   checkBuild(s, ValueType::Array, 67154);
   ASSERT_EQ(65ULL, s.length());
 
-  for (size_t i = 0; i < 65; ++i) {
+  for (std::size_t i = 0; i < 65; ++i) {
     Slice ss = s[i];
     checkBuild(ss, ValueType::String, 1033);
     ValueLength len;
@@ -1606,7 +1605,7 @@ TEST(ParserTest, LongArrayFewMembers) {
 
 TEST(ParserTest, LongArrayManyMembers) {
   std::string value("[");
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1624,7 +1623,7 @@ TEST(ParserTest, LongArrayManyMembers) {
   checkBuild(s, ValueType::Array, 1023);
   ASSERT_EQ(256ULL, s.length());
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     Slice ss = s[i];
     if (i <= 9) {
       checkBuild(ss, ValueType::SmallInt, 1);
@@ -1950,7 +1949,7 @@ TEST(ParserTest, ObjectMissingQuotes) {
 
 TEST(ParserTest, ShortObjectMembers) {
   std::string value("{");
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -1977,7 +1976,7 @@ TEST(ParserTest, ShortObjectMembers) {
   checkBuild(s, ValueType::Object, 3059);
   ASSERT_EQ(255ULL, s.length());
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2012,7 +2011,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   single.append(single);  // 1024 bytes
 
   std::string value("{");
-  for (size_t i = 0; i < 64; ++i) {
+  for (std::size_t i = 0; i < 64; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -2040,7 +2039,7 @@ TEST(ParserTest, LongObjectFewMembers) {
   checkBuild(s, ValueType::Object, 66889);
   ASSERT_EQ(64ULL, s.length());
 
-  for (size_t i = 0; i < 64; ++i) {
+  for (std::size_t i = 0; i < 64; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2064,7 +2063,7 @@ TEST(ParserTest, LongObjectFewMembers) {
 
 TEST(ParserTest, LongObjectManyMembers) {
   std::string value("{");
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     if (i > 0) {
       value.push_back(',');
     }
@@ -2091,7 +2090,7 @@ TEST(ParserTest, LongObjectManyMembers) {
   checkBuild(s, ValueType::Object, 3071);
   ASSERT_EQ(256ULL, s.length());
 
-  for (size_t i = 0; i < 256; ++i) {
+  for (std::size_t i = 0; i < 256; ++i) {
     Slice sk = s.keyAt(i);
     ValueLength len;
     char const* str = sk.getString(len);
@@ -2171,7 +2170,7 @@ TEST(ParserTest, DuplicateAttributesDisallowed) {
                               Exception::DuplicateAttributeName);
 }
 
-TEST(ParserTest, DuplicateAttributesDisallowedUnsortedObject) {
+TEST(ParserTest, DuplicateAttributesDisallowedUnsortedInput) {
   Options options;
   options.checkAttributeUniqueness = true;
 
@@ -2209,6 +2208,108 @@ TEST(ParserTest, DuplicateSubAttributesDisallowed) {
   Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
                               Exception::DuplicateAttributeName);
+}
+
+TEST(ParserTest, DuplicateAttributesSortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = false;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    // now push a duplicate
+    value.append(",\"test0\":false");
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                                Exception::DuplicateAttributeName);
+  }
+}
+
+TEST(ParserTest, NoDuplicateAttributesSortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = false;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_TRUE(parser.parse(value) > 0);
+  }
+}
+
+TEST(ParserTest, DuplicateAttributesUnsortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = true;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    // now push a duplicate
+    value.append(",\"test0\":false");
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
+                                Exception::DuplicateAttributeName);
+  }
+}
+
+TEST(ParserTest, NoDuplicateAttributesUnsortedObjects) {
+  Options options;
+  options.buildUnindexedObjects = true;
+  options.checkAttributeUniqueness = true;
+
+  for (std::size_t i = 1; i < 20; ++i) {
+    std::string value;
+    value.push_back('{');
+    for (std::size_t j = 0; j < i; ++j) {
+      if (j != 0) {
+        value.push_back(',');
+      }
+      value.push_back('"');
+      value.append("test");
+      value.append(std::to_string(j));
+      value.append("\":true");
+    }
+    value.push_back('}');
+  
+    Parser parser(&options);
+    ASSERT_TRUE(parser.parse(value) > 0);
+  }
 }
 
 TEST(ParserTest, FromJsonString) {
@@ -2284,132 +2385,9 @@ TEST(ParserTest, KeepTopLevelOpenTrue) {
   ASSERT_FALSE(s.hasKey("qux"));
 }
 
-TEST(ParserTest, ExcludeAttributesTopLevel) {
-  std::string const value(
-      "{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":"
-      "7}");
-
-  struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
-    bool shouldExclude(Slice const& key, int nesting) override final {
-      EXPECT_EQ(1, nesting);
-
-      ValueLength keyLength;
-      char const* p = key.getString(keyLength);
-
-      if (keyLength == 3 && (strncmp(p, "foo", keyLength) == 0 ||
-                             strncmp(p, "bar", keyLength) == 0 ||
-                             strncmp(p, "qux", keyLength) == 0)) {
-        // exclude attribute
-        return true;
-      }
-      // keep attribute
-      return false;
-    }
-  };
-
-  MyAttributeExcludeHandler handler;
-  Options options;
-  options.attributeExcludeHandler = &handler;
-
-  Parser parser(&options);
-  parser.parse(value);
-
-  std::shared_ptr<Builder> b = parser.steal();
-  Slice s(b->slice());
-
-  ASSERT_EQ(4UL, s.length());
-  ASSERT_FALSE(s.hasKey("foo"));
-  ASSERT_FALSE(s.hasKey("bar"));
-  ASSERT_FALSE(s.hasKey("qux"));
-  ASSERT_TRUE(s.hasKey("baz"));
-  ASSERT_EQ(3UL, s.get("baz").getUInt());
-  ASSERT_TRUE(s.hasKey("quux"));
-  ASSERT_EQ(5UL, s.get("quux").getUInt());
-  ASSERT_TRUE(s.hasKey("bart"));
-  ASSERT_EQ(6UL, s.get("bart").getUInt());
-  ASSERT_TRUE(s.hasKey("bark"));
-  ASSERT_EQ(7UL, s.get("bark").getUInt());
-}
-
-TEST(ParserTest, ExcludeAttributesTopLevelUsingHelper) {
-  std::string const value(
-      "{\"foo\":1,\"bar\":2,\"baz\":3,\"qux\":4,\"quux\":5,\"bart\":6,\"bark\":"
-      "7}");
-
-  TopLevelAttributeExcludeHandler handler(std::unordered_set<std::string>{ "foo", "bar", "qux" });
-  Options options;
-  options.attributeExcludeHandler = &handler;
-
-  Parser parser(&options);
-  parser.parse(value);
-
-  std::shared_ptr<Builder> b = parser.steal();
-  Slice s(b->slice());
-
-  ASSERT_EQ(4UL, s.length());
-  ASSERT_FALSE(s.hasKey("foo"));
-  ASSERT_FALSE(s.hasKey("bar"));
-  ASSERT_FALSE(s.hasKey("qux"));
-  ASSERT_TRUE(s.hasKey("baz"));
-  ASSERT_EQ(3UL, s.get("baz").getUInt());
-  ASSERT_TRUE(s.hasKey("quux"));
-  ASSERT_EQ(5UL, s.get("quux").getUInt());
-  ASSERT_TRUE(s.hasKey("bart"));
-  ASSERT_EQ(6UL, s.get("bart").getUInt());
-  ASSERT_TRUE(s.hasKey("bark"));
-  ASSERT_EQ(7UL, s.get("bark").getUInt());
-}
-
-TEST(ParserTest, ExcludeAttributesSubLevel) {
-  std::string const value(
-      "{\"foo\":{\"bar\":{\"baz\":2,\"qux\":2,\"bart\":4},\"qux\":{\"baz\":9}},"
-      "\"qux\":5}");
-
-  struct MyAttributeExcludeHandler : public AttributeExcludeHandler {
-    bool shouldExclude(Slice const& key, int nesting) override final {
-      if (nesting == 3) {
-        ValueLength keyLength;
-        char const* p = key.getString(keyLength);
-
-        if (keyLength == 3 && (strncmp(p, "baz", keyLength) == 0 ||
-                               strncmp(p, "qux", keyLength) == 0)) {
-          // exclude attribute
-          return true;
-        }
-      }
-      // keep attribute
-      return false;
-    }
-  };
-
-  MyAttributeExcludeHandler handler;
-  Options options;
-  options.attributeExcludeHandler = &handler;
-
-  Parser parser(&options);
-  parser.parse(value);
-
-  std::shared_ptr<Builder> b = parser.steal();
-  Slice s(b->slice());
-
-  ASSERT_EQ(2UL, s.length());
-  ASSERT_TRUE(s.hasKey("foo"));
-  ASSERT_TRUE(s.get("foo").isObject());
-  ASSERT_EQ(2UL, s.get("foo").length());
-  ASSERT_TRUE(s.get("foo").hasKey("bar"));
-  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "bar"})).isObject());
-  ASSERT_EQ(1UL, s.get(std::vector<std::string>({"foo", "bar"})).length());
-  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "bar"})).hasKey("bart"));
-  ASSERT_TRUE(s.get("foo").hasKey("qux"));
-  ASSERT_TRUE(s.get(std::vector<std::string>({"foo", "qux"})).isObject());
-  ASSERT_EQ(0UL, s.get(std::vector<std::string>({"foo", "qux"})).length());
-  ASSERT_TRUE(s.hasKey("qux"));
-  ASSERT_EQ(5UL, s.get("qux").getUInt());
-}
-
 TEST(ParserTest, UseNonSSEStringCopy) {
   // modify global function pointer!
-  JSONStringCopy = JSONStringCopyC;
+  enableBuiltinStringFunctions();
 
   std::string const value(
       "\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
@@ -2428,7 +2406,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidString) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string const value("\"the quick brown fox jumped over the lazy dog\"");
 
@@ -2445,7 +2423,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckValidStringEscaped) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string const value(
       "\"the quick brown\\tfox\\r\\njumped \\\"over\\\" the lazy dog\"");
@@ -2463,11 +2441,11 @@ TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
   options.validateUtf8Strings = true;
 
   // modify global function pointer!
-  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  enableBuiltinStringFunctions();
 
   std::string value;
   value.push_back('"');
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     value.push_back(static_cast<unsigned char>(0x80));
   }
   value.push_back('"');
@@ -2481,7 +2459,7 @@ TEST(ParserTest, UseNonSSEUtf8CheckInvalidUtf8) {
 }
 
 TEST(ParserTest, UseNonSSEWhitespaceCheck) {
-  JSONSkipWhiteSpace = JSONSkipWhiteSpaceC;
+  enableBuiltinStringFunctions();
 
   // modify global function pointer!
   std::string const value("\"foo                 bar\"");

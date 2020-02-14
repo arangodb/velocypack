@@ -80,7 +80,7 @@ The following options can be set when building VPack:
   default is `OFF`, meaning the suite will not be built. Set the option to `ON` to
   build it. Building the benchmark suite requires the subdirectory *rapidjson* to
   be present (see below) and the `BuildTools` option to be set to `ON`.
-* `-DBuildExamples`: controls whether VPack's examples should be built. The
+* `-DBuildVelocyPackExamples`: controls whether VPack's examples should be built. The
   examples are not needed when VPack is used as a library only.
 * `-DBuildTests`: controls whether VPack's own test suite should be built. The
   default is `OFF`. Set the option to `ON` for building the tests. This requires
@@ -120,7 +120,7 @@ installed. To run the coverage tests, a debug build needs to be created as
 follows:
 
 ```bash
-(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF -DBuildTools=OFF .. && make)
+(cd build && cmake -DCoverage=ON -DBuildBench=OFF -DBuildVelocyPackExamples=OFF -DBuildTests=ON -DBuildLargeTests=OFF -DBuildTools=OFF .. && make)
 (cd build && lcov --zerocounters --directory . && lcov --capture --initial --directory . --output-file app)
 (cd build/tests && ctest)
 (cd build && lcov --no-checksum --directory . --capture --output-file app.info && genhtml app.info)

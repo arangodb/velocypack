@@ -28,13 +28,11 @@
 #define VELOCYPACK_ATTRIBUTETRANSLATOR_H 1
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/Options.h"
-#include "velocypack/Slice.h"
 #include "velocypack/StringRef.h"
 
 namespace arangodb {
@@ -46,33 +44,55 @@ class AttributeTranslator {
   AttributeTranslator(AttributeTranslator const&) = delete;
   AttributeTranslator& operator=(AttributeTranslator const&) = delete;
 
-  AttributeTranslator() : _builder(nullptr), _count(0) {}
+  AttributeTranslator(); 
 
   ~AttributeTranslator();
 
-  size_t count() const { return _count; }
+  std::size_t count() const { return _count; }
 
   void add(std::string const& key, uint64_t id);
 
   void seal();
 
-  Builder* builder() { return _builder; }
+  Builder* builder() const { return _builder.get(); }
+  
+  // translate from string to id
+  uint8_t const* translate(StringRef const& key) const noexcept {
+    auto it = _keyToId.find(key);
+
+    if (it == _keyToId.end()) {
+      return nullptr;
+    }
+
+    return (*it).second;
+  }
 
   // translate from string to id
-  uint8_t const* translate(std::string const& key) const;
-
+  inline uint8_t const* translate(std::string const& key) const noexcept {
+    return translate(StringRef(key.data(), key.size()));
+  }
+  
   // translate from string to id
-  uint8_t const* translate(char const* key, ValueLength length) const;
+  inline uint8_t const* translate(char const* key, ValueLength length) const noexcept {
+    return translate(StringRef(key, length));
+  }
 
   // translate from id to string
-  uint8_t const* translate(uint64_t id) const;
+  uint8_t const* translate(uint64_t id) const noexcept {
+    auto it = _idToKey.find(id);
+
+    if (it == _idToKey.end()) {
+      return nullptr;
+    }
+
+    return (*it).second;
+  }
 
  private:
-  Builder* _builder;
-  std::unordered_map<std::string, uint8_t const*> _keyToIdString;
-  std::unordered_map<StringRef, uint8_t const*> _keyToIdStringRef;
+  std::unique_ptr<Builder> _builder;
+  std::unordered_map<StringRef, uint8_t const*> _keyToId;
   std::unordered_map<uint64_t, uint8_t const*> _idToKey;
-  size_t _count;
+  std::size_t _count;
 };
 
 class AttributeTranslatorScope {
@@ -81,22 +101,13 @@ class AttributeTranslatorScope {
   AttributeTranslatorScope& operator= (AttributeTranslatorScope const&) = delete;
 
  public:
-  explicit AttributeTranslatorScope(AttributeTranslator* translator)
-      : _old(Options::Defaults.attributeTranslator) {
-    Options::Defaults.attributeTranslator = translator;
-  }
+  explicit AttributeTranslatorScope(AttributeTranslator* translator);
+  ~AttributeTranslatorScope();
 
-  ~AttributeTranslatorScope() {
-    revert();
-  }
-
-  // prematurely revert the change
-  void revert() {
-    Options::Defaults.attributeTranslator = _old;
-  }
+  void revert() noexcept;
 
  private:
-   AttributeTranslator* _old;
+  AttributeTranslator* _old;
 };
 
 }  // namespace arangodb::velocypack

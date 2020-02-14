@@ -64,6 +64,8 @@ static void usage(char* argv[]) {
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
   std::cout << " --hex           print a hex dump of the generated VPack value"
             << std::endl;
+  std::cout << " --stringify     print a char array containing the generated VPack value"
+            << std::endl;
 }
 
 static inline bool isOption(char const* arg, char const* expected) {
@@ -103,6 +105,7 @@ int main(int argc, char* argv[]) {
   bool compact = true;
   bool compress = false;
   bool hexDump = false;
+  bool stringify = false;
 
   int i = 1;
   while (i < argc) {
@@ -120,6 +123,8 @@ int main(int argc, char* argv[]) {
       compress = false;
     } else if (allowFlags && isOption(p, "--hex")) {
       hexDump = true;
+    } else if (allowFlags && isOption(p, "--stringify")) {
+      stringify = true;
     } else if (allowFlags && isOption(p, "--")) {
       allowFlags = false;
     } else if (infileName == nullptr) {
@@ -234,7 +239,6 @@ int main(int argc, char* argv[]) {
   Parser parser(&options);
   try {
     parser.parse(s);
-exit(0);
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while parsing infile '" << infile
               << "': " << ex.what() << std::endl;
@@ -262,6 +266,8 @@ exit(0);
   std::shared_ptr<Builder> builder = parser.steal();
   if (hexDump) {
     ofs << HexDump(builder->slice()) << std::endl;
+  } else if (stringify) {
+    ofs << "\"" << HexDump(builder->slice(), 2048, "", "\\x") << "\"" << std::endl;
   } else {
     uint8_t const* start = builder->start();
     ofs.write(reinterpret_cast<char const*>(start), builder->size());

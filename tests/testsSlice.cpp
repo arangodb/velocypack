@@ -1154,11 +1154,11 @@ TEST(SliceTest, StringEmpty) {
 TEST(SliceTest, StringLengths) {
   Builder builder;
 
-  for (size_t i = 0; i < 255; ++i) {
+  for (std::size_t i = 0; i < 255; ++i) {
     builder.clear();
 
     std::string temp;
-    for (size_t j = 0; j < i; ++j) {
+    for (std::size_t j = 0; j < i; ++j) {
       temp.push_back('x');
     }
 
@@ -1776,7 +1776,7 @@ TEST(SliceTest, EqualToUniqueValues) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1790,7 +1790,7 @@ TEST(SliceTest, EqualToDuplicateValuesNumbers) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1804,7 +1804,7 @@ TEST(SliceTest, EqualToBiggerNumbers) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1819,7 +1819,7 @@ TEST(SliceTest, EqualToDuplicateValuesStrings) {
   Parser parser;
   parser.parse(value);
 
-  std::unordered_set<Slice> values;
+  std::unordered_set<Slice, NormalizedCompare::Hash, NormalizedCompare::Equal> values(11, NormalizedCompare::Hash(), NormalizedCompare::Equal());
   for (auto it : ArrayIterator(Slice(parser.start()))) {
     values.emplace(it);
   }
@@ -1833,9 +1833,8 @@ TEST(SliceTest, EqualToNull) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("null");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
-  ASSERT_TRUE(s1 == s2);
-  ASSERT_FALSE(s1 != s2);
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToInt) {
@@ -1844,7 +1843,8 @@ TEST(SliceTest, EqualToInt) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToUInt) {
@@ -1853,7 +1853,8 @@ TEST(SliceTest, EqualToUInt) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("128885355");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToDouble) {
@@ -1862,7 +1863,8 @@ TEST(SliceTest, EqualToDouble) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("-128885355.353");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToString) {
@@ -1871,7 +1873,8 @@ TEST(SliceTest, EqualToString) {
   std::shared_ptr<Builder> b2 = Parser::fromJson("\"this is a test string\"");
   Slice s2 = b2->slice();
 
-  ASSERT_TRUE(std::equal_to<Slice>()(s1, s2));
+  ASSERT_TRUE(s1.binaryEquals(s2));
+  ASSERT_TRUE(s2.binaryEquals(s1));
 }
 
 TEST(SliceTest, EqualToDirectInvocation) {
@@ -1881,13 +1884,13 @@ TEST(SliceTest, EqualToDirectInvocation) {
   parser.parse(value);
 
   int comparisons = 0;
-  std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {
     ArrayIterator it2(Slice(parser.start()));
     while (it2.valid()) {
       if (it.index() != it2.index()) {
-        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ASSERT_FALSE(it.value().binaryEquals(it2.value()));
+        ASSERT_FALSE(it2.value().binaryEquals(it.value()));
         ++comparisons;
       }
       it2.next();
@@ -1904,13 +1907,13 @@ TEST(SliceTest, EqualToDirectInvocationSmallInts) {
   parser.parse(value);
 
   int comparisons = 0;
-  std::equal_to<Slice> comparer;
   ArrayIterator it(Slice(parser.start()));
   while (it.valid()) {
     ArrayIterator it2(Slice(parser.start()));
     while (it2.valid()) {
       if (it.index() != it2.index()) {
-        ASSERT_FALSE(comparer(it.value(), it2.value()));
+        ASSERT_FALSE(it.value().binaryEquals(it2.value()));
+        ASSERT_FALSE(it2.value().binaryEquals(it.value()));
         ++comparisons;
       }
       it2.next();
@@ -1930,11 +1933,27 @@ TEST(SliceTest, EqualToDirectInvocationLongStrings) {
       "........................................................."
       "longerthan127chars\"");
 
-  std::equal_to<Slice> comparer;
-  ASSERT_TRUE(comparer(b1->slice(), b1->slice()));
-  ASSERT_TRUE(comparer(b2->slice(), b2->slice()));
-  ASSERT_FALSE(comparer(b1->slice(), b2->slice()));
-  ASSERT_FALSE(comparer(b2->slice(), b1->slice()));
+  ASSERT_TRUE(b1->slice().binaryEquals(b1->slice()));
+  ASSERT_TRUE(b2->slice().binaryEquals(b2->slice()));
+  ASSERT_FALSE(b1->slice().binaryEquals(b2->slice()));
+  ASSERT_FALSE(b2->slice().binaryEquals(b1->slice()));
+}
+
+TEST(SliceTest, Hashing) {
+  for (std::size_t i = 0; i < 256; ++i) {
+    if (SliceStaticData::FixedTypeLengths[i] != 1) {
+      // not a one-byte type
+      continue;
+    }
+    Builder b;
+    uint8_t val = static_cast<uint8_t>(i);
+    b.add(Slice(&val));
+
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash());
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow());
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hash(Slice::defaultSeed64));
+    ASSERT_EQ(SliceStaticData::PrecalculatedHashesForDefaultSeed[i], b.slice().hashSlow(Slice::defaultSeed64));
+  }
 }
 
 #ifdef VELOCYPACK_XXHASH
@@ -2239,7 +2258,13 @@ TEST(SliceTest, NormalizedHashObject) {
   Slice s2 = b2->slice();
   
   // hash values differ, but normalized hash values shouldn't!
+#ifdef VELOCYPACK_XXHASH
   ASSERT_EQ(15518419071972093120ULL, s1.hash());
+#endif
+#ifdef VELOCYPACK_FASTHASH
+  ASSERT_EQ(6865527808070733846ULL, s1.hash());
+#endif
+
   ASSERT_EQ(4048487509578424242ULL, s2.hash());
 
   ASSERT_EQ(18068466095586825298ULL, s1.normalizedHash());
@@ -2723,39 +2748,6 @@ TEST(SliceTest, TranslatedInvalidKey) {
   ASSERT_VELOCYPACK_EXCEPTION(Collection::keys(s), Exception::InvalidValueType);
 }
 
-TEST(SliceTest, SliceScope) {
-  SliceScope scope;
-
-  Slice a;
-  Slice b;
-  {
-    a = Slice::fromJson(scope, "\"foobarbazsomevalue\"");
-    {
-      b = Slice::fromJson(scope,
-                          "\"some longer string that hopefully requires a "
-                          "dynamic memory allocation and that hopefully "
-                          "survives even if the Slice object itself goes out "
-                          "of scope - if it does not survive, this test will "
-                          "reveal it. ready? let's check it!\"");
-    }
-    // overwrite stack
-    Slice c(Slice::fromJson(
-        scope, "\"012345678901234567890123456789012345678901234567\""));
-    ASSERT_TRUE(c.isString());
-  }
-
-  ASSERT_TRUE(a.isString());
-  ASSERT_EQ("foobarbazsomevalue", a.copyString());
-
-  ASSERT_TRUE(b.isString());
-  ASSERT_EQ(
-      "some longer string that hopefully requires a dynamic memory allocation "
-      "and that hopefully survives even if the Slice object itself goes out of "
-      "scope - if it does not survive, this test will reveal it. ready? let's "
-      "check it!",
-      b.copyString());
-}
-
 TEST(SliceTest, CustomTypeByteSize) {
   uint8_t example0[] = { 0xf0, 0x00 };
   {
@@ -2982,6 +2974,76 @@ TEST(SliceTest, IsNumber) {
   ASSERT_VELOCYPACK_EXCEPTION(s.getNumber<int64_t>(), Exception::NumberOutOfRange);
   ASSERT_EQ(uint64_t(UINT64_MAX), s.getNumber<uint64_t>());
   ASSERT_EQ(double(UINT64_MAX), s.getNumber<double>());
+}
+
+TEST(SliceTest, ReadTag) {
+  Builder b;
+  b.addTagged(42, Value(5));
+
+  Slice s = b.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 42);
+  ASSERT_EQ(s.getTags().at(0), 42);
+  ASSERT_EQ(s.getTags().size(), 1);
+  ASSERT_TRUE(s.hasTag(42));
+  ASSERT_FALSE(s.hasTag(49));
+
+  ASSERT_EQ(s.value().getInt(), 5);
+}
+
+TEST(SliceTest, ReadTag8Bytes) {
+  Builder b;
+  b.addTagged(257, Value(5));
+
+  Slice s = b.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 257);
+  ASSERT_EQ(s.getTags().at(0), 257);
+  ASSERT_EQ(s.getTags().size(), 1);
+  ASSERT_TRUE(s.hasTag(257));
+  ASSERT_FALSE(s.hasTag(49));
+
+  ASSERT_EQ(s.value().getInt(), 5);
+}
+
+TEST(SliceTest, ReadTags) {
+  Builder b;
+  b.addTagged(42, Value(5));
+
+  Builder bb;
+  bb.addTagged(49, b.slice());
+
+  Slice s = bb.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 49);
+  ASSERT_EQ(s.getTags().size(), 2);
+  ASSERT_EQ(s.getTags().at(0), 49);
+  ASSERT_EQ(s.getTags().at(1), 42);
+  ASSERT_TRUE(s.hasTag(42));
+  ASSERT_TRUE(s.hasTag(49));
+  ASSERT_FALSE(s.hasTag(50));
+
+  ASSERT_EQ(s.value().getInt(), 5);
+}
+
+TEST(SliceTest, ReadTags8Bytes) {
+  Builder b;
+  b.addTagged(257, Value(5));
+
+  Builder bb;
+  bb.addTagged(65536, b.slice());
+
+  Slice s = bb.slice();
+  ASSERT_TRUE(s.isTagged());
+  ASSERT_EQ(s.getFirstTag(), 65536);
+  ASSERT_EQ(s.getTags().size(), 2);
+  ASSERT_EQ(s.getTags().at(0), 65536);
+  ASSERT_EQ(s.getTags().at(1), 257);
+  ASSERT_TRUE(s.hasTag(257));
+  ASSERT_TRUE(s.hasTag(65536));
+  ASSERT_FALSE(s.hasTag(50));
+
+  ASSERT_EQ(s.value().getInt(), 5);
 }
 
 int main(int argc, char* argv[]) {

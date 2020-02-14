@@ -36,6 +36,18 @@ TEST(BufferTest, CreateEmpty) {
   ASSERT_EQ(0UL, buffer.size());
   ASSERT_EQ(0UL, buffer.length());
   ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+  ASSERT_NE(nullptr, buffer.data());
+}
+
+TEST(BufferTest, CreateEmptyWithSize) {
+  Buffer<uint8_t> buffer(10);
+
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+  ASSERT_NE(nullptr, buffer.data());
 }
 
 TEST(BufferTest, CreateAndAppend) {
@@ -52,7 +64,7 @@ TEST(BufferTest, CreateAndAppendLong) {
   std::string const value("this is a test string");
   Buffer<uint8_t> buffer;
 
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -77,7 +89,7 @@ TEST(BufferTest, CopyConstructLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -104,7 +116,7 @@ TEST(BufferTest, CopyAssignLongValue) {
   std::string const value("this is a test string");
 
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -119,12 +131,12 @@ TEST(BufferTest, CopyAssignDiscardOwnValue) {
   std::string const value("this is a test string");
 
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
   Buffer<char> buffer2;
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     buffer2.append(value.c_str(), value.size());
   }
 
@@ -150,7 +162,7 @@ TEST(BufferTest, MoveConstructLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -177,7 +189,7 @@ TEST(BufferTest, MoveAssignLongValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
@@ -192,12 +204,12 @@ TEST(BufferTest, MoveAssignDiscardOwnValue) {
   std::string const value("this is a test string");
   
   Buffer<char> buffer;
-  for (size_t i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     buffer.append(value.c_str(), value.size());
   }
 
   Buffer<char> buffer2;
-  for (size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 100; ++i) {
     buffer2.append(value.c_str(), value.size());
   }
 
@@ -205,6 +217,40 @@ TEST(BufferTest, MoveAssignDiscardOwnValue) {
   ASSERT_EQ(1000 * value.size(), buffer2.size());
   ASSERT_EQ(0UL, buffer.size()); // should be empty
   ASSERT_NE(buffer.data(), buffer2.data());
+}
+
+TEST(BufferTest, Clear) {
+  Buffer<uint8_t> buffer;
+
+  buffer.clear();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+
+  buffer.append("foobar", 6);
+
+  buffer.clear();
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
+
+  for (std::size_t i = 0; i < 256; ++i) {
+    buffer.push_back('x');
+  }
+  
+  ASSERT_EQ(256UL, buffer.size());
+  ASSERT_EQ(256UL, buffer.length());
+  ASSERT_EQ(256UL, buffer.byteSize());
+  ASSERT_FALSE(buffer.empty());
+  
+  buffer.clear();
+  
+  ASSERT_EQ(0UL, buffer.size());
+  ASSERT_EQ(0UL, buffer.length());
+  ASSERT_EQ(0UL, buffer.byteSize());
+  ASSERT_TRUE(buffer.empty());
 }
 
 TEST(BufferTest, SizeEmpty) {
@@ -264,7 +310,7 @@ TEST(BufferTest, VectorTest) {
   Buffer<uint8_t>& last = buffers.back();
   Slice copy(last.data());
   ASSERT_TRUE(copy.isString());
-  ASSERT_TRUE(copy.equals(s));
+  ASSERT_TRUE(copy.binaryEquals(s));
   ASSERT_EQ("der hund, der ist so bunt", copy.copyString());
 }
 
@@ -284,7 +330,7 @@ TEST(BufferTest, VectorMoveTest) {
   Buffer<uint8_t>& last = buffers.back();
   Slice copy(last.data());
   ASSERT_TRUE(copy.isString());
-  ASSERT_TRUE(copy.equals(s));
+  ASSERT_TRUE(copy.binaryEquals(s));
   ASSERT_EQ(0UL, b.byteSize());
 }
 
@@ -464,6 +510,30 @@ TEST(BufferTest, ResetToTest) {
   
   buffer.resetTo(1);
   ASSERT_EQ(std::string("f"), std::string(reinterpret_cast<char const*>(buffer.data()), buffer.size()));
+}
+
+TEST(BufferTest, BufferNonDeleterTest) {
+  Buffer<uint8_t> buffer;
+  for (std::size_t i = 0; i < 256; ++i) {
+    buffer.push_back('x');
+  }
+
+  {
+    std::shared_ptr<Buffer<uint8_t>> ptr;
+    ptr.reset(&buffer, BufferNonDeleter<uint8_t>());
+
+    buffer.append("test");
+    ptr.reset();
+  }
+
+  ASSERT_EQ(260, buffer.size());
+  
+  // make sure the Buffer is still usable
+  for (std::size_t i = 0; i < 2048; ++i) {
+    buffer.push_back('x');
+  }
+  
+  ASSERT_EQ(2308, buffer.size());
 }
 
 int main(int argc, char* argv[]) {
