@@ -26,6 +26,8 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/TaoParser.h"
 
+#include "tao/json/external/pegtl/memory_input.hpp"
+
 #include <cstdlib>
 
 namespace arangodb
@@ -36,18 +38,18 @@ namespace arangodb
          if (options->clearBuilderBeforeParse) {
             _e.builder->clear();
          }
-         tao::json_pegtl::memory_input< tao::json_pegtl::tracking_mode::LAZY, tao::json_pegtl::eol::lf_crlf, const char* > in( reinterpret_cast< const char * >( json ), size, __PRETTY_FUNCTION__ );
+         tao::json::pegtl::memory_input< tao::json::pegtl::tracking_mode::lazy, tao::json::pegtl::eol::lf_crlf, const char* > in( reinterpret_cast< const char * >( json ), size, __PRETTY_FUNCTION__ );
          if ( multi ) {
             ValueLength nr = 0;
             do {
                const auto * const t = in.current();
-               tao::json_pegtl::parse< tao::json_pegtl::must< tao::json::internal::rules::text >, tao::json::internal::action, tao::json::internal::control >( in, _e );
+               tao::json::pegtl::parse< tao::json::pegtl::must< tao::json::internal::rules::text >, tao::json::internal::action>( in, _e );
                nr += in.current() - t;
             } while ( !in.empty() );
             return nr;
          }
          const auto * const t = in.current();
-         tao::json_pegtl::parse< tao::json::internal::grammar, tao::json::internal::action, tao::json::internal::control >( in, _e );
+         tao::json::pegtl::parse< tao::json::internal::grammar, tao::json::internal::action>( in, _e );
          return in.current() - t;
       }
 

@@ -94,12 +94,12 @@ namespace arangodb
             add( Value( v ) );
          }
 
-         void string( const tao::string_view v )
+         void string( const std::string_view v )
          {
             add( ValuePair( reinterpret_cast< const uint8_t* >( v.data() ), v.size(), ValueType::String ) );
          }
 
-         void binary( const tao::byte_view v )
+         void binary( const tao::binary_view v )
          {
             add( ValuePair( reinterpret_cast< const uint8_t* >( v.data() ), v.size(), ValueType::Binary ) );
          }
@@ -177,7 +177,7 @@ namespace arangodb
                for ( const auto& s : ObjectIterator( slice ) ) {
                   ValueLength size;
                   const char * data = s.key.getString( size );
-                  consumer.key( tao::string_view( data, size ) );
+                  consumer.key( std::string_view( data, size ) );
                   sliceToEvents( consumer, s.value );
                   consumer.member();
                }
@@ -208,17 +208,19 @@ namespace arangodb
             case ValueType::String: {
                ValueLength size;
                const char * data = slice.getString( size );
-               consumer.string( tao::string_view( data, size ) );
+               consumer.string( std::string_view( data, size ) );
             }  break;
             case ValueType::Binary: {
                ValueLength size;
                const auto * data = slice.getBinary( size );
-               consumer.binary( tao::byte_view( reinterpret_cast< const tao::byte* >( data ), size ) );
+               consumer.binary( tao::binary_view( reinterpret_cast< const std::byte* >( data ), size ) );
             }  break;
             case ValueType::BCD:
                // TODO: Convert to other number format or string?
                break;
             case ValueType::Custom:
+               // TODO: What?
+            case ValueType::Tagged:
                // TODO: What?
                break;
          }
