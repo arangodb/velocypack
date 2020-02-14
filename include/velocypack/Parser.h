@@ -29,22 +29,60 @@
 
 #include <string>
 #include <cmath>
-#include <memory>
-#include <utility>
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/Json.h"
+#include "velocypack/Builder.h"
 #include "velocypack/Exception.h"
+#include "velocypack/Options.h"
 
 namespace arangodb {
 namespace velocypack {
 
-   // Parser class with the same interface as before
-   // the integration of taocpp/json.
-
 class Parser {
+  // This class can parse JSON very rapidly, but only from contiguous
+  // blocks of memory. It builds the result using the Builder.
 
-   EventsToBuilder _e;
+  struct ParsedNumber {
+    ParsedNumber() : intValue(0), doubleValue(0.0), isInteger(true) {}
+
+    void addDigit(int i) {
+      if (isInteger) {
+        // check if adding another digit to the int will make it overflow
+        if (intValue < 1844674407370955161ULL ||
+            (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
+          // int won't overflow
+          intValue = intValue * 10 + (i - '0');
+          return;
+        }
+        // int would overflow
+        doubleValue = static_cast<double>(intValue);
+        isInteger = false;
+      }
+
+      doubleValue = doubleValue * 10.0 + (i - '0');
+      if (std::isnan(doubleValue) || !std::isfinite(doubleValue)) {
+        throw Exception(Exception::NumberOutOfRange);
+      }
+    }
+
+    double asDouble() const {
+      if (isInteger) {
+        return static_cast<double>(intValue);
+      }
+      return doubleValue;
+    }
+
+    uint64_t intValue;
+    double doubleValue;
+    bool isInteger;
+  };
+
+  std::shared_ptr<Builder> _builder;
+  Builder* _builderPtr;
+  uint8_t const* _start;
+  std::size_t _size;
+  std::size_t _pos;
+  int _nesting;
 
  public:
   Options const* options;
@@ -54,20 +92,42 @@ class Parser {
   Parser& operator=(Parser const&) = delete;
   Parser& operator=(Parser&&) = delete;
   ~Parser() = default;
-
-  explicit Parser(Options const* options = &Options::Defaults)
-      : options(options) {
-    if (options == nullptr) {
-      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
-    }
-    _e.builder->options = options;
+  
+  Parser()
+      : _start(nullptr), 
+        _size(0), 
+        _pos(0), 
+        _nesting(0), 
+        options(&Options::Defaults) {
+    _builder.reset(new Builder());
+    _builderPtr = _builder.get();
+    _builderPtr->options = &Options::Defaults;
   }
 
-  explicit Parser(std::shared_ptr<Builder>& builder,
-                  Options const* options = &Options::Defaults)
-      : _e(builder),
+  explicit Parser(Options const* options) 
+      : _start(nullptr), 
+        _size(0), 
+        _pos(0), 
+        _nesting(0), 
         options(options) {
-    if (options == nullptr) {
+    if (VELOCYPACK_UNLIKELY(options == nullptr)) {
+      throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+    }
+    _builder.reset(new Builder());
+    _builderPtr = _builder.get();
+    _builderPtr->options = options;
+  }
+
+  explicit Parser(std::shared_ptr<Builder> const& builder,
+                  Options const* options = &Options::Defaults)
+      : _builder(builder),
+        _builderPtr(_builder.get()), 
+        _start(nullptr), 
+        _size(0), 
+        _pos(0), 
+        _nesting(0),
+         options(options) {
+    if (VELOCYPACK_UNLIKELY(options == nullptr)) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
   }
@@ -75,14 +135,19 @@ class Parser {
   // This method produces a parser that does not own the builder
   explicit Parser(Builder& builder,
                   Options const* options = &Options::Defaults)
-      : _e( std::shared_ptr< Builder >( &builder, BuilderNonDeleter() ) ),
-        options(options) {
-    if (options == nullptr) {
+      : _start(nullptr), 
+        _size(0), 
+        _pos(0), 
+        _nesting(0),
+         options(options) {
+    if (VELOCYPACK_UNLIKELY(options == nullptr)) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
+    _builder.reset(&builder, BuilderNonDeleter());
+    _builderPtr = _builder.get();
   }
 
-  Builder const& builder() const { return *_e.builder; }
+  Builder const& builder() const { return *_builderPtr; }
 
   static std::shared_ptr<Builder> fromJson(
       std::string const& json,
@@ -91,9 +156,9 @@ class Parser {
     parser.parse(json);
     return parser.steal();
   }
-
+  
   static std::shared_ptr<Builder> fromJson(
-      char const* start, size_t size,
+      char const* start, std::size_t size,
       Options const* options = &Options::Defaults) {
     Parser parser(options);
     parser.parse(start, size);
@@ -101,7 +166,7 @@ class Parser {
   }
 
   static std::shared_ptr<Builder> fromJson(
-      uint8_t const* start, size_t size,
+      uint8_t const* start, std::size_t size,
       Options const* options = &Options::Defaults) {
     Parser parser(options);
     parser.parse(start, size);
@@ -109,25 +174,151 @@ class Parser {
   }
 
   ValueLength parse(std::string const& json, bool multi = false) {
-    return parse(json.data(), json.size(),multi);
+    return parse(reinterpret_cast<uint8_t const*>(json.data()), json.size(),
+                 multi);
   }
 
-  ValueLength parse(void const* json, const ValueLength size, const bool multi = false );
+  ValueLength parse(char const* start, std::size_t size, bool multi = false) {
+    return parse(reinterpret_cast<uint8_t const*>(start), size, multi);
+  }
+
+  ValueLength parse(uint8_t const* start, std::size_t size, bool multi = false) {
+    _start = start;
+    _size = size;
+    _pos = 0;
+    if (options->clearBuilderBeforeParse) {
+      _builder->clear();
+    }
+    return parseInternal(multi);
+  }
+
+  // We probably want a parse from stream at some stage...
+  // Not with this high-performance two-pass approach. :-(
 
   std::shared_ptr<Builder> steal() {
     // Parser object is broken after a steal()
-    return std::move( _e.builder );
+    std::shared_ptr<Builder> res(_builder);
+    _builder.reset();
+    _builderPtr = nullptr;
+    return res;
   }
 
   // Beware, only valid as long as you do not parse more, use steal
   // to move the data out!
-  uint8_t const* start() { return _e.builder->start(); }
+  uint8_t const* start() { return _builderPtr->start(); }
 
   // Returns the position at the time when the just reported error
   // occurred, only use when handling an exception.
-  size_t errorPos() const { return 0; }  // TODO!
+  std::size_t errorPos() const { return _pos > 0 ? _pos - 1 : _pos; }
 
-  void clear() { _e.builder->clear(); }
+  void clear() { _builderPtr->clear(); }
+
+ private:
+  inline int peek() const {
+    if (_pos >= _size) {
+      return -1;
+    }
+    return static_cast<int>(_start[_pos]);
+  }
+
+  inline int consume() {
+    if (_pos >= _size) {
+      return -1;
+    }
+    return static_cast<int>(_start[_pos++]);
+  }
+
+  inline void unconsume() { --_pos; }
+
+  inline void reset() { _pos = 0; }
+
+  ValueLength parseInternal(bool multi);
+
+  inline bool isWhiteSpace(uint8_t i) const noexcept {
+    return (i == ' ' || i == '\t' || i == '\n' || i == '\r');
+  }
+
+  // skips over all following whitespace tokens but does not consume the
+  // byte following the whitespace
+  int skipWhiteSpace(char const*);
+
+  void parseTrue() {
+    // Called, when main mode has just seen a 't', need to see "rue" next
+    if (consume() != 'r' || consume() != 'u' || consume() != 'e') {
+      throw Exception(Exception::ParseError, "Expecting 'true'");
+    }
+    _builderPtr->addTrue();
+  }
+
+  void parseFalse() {
+    // Called, when main mode has just seen a 'f', need to see "alse" next
+    if (consume() != 'a' || consume() != 'l' || consume() != 's' ||
+        consume() != 'e') {
+      throw Exception(Exception::ParseError, "Expecting 'false'");
+    }
+    _builderPtr->addFalse();
+  }
+
+  void parseNull() {
+    // Called, when main mode has just seen a 'n', need to see "ull" next
+    if (consume() != 'u' || consume() != 'l' || consume() != 'l') {
+      throw Exception(Exception::ParseError, "Expecting 'null'");
+    }
+    _builderPtr->addNull();
+  }
+
+  void scanDigits(ParsedNumber& value) {
+    while (true) {
+      int i = consume();
+      if (i < 0) {
+        return;
+      }
+      if (i < '0' || i > '9') {
+        unconsume();
+        return;
+      }
+      value.addDigit(i);
+    }
+  }
+
+  double scanDigitsFractional() {
+    double pot = 0.1;
+    double x = 0.0;
+    while (true) {
+      int i = consume();
+      if (i < 0) {
+        return x;
+      }
+      if (i < '0' || i > '9') {
+        unconsume();
+        return x;
+      }
+      x = x + pot * (i - '0');
+      pot /= 10.0;
+    }
+  }
+
+  inline int getOneOrThrow(char const* msg) {
+    int i = consume();
+    if (i < 0) {
+      throw Exception(Exception::ParseError, msg);
+    }
+    return i;
+  }
+
+  inline void increaseNesting() { ++_nesting; }
+
+  inline void decreaseNesting() { --_nesting; }
+
+  void parseNumber();
+
+  void parseString();
+
+  void parseArray();
+
+  void parseObject();
+
+  void parseJson();
 };
 
 }  // namespace arangodb::velocypack
