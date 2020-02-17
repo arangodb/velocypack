@@ -1,6 +1,7 @@
 bench
 vpack-to-json
 json-to-vpack
+taocpp-json
 core 
 AsmTest
 *.o
