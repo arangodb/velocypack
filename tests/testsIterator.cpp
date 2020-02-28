@@ -81,6 +81,20 @@ TEST(IteratorTest, IterateArrayEmpty) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(0U, it.size());
+  ASSERT_FALSE(it.valid());
+
+  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+
+  it.next();
+  ASSERT_FALSE(it.valid());
+  
+  ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
+}
+
+TEST(IteratorTest, IterateArrayEmptySpecial) {
+  ArrayIterator it(ArrayIterator::Empty{});
+  ASSERT_EQ(0U, it.size());
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
@@ -99,6 +113,7 @@ TEST(IteratorTest, IterateArray) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(8U, it.size());
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
@@ -167,6 +182,7 @@ TEST(IteratorTest, IterateArrayForward) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(8U, it.size());
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
@@ -228,6 +244,7 @@ TEST(IteratorTest, IterateCompactArrayForward) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(8U, it.size());
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
@@ -286,12 +303,14 @@ TEST(IteratorTest, IterateSubArray) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(2U, it.size());
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();
   ASSERT_TRUE(current.isArray());
 
   ArrayIterator it2(current);
+  ASSERT_EQ(3U, it2.size());
   ASSERT_TRUE(it2.valid());
   Slice sub = it2.value();
   ASSERT_TRUE(sub.isNumber());
@@ -322,6 +341,7 @@ TEST(IteratorTest, IterateSubArray) {
   ASSERT_TRUE(current.isArray());
 
   ArrayIterator it3(current);
+  ASSERT_EQ(2U, it3.size());
 
   ASSERT_TRUE(it3.valid());
   sub = it3.value();
@@ -352,6 +372,7 @@ TEST(IteratorTest, IterateArrayUnsorted) {
   Slice s(parser.start());
 
   ArrayIterator it(s);
+  ASSERT_EQ(8U, it.size());
 
   ASSERT_TRUE(it.valid());
   Slice current = it.value();

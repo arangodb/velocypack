@@ -3447,7 +3447,7 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
 
 #if __cplusplus >= 201703L
 TEST(BuilderTest, getSharedSlice) {
-  auto const check = [](Builder& b, bool const isSmall) {
+  auto const check = [](Builder& b, bool const /* isSmall */) {
     auto const slice = b.slice();
     ASSERT_EQ(1, b.buffer().use_count());
     auto const sharedSlice = b.sharedSlice();
