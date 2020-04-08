@@ -81,11 +81,11 @@ reference, for arrays and objects see below for details:
   - 0x40-0xbe : UTF-8-string, using V - 0x40 bytes (not Unicode characters!),
                 length 0 is possible, so 0x40 is the empty string,
                 maximal length is 126, note that strings here are not
-                zero-terminated
+                zero-terminated and may contain NUL bytes
   - 0xbf      : long UTF-8-string, next 8 bytes are length of string in
                 bytes (not Unicode characters) as little endian unsigned
                 integer, note that long strings are not zero-terminated
-                and may contain zero bytes
+                and may contain NUL bytes
   - 0xc0-0xc7 : binary blob, next V - 0xbf bytes are the length of blob in
                 bytes, note that binary blobs are not zero-terminated
   - 0xc8-0xcf : positive long packed BCD-encoded float, V - 0xc7 bytes follow
@@ -389,7 +389,7 @@ entries, as in this example:
 Similarly with type 0x0c and 2-byte offsets, byte length and number of
 subvalues, or with type 0x0e and 8-byte numbers.
 
-Note that it is not recommended to encode short arrays with too long
+Note that it is not recommended to encode short objects with too long
 index tables.
 
 ### Special compact objects

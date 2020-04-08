@@ -513,6 +513,96 @@ TEST(ValidatorTest, StringInvalidUtf8Long) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
 }
 
+TEST(ValidatorTest, StringValidUtf8ObjectWithValidation) {
+  std::string const value("\x0b\x08\x01\x41\x41\x41\x41\x03", 8);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringInvalidUtf8ObjectKeyWithValidation) {
+  std::string const value("\x0b\x08\x01\x41\x80\x41\x41\x03", 8);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8ObjectValueWithValidation) {
+  std::string const value("\x0b\x08\x01\x41\x41\x41\x80\x03", 8);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8ObjectLongKeyWithValidation) {
+  std::string const value("\x0b\x10\x01\xbf\x01\x00\x00\x00\x00\x00\x00\x00\x80\x41\x41\x03", 16);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8ObjectLongValueWithValidation) {
+  std::string const value("\x0b\x10\x01\x41\x41\xbf\x01\x00\x00\x00\x00\x00\x00\x00\x80\x03", 16);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringValidUtf8CompactObjectWithValidation) {
+  std::string const value("\x14\x07\x41\x41\x41\x41\x01", 7);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, StringInvalidUtf8CompactObjectKeyWithValidation) {
+  std::string const value("\x14\x07\x41\x80\x41\x41\x01", 7);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8CompactObjectLongKeyWithValidation) {
+  std::string const value("\x14\x0f\xbf\x01\x00\x00\x00\x00\x00\x00\x00\x80\x41\x41\x01", 15);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8CompactObjectValueWithValidation) {
+  std::string const value("\x14\x07\x41\x41\x41\x80\x01", 7);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
+TEST(ValidatorTest, StringInvalidUtf8CompactLongObjectValueWithValidation) {
+  std::string const value("\x14\x0f\x41\x41\xbf\x01\x00\x00\x00\x00\x00\x00\x00\x80\x01", 15);
+
+  Options options;
+  options.validateUtf8Strings = true;
+  Validator validator(&options);
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::InvalidUtf8Sequence);
+}
+
 TEST(ValidatorTest, LongStringEmpty) {
   std::string const value("\xbf\x00\x00\x00\x00\x00\x00\x00\x00", 9);
 
