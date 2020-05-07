@@ -21,7 +21,7 @@ endif()
 
 message(STATUS "Build mode: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Install base directory: ${CMAKE_INSTALL_PREFIX}")
-set(VELOCYPACK_VERSION "0.0.1" CACHE STRING "VelocyPack version")
+set(VELOCYPACK_VERSION "0.1.33" CACHE STRING "VelocyPack version")
 set(VELOCYPACK_DISPLAY_NAME "Velocypack")
 set(VELOCYPACK_URL_INFO_ABOUT "https://github.com/arangodb/velocypack")
 set(VELOCYPACK_CONTACT "hackers@arangodb.org")
