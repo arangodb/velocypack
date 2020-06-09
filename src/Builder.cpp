@@ -1005,11 +1005,11 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
       break;
     }
     case ValueType::Array: {
-      addArray(item._unindexed);
+      addArray(item.unindexed());
       break;
     }
     case ValueType::Object: {
-      addObject(item._unindexed);
+      addObject(item.unindexed());
       break;
     }
     case ValueType::UTCDate: {

@@ -2015,8 +2015,29 @@ TEST(ValidatorTest, ObjectCompactManyEntries) {
   ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
 }
 
+TEST(ValidatorTest, ObjectNegativeKeySmallInt) {
+  std::string const value("\x0b\x06\x01\x3a\x18\x03", 6);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectNegativeKeySignedInt) {
+  std::string const value("\x0b\x07\x01\x20\x01\x18\x03", 7);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
+}
+
 TEST(ValidatorTest, ObjectOneByte) {
   std::string const value("\x0b\x06\x01\x40\x18\x03", 6);
+
+  Validator validator;
+  ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
+}
+
+TEST(ValidatorTest, ObjectOneByteSingleByteKey) {
+  std::string const value("\x0b\x07\x01\x41\x41\x18\x03", 7);
 
   Validator validator;
   ASSERT_TRUE(validator.validate(value.c_str(), value.size()));
