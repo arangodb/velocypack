@@ -2022,7 +2022,7 @@ TEST(ValidatorTest, ObjectNegativeKeySmallInt) {
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()), Exception::ValidatorInvalidLength);
 }
 
-TEST(ValidatorTest, ObjectNegativeKeySignedInt) {
+TEST(ValidatorTest, ObjectKeySignedInt) {
   std::string const value("\x0b\x07\x01\x20\x01\x18\x03", 7);
 
   Validator validator;
