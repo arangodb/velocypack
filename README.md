@@ -61,7 +61,7 @@ respect to the above list. To name but a few:
     self-contained. Their transport format is a serialization that is
     not good for rapid sub-value access
   - MessagePack is probably the closest to our shopping list. It has
-    has decent data types and is quite compact. However, we found that 
+    decent data types and is quite compact. However, we found that 
     one can do better in terms of compactness for some cases. More
     important for us, MessagePack provides no quick sub-value access
   - Our own shaped JSON (used in ArangoDB as internal storage format)
