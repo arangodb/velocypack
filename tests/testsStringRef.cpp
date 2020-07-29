@@ -352,7 +352,7 @@ TEST(StringRefTest, PopBack) {
 }
 
 TEST(StringRefTest, Find) {
-  std::string const value("the-quick-brown-foxx");
+  std::string const value("the-quick-brown-foxx\t\n\r\fxx.\\ o5124574");
   StringRef s(value);
 
   for (std::size_t i = 0; i < 256; ++i) {
@@ -360,13 +360,111 @@ TEST(StringRefTest, Find) {
   }
 }
 
+TEST(StringRefTest, FindOffset) {
+  std::string const value("ababcdefghijklthe-quick-brown-foxxfoxxfoxxabcz\tfoo\nbar\r\n\tfoofofoabc43823");
+  StringRef s(value);
+
+  for (std::size_t i = 0; i < 128; ++i) {
+    for (std::size_t offset = 0; offset < 30; offset += 2) {
+      ASSERT_EQ(value.find(static_cast<char>(i), offset), s.find(static_cast<char>(i), offset));
+    }
+  }
+}
+
+TEST(StringRefTest, FindPositions) {
+  std::string const value("foobarbazbarkbarz");
+  StringRef s(value);
+
+  ASSERT_EQ(std::string::npos, s.find('y', 0));
+  ASSERT_EQ(std::string::npos, s.find('\t', 0));
+  ASSERT_EQ(std::string::npos, s.find('\r', 0));
+  ASSERT_EQ(std::string::npos, s.find('\0', 0));
+  
+  ASSERT_EQ(0U, s.find('f', 0));
+  ASSERT_EQ(1U, s.find('o', 0));
+  ASSERT_EQ(3U, s.find('b', 0));
+  ASSERT_EQ(8U, s.find('z', 0));
+  
+  ASSERT_EQ(std::string::npos, s.find('f', 1));
+  ASSERT_EQ(std::string::npos, s.find('f', 1000));
+  ASSERT_EQ(std::string::npos, s.find('o', 1000));
+  ASSERT_EQ(std::string::npos, s.find('y', 1000));
+  ASSERT_EQ(1U, s.find('o', 1));
+  ASSERT_EQ(2U, s.find('o', 2));
+  ASSERT_EQ(std::string::npos, s.find('o', 3));
+  ASSERT_EQ(std::string::npos, s.find('a', 20));
+  ASSERT_EQ(8U, s.find('z', 8));
+  ASSERT_EQ(16U, s.find('z', 9));
+  ASSERT_EQ(16U, s.find('z', 16));
+  ASSERT_EQ(std::string::npos, s.find('z', 17));
+}
+
 TEST(StringRefTest, RFind) {
-  std::string const value("the-quick-brown-foxx");
+  std::string const value("the-quick-brown-foxx\t\n\r\fxx.\\ o5124574");
   StringRef s(value);
 
   for (std::size_t i = 0; i < 256; ++i) {
     ASSERT_EQ(value.rfind(static_cast<char>(i)), s.rfind(static_cast<char>(i)));
   }
+}
+
+TEST(StringRefTest, RFindOffset) {
+  std::string const value("ababcdefghijklthe-quick-brown-foxxfoxxfoxxabcz\tfoo\nbar\r\n\tfoofofoabc43823");
+  StringRef s(value);
+
+  for (std::size_t i = 0; i < 128; ++i) {
+    for (std::size_t offset = 0; offset < 30; offset += 2) {
+      ASSERT_EQ(value.rfind(static_cast<char>(i), offset), s.rfind(static_cast<char>(i), offset));
+    }
+  }
+}
+
+TEST(StringRefTest, RFindPositions) {
+  std::string const value("foobarbazbarkbarz");
+  StringRef s(value);
+
+  ASSERT_EQ(std::string::npos, s.rfind('y', 0));
+  ASSERT_EQ(std::string::npos, s.rfind('\t', 0));
+  ASSERT_EQ(std::string::npos, s.rfind('\r', 0));
+  ASSERT_EQ(std::string::npos, s.rfind('\0', 0));
+  ASSERT_EQ(std::string::npos, s.rfind('y', std::string::npos));
+  ASSERT_EQ(std::string::npos, s.rfind('\t', std::string::npos));
+  ASSERT_EQ(std::string::npos, s.rfind('\r', std::string::npos));
+  ASSERT_EQ(std::string::npos, s.rfind('\0', std::string::npos));
+  
+  ASSERT_EQ(0U, s.rfind('f', std::string::npos));
+  ASSERT_EQ(2U, s.rfind('o', std::string::npos));
+  ASSERT_EQ(13U, s.rfind('b', std::string::npos));
+  ASSERT_EQ(16U, s.rfind('z', std::string::npos));
+  
+  ASSERT_EQ(0U, s.rfind('f', 0));
+  ASSERT_EQ(0U, s.rfind('f', 1));
+  ASSERT_EQ(0U, s.rfind('f', 1000));
+  ASSERT_EQ(2U, s.rfind('o', 1000));
+  ASSERT_EQ(std::string::npos, s.rfind('y', 1000));
+
+  ASSERT_EQ(1U, s.rfind('o', 1));
+  ASSERT_EQ(2U, s.rfind('o', 2));
+  ASSERT_EQ(2U, s.rfind('o', 3));
+  ASSERT_EQ(2U, s.rfind('o', 4));
+  ASSERT_EQ(std::string::npos, s.rfind('z', 3));
+  
+  ASSERT_EQ(14U, s.rfind('a', std::string::npos));
+  ASSERT_EQ(14U, s.rfind('a', 20));
+  ASSERT_EQ(14U, s.rfind('a', 16));
+  ASSERT_EQ(14U, s.rfind('a', 17));
+  ASSERT_EQ(14U, s.rfind('a', 14));
+  ASSERT_EQ(10U, s.rfind('a', 13));
+  ASSERT_EQ(10U, s.rfind('a', 11));
+  ASSERT_EQ(10U, s.rfind('a', 10));
+  ASSERT_EQ(7U, s.rfind('a', 9));
+  ASSERT_EQ(7U, s.rfind('a', 8));
+  ASSERT_EQ(7U, s.rfind('a', 7));
+  ASSERT_EQ(4U, s.rfind('a', 6));
+  ASSERT_EQ(4U, s.rfind('a', 5));
+  ASSERT_EQ(4U, s.rfind('a', 4));
+  ASSERT_EQ(std::string::npos, s.rfind('a', 3));
+  ASSERT_EQ(std::string::npos, s.rfind('a', 0));
 }
 
 TEST(StringRefTest, IteratorBeginEnd) {
