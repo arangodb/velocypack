@@ -86,6 +86,7 @@
 
 #ifndef VELOCYPACK_XXHASH
 #ifndef VELOCYPACK_FASTHASH
+// default to xxhash if no hash define is set
 #define VELOCYPACK_XXHASH
 #endif
 #endif
@@ -93,7 +94,7 @@
 #include "velocypack/velocypack-memory.h"
 
 #ifdef VELOCYPACK_XXHASH
-// forward for XXH64 function declared elsewhere
+// forward for XXH functions declared elsewhere
 extern "C" unsigned long long XXH64(void const*, std::size_t, unsigned long long);
 extern "C" unsigned int XXH32(void const* input, std::size_t len, unsigned int seed);
 
@@ -102,10 +103,12 @@ extern "C" unsigned int XXH32(void const* input, std::size_t len, unsigned int s
 #endif
 
 #ifdef VELOCYPACK_FASTHASH
-// forward for fasthash64 function declared elsewhere
+// forward for fasthash functions declared elsewhere
 uint64_t fasthash64(void const*, std::size_t, uint64_t);
+uint64_t fasthash32(void const*, std::size_t, uint32_t);
 
 #define VELOCYPACK_HASH(mem, size, seed) fasthash64(mem, size, seed)
+#define VELOCYPACK_HASH32(mem, size, seed) fasthash32(mem, size, seed)
 #endif
 
 namespace arangodb {
