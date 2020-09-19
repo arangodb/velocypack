@@ -131,17 +131,15 @@ class HashedStringRef {
 
   int compare(HashedStringRef const& other) const noexcept;
   
-  int compare(std::string const& other) const noexcept { return compare(HashedStringRef(other)); }
+  template<typename OtherType>
+  int compare(OtherType const& other) const noexcept { return compare(HashedStringRef(other)); }
   
-  int compare(char const* other) const noexcept { return compare(HashedStringRef(other)); }
-
   bool equals(HashedStringRef const& other) const noexcept;
   
-  bool equals(std::string const& other) const noexcept { return equals(HashedStringRef(other)); }
+  template<typename OtherType>
+  bool equals(OtherType const& other) const noexcept { return equals(HashedStringRef(other)); }
   
-  bool equals(char const* other) const noexcept { return equals(HashedStringRef(other)); }
-
-  inline std::string toString() const {
+  std::string toString() const {
     return std::string(_data, _length);
   }
 

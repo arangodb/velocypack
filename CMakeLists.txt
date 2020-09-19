@@ -57,6 +57,7 @@ set(VELOCY_SOURCE
     src/asm-functions.cpp
     src/asm-utf8check.cpp
     src/fpconv.cpp
+    src/string-functions.cpp
 )
 
 if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
