@@ -27,6 +27,7 @@
 #include <iostream>
 
 #include "velocypack/Exception.h"
+#include "velocypack/HashedStringRef.h"
 #include "velocypack/Slice.h"
 #include "velocypack/StringRef.h"
 
@@ -38,7 +39,7 @@ void* memrchrSwitch(void const* block, int c, std::size_t size) {
 #ifdef __linux__
   return const_cast<void*>(memrchr(block, c, size));
 #else
-/// naive memrchr overlay for Windows or other platforms, which don't implement it
+  /// naive memrchr overlay for Windows or other platforms, which don't implement it
   if (size) {
     unsigned char const* p = static_cast<unsigned char const*>(block);
 
@@ -59,6 +60,16 @@ StringRef::StringRef(Slice slice) {
   ValueLength l;
   _data = slice.getString(l);
   _length = l;
+}
+
+StringRef::StringRef(HashedStringRef const& other) noexcept 
+  : _data(other.data()), _length(other.size()) {}
+  
+/// @brief create a StringRef from another HashedStringRef
+StringRef& StringRef::operator=(HashedStringRef const& other) noexcept {
+  _data = other.data();
+  _length = other.size();
+  return *this;
 }
   
 /// @brief create a StringRef from a VPack slice of type String

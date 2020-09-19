@@ -37,6 +37,7 @@
 namespace arangodb {
 namespace velocypack {
 class Slice;
+class StringRef;
 
 class HashedStringRef {
  public:
@@ -66,6 +67,9 @@ class HashedStringRef {
    
   /// @brief create a HashedStringRef from a VPack slice (must be of type String)
   explicit HashedStringRef(Slice slice);
+  
+  /// @brief create a HashedStringRef from anther StringRef
+  explicit HashedStringRef(StringRef const& other) noexcept;
   
   /// @brief create a HashedStringRef from another HashedStringRef
   constexpr HashedStringRef(HashedStringRef const& other) noexcept
@@ -113,6 +117,9 @@ class HashedStringRef {
   
   /// @brief create a HashedStringRef from a VPack slice of type String
   HashedStringRef& operator=(Slice slice);
+  
+  /// @brief create a HashedStringRef from a StringRef
+  HashedStringRef& operator=(StringRef const& other) noexcept;
   
   HashedStringRef substr(std::size_t pos = 0, std::size_t count = std::string::npos) const;
   

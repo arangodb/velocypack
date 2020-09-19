@@ -29,6 +29,7 @@
 #include "velocypack/Exception.h"
 #include "velocypack/Slice.h"
 #include "velocypack/HashedStringRef.h"
+#include "velocypack/StringRef.h"
 
 using namespace arangodb::velocypack;
 
@@ -38,7 +39,7 @@ void* memrchrSwitch(void const* block, int c, std::size_t size) {
 #ifdef __linux__
   return const_cast<void*>(memrchr(block, c, size));
 #else
-/// naive memrchr overlay for Windows or other platforms, which don't implement it
+  /// naive memrchr overlay for Windows or other platforms, which don't implement it
   if (size) {
     unsigned char const* p = static_cast<unsigned char const*>(block);
 
@@ -61,6 +62,11 @@ HashedStringRef::HashedStringRef(Slice slice) {
   _length = l;
   _hash = hash(_data, _length);
 }
+
+HashedStringRef::HashedStringRef(StringRef const& other) noexcept 
+  : _data(other.data()),
+    _length(other.size()),
+    _hash(hash(_data, _length)) {}
   
 /// @brief create a HashedStringRef from a VPack slice of type String
 HashedStringRef& HashedStringRef::operator=(Slice slice) {
@@ -68,6 +74,14 @@ HashedStringRef& HashedStringRef::operator=(Slice slice) {
   ValueLength l;
   _data = slice.getString(l);
   _length = l;
+  _hash = hash(_data, _length);
+  return *this;
+}
+
+/// @brief create a HashedStringRef from another StringRef
+HashedStringRef& HashedStringRef::operator=(StringRef const& other) noexcept {
+  _data = other.data();
+  _length = other.size();
   _hash = hash(_data, _length);
   return *this;
 }
