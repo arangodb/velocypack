@@ -50,11 +50,19 @@ class HashedStringRef {
   explicit HashedStringRef(std::string const& str) noexcept 
     : HashedStringRef(str.data(), str.size()) {}
   
-  /// @brief create a HashedStringRef from a C string plus length
+  /// @brief create a HashedStringRef from a string plus length
   HashedStringRef(char const* data, std::size_t length) noexcept 
     : _data(data), 
       _length(static_cast<uint32_t>(length)), 
       _hash(hash(_data, _length)) {}
+  
+  /// @brief create a HashedStringRef from a string plus length and hash.
+  /// note: the hash is *not* validated. it is the caller's responsibility
+  /// to ensure the hash value is correct
+  HashedStringRef(char const* data, std::size_t length, uint32_t hash) noexcept 
+    : _data(data), 
+      _length(static_cast<uint32_t>(length)), 
+      _hash(hash) {}
   
   /// @brief create a HashedStringRef from a null-terminated C string
   explicit HashedStringRef(char const* data) noexcept 
@@ -141,6 +149,8 @@ class HashedStringRef {
   std::string toString() const {
     return std::string(_data, _length);
   }
+
+  StringRef stringRef() const noexcept;
 
   constexpr inline bool empty() const noexcept {
     return (_length == 0);
