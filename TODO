@@ -6,10 +6,8 @@ Lessons from Cuckoo
 * Add tests for empty attribute names
 * throw out types 0x0f to x012
 * remove flag sortAttributeNames
-* ObjectIterator: performance
 * 1 element arrays and objects compact
 * refactor close() method
-* findDataOffset reparieren
 
 Documentation
 -------------
@@ -19,18 +17,12 @@ Documentation
 Testing
 -------
 * automate tests on MacOS and ARM
-* automate tests for 32 bit Windows builds
 * test equal_to with custom types
 
 Features
 --------
 * implement missing type BCD in Builder, Slice, Parser and Dumper
 * unique/distinct/sort for Arrays
-* optionally validate Slice bounds (framing). Validator is started but not finished
-
-APIs
-----
-* SWIG support (MN)
 
 Tools
 -----
@@ -38,7 +30,3 @@ Tools
 * add optional saving of dictionaries from json-to-vpack
 * add optional reading of dictionaries in vpack-to-json
 * automate sizes table generation, add comparison for BSON & MessagePack
-
-Internals
----------
-* change from assertions to exceptions in Slice constructors

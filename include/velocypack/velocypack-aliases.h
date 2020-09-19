@@ -113,6 +113,13 @@ using VPackException = arangodb::velocypack::Exception;
 #endif
 #endif
 
+#ifdef VELOCYPACK_HASED_STRINGREF_H
+#ifndef VELOCYPACK_ALIAS_HASED_STRINGREF
+#define VELOCYPACK_ALIAS_HASED_STRINGREF
+using VPackHashedStringRef = arangodb::velocypack::HashedStringRef;
+#endif
+#endif
+
 #ifdef VELOCYPACK_HEXDUMP_H
 #ifndef VELOCYPACK_ALIAS_HEXDUMP
 #define VELOCYPACK_ALIAS_HEXDUMP

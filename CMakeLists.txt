@@ -40,6 +40,7 @@ set(VELOCY_SOURCE
     src/Compare.cpp
     src/Dumper.cpp
     src/Exception.cpp
+    src/HashedStringRef.cpp
     src/HexDump.cpp
     src/Iterator.cpp
     src/Options.cpp
