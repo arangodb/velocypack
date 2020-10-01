@@ -500,9 +500,9 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       if (options->binaryAsHex) {
         _sink->push_back('"');
         ValueLength len;
-        uint8_t const *bin = slice->getBinary(len);
-        for (uint8_t i = 0; i < len; i++) {
-          uint8_t value = *(bin+i);
+        uint8_t const* bin = slice->getBinary(len);
+        for (ValueLength i = 0; i < len; ++i) {
+          uint8_t value = bin[i];
           uint8_t x = value / 16;
           _sink->push_back((x < 10 ? ('0' + x) : ('a' + x - 10)));
           x = value % 16;
