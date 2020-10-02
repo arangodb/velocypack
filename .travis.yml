@@ -46,6 +46,7 @@ matrix:
         - build_type=Release
         - SANITIZER=false
         - CXX_STANDARD=17
+        - TAO=ON
       addons:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
@@ -92,6 +93,7 @@ matrix:
         #build settings
         - build_type=Release
         - CXX_STANDARD=17
+        - TAO=ON
       addons:
         apt:
           sources:
@@ -105,12 +107,16 @@ matrix:
       compiler: clang
       env:
         - build_type=Release
+        - TAO=ON
 
 install:
+    - git clone https://github.com/taocpp/json.git taocpp-json
+    - ( cd taocpp-json; git checkout 631095f4bfa45c63af5ccc1cb35ea16eb9ead450; )
     - export CXX=$CXX
     - export CC=$CC
     - export CXX_STANDARD=${CXX_STANDARD:-17}
     - export BUILD_TYPE=${build_type}
+    - export TAO=${TAO:-OFF}
     - cmake --version
     - $CXX --version
 

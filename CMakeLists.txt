@@ -11,6 +11,15 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
+option(TaoJson "Add support for taocpp::json" OFF)
+
+if(TaoJson)
+    if(NOT TARGET taocpp::json)
+        set(TAOCPP_JSON_BUILD_TESTS OFF CACHE BOOL "Build test programs" FORCE)
+        set(TAOCPP_JSON_BUILD_EXAMPLES OFF CACHE BOOL "Build example programs" FORCE)
+        add_subdirectory(taocpp-json EXCLUDE_FROM_ALL)
+    endif()
+endif()
 
 set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
@@ -45,6 +54,7 @@ set(VELOCY_SOURCE
     src/Iterator.cpp
     src/Options.cpp
     src/Parser.cpp
+    $<$<BOOL:${TaoJson}>:src/TaoParser.cpp>
     src/Serializable.cpp
     src/Slice.cpp
     src/SliceStaticData.cpp
@@ -81,6 +91,7 @@ message(STATUS "Building with hash type: ${HashType}")
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(velocypack PRIVATE src)
 target_include_directories(velocypack PUBLIC include)
+target_link_libraries(velocypack PUBLIC $<$<BOOL:${TaoJson}>:taocpp::json>)
 
 if(Maintainer)
     add_executable(buildVersion scripts/build-version.cpp)
