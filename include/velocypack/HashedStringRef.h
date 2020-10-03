@@ -55,7 +55,7 @@ class HashedStringRef {
     : _data(data), 
       _length(static_cast<uint32_t>(length)), 
       _hash(hash(_data, _length)) {}
-  
+ 
   /// @brief create a HashedStringRef from a string plus length and hash.
   /// note: the hash is *not* validated. it is the caller's responsibility
   /// to ensure the hash value is correct
@@ -109,15 +109,15 @@ class HashedStringRef {
   /// @brief create a HashedStringRef from an std::string
   HashedStringRef& operator=(std::string const& other) noexcept {
     _data = other.data();
-    _length = other.size();
-    _hash = hash(other.data(), other.size());
+    _length = static_cast<uint32_t>(other.size());
+    _hash = hash(other.data(), static_cast<uint32_t>(other.size()));
     return *this;
   }
   
   /// @brief create a HashedStringRef from a null-terminated C string
   HashedStringRef& operator=(char const* other) noexcept {
     _data = other;
-    _length = strlen(other);
+    _length = static_cast<uint32_t>(strlen(other));
     _hash = hash(_data, _length);
     return *this;
   }
@@ -213,38 +213,38 @@ std::ostream& operator<<(std::ostream& stream, HashedStringRef const& ref);
 } // namespace velocypack
 } // namespace arangodb
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return (lhs.size() == rhs.size() && 
           lhs.hash() == rhs.hash() && 
           memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
 }
 
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return !(lhs == rhs);
 }
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) {
+inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) noexcept {
   return (lhs.size() == rhs.size() && 
           memcmp(lhs.data(), rhs.c_str(), lhs.size()) == 0);
 }
 
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) {
+inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) noexcept {
   return !(lhs == rhs);
 }
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) {
+inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) noexcept {
   return lhs == arangodb::velocypack::HashedStringRef(rhs);
 }
 
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) {
+inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) noexcept {
   return !(lhs == rhs);
 }
 
-inline bool operator<(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator<(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return (lhs.compare(rhs) < 0);
 }
 
-inline bool operator>(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator>(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return (lhs.compare(rhs) > 0);
 }
 
