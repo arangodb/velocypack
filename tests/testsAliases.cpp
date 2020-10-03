@@ -44,6 +44,7 @@ using VPackSerialize = arangodb::velocypack::Serialize;
 using VPackSink = arangodb::velocypack::Sink;
 using VPackSlice = arangodb::velocypack::Slice;
 using VPackStringSink = arangodb::velocypack::StringSink;
+using VPackStringLengthSink = arangodb::velocypack::StringLengthSink;
 using VPackStringStreamSink = arangodb::velocypack::StringStreamSink;
 using VPackValue = arangodb::velocypack::Value;
 using VPackValueLength = arangodb::velocypack::ValueLength;

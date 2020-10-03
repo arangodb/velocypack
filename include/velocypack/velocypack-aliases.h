@@ -80,6 +80,7 @@ template<typename T> using VPackBuffer = arangodb::velocypack::Buffer<T>;
 using VPackSink = arangodb::velocypack::Sink;
 using VPackCharBufferSink = arangodb::velocypack::CharBufferSink;
 using VPackStringSink = arangodb::velocypack::StringSink;
+using VPackStringLengthSink = arangodb::velocypack::StringLengthSink;
 using VPackStringStreamSink = arangodb::velocypack::StringStreamSink;
 #endif
 #endif

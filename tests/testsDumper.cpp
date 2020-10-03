@@ -1596,6 +1596,161 @@ TEST(DumperTest, EmptyAttributeName) {
   ASSERT_EQ(std::string(R"({"":123,"a":"abc"})"), buffer);
 }
 
+TEST(DumperLengthTest, Null) {
+  std::string const value("null");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("null"), sink.length);
+}
+
+TEST(DumperLengthTest, True) {
+  std::string const value("  true ");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("true"), sink.length);
+}
+
+TEST(DumperLengthTest, False) {
+  std::string const value("false ");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("false"), sink.length);
+}
+
+TEST(DumperLengthTest, String) {
+  std::string const value("   \"abcdefgjfjhhgh\"  ");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("\"abcdefgjfjhhgh\""), sink.length);;
+}
+
+TEST(DumperLengthTest, EmptyObject) {
+  std::string const value("{}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("{}"), sink.length);
+}
+
+TEST(DumperLengthTest, SimpleObject) {
+  std::string const value("{\"foo\":\"bar\"}");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("{\"foo\":\"bar\"}"), sink.length);
+}
+
+TEST(DumperLengthTest, SimpleArray) {
+  std::string const value("[1, 2, 3, 4, 5, 6, 7, \"abcdef\"]");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("[1,2,3,4,5,6,7,\"abcdef\"]"), sink.length);
+}
+
+TEST(DumperLengthTest, EscapeUnicodeOn) {
+  std::string const value("\"mötör\"");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  options.escapeUnicode = true;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("\"m\\uxxxxt\\uxxxxr\""), sink.length);
+}
+
+TEST(DumperLengthTest, EscapeUnicodeOff) {
+  std::string const value("\"mötör\"");
+
+  Parser parser;
+  parser.parse(value);
+
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  Options options;
+  options.prettyPrint = false;
+  options.escapeUnicode = false;
+  StringLengthSink sink;
+  Dumper dumper(&sink, &options);
+  dumper.dump(s);
+  ASSERT_EQ(strlen("\"mötör\""), sink.length);
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
