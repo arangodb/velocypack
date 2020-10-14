@@ -27,6 +27,7 @@
 #include <ostream>
 #include <string>
 #include <iostream>
+#include <initializer_list>
 
 #include "tests-common.h"
 
@@ -189,6 +190,170 @@ TEST(SliceTest, GetResolveExternalExternal) {
   
   ASSERT_FALSE(s.get(std::vector<std::string>{"boo"}, true).isExternal());
   ASSERT_TRUE(s.get(std::vector<std::string>{"boo"}, true).isObject());
+}
+
+TEST(SliceTest, GetEmptyPath) {
+  std::string const value("{\"foo\":{\"bar\":{\"baz\":3,\"bark\":4},\"qux\":5},\"poo\":6}");
+
+  Parser parser;
+  parser.parse(value);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  {
+    std::vector<std::string> lookup;
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup), Exception::InvalidAttributePath);
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup.begin(), lookup.end()), Exception::InvalidAttributePath);
+  }
+
+  {
+    std::vector<StringRef> lookup;
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup), Exception::InvalidAttributePath);
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup.begin(), lookup.end()), Exception::InvalidAttributePath);
+  }
+}
+
+TEST(SliceTest, GetOnNonObject) {
+  Slice s = Slice::nullSlice();
+
+  {
+    std::vector<std::string> lookup{"foo"};
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup), Exception::InvalidValueType);
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup.begin(), lookup.end()), Exception::InvalidValueType);
+  }
+
+  {
+    std::vector<StringRef> lookup{StringRef{"foo"}};
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup), Exception::InvalidValueType);
+    ASSERT_VELOCYPACK_EXCEPTION(s.get(lookup.begin(), lookup.end()), Exception::InvalidValueType);
+  }
+}
+ 
+#if __cplusplus >= 201300
+TEST(SliceTest, GetOnNestedObject) {
+  std::string const value("{\"foo\":{\"bar\":{\"baz\":3,\"bark\":4},\"qux\":5},\"poo\":6}");
+
+  Parser parser;
+  parser.parse(value);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  auto runTest = [s](auto lookup) {
+    lookup.emplace_back("foo");
+    ASSERT_TRUE(s.get(lookup).isObject());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isObject());
+
+    lookup.emplace_back("boo"); // foo.boo does not exist
+    ASSERT_TRUE(s.get(lookup).isNone());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNone());
+    lookup.pop_back();
+    
+    lookup.emplace_back("bar"); // foo.bar
+    ASSERT_TRUE(s.get(lookup).isObject());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isObject());
+    
+    lookup.emplace_back("baz"); // foo.bar.baz
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+    
+    lookup.emplace_back("bat"); // foo.bar.baz.bat
+    ASSERT_TRUE(s.get(lookup).isNone());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNone());
+    lookup.pop_back(); // foo.bar.baz
+    lookup.pop_back(); // foo.bar
+    
+    lookup.emplace_back("bark"); // foo.bar.bark
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(4, s.get(lookup).getInt());
+    ASSERT_EQ(4, s.get(lookup.begin(), lookup.end()).getInt());
+    
+    lookup.emplace_back("bat"); // foo.bar.bark.bat
+    ASSERT_TRUE(s.get(lookup).isNone());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNone());
+    lookup.pop_back(); // foo.bar.bark
+    lookup.pop_back(); // foo.bar
+    
+    lookup.emplace_back("borg"); // foo.bar.borg
+    ASSERT_TRUE(s.get(lookup).isNone());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNone());
+    lookup.pop_back(); // foo.bar
+    lookup.pop_back(); // foo
+    
+    lookup.emplace_back("qux"); // foo.qux
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(5, s.get(lookup).getInt());
+    ASSERT_EQ(5, s.get(lookup.begin(), lookup.end()).getInt());
+    lookup.pop_back(); // foo
+    
+    lookup.emplace_back("poo"); // foo.poo
+    ASSERT_TRUE(s.get(lookup).isNone());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNone());
+    lookup.pop_back(); // foo
+    lookup.pop_back(); // {}
+
+    lookup.emplace_back("poo"); // poo
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(6, s.get(lookup).getInt());
+    ASSERT_EQ(6, s.get(lookup.begin(), lookup.end()).getInt());
+  };
+
+  runTest(std::vector<std::string>());
+  runTest(std::vector<StringRef>());
+  
+  {
+    auto lookup = { "foo", "bar", "baz" };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
+  
+  {
+    std::initializer_list<char const*> lookup = { "foo", "bar", "baz" };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
+}
+#endif
+
+TEST(SliceTest, GetWithIterator) {
+  std::string const value("{\"foo\":{\"bar\":{\"baz\":3,\"bark\":4},\"qux\":5},\"poo\":6}");
+
+  Parser parser;
+  parser.parse(value);
+  std::shared_ptr<Builder> builder = parser.steal();
+  Slice s(builder->start());
+
+  {
+    auto lookup = { "foo", "bar", "baz" };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
+  
+  {
+    std::initializer_list<char const*> lookup = { "foo", "bar", "baz" };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
+  
+  {
+    std::initializer_list<std::string> lookup = { "foo", "bar", "baz" };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
 }
   
 TEST(SliceTest, SliceStart) {

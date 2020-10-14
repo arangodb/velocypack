@@ -29,6 +29,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <initializer_list>
 #include <iosfwd>
 #include <algorithm>
 #include <functional>
@@ -536,34 +537,47 @@ class Slice {
 
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
-  template<typename T>
-  Slice get(std::vector<T> const& attributes, 
+  template<typename Iterator>
+  Slice get(Iterator begin, Iterator end,
             bool resolveExternals = false) const {
-    std::size_t const n = attributes.size();
-    if (n == 0) {
+    if (VELOCYPACK_UNLIKELY(begin == end)) {
       throw Exception(Exception::InvalidAttributePath);
-    }
-
+    }    
     // use ourselves as the starting point
     Slice last(start());
     if (resolveExternals) {
       last = last.resolveExternal();
     }
-    for (std::size_t i = 0; i < attributes.size(); ++i) {
+    for (; begin != end; ++begin) {
       // fetch subattribute
-      last = last.get(attributes[i]);
-
-      // abort as early as possible
+      last = last.get(*begin);      
       if (last.isExternal()) {
         last = last.resolveExternal();
-      }
-
-      if (last.isNone() || (i + 1 < n && !last.isObject())) {
+      }      
+      // abort as early as possible
+      if (last.isNone() || (begin + 1 != end && !last.isObject())) {
         return Slice();
       }
-    }
-
+    }    
     return last;
+  }
+
+  // look for the specified attribute path inside an Object
+  // returns a Slice(ValueType::None) if not found
+  template<typename T>
+  Slice get(std::vector<T> const& attributes, 
+            bool resolveExternals = false) const {
+    // forward to the iterator-based lookup
+    return this->get(attributes.begin(), attributes.end(), resolveExternals);
+  }
+  
+  // look for the specified attribute path inside an Object
+  // returns a Slice(ValueType::None) if not found
+  template<typename T>
+  Slice get(std::initializer_list<T> const& attributes, 
+            bool resolveExternals = false) const {
+    // forward to the iterator-based lookup
+    return this->get(attributes.begin(), attributes.end(), resolveExternals);
   }
   
   // look for the specified attribute inside an Object
