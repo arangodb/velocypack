@@ -354,6 +354,22 @@ TEST(SliceTest, GetWithIterator) {
     ASSERT_EQ(3, s.get(lookup).getInt());
     ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
   }
+  
+  {
+    std::initializer_list<StringRef> lookup = {StringRef("foo"), StringRef("bar"), StringRef("baz") };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
+  
+  {
+    std::initializer_list<HashedStringRef> lookup = {HashedStringRef("foo"), HashedStringRef("bar"), HashedStringRef("baz") };
+    ASSERT_TRUE(s.get(lookup).isNumber());
+    ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
+    ASSERT_EQ(3, s.get(lookup).getInt());
+    ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
+  }
 }
   
 TEST(SliceTest, SliceStart) {
