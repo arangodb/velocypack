@@ -555,7 +555,7 @@ class Slice {
         last = last.resolveExternal();
       }      
       // abort as early as possible
-      if (last.isNone() || (begin + 1 != end && !last.isObject())) {
+      if (last.isNone() || (++begin != end && !last.isObject())) {
         return Slice();
       }
     }    
