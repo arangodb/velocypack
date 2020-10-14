@@ -790,12 +790,7 @@ class Builder {
   uint8_t* addInternal(StringRef const& attrName, uint64_t tag, T const& sub) {
     return addInternal<T>(attrName.data(), attrName.size(), tag, sub);
   }
-/*
-  template <typename T>
-  uint8_t* addInternal(char const* attrName, uint64_t tag, T const& sub) {
-    return addInternal<T>(attrName, strlen(attrName), tag, sub);
-  }
-*/
+  
   template <typename T>
   uint8_t* addInternal(char const* attrName, std::size_t attrLength, uint64_t tag, T const& sub) {
     bool haveReported = false;
