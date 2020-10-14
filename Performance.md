@@ -7,7 +7,7 @@ to be written
 Data size comparison
 ====================
 
-The directory [*tests/jsonSample*](https://github.com/arangodb/velocypack/tree/master/tests/jsonSample)
+The directory [*tests/jsonSample*](https://github.com/arangodb/velocypack/tree/main/tests/jsonSample)
 contains several example JSON files which can be converted to VPack values. 
 The following section shows how much can be gained by converting these JSON 
 data into VPack values.

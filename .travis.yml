@@ -51,7 +51,7 @@ matrix:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
     - name: "address sanitizer build"
-      if: branch = master AND false #disabled
+      if: branch = main AND false #disabled
       env:
         - ARCH=amd64
         #compiler
@@ -63,7 +63,7 @@ matrix:
         - CXX_STANDARD=17
 
     - name: "coverage build"
-      if: branch = master
+      if: branch = main
       env:
         - ARCH=amd64
         #compiler
@@ -81,7 +81,7 @@ matrix:
         - ./scripts/travis-after-success.sh
 
     - name: "clang build"
-      if: branch = master AND false # disabled because of clang ICE
+      if: branch = main AND false # disabled because of clang ICE
       compiler: clang++-9
       env:
         - ARCH=amd64
