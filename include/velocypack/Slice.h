@@ -548,7 +548,7 @@ class Slice {
     if (resolveExternals) {
       last = last.resolveExternal();
     }
-    while (begin != end) {
+    do {
       // fetch subattribute
       last = last.get(*begin);      
       if (last.isExternal()) {
@@ -558,7 +558,7 @@ class Slice {
       if (last.isNone() || (++begin != end && !last.isObject())) {
         return Slice();
       }
-    }    
+    } while (begin != end);
     return last;
   }
 
