@@ -31,6 +31,7 @@
 #include <vector>
 #include <initializer_list>
 #include <iosfwd>
+#include <iterator>
 #include <algorithm>
 #include <functional>
 #include <type_traits>
@@ -537,9 +538,13 @@ class Slice {
 
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
-  template<typename Iterator>
-  Slice get(Iterator begin, Iterator end,
+  template<typename ForwardIterator>
+  Slice get(ForwardIterator begin, ForwardIterator end,
             bool resolveExternals = false) const {
+    static_assert(std::is_base_of<std::forward_iterator_tag,
+                                  typename std::iterator_traits<ForwardIterator>::iterator_category>::value, 
+                  "get(begin, end) must be used with a forward iterator");
+
     if (VELOCYPACK_UNLIKELY(begin == end)) {
       throw Exception(Exception::InvalidAttributePath);
     }    
@@ -565,16 +570,7 @@ class Slice {
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
   template<typename T>
-  Slice get(std::vector<T> const& attributes, 
-            bool resolveExternals = false) const {
-    // forward to the iterator-based lookup
-    return this->get(attributes.begin(), attributes.end(), resolveExternals);
-  }
-  
-  // look for the specified attribute path inside an Object
-  // returns a Slice(ValueType::None) if not found
-  template<typename T>
-  Slice get(std::initializer_list<T> const& attributes, 
+  Slice get(T const& attributes, 
             bool resolveExternals = false) const {
     // forward to the iterator-based lookup
     return this->get(attributes.begin(), attributes.end(), resolveExternals);
@@ -604,6 +600,12 @@ class Slice {
     return get(attribute.data(), attribute.size());
   }
   
+  // whether or not an Object has a specific sub-key
+  template<typename T>
+  bool hasKey(T const& attributes) const {
+    return !get(attributes).isNone();
+  }
+  
   // whether or not an Object has a specific key
   bool hasKey(StringRef const& attribute) const {
     return !get(attribute).isNone();
@@ -619,11 +621,6 @@ class Slice {
   
   bool hasKey(char const* attribute, std::size_t length) const {
     return hasKey(StringRef(attribute, length));
-  }
-
-  // whether or not an Object has a specific sub-key
-  bool hasKey(std::vector<std::string> const& attributes) const {
-    return !get(attributes).isNone();
   }
 
   // return the pointer to the data for an External object
