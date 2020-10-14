@@ -548,7 +548,7 @@ class Slice {
     if (resolveExternals) {
       last = last.resolveExternal();
     }
-    for (; begin != end; ++begin) {
+    while (begin != end) {
       // fetch subattribute
       last = last.get(*begin);      
       if (last.isExternal()) {
