@@ -364,7 +364,7 @@ TEST(SliceTest, GetWithIterator) {
   }
   
   {
-    std::initializer_list<HashedStringRef> lookup = {HashedStringRef("foo"), HashedStringRef("bar"), HashedStringRef("baz") };
+    std::initializer_list<HashedStringRef> lookup = {HashedStringRef("foo", 3), HashedStringRef("bar", 3), HashedStringRef("baz", 3) };
     ASSERT_TRUE(s.get(lookup).isNumber());
     ASSERT_TRUE(s.get(lookup.begin(), lookup.end()).isNumber());
     ASSERT_EQ(3, s.get(lookup).getInt());
