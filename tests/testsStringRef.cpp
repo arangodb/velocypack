@@ -37,7 +37,9 @@ TEST(StringRefTest, CopyStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -51,7 +53,9 @@ TEST(StringRefTest, MoveStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -69,7 +73,9 @@ TEST(StringRefTest, CopyAssignStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -87,7 +93,9 @@ TEST(StringRefTest, MoveAssignStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -104,6 +112,8 @@ TEST(StringRefTest, EmptyStringRef) {
 
   ASSERT_TRUE(s.equals(StringRef()));
   ASSERT_TRUE(s.equals(s));
+  ASSERT_TRUE(s == StringRef());
+  ASSERT_TRUE(s == s);
   ASSERT_EQ(0, s.compare(s));
   ASSERT_EQ(0, s.compare(StringRef()));
 }

@@ -423,7 +423,7 @@ int Slice::compareString(StringRef const& value) const {
   char const* k = getString(keyLength);
   std::size_t const compareLength =
       (std::min)(static_cast<std::size_t>(keyLength), length);
-  int res = memcmp(k, value.data(), compareLength);
+  int res = std::memcmp(k, value.data(), compareLength);
 
   if (res == 0) {
     return static_cast<int>(keyLength - length);
@@ -437,7 +437,7 @@ int Slice::compareStringUnchecked(StringRef const& value) const noexcept {
   char const* k = getStringUnchecked(keyLength);
   std::size_t const compareLength =
       (std::min)(static_cast<std::size_t>(keyLength), length);
-  int res = memcmp(k, value.data(), compareLength);
+  int res = std::memcmp(k, value.data(), compareLength);
 
   if (res == 0) {
     return static_cast<int>(keyLength - length);
@@ -449,14 +449,14 @@ bool Slice::isEqualString(StringRef const& attribute) const {
   ValueLength keyLength;
   char const* k = getString(keyLength);
   return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
-          (memcmp(k, attribute.data(), attribute.size()) == 0);
+          (std::memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 bool Slice::isEqualStringUnchecked(StringRef const& attribute) const noexcept {
   ValueLength keyLength;
   char const* k = getStringUnchecked(keyLength);
   return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
-          (memcmp(k, attribute.data(), attribute.size()) == 0);
+          (std::memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 Slice Slice::getFromCompactObject(StringRef const& attribute) const {

@@ -1005,7 +1005,7 @@ class Slice {
       return false;
     }
 
-    return (memcmp(start(), other.start(), checkOverflow(size)) == 0);
+    return (std::memcmp(start(), other.start(), checkOverflow(size)) == 0);
   }
  
   static bool binaryEquals(uint8_t const* left, uint8_t const* right) {
@@ -1188,7 +1188,7 @@ class Slice {
       char const* value;
       char binary[sizeof(char const*)];
     };
-    memcpy(&binary[0], start() + 1, sizeof(char const*));
+    std::memcpy(&binary[0], start() + 1, sizeof(char const*));
     return value;
   }
 
