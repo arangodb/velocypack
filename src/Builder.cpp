@@ -353,7 +353,7 @@ void Builder::sortObjectIndexShort(uint8_t* objBase,
     if (*aa >= 0x40 && *aa <= 0xbe && *bb >= 0x40 && *bb <= 0xbe) {
       // The fast path, short strings:
       uint8_t m = (std::min)(*aa - 0x40, *bb - 0x40);
-      int c = memcmp(aa + 1, bb + 1, checkOverflow(m));
+      int c = std::memcmp(aa + 1, bb + 1, checkOverflow(m));
       return (c < 0 || (c == 0 && *aa < *bb));
     } else {
       uint64_t lena;
@@ -361,7 +361,7 @@ void Builder::sortObjectIndexShort(uint8_t* objBase,
       aa = findAttrName(aa, lena);
       bb = findAttrName(bb, lenb);
       uint64_t m = (std::min)(lena, lenb);
-      int c = memcmp(aa, bb, checkOverflow(m));
+      int c = std::memcmp(aa, bb, checkOverflow(m));
       return (c < 0 || (c == 0 && lena < lenb));
     }
   });
@@ -403,7 +403,7 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
     uint64_t sizea = a.nameSize;
     uint64_t sizeb = b.nameSize;
     std::size_t const compareLength = checkOverflow((std::min)(sizea, sizeb));
-    int res = memcmp(a.nameStart, b.nameStart, compareLength);
+    int res = std::memcmp(a.nameStart, b.nameStart, compareLength);
 
     return (res < 0 || (res == 0 && sizea < sizeb));
   });
@@ -871,7 +871,7 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
       }
       reserve(1 + sizeof(double));
       appendByteUnchecked(0x1b);
-      memcpy(&x, &v, sizeof(double));
+      std::memcpy(&x, &v, sizeof(double));
       appendLengthUnchecked<sizeof(double)>(x);
       break;
     }
@@ -983,7 +983,7 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
         appendByteUnchecked(0xbf);
         appendLengthUnchecked<8>(size);
       }
-      memcpy(_start + _pos, p, size);
+      std::memcpy(_start + _pos, p, size);
       advance(size);
       break;
     }
@@ -1047,7 +1047,7 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
       }
       appendUInt(size, 0xbf);
       reserve(size);
-      memcpy(_start + _pos, p, checkOverflow(size));
+      std::memcpy(_start + _pos, p, checkOverflow(size));
       advance(size);
       break;
     }
@@ -1065,7 +1065,7 @@ uint8_t* Builder::set(uint64_t tag, Value const& item) {
       // store pointer. this doesn't need to be portable
       appendByteUnchecked(0x1d);
       void const* value = item.getExternal();
-      memcpy(_start + _pos, &value, sizeof(void*));
+      std::memcpy(_start + _pos, &value, sizeof(void*));
       advance(sizeof(void*));
       break;
     }
@@ -1117,7 +1117,7 @@ uint8_t* Builder::set(uint64_t tag, Slice const& item) {
 
   ValueLength const l = item.byteSize();
   reserve(l);
-  memcpy(_start + _pos, item.start(), checkOverflow(l));
+  std::memcpy(_start + _pos, item.start(), checkOverflow(l));
   advance(l);
   return _start + _pos - l;
 }
@@ -1149,7 +1149,7 @@ uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {
       appendByteUnchecked(static_cast<uint8_t>(0x40 + size));
     }
     VELOCYPACK_ASSERT(pair.getStart() != nullptr);
-    memcpy(_start + _pos, pair.getStart(), checkOverflow(size));
+    std::memcpy(_start + _pos, pair.getStart(), checkOverflow(size));
     advance(size);
     return _start + oldPos;
   } else if (pair.valueType() == ValueType::Binary) {
@@ -1157,7 +1157,7 @@ uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {
     reserve(9 + v);
     appendUInt(v, 0xbf);
     VELOCYPACK_ASSERT(pair.getStart() != nullptr);
-    memcpy(_start + _pos, pair.getStart(), checkOverflow(v));
+    std::memcpy(_start + _pos, pair.getStart(), checkOverflow(v));
     advance(v);
     return _start + oldPos;
   } else if (pair.valueType() == ValueType::Custom) {
@@ -1170,7 +1170,7 @@ uint8_t* Builder::set(uint64_t tag, ValuePair const& pair) {
     reserve(size);
     uint8_t const* p = pair.getStart();
     if (p != nullptr) {
-      memcpy(_start + _pos, p, checkOverflow(size));
+      std::memcpy(_start + _pos, p, checkOverflow(size));
     }
     advance(size);
     return _start + _pos - size;
@@ -1211,7 +1211,7 @@ bool Builder::checkAttributeUniquenessSorted(Slice obj) const {
     ValueLength len2;
     char const* q = current.getStringUnchecked(len2);
 
-    if (len == len2 && memcmp(p, q, checkOverflow(len2)) == 0) {
+    if (len == len2 && std::memcmp(p, q, checkOverflow(len2)) == 0) {
       // identical key
       return false;
     }

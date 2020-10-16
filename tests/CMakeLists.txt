@@ -20,6 +20,7 @@ set(Tests
     testsDumper
     testsException
     testsFiles
+    testsHashedStringRef
     testsHexDump
     testsIterator
     testsLookup
