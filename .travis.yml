@@ -76,20 +76,20 @@ matrix:
         - SANITIZER=true
         - CXX_STANDARD=17
 
-    - name: "coverage build, g++-8"
+    - name: "coverage build, g++-9"
       if: branch = main
       env:
         - ARCH=amd64
         #compiler
-        - CXX=g++-8
-        - CC=gcc-8
+        - CXX=g++-9
+        - CC=gcc-9
         #build settings
         - build_type=Debug
-        - CXXFLAGS="-O0 --coverage"
+        - CXXFLAGS="-O0 -fno-inline --coverage"
         - CXX_STANDARD=17
       addons:
         apt:
-          packages: ['gcc-8', 'g++-8', 'lcov', 'cmake']
+          packages: ['gcc-9', 'g++-9', 'lcov', 'cmake']
       script:
         - ./scripts/travis-build.sh
         - ./scripts/travis-after-success.sh
