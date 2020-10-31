@@ -28,7 +28,7 @@ echo "gcov: $GCOV"
 LCOV=(
     'lcov'
     '--directory' "$project_dir"
-    '--gcov-tool' "$(type -p ${CXX})"
+    '--gcov-tool' "$(type -p ${GCOV})"
 )
 
 # clear counters
