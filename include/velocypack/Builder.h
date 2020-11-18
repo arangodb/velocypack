@@ -107,18 +107,28 @@ class Builder {
 
  public:
   Options const* options;
+  
+  // create an empty Builder, using default Options
+  Builder();
 
   // create an empty Builder, using Options
-  explicit Builder(Options const* options = &Options::Defaults);
+  explicit Builder(Options const* options);
   
-  // create an empty Builder, using an existing buffer
-  explicit Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer,
-                   Options const* options = &Options::Defaults);
+  // create an empty Builder, using an existing buffer and default Options
+  explicit Builder(std::shared_ptr<Buffer<uint8_t>> buffer);
+  
+  // create an empty Builder, using an existing buffer and Options
+  explicit Builder(std::shared_ptr<Buffer<uint8_t>> buffer,
+                   Options const* options);
+  
+  // create a Builder that uses an existing Buffer and default Options. 
+  // the Builder will not claim ownership for its Buffer
+  explicit Builder(Buffer<uint8_t>& buffer) noexcept;
 
   // create a Builder that uses an existing Buffer. the Builder will not
   // claim ownership for this Buffer
   explicit Builder(Buffer<uint8_t>& buffer,
-                   Options const* options = &Options::Defaults);
+                   Options const* options);
 
   // populate a Builder from a Slice
   explicit Builder(Slice slice, Options const* options = &Options::Defaults);
@@ -960,22 +970,20 @@ class Builder {
   void openCompoundValue(uint8_t type) {
     if (_stack.empty()) {
       addCompoundValue(type);
+    } else if (_keyWritten) {
+      _keyWritten = false;
+      addCompoundValue(type);
     } else {
       ValueLength const to = _stack.back().startPos;
-      if (_keyWritten) {
-        _keyWritten = false;
+      if (VELOCYPACK_UNLIKELY(_start[to] != 0x06 && _start[to] != 0x13)) {
+        throw Exception(Exception::BuilderNeedOpenArray);
+      }
+      reportAdd();
+      try {
         addCompoundValue(type);
-      } else {
-        if (VELOCYPACK_UNLIKELY(_start[to] != 0x06 && _start[to] != 0x13)) {
-          throw Exception(Exception::BuilderNeedOpenArray);
-        }
-        reportAdd();
-        try {
-          addCompoundValue(type);
-        } catch (...) {
-          cleanupAdd();
-          throw;
-        }
+      } catch (...) {
+        cleanupAdd();
+        throw;
       }
     }
   }

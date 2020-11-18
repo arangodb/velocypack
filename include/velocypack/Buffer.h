@@ -267,7 +267,7 @@ class Buffer {
 
   // If true, uses memory inside the buffer (_local).
   // Otherwise, uses memory on the heap.
-  bool usesLocalMemory() const noexcept {
+  inline bool usesLocalMemory() const noexcept {
     return _buffer == _local;
   }
  

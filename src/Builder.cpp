@@ -82,7 +82,7 @@ uint8_t determineArrayType(bool needIndexTable, ValueLength offsetSize) {
   return type;
 }
 
-constexpr ValueLength LinearAttributeUniquenessCutoff = 4;
+constexpr ValueLength linearAttributeUniquenessCutoff = 4;
   
 // struct used when sorting index tables for objects:
 struct SortEntry {
@@ -134,7 +134,7 @@ uint8_t const* findAttrName(uint8_t const* base, uint64_t& len) {
 }
 
 bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
-  std::array<StringRef, LinearAttributeUniquenessCutoff> keys;
+  std::array<StringRef, linearAttributeUniquenessCutoff> keys;
 
   do {
     // key(true) guarantees a String as returned type
@@ -183,9 +183,9 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
 }
 
 } // namespace
-  
-// create an empty Builder, using Options 
-Builder::Builder(Options const* options)
+
+// create an empty Builder, using default Options 
+Builder::Builder()
       : _buffer(std::make_shared<Buffer<uint8_t>>()),
         _bufferPtr(_buffer.get()),
         _start(_bufferPtr->data()),
@@ -193,47 +193,62 @@ Builder::Builder(Options const* options)
         _arena(),
         _stack(_arena),
         _keyWritten(false),
-        options(options) {
-  if (VELOCYPACK_UNLIKELY(options == nullptr)) {
+        options(&Options::Defaults) {}
+  
+// create an empty Builder, using Options 
+Builder::Builder(Options const* opts)
+      : Builder() {
+  if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
+  options = opts;
 }
-  
-// create an empty Builder, using an existing buffer
-Builder::Builder(std::shared_ptr<Buffer<uint8_t>> const& buffer, Options const* options)
-      : _buffer(buffer), 
+
+// create an empty Builder, using an existing buffer and default Options
+Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer)
+      : _buffer(std::move(buffer)), 
         _bufferPtr(_buffer.get()), 
         _start(nullptr),
         _pos(0), 
         _arena(),
         _stack(_arena),
         _keyWritten(false), 
-        options(options) {
+        options(&Options::Defaults) {
   if (VELOCYPACK_UNLIKELY(_bufferPtr == nullptr)) {
     throw Exception(Exception::InternalError, "Buffer cannot be a nullptr");
   }
   _start = _bufferPtr->data();
   _pos = _bufferPtr->size();
-
-  if (VELOCYPACK_UNLIKELY(options == nullptr)) {
-    throw Exception(Exception::InternalError, "Options cannot be a nullptr");
-  }
 }
   
-// create a Builder that uses an existing Buffer. the Builder will not
-// claim ownership for this Buffer
-Builder::Builder(Buffer<uint8_t>& buffer, Options const* options)
+// create an empty Builder, using an existing buffer
+Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer, Options const* opts)
+      : Builder(std::move(buffer)) {
+  if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
+    throw Exception(Exception::InternalError, "Options cannot be a nullptr");
+  }
+  options = opts;
+}
+
+// create a Builder that uses an existing Buffer and options. 
+// the Builder will not claim ownership for its Buffer
+Builder::Builder(Buffer<uint8_t>& buffer) noexcept
       : _bufferPtr(&buffer), 
         _start(_bufferPtr->data()),
         _pos(buffer.size()), 
         _arena(),
         _stack(_arena),
         _keyWritten(false), 
-        options(options) {
-
-  if (VELOCYPACK_UNLIKELY(options == nullptr)) {
+        options(&Options::Defaults) {}
+  
+// create a Builder that uses an existing Buffer. the Builder will not
+// claim ownership for its Buffer
+Builder::Builder(Buffer<uint8_t>& buffer, Options const* opts)
+      : Builder(buffer) {
+  if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
+  options = opts;
 }
   
 // populate a Builder from a Slice
@@ -843,11 +858,7 @@ uint8_t* Builder::set(Value const& item) {
         throw Exception(Exception::BuilderUnexpectedValue,
                         "Must give bool for ValueType::Bool");
       }
-      if (item.getBool()) {
-        appendByte(0x1a);
-      } else {
-        appendByte(0x19);
-      }
+      appendByte(item.getBool() ? 0x1a : 0x19);
       break;
     }
     case ValueType::Double: {
@@ -1251,7 +1262,7 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
   // allocations
   ObjectIterator it(obj, true);
     
-  if (it.size() <= ::LinearAttributeUniquenessCutoff) {
+  if (it.size() <= ::linearAttributeUniquenessCutoff) {
     return ::checkAttributeUniquenessUnsortedBrute(it);
   }
   return ::checkAttributeUniquenessUnsortedSet(it);
