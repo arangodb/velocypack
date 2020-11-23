@@ -310,13 +310,13 @@ class Builder {
   uint8_t* addUnchecked(char const* attrName, std::size_t attrLength, T const& sub) {
     if (_stack.empty()) {
       set(ValuePair(attrName, attrLength, ValueType::String));
-      return writeKey(sub);
+      return writeValue(sub);
     }
     
     reportAdd();
     try {
       set(ValuePair(attrName, attrLength, ValueType::String));
-      return writeKey(sub);
+      return writeValue(sub);
     } catch (...) {
       // clean up in case of an exception
       cleanupAdd();
@@ -874,13 +874,13 @@ class Builder {
           reserve(l);
           memcpy(_start + _pos, translated, checkOverflow(l));
           advance(l);
-          return writeKey(sub);
+          return writeValue(sub);
         }
         // otherwise fall through to regular behavior
       }
 
       set(ValuePair(attrName, attrLength, ValueType::String));
-      return writeKey(sub);
+      return writeValue(sub);
     } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
@@ -927,13 +927,13 @@ class Builder {
           reserve(l);
           memcpy(_start + _pos, translated, checkOverflow(l));
           advance(l);
-          return writeKeyTagged(tag, sub);
+          return writeValueTagged(tag, sub);
         }
         // otherwise fall through to regular behavior
       }
 
       set(ValuePair(attrName, attrLength, ValueType::String));
-      return writeKeyTagged(tag, sub);
+      return writeValueTagged(tag, sub);
     } catch (...) {
       // clean up in case of an exception
       if (haveReported) {
@@ -944,13 +944,13 @@ class Builder {
   }
   
   template <typename T>
-  inline uint8_t* writeKey(T const& sub) {
+  inline uint8_t* writeValue(T const& sub) {
     _keyWritten = true;
     return set(sub);
   }
 
   template <typename T>
-  inline uint8_t* writeKeyTagged(uint64_t tag, T const& sub) {
+  inline uint8_t* writeValueTagged(uint64_t tag, T const& sub) {
     _keyWritten = true;
     if (VELOCYPACK_UNLIKELY(tag != 0)) {
       appendTag(tag);
