@@ -1724,7 +1724,7 @@ TEST(BuilderTest, StringView) {
   ValueLength len;
   char const* s = slice.getString(len);
   ASSERT_EQ(value.size(), len);
-  ASSERT_EQ(0, strncmp(s, value.c_str(), value.size()));
+  ASSERT_EQ(0, strncmp(s, value.data(), value.size()));
 
   std::string_view c = slice.stringView();
   ASSERT_EQ(value.size(), c.size());
@@ -3552,6 +3552,15 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
 }
 
 #if __cplusplus >= 201703L
+TEST(BuilderTest, getSharedSliceEmpty) {
+  SharedSlice ss;
+  Builder b;
+  ASSERT_EQ(1, b.buffer().use_count());
+  auto const sharedSlice = b.sharedSlice();
+  ASSERT_EQ(1, b.buffer().use_count());
+  ASSERT_EQ(3, sharedSlice.buffer().use_count());
+}
+
 TEST(BuilderTest, getSharedSlice) {
   auto const check = [](Builder& b, bool const /* isSmall */) {
     auto const slice = b.slice();
@@ -3566,7 +3575,6 @@ TEST(BuilderTest, getSharedSlice) {
 
   auto smallBuilder = Builder{};
   auto largeBuilder = Builder{};
-  auto emptyBuilder = Builder{};
 
   // A buffer can take slices up to 192 bytes without allocating memory.
   // This will fit:
@@ -3576,13 +3584,13 @@ TEST(BuilderTest, getSharedSlice) {
 
   check(smallBuilder, true);
   check(largeBuilder, false);
-  check(emptyBuilder, false);
+}
   
-  {
-    Builder b;
-    b.openObject();
-    ASSERT_VELOCYPACK_EXCEPTION(b.sharedSlice(), Exception::BuilderNotSealed);
-  }
+TEST(BuilderTest, getSharedSliceOpen) {
+  SharedSlice ss;
+  Builder b;
+  b.openObject();
+  ASSERT_VELOCYPACK_EXCEPTION(ss = b.sharedSlice(), Exception::BuilderNotSealed);
 }
 
 TEST(BuilderTest, stealSharedSlice) {
