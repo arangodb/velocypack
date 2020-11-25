@@ -26,6 +26,7 @@ set(Tests
     testsLookup
     testsParser
     testsSerializable
+    testsSink
     testsSlice
     testsSliceContainer
     testsStringRef

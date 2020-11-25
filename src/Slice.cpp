@@ -40,7 +40,7 @@ using namespace arangodb::velocypack;
 namespace {
 
 // maximum values for integers of different byte sizes
-int64_t const maxValues[] = {
+constexpr int64_t maxValues[] = {
   128, 32768, 8388608, 2147483648, 549755813888, 140737488355328, 36028797018963968
 };
 

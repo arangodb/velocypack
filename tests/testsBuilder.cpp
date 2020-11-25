@@ -29,6 +29,10 @@
 #include <ostream>
 #include <string>
 
+#if __cplusplus >= 201703L
+#include <string_view>
+#endif
+
 #include "tests-common.h"
 
 TEST(BuilderTest, ConstructWithBufferRef) {
@@ -1413,6 +1417,9 @@ TEST(BuilderTest, ExternalDisallowed) {
       b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)),
                   ValueType::External)),
       Exception::BuilderExternalsDisallowed);
+  
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.addExternal(externalStuff), Exception::BuilderExternalsDisallowed);
 }
 
 TEST(BuilderTest, External) {
@@ -1564,6 +1571,26 @@ TEST(BuilderTest, ExternalExternal) {
   ASSERT_EQ(0, strncmp(str, p, len));
 }
 
+TEST(BuilderTest, ExternalAsObjectKey) {
+  uint8_t externalStuff[] = {0x18};
+  /*
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(
+        b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)),
+                ValueType::External)), Exception::BuilderKeyMustBeString);
+  }
+  */
+
+  {
+    Builder b;
+    b.openObject();
+    ASSERT_VELOCYPACK_EXCEPTION(
+        b.addExternal(externalStuff), Exception::BuilderKeyMustBeString);
+  }
+}
+
 TEST(BuilderTest, UInt) {
   uint64_t value = 0x12345678abcdef;
   Builder b;
@@ -1685,6 +1712,26 @@ TEST(BuilderTest, StringString) {
   ASSERT_EQ(value, c);
 }
 
+#if __cplusplus >= 201703L
+TEST(BuilderTest, StringView) {
+  std::string_view const value("der fuxx ging in den wald und aß pilze");
+  Builder b;
+  b.add(Value(value));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(value.size(), len);
+  ASSERT_EQ(0, strncmp(s, value.data(), value.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(value.size(), c.size());
+  ASSERT_EQ(value, c);
+}
+#endif
+
 TEST(BuilderTest, BinaryViaValuePair) {
   uint8_t binaryStuff[] = {0x02, 0x03, 0x05, 0x08, 0x0d};
 
@@ -1715,6 +1762,9 @@ TEST(BuilderTest, ShortStringViaValuePair) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+  
+  ASSERT_EQ(p, b.slice().copyString());
+  ASSERT_TRUE(StringRef(p).equals(b.slice().stringRef()));
 }
 
 TEST(BuilderTest, LongStringViaValuePair) {
@@ -1748,6 +1798,9 @@ TEST(BuilderTest, LongStringViaValuePair) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
+
+  ASSERT_EQ(p, b.slice().copyString());
+  ASSERT_TRUE(StringRef(p).equals(b.slice().stringRef()));
 }
 
 TEST(BuilderTest, CustomViaValuePair) {
@@ -2724,6 +2777,7 @@ TEST(BuilderTest, HandInBuffer) {
   Buffer<uint8_t> buf;
   {
     Builder b(buf);
+    ASSERT_EQ(&Options::Defaults, b.options);
     b.openObject();
     b.add("a",Value(123));
     b.add("b",Value("abc"));
@@ -2738,6 +2792,7 @@ TEST(BuilderTest, HandInBuffer) {
     ASSERT_TRUE(ss.isString());
     ASSERT_EQ(std::string("abc"), ss.copyString());
   }
+  // check that everthing is still valid
   Slice s(buf.data());
   ASSERT_TRUE(s.isObject());
   ASSERT_EQ(2UL, s.length());
@@ -2747,10 +2802,67 @@ TEST(BuilderTest, HandInBuffer) {
   ss = s.get("b");
   ASSERT_TRUE(ss.isString());
   ASSERT_EQ(std::string("abc"), ss.copyString());
+}
+
+
+TEST(BuilderTest, HandInBufferNoOptions) {
+  Buffer<uint8_t> buf;
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buf, nullptr),
+                              Exception::InternalError);
+}
+
+TEST(BuilderTest, HandInBufferCustomOptions) {
+  Buffer<uint8_t> buf;
+
   {
-    ASSERT_VELOCYPACK_EXCEPTION(new Builder(buf, nullptr),
-                                Exception::InternalError);
+    Options options;
+    Builder b(buf, &options);
+    ASSERT_EQ(&options, b.options);
+
+    b.openObject();
+    b.add("a",Value(123));
+    b.add("b",Value("abc"));
+    b.close();
   }
+  Slice s(buf.data());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(2UL, s.length());
+  Slice ss = s.get("a");
+  ASSERT_TRUE(ss.isInteger());
+  ASSERT_EQ(123L, ss.getInt());
+  ss = s.get("b");
+  ASSERT_TRUE(ss.isString());
+  ASSERT_EQ(std::string("abc"), ss.copyString());
+}
+
+TEST(BuilderTest, HandInSharedBufferNoOptions) {
+  auto buf = std::make_shared<Buffer<uint8_t>>();
+  ASSERT_VELOCYPACK_EXCEPTION(new Builder(buf, nullptr),
+                              Exception::InternalError);
+}
+
+TEST(BuilderTest, HandInSharedBufferCustomOptions) {
+  auto buf = std::make_shared<Buffer<uint8_t>>();
+
+  {
+    Options options;
+    Builder b(buf, &options);
+    ASSERT_EQ(&options, b.options);
+
+    b.openObject();
+    b.add("a",Value(123));
+    b.add("b",Value("abc"));
+    b.close();
+  }
+  Slice s(buf->data());
+  ASSERT_TRUE(s.isObject());
+  ASSERT_EQ(2UL, s.length());
+  Slice ss = s.get("a");
+  ASSERT_TRUE(ss.isInteger());
+  ASSERT_EQ(123L, ss.getInt());
+  ss = s.get("b");
+  ASSERT_TRUE(ss.isString());
+  ASSERT_EQ(std::string("abc"), ss.copyString());
 }
 
 TEST(BuilderTest, SliceEmpty) {
@@ -3446,6 +3558,15 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
 }
 
 #if __cplusplus >= 201703L
+TEST(BuilderTest, getSharedSliceEmpty) {
+  SharedSlice ss;
+  Builder b;
+  ASSERT_EQ(1, b.buffer().use_count());
+  auto const sharedSlice = b.sharedSlice();
+  ASSERT_EQ(1, b.buffer().use_count());
+  ASSERT_EQ(3, sharedSlice.buffer().use_count());
+}
+
 TEST(BuilderTest, getSharedSlice) {
   auto const check = [](Builder& b, bool const /* isSmall */) {
     auto const slice = b.slice();
@@ -3469,6 +3590,13 @@ TEST(BuilderTest, getSharedSlice) {
 
   check(smallBuilder, true);
   check(largeBuilder, false);
+}
+  
+TEST(BuilderTest, getSharedSliceOpen) {
+  SharedSlice ss;
+  Builder b;
+  b.openObject();
+  ASSERT_VELOCYPACK_EXCEPTION(ss = b.sharedSlice(), Exception::BuilderNotSealed);
 }
 
 TEST(BuilderTest, stealSharedSlice) {
