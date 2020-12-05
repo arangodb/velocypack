@@ -877,7 +877,12 @@ class Builder {
 
   inline void reportAdd() {
     std::size_t depth = _stack.size() - 1;
-    _index[depth].push_back(_pos - _stack[depth]);
+    ValueLength pos = _pos - _stack[depth];
+
+    // avoid same position being added several times
+    if(_index[depth].empty() || _index[depth].back() != pos) {
+      _index[depth].push_back(pos);
+    }
   }
 
   template <uint64_t n>

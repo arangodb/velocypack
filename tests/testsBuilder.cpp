@@ -1403,6 +1403,45 @@ TEST(BuilderTest, ArrayCompactLengthAboveThreshold) {
   ASSERT_EQ(0x80, result[516]);
 }
 
+TEST(BuilderTest, ArrayCompactLength) {
+  Builder obj;
+  obj.openArray(true);
+  obj.add(Value(1));
+  obj.openArray(true);
+  obj.add(Value(2));
+  obj.close();
+  obj.close();
+
+  Slice objSlice = obj.slice();
+
+  static uint8_t correctResult[] = {0x13, 0x08, 0x31, 0x13, 0x04, 0x32, 0x01, 0x02};
+
+  ASSERT_EQ(sizeof(correctResult), objSlice.byteSize());
+  ASSERT_EQ(0, memcmp(objSlice.start(), correctResult, objSlice.byteSize()));
+}
+
+TEST(BuilderTest, ArrayCompactLengthSerializable) {
+  Builder obj;
+  obj.openArray(true);
+  obj.add(Value(1));
+
+  LambdaSerializable ls([&](Builder& b) {
+    b.openArray(true);
+    b.add(Value(2));
+    b.close();
+  });
+
+  obj.add(ls);
+  obj.close();
+
+  Slice objSlice = obj.slice();
+
+  static uint8_t correctResult[] = {0x13, 0x08, 0x31, 0x13, 0x04, 0x32, 0x01, 0x02};
+
+  ASSERT_EQ(sizeof(correctResult), objSlice.byteSize());
+  ASSERT_EQ(0, memcmp(objSlice.start(), correctResult, objSlice.byteSize()));
+}
+
 TEST(BuilderTest, ExternalDisallowed) {
   uint8_t externalStuff[] = {0x01};
   Options options;

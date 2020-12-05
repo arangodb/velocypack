@@ -25,6 +25,7 @@
 #define VELOCYPACK_SERIALIZABLE_H 1
 
 #include <memory>
+#include <functional>
 
 #include "velocypack/velocypack-common.h"
 
@@ -45,6 +46,18 @@ class Serializable {
 struct Serialize {
   Serialize(Serializable const& sable) : _sable(sable) {}
   Serializable const& _sable;
+};
+
+class LambdaSerializable : public Serializable {
+ public:
+  std::function<void(Builder&)> lambda;
+
+  LambdaSerializable(std::function<void(Builder&)> lambda) : lambda(lambda) {}
+
+  using Serializable::toVelocyPack;
+  void toVelocyPack(Builder& b) const override {
+    lambda(b);
+  }
 };
 
 }
