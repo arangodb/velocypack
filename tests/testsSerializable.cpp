@@ -62,6 +62,22 @@ TEST(SerializableTest, AddObject) {
   ASSERT_EQ(ValueType::Object, s.type());
   Slice t(s.get("key"));
   ASSERT_EQ(t.get("test").copyString(), "serialized!");
+  ASSERT_EQ(s.length(), 1);
+}
+
+TEST(SerializableTest, AddArray) {
+  SerializableTest st;
+
+  Builder b;
+  {
+    ArrayBuilder ob(&b);
+    b.add(Serialize(st));
+  }
+  Slice s(b.slice());
+  ASSERT_EQ(ValueType::Array, s.type());
+  Slice t(s.at(0));
+  ASSERT_EQ(t.get("test").copyString(), "serialized!");
+  ASSERT_EQ(s.length(), 1);
 }
 
 TEST(SerializableTest, ToVelocyPack) {
