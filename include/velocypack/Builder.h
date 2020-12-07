@@ -796,7 +796,7 @@ class Builder {
   // add without a tag
   template <typename T>
   uint8_t* addInternal(T const& sub) {
-    if (_stack.empty()) {
+    if (_stack.empty() || std::is_same<T, Serializable>::value) {
       return set(sub);
     }
 
