@@ -19,7 +19,7 @@ echo "Building with C++ Standard $CXX_STANDARD"
 
 mkdir -p build && cd build || ferr "could not create build dir"
 
-cmake -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash \
+cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DHashType=xxhash \
       -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON \
       -DBuildTools=ON -DEnableSSE=OFF \
       -DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
