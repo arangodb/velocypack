@@ -20,11 +20,13 @@ set(Tests
     testsDumper
     testsException
     testsFiles
+    testsHashedStringRef
     testsHexDump
     testsIterator
     testsLookup
     testsParser
     testsSerializable
+    testsSink
     testsSlice
     testsSliceContainer
     testsStringRef

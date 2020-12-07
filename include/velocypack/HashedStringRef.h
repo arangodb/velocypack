@@ -18,7 +18,6 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Max Neunhoeffer
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -38,6 +37,18 @@ namespace velocypack {
 class Slice;
 class StringRef;
 
+/// a non-owning string reference with a computed hash value.
+/// it can be used for fast equality comparisons, for example as keys
+/// in unordered containers.
+/// the HashedStringRef does not own the data it points to. 
+/// it is the caller's responsibility to keep the pointed-to string 
+/// data valid while the HashedStringRef points to it.
+/// the length of the pointed-to string is restricted to (2 ^ 32) - 1.
+/// there are intentionally no constructors to create HashedStringRefs
+/// from std::string, char const* or (char const*, size_t) pairs,
+/// so that the caller must explicitly pass the string length as a
+/// uint32_t and must handle potential string truncation at the call
+/// site.
 class HashedStringRef {
  public:
   /// @brief create an empty HashedStringRef
@@ -46,37 +57,15 @@ class HashedStringRef {
       _length(0), 
       _hash(hash("", 0)) {}
 
-  /// @brief create a HashedStringRef from an std::string
-  explicit HashedStringRef(std::string const& str) noexcept 
-    : HashedStringRef(str.data(), str.size()) {}
-  
-  /// @brief create a HashedStringRef from a string plus length
-  HashedStringRef(char const* data, std::size_t length) noexcept 
+  /// @brief create a HashedStringRef from a string plus length.
+  /// the length is intentionally restricted to a uint32_t here.
+  HashedStringRef(char const* data, uint32_t length) noexcept 
     : _data(data), 
-      _length(static_cast<uint32_t>(length)), 
+      _length(length),
       _hash(hash(_data, _length)) {}
   
-  /// @brief create a HashedStringRef from a string plus length and hash.
-  /// note: the hash is *not* validated. it is the caller's responsibility
-  /// to ensure the hash value is correct
-  HashedStringRef(char const* data, std::size_t length, uint32_t hash) noexcept 
-    : _data(data), 
-      _length(static_cast<uint32_t>(length)), 
-      _hash(hash) {}
-  
-  /// @brief create a HashedStringRef from a null-terminated C string
-  explicit HashedStringRef(char const* data) noexcept 
-#if __cplusplus >= 201703
-    : HashedStringRef(data, std::char_traits<char>::length(data)) {}
-#else
-    : HashedStringRef(data, strlen(data)) {}
-#endif
-   
   /// @brief create a HashedStringRef from a VPack slice (must be of type String)
   explicit HashedStringRef(Slice slice);
-  
-  /// @brief create a HashedStringRef from anther StringRef
-  explicit HashedStringRef(StringRef const& other) noexcept;
   
   /// @brief create a HashedStringRef from another HashedStringRef
   constexpr HashedStringRef(HashedStringRef const& other) noexcept
@@ -106,27 +95,9 @@ class HashedStringRef {
     return *this;
   }
   
-  /// @brief create a HashedStringRef from an std::string
-  HashedStringRef& operator=(std::string const& other) noexcept {
-    _data = other.data();
-    _length = other.size();
-    _hash = hash(other.data(), other.size());
-    return *this;
-  }
-  
-  /// @brief create a HashedStringRef from a null-terminated C string
-  HashedStringRef& operator=(char const* other) noexcept {
-    _data = other;
-    _length = strlen(other);
-    _hash = hash(_data, _length);
-    return *this;
-  }
-  
-  /// @brief create a HashedStringRef from a VPack slice of type String
+  /// @brief create a HashedStringRef from a VPack slice of type String.
+  /// if the slice if not of type String, this method will throw an exception.
   HashedStringRef& operator=(Slice slice);
-  
-  /// @brief create a HashedStringRef from a StringRef
-  HashedStringRef& operator=(StringRef const& other) noexcept;
   
   HashedStringRef substr(std::size_t pos = 0, std::size_t count = std::string::npos) const;
   
@@ -138,13 +109,27 @@ class HashedStringRef {
 
   int compare(HashedStringRef const& other) const noexcept;
   
-  template<typename OtherType>
-  int compare(OtherType const& other) const noexcept { return compare(HashedStringRef(other)); }
+  int compare(char const* data, std::size_t length) const noexcept;
   
+  int compare(std::string const& other) const noexcept {
+    return compare(other.data(), other.size());
+  }
+  
+  int compare(char const* data) const noexcept {
+    return compare(data, std::strlen(data));
+  }
+   
   bool equals(HashedStringRef const& other) const noexcept;
   
-  template<typename OtherType>
-  bool equals(OtherType const& other) const noexcept { return equals(HashedStringRef(other)); }
+  bool equals(char const* data, std::size_t length) const noexcept;
+  
+  bool equals(std::string const& other) const noexcept {
+    return equals(other.data(), other.size());
+  }
+  
+  bool equals(char const* data) const noexcept {
+    return equals(data, std::strlen(data));
+  }
   
   std::string toString() const {
     return std::string(_data, _length);
@@ -198,6 +183,11 @@ class HashedStringRef {
     return _hash;
   }
 
+  // return a combined hash/length value for comparisons with less branching
+  constexpr inline uint64_t tag() const noexcept {
+    return (static_cast<uint64_t>(_hash) << 32) | static_cast<uint64_t>(_length);
+  }
+
  private:
   inline uint32_t hash(char const* data, uint32_t length) const noexcept {
     return VELOCYPACK_HASH32(data, length, 0xdeadbeef);
@@ -213,38 +203,28 @@ std::ostream& operator<<(std::ostream& stream, HashedStringRef const& ref);
 } // namespace velocypack
 } // namespace arangodb
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
-  return (lhs.size() == rhs.size() && 
-          lhs.hash() == rhs.hash() && 
-          memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
+inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
+  // equal tags imply equal length/size
+  return (lhs.tag() == rhs.tag() && memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
 }
 
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return !(lhs == rhs);
 }
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) {
-  return (lhs.size() == rhs.size() && 
-          memcmp(lhs.data(), rhs.c_str(), lhs.size()) == 0);
+inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) noexcept {
+  return (lhs.size() == rhs.size() && memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
 }
 
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) {
+inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, std::string const& rhs) noexcept {
   return !(lhs == rhs);
 }
 
-inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) {
-  return lhs == arangodb::velocypack::HashedStringRef(rhs);
-}
-
-inline bool operator!=(arangodb::velocypack::HashedStringRef const& lhs, char const* rhs) {
-  return !(lhs == rhs);
-}
-
-inline bool operator<(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator<(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return (lhs.compare(rhs) < 0);
 }
 
-inline bool operator>(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) {
+inline bool operator>(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   return (lhs.compare(rhs) > 0);
 }
 
@@ -261,9 +241,7 @@ template <>
 struct equal_to<arangodb::velocypack::HashedStringRef> {
   bool operator()(arangodb::velocypack::HashedStringRef const& lhs,
                   arangodb::velocypack::HashedStringRef const& rhs) const noexcept {
-    return (lhs.size() == rhs.size() &&
-            lhs.hash() == rhs.hash() &&
-            (memcmp(lhs.data(), rhs.data(), lhs.size()) == 0));
+    return (lhs.tag() == rhs.tag() && memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
   }
 };
 

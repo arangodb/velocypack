@@ -1,5 +1,5 @@
 os: linux
-dist: bionic
+dist: focal
 language: cpp
 
 env:
@@ -8,7 +8,7 @@ env:
 
 matrix:
   include:
-    - name: "C++11 build"
+    - name: "C++11 build g+-8"
       env:
         - ARCH=amd64
         #compiler
@@ -22,7 +22,7 @@ matrix:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
-    - name: "C++14 build"
+    - name: "C++14 build g++-8"
       env:
         - ARCH=amd64
         #compiler
@@ -36,7 +36,21 @@ matrix:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
-    - name: "C++17 build"
+    - name: "C++17 build g++-8"
+      env:
+        - ARCH=amd64
+        #compiler
+        - CXX=g++-8
+        - CC=gcc-8
+        #build settings
+        - build_type=Release
+        - SANITIZER=false
+        - CXX_STANDARD=17
+      addons:
+        apt:
+          packages: ['gcc-8', 'g++-8', 'cmake']
+    
+    - name: "C++17 build g++-9"
       env:
         - ARCH=amd64
         #compiler
@@ -50,8 +64,8 @@ matrix:
         apt:
           packages: ['gcc-8', 'g++-8', 'cmake']
 
-    - name: "address sanitizer build"
-      if: branch = master AND false #disabled
+    - name: "address sanitizer build, g++-8"
+      if: branch = main AND false #disabled
       env:
         - ARCH=amd64
         #compiler
@@ -62,26 +76,26 @@ matrix:
         - SANITIZER=true
         - CXX_STANDARD=17
 
-    - name: "coverage build"
-      if: branch = master
+    - name: "coverage build, g++-9"
+      if: branch = main
       env:
         - ARCH=amd64
         #compiler
-        - CXX=g++-7
-        - CC=gcc-7
+        - CXX=g++-9
+        - CC=gcc-9
         #build settings
         - build_type=Debug
-        - CXXFLAGS="-O0 --coverage"
+        - CXXFLAGS="-O0 -fno-inline --coverage"
         - CXX_STANDARD=17
       addons:
         apt:
-          packages: ['gcc-7', 'g++-7', 'lcov', 'cmake']
+          packages: ['gcc-9', 'g++-9', 'lcov', 'cmake']
       script:
         - ./scripts/travis-build.sh
         - ./scripts/travis-after-success.sh
 
-    - name: "clang build"
-      if: branch = master AND false # disabled because of clang ICE
+    - name: "clang build, clang++-9"
+      if: branch = main AND false # disabled because of clang ICE
       compiler: clang++-9
       env:
         - ARCH=amd64

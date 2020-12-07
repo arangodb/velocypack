@@ -37,7 +37,9 @@ TEST(StringRefTest, CopyStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -51,7 +53,9 @@ TEST(StringRefTest, MoveStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -69,7 +73,9 @@ TEST(StringRefTest, CopyAssignStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -87,7 +93,9 @@ TEST(StringRefTest, MoveAssignStringRef) {
 
   ASSERT_EQ(19, copy.size());
   ASSERT_EQ(s.data(), copy.data());
+  ASSERT_EQ(s.size(), copy.size());
   ASSERT_TRUE(s.equals(copy));
+  ASSERT_TRUE(s == copy);
   ASSERT_EQ(0, s.compare(copy));
   ASSERT_EQ('t', s.front());
   ASSERT_EQ('t', copy.front());
@@ -104,6 +112,8 @@ TEST(StringRefTest, EmptyStringRef) {
 
   ASSERT_TRUE(s.equals(StringRef()));
   ASSERT_TRUE(s.equals(s));
+  ASSERT_TRUE(s == StringRef());
+  ASSERT_TRUE(s == s);
   ASSERT_EQ(0, s.compare(s));
   ASSERT_EQ(0, s.compare(StringRef()));
 }
@@ -135,6 +145,27 @@ TEST(StringRefTest, StringRefFromString) {
   ASSERT_TRUE(s.equals(s));
   ASSERT_EQ(0, s.compare(s));
   ASSERT_EQ(0, s.compare(StringRef(value)));
+}
+
+TEST(StringRefTest, StringRefFromHashedStringRef) {
+  std::string const value("the-quick-brown-foxx");
+  HashedStringRef h(value.data(), 20);
+
+  StringRef s(h);
+
+  ASSERT_TRUE(!s.empty());
+  ASSERT_EQ(20U, s.size());
+  ASSERT_EQ("the-quick-brown-foxx", s.toString());
+  ASSERT_EQ(h.data(), s.data());
+  ASSERT_EQ(h.size(), s.size());
+  ASSERT_EQ(value.data(), s.data());
+
+  ASSERT_TRUE(s.equals(StringRef(value)));
+  ASSERT_TRUE(s.equals(s));
+  ASSERT_TRUE(s.equals(h));
+  ASSERT_EQ(0, s.compare(s));
+  ASSERT_EQ(0, s.compare(StringRef(value)));
+  ASSERT_EQ(0, s.compare(h));
 }
 
 TEST(StringRefTest, StringRefFromStringWithNullByte) {
@@ -260,6 +291,28 @@ TEST(StringRefTest, StringRefAssignFromStringSlice) {
   ASSERT_TRUE(s.equals(s));
   ASSERT_EQ(0, s.compare(s));
   ASSERT_EQ(0, s.compare("the-quick-brown-foxx"));
+}
+
+TEST(StringRefTest, StringRefAssignFromHashedStringRef) {
+  std::string const value("the-quick-brown-foxx");
+  HashedStringRef h(value.data(), 20);
+
+  StringRef s;
+  s = h;
+
+  ASSERT_TRUE(!s.empty());
+  ASSERT_EQ(20U, s.size());
+  ASSERT_EQ("the-quick-brown-foxx", s.toString());
+  ASSERT_EQ(h.data(), s.data());
+  ASSERT_EQ(h.size(), s.size());
+  ASSERT_EQ(value.data(), s.data());
+
+  ASSERT_TRUE(s.equals(StringRef(value)));
+  ASSERT_TRUE(s.equals(s));
+  ASSERT_TRUE(s.equals(h));
+  ASSERT_EQ(0, s.compare(s));
+  ASSERT_EQ(0, s.compare(StringRef(value)));
+  ASSERT_EQ(0, s.compare(h));
 }
 
 TEST(StringRefTest, CharacterAccess) {
