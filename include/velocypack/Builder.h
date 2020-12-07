@@ -720,7 +720,7 @@ class Builder {
   template <typename T>
   uint8_t* addInternal(uint64_t tag, T const& sub) {
     bool haveReported = false;
-    if (!_stack.empty()) {
+    if (!std::is_same<T, Serializable>::value && !_stack.empty()) {
       if (!_keyWritten) {
         reportAdd();
         haveReported = true;
