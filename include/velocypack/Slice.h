@@ -34,6 +34,7 @@
 #include <iterator>
 #include <algorithm>
 #include <functional>
+#include <tuple>
 #include <type_traits>
 
 #if __cplusplus >= 201703L
