@@ -88,7 +88,7 @@ TEST(IteratorTest, IterateArrayEmpty) {
 
   it.next();
   ASSERT_FALSE(it.valid());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
 }
 
@@ -101,7 +101,7 @@ TEST(IteratorTest, IterateArrayEmptySpecial) {
 
   it.next();
   ASSERT_FALSE(it.valid());
-  
+
   ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
 }
 
@@ -216,14 +216,14 @@ TEST(IteratorTest, IterateArrayForward) {
   current = it.value();
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
-  
+
   it.forward(2);
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
-  
+
   it.forward(1);
 
   ASSERT_FALSE(it.valid());
@@ -235,7 +235,7 @@ TEST(IteratorTest, IterateArrayForward) {
 
 TEST(IteratorTest, IterateCompactArrayForward) {
   std::string const value("[1,2,3,4,null,true,\"foo\",\"bar\"]");
-  
+
   Options options;
   options.buildUnindexedArrays = true;
 
@@ -278,14 +278,14 @@ TEST(IteratorTest, IterateCompactArrayForward) {
   current = it.value();
   ASSERT_TRUE(current.isBool());
   ASSERT_TRUE(current.getBool());
-  
+
   it.forward(2);
 
   ASSERT_TRUE(it.valid());
   current = it.value();
   ASSERT_TRUE(current.isString());
   ASSERT_EQ("bar", current.copyString());
-  
+
   it.forward(1);
 
   ASSERT_FALSE(it.valid());
@@ -601,7 +601,7 @@ TEST(IteratorTest, IterateObjectUnsorted) {
   ASSERT_EQ(1UL, current.getUInt());
 
   it.next();
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
@@ -610,7 +610,7 @@ TEST(IteratorTest, IterateObjectUnsorted) {
   ASSERT_EQ(2UL, current.getUInt());
 
   it.next();
-  
+
   ASSERT_TRUE(it.valid());
   key = it.key();
   current = it.value();
@@ -1213,6 +1213,27 @@ TEST(IteratorTest, ObjectIteratorToStream) {
     result << it;
     ASSERT_EQ("[ObjectIterator 4 / 3]", result.str());
   }
+}
+
+TEST(IteratorTest, ArrayIteratorUnpackTuple) {
+  Builder b;
+  b.openArray();
+  b.add(Value("some string"));
+  b.add(Value(12));
+  b.add(Value(false));
+  b.add(Value("extracted as slice"));
+  b.close();
+
+  Slice s = b.slice();
+  ArrayIterator iter(s);
+  auto t = iter.unpackTuple<std::string, int, bool>();
+
+  ASSERT_EQ(std::get<0>(t), "some string");
+  ASSERT_EQ(std::get<1>(t), 12);
+  ASSERT_EQ(std::get<2>(t), false);
+
+  ASSERT_TRUE(iter.valid());
+  ASSERT_TRUE(iter.value().isEqualString("extracted as slice"));
 }
 
 int main(int argc, char* argv[]) {
