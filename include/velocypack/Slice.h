@@ -53,6 +53,7 @@
 
 namespace arangodb {
 namespace velocypack {
+class Sink;
 
 template<typename, typename = void>
 struct Extractor;
@@ -1027,6 +1028,7 @@ class Slice {
 
   std::string toHex() const;
   std::string toJson(Options const* options = &Options::Defaults) const;
+  void toJson(Sink* sink, Options const* options = &Options::Defaults) const;
   std::string toString(Options const* options = &Options::Defaults) const;
   std::string hexType() const;
 
