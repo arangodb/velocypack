@@ -131,6 +131,12 @@ std::string Slice::toJson(Options const* options) const {
   return buffer;
 }
 
+std::string& Slice::toJson(std::string& out, Options const* options) const {
+  StringSink sink(&out);
+  toJson(&sink, options);
+  return out;
+}
+
 void Slice::toJson(Sink* sink, Options const* options) const {
   Dumper dumper(sink, options);
   dumper.dump(this);
