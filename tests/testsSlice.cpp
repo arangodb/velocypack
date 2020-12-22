@@ -398,6 +398,14 @@ TEST(SliceTest, ToJsonNull) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("null", s.toJson());
+
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("null", out);
+
+  out.clear();
+  ASSERT_EQ("null", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonFalse) {
@@ -408,6 +416,14 @@ TEST(SliceTest, ToJsonFalse) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("false", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("false", out);
+  
+  out.clear();
+  ASSERT_EQ("false", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonTrue) {
@@ -418,6 +434,14 @@ TEST(SliceTest, ToJsonTrue) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("true", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("true", out);
+  
+  out.clear();
+  ASSERT_EQ("true", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonNumber) {
@@ -428,6 +452,14 @@ TEST(SliceTest, ToJsonNumber) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("-12345", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("-12345", out);
+  
+  out.clear();
+  ASSERT_EQ("-12345", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonString) {
@@ -438,6 +470,14 @@ TEST(SliceTest, ToJsonString) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("\"foobarbaz\"", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("\"foobarbaz\"", out);
+  
+  out.clear();
+  ASSERT_EQ("\"foobarbaz\"", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonArrayEmpty) {
@@ -449,6 +489,14 @@ TEST(SliceTest, ToJsonArrayEmpty) {
   Slice s(builder->start());
   ASSERT_EQ(0x01, s.head());
   ASSERT_EQ("[]", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("[]", out);
+  
+  out.clear();
+  ASSERT_EQ("[]", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonArray) {
@@ -459,6 +507,14 @@ TEST(SliceTest, ToJsonArray) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("[1,2,3,4,5]", out);
+  
+  out.clear();
+  ASSERT_EQ("[1,2,3,4,5]", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonArrayCompact) {
@@ -474,6 +530,14 @@ TEST(SliceTest, ToJsonArrayCompact) {
   ASSERT_EQ(0x13, s.head());
 
   ASSERT_EQ("[1,2,3,4,5]", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("[1,2,3,4,5]", out);
+  
+  out.clear();
+  ASSERT_EQ("[1,2,3,4,5]", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonObjectEmpty) {
@@ -489,6 +553,14 @@ TEST(SliceTest, ToJsonObjectEmpty) {
   ASSERT_EQ(0x0a, s.head());
 
   ASSERT_EQ("{}", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("{}", out);
+  
+  out.clear();
+  ASSERT_EQ("{}", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonObject) {
@@ -504,6 +576,14 @@ TEST(SliceTest, ToJsonObject) {
   ASSERT_EQ(0x14, s.head());
 
   ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", out);
+  
+  out.clear();
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson(out));
 }
 
 TEST(SliceTest, ToJsonObjectCompact) {
@@ -514,6 +594,14 @@ TEST(SliceTest, ToJsonObjectCompact) {
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
   ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson());
+  
+  std::string out;
+  StringSink sink(&out);
+  s.toJson(&sink);
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", out);
+  
+  out.clear();
+  ASSERT_EQ("{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5}", s.toJson(out));
 }
 
 TEST(SliceTest, InvalidGetters) {
