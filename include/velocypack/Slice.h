@@ -1416,7 +1416,7 @@ struct Extractor<T, typename std::enable_if<std::is_arithmetic<T>::value>::type>
 template<typename... Ts>
 struct Extractor<std::tuple<Ts...>> {
   static std::tuple<Ts...> extract(Slice slice) {
-    return slice.unpackTuple<Ts...>(slice);
+    return slice.unpackTuple<Ts...>();
   }
 };
 
