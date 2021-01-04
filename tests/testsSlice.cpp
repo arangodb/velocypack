@@ -3399,6 +3399,18 @@ TEST(SliceTest, UnpackTupleSlice) {
   ASSERT_TRUE(std::get<3>(t).isString());
 }
 
+TEST(SliceTest, UnpackTupleSliceInvalidSize) {
+  Builder b;
+  b.openArray();
+  b.add(Value("some string"));
+  b.add(Value(12));
+  b.add(Value(false));
+  b.close();
+
+  Slice s = b.slice();
+  ASSERT_VELOCYPACK_EXCEPTION((s.unpackTuple<std::string, int, bool, Slice>()), Exception::BadTupleSize)
+}
+
 TEST(SliceTest, ExtractTuple) {
   Builder b;
   b.openArray();
