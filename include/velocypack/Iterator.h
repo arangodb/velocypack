@@ -159,7 +159,7 @@ class ArrayIterator : public std::iterator<std::forward_iterator_tag, Slice> {
   }
 
   template<typename... Ts>
-  std::tuple<Ts...> unpackTuple() {
+  std::tuple<Ts...> unpackPrefixAsTuple() {
     return unpackTupleInternal(unpack_helper<Ts...>{});
   }
 

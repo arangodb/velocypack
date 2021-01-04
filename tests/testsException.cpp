@@ -80,6 +80,8 @@ TEST(ExceptionTest, TestMessages) {
                Exception::message(Exception::ValidatorInvalidType));
   ASSERT_STREQ("Invalid length found in binary data",
                Exception::message(Exception::ValidatorInvalidLength));
+  ASSERT_STREQ("Array size does not match tuple size",
+               Exception::message(Exception::BadTupleSize));
 
   ASSERT_STREQ("Unknown error", Exception::message(Exception::UnknownError));
   ASSERT_STREQ("Unknown error",

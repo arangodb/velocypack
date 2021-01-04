@@ -1226,7 +1226,7 @@ TEST(IteratorTest, ArrayIteratorUnpackTuple) {
 
   Slice s = b.slice();
   ArrayIterator iter(s);
-  auto t = iter.unpackTuple<std::string, int, bool>();
+  auto t = iter.unpackPrefixAsTuple<std::string, int, bool>();
 
   ASSERT_EQ(std::get<0>(t), "some string");
   ASSERT_EQ(std::get<1>(t), 12);
