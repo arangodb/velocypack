@@ -30,6 +30,17 @@
 #include <cstring>
 #include <type_traits>
 
+#ifdef __APPLE__
+#include <libkern/OSByteOrder.h>
+#include <machine/endian.h>
+#elif _WIN32
+// always little-endian
+#elif __linux__
+#include <endian.h>
+#else
+#error "unable to determine endianness - unsupported OS or compiler"
+#endif
+
 #if defined(__GNUC__) || defined(__GNUG__)
 #define VELOCYPACK_LIKELY(v) __builtin_expect(!!(v), 1)
 #define VELOCYPACK_UNLIKELY(v) __builtin_expect(!!(v), 0)
@@ -113,6 +124,25 @@ uint64_t fasthash32(void const*, std::size_t, uint32_t);
 namespace arangodb {
 namespace velocypack {
 
+// home-made endianness detection. can be removed with C++20
+#ifdef __APPLE__
+#if BYTE_ORDER == LITTLE_ENDIAN
+static constexpr bool isLittleEndian() { return true; }
+#elif BYTE_ORDER == BIG_ENDIAN
+static constexpr bool isLittleEndian() { return false; }
+#endif
+#elif _WIN32
+static constexpr bool isLittleEndian() { return true; }
+#elif __linux__
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+static constexpr bool isLittleEndian() { return true; }
+#elif __BYTE_ORDER == __BIG_ENDIAN
+static constexpr bool isLittleEndian() { return false; }
+#endif
+#else
+#error "unable to detect endianness - unsupported OS or compiler"
+#endif
+
 // unified size type for VPack, can be used on 32 and 64 bit
 // though no VPack values can exceed the bounds of 32 bit on a 32 bit OS
 typedef uint64_t ValueLength;
@@ -190,7 +220,7 @@ int64_t currentUTCDateValue();
 static inline uint64_t toUInt64(int64_t v) noexcept {
   // If v is negative, we need to add 2^63 to make it positive,
   // before we can cast it to an uint64_t:
-  uint64_t shift2 = 1ULL << 63;
+  constexpr uint64_t shift2 = 1ULL << 63;
   int64_t shift = static_cast<int64_t>(shift2 - 1);
   return v >= 0 ? static_cast<uint64_t>(v)
                 : static_cast<uint64_t>((v + shift) + 1) + shift2;
@@ -200,7 +230,7 @@ static inline uint64_t toUInt64(int64_t v) noexcept {
 }
 
 static inline int64_t toInt64(uint64_t v) noexcept {
-  uint64_t shift2 = 1ULL << 63;
+  constexpr uint64_t shift2 = 1ULL << 63;
   int64_t shift = static_cast<int64_t>(shift2 - 1);
   return v >= shift2 ? (static_cast<int64_t>(v - shift2) - shift) - 1
                      : static_cast<int64_t>(v);
@@ -213,14 +243,24 @@ static inline T readIntegerFixed(uint8_t const* start) noexcept {
   static_assert(std::is_unsigned<T>::value, "result type must be unsigned");
   static_assert(length > 0, "length must be > 0");
   static_assert(length <= sizeof(T), "length must be <= sizeof(T)");
-  uint64_t x = 8;
-  uint8_t const* end = start + length;
-  T value = static_cast<T>(*start++);
-  while (start < end) {
-    value += static_cast<T>(*start++) << x;
-    x += 8;
+
+  if constexpr (isLittleEndian() && length == sizeof(T)) {
+    // this branch simplifies the integer reading to a plain load,
+    // but it only works for little endian systems
+    T value;
+    memcpy(&value, start, sizeof(T));
+    return value;
+  } else {
+    // this branch will be used in case we load a value into a larger type
+    uint64_t x = 8;
+    uint8_t const* end = start + length;
+    T value = static_cast<T>(*start++);
+    while (start < end) {
+      value += static_cast<T>(*start++) << x;
+      x += 8;
+    }
+    return value;
   }
-  return value;
 }
 
 // read an unsigned little endian integer value of the
