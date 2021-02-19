@@ -30,6 +30,17 @@
 #include <cstring>
 #include <type_traits>
 
+#ifdef __APPLE__
+#include <libkern/OSByteOrder.h>
+#include <machine/endian.h>
+#elif _WIN32
+#include <stdlib.h>
+#elif __linux__
+#include <endian.h>
+#else
+#pragma messsage("unsupported OS or compiler")
+#endif
+
 #if defined(__GNUC__) || defined(__GNUG__)
 #define VELOCYPACK_LIKELY(v) __builtin_expect(!!(v), 1)
 #define VELOCYPACK_UNLIKELY(v) __builtin_expect(!!(v), 0)
@@ -66,7 +77,7 @@
 #define VELOCYPACK_64BIT
 
 #else
-#error "Could not determine environment type (32 or 64 bits)"
+#error "Could not determine build environment type (32 or 64 bits)"
 #endif
 
 // attribute used to tag potentially unused functions (used mostly in tests/)
@@ -110,29 +121,14 @@ uint64_t fasthash32(void const*, std::size_t, uint32_t);
 #define VELOCYPACK_HASH32(mem, size, seed) fasthash32(mem, size, seed)
 #endif
 
-#ifdef __APPLE__
-#include <libkern/OSByteOrder.h>
-#include <machine/endian.h>
-#elif _WIN32
-#include <stdlib.h>
-#elif __linux__
-#include <endian.h>
-#else
-#pragma messsage("unsupported os or compiler")
-#endif
-
 namespace arangodb {
 namespace velocypack {
 
 #ifdef __APPLE__
-#define bswap_16(x) OSSwapInt16(x)
-#define bswap_32(x) OSSwapInt32(x)
-#define bswap_64(x) OSSwapInt64(x)
 #if BYTE_ORDER == LITTLE_ENDIAN
 static constexpr bool isLittleEndian() { return true; }
 #elif BYTE_ORDER == BIG_ENDIAN
 static constexpr bool isLittleEndian() { return false; }
-#include <libkern/OSByteOrder.h>
 #endif
 #elif _WIN32
 static constexpr bool isLittleEndian() { return true; }
@@ -141,15 +137,17 @@ static constexpr bool isLittleEndian() { return true; }
 static constexpr bool isLittleEndian() { return true; }
 #elif __BYTE_ORDER == __BIG_ENDIAN
 static constexpr bool isLittleEndian() { return false; }
+#else
+#pragma messsage("Unsupported endianness")
 #endif
 #else
-#pragma messsage("unsupported os or compiler")
+#pragma messsage("Unsupported OS or compiler")
 #endif
-
 
 template<typename T>
 VELOCYPACK_FORCE_INLINE T hostToLittle(T in) noexcept {
-  static_assert(sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, "invalid sizeof(T)");
+  static_assert(sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1, 
+      "invalid sizeof(T)");
 
   if constexpr (sizeof(T) == 8) {
 #ifdef __APPLE__
@@ -330,9 +328,11 @@ static inline T readIntegerFixed(uint8_t const* start) noexcept {
   static_assert(length <= sizeof(T), "length must be <= sizeof(T)");
   T value{0};
   memcpy(&value, start, length);
+#ifndef _WIN32
   if constexpr (!isLittleEndian()) {
    value = littleToHost(value);
   }
+#endif
   return value;
 }
 
@@ -345,9 +345,11 @@ static inline T readIntegerNonEmpty(uint8_t const* start, ValueLength length) no
   VELOCYPACK_ASSERT(length <= sizeof(T));
   T value{0};
   memcpy(&value, start, length);
+#ifndef _WIN32
   if constexpr (!isLittleEndian()) {
     value = littleToHost(value);
   }
+#endif
   return value;
 }
 
@@ -356,9 +358,11 @@ static inline uint64_t readUInt64(uint8_t const* start) noexcept {
 }
 
 static inline void storeUInt64(uint8_t* start, uint64_t value) noexcept {
+#ifndef _WIN32
  if constexpr (!isLittleEndian()) {
    value = hostToLittle(value);
  }
+#endif
  memcpy(start, &value, sizeof(value));
 
 }
