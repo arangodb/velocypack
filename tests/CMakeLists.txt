@@ -62,10 +62,6 @@ if(BuildTests)
     find_package(Threads REQUIRED)
     if (NOT TARGET googletest)
       if (MSVC)
-        if (POLICY CMP0077)
-        # We are going to override option for Gtest and NEW behaviour is surely fine
-          cmake_policy(SET CMP0077 NEW) 
-        endif()
         # Configure google to match selected CRT runtime.
         # We check only Release variables as GTest itself does not support
         # using different runtimes for Debug and Release.
@@ -74,7 +70,8 @@ if(BuildTests)
           string(FIND "${${flag_var}}" "/MD" MD_POS)
           if(${MD_POS} GREATER_EQUAL 0)
             message("Dynamic runtime detected! Setting GTest to use dynamic runtime for static build!")
-            set(gtest_force_shared_crt ON)
+            SET(gtest_force_shared_crt ON CACHE BOOL 
+                "Use shared (DLL) run-time lib even when Google Test is built as static lib." FORCE)
             break()
           endif()
         endforeach()
