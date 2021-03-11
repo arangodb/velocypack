@@ -60,8 +60,23 @@ if(BuildTests)
     include(CTest)
     enable_testing()
     find_package(Threads REQUIRED)
-    add_subdirectory(googletest REQUIRED)
-
+    if (NOT TARGET googletest)
+      if (MSVC)
+        # Configure google to match selected CRT runtime.
+        # We check only Release variables as GTest itself does not support
+        # using different runtimes for Debug and Release.
+        foreach (flag_var
+                CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE)
+          string(FIND "${${flag_var}}" "/MD" MD_POS)
+          if(${MD_POS} GREATER_EQUAL 0)
+            message("Dynamic runtime detected! Setting GTest to use dynamic runtime for static build!")
+            set(gtest_force_shared_crt ON)
+            break()
+          endif()
+        endforeach()
+      endif()
+      add_subdirectory(googletest REQUIRED)
+    endif()
     foreach(testName ${Tests})
         standard_test(${testName})
     endforeach()
