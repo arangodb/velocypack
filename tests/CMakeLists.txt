@@ -62,6 +62,10 @@ if(BuildTests)
     find_package(Threads REQUIRED)
     if (NOT TARGET googletest)
       if (MSVC)
+        if (POLICY CMP0077)
+        # We are going to override option for Gtest and NEW behaviour is surely fine
+          cmake_policy(SET CMP0077 NEW) 
+        endif()
         # Configure google to match selected CRT runtime.
         # We check only Release variables as GTest itself does not support
         # using different runtimes for Debug and Release.
