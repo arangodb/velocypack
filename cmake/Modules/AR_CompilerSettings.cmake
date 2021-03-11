@@ -47,11 +47,6 @@ elseif(MSVC)
     # it always reports 199711L (i.e. C++98).
     set(${flag_var} "${${flag_var}} /Zc:__cplusplus")
 
-    #if (flag_var MATCHES "DEBUG")
-    #  set(${flag_var} "${${flag_var}} /MTd")
-    #else ()
-    #  set(${flag_var} "${${flag_var}} /MT")
-    #endif ()
   endforeach()
 
   # https://msdn.microsoft.com/en-us/library/aa267384%28VS.60%29.aspx
