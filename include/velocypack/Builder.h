@@ -417,12 +417,12 @@ class Builder {
   inline uint8_t* add(Slice const& sub) {
     return addInternal<Slice>(sub);
   }
-
+#if __cplusplus >= 201703L
   // Add a shared slice to an array
   inline uint8_t* add(SharedSlice const& sub) {
     return addInternal<Slice>(sub.slice());
   }
-
+#endif
   // Add a subvalue into an array from a ValuePair:
   inline uint8_t* add(ValuePair const& sub) {
     return addInternal<ValuePair>(sub);
