@@ -84,8 +84,8 @@ experiments and usage attempts are very encouraging.
 
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the 
-VelocyPack format*. The library is written in good old C++11 so it
-should compile on most systems.
+VelocyPack format*. The library is written in C++17 so it should compile 
+on many up-to-date systems.
 
 
 Specification
@@ -108,7 +108,7 @@ Building the VPack library
 
 The VPack library can be built on Linux, MacOS and Windows. It will likely
 compile and work on other platforms for which a recent version of *cmake* and
-a working C++11-enabled compiler are available.
+a working C++17-enabled compiler are available.
 
 See the file [Install.md](Install.md) for compilation and installation
 instructions.
