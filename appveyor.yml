@@ -12,3 +12,4 @@ build_script:
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%\build\tests
   - ctest -V 
+image: Visual Studio 2017
