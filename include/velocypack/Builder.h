@@ -193,7 +193,7 @@ class Builder {
 
     // Reserves len bytes at pos of the current state (top of stack)
     // or throws an exception
-    if (_pos + len < _bufferPtr->size()) {
+    if (_pos + len < _bufferPtr->capacity()) {
       return;  // All OK, we can just increase tos->pos by len
     }
 
