@@ -48,11 +48,11 @@
 
 #ifdef VELOCYPACK_DEBUG
 #include <cassert>
-#define VELOCYPACK_ASSERT(x) assert(x)
+#define VELOCYPACK_ASSERT(x) /*GCOVR_EXCL_LINE*/ assert(x)
 
 #else
 
-#define VELOCYPACK_ASSERT(x)
+#define VELOCYPACK_ASSERT(x) /*GCOVR_EXCL_LINE*/
 #endif
 
 // check for environment type (32 or 64 bit)
