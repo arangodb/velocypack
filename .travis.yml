@@ -8,34 +8,6 @@ env:
 
 matrix:
   include:
-    - name: "C++11 build g+-8"
-      env:
-        - ARCH=amd64
-        #compiler
-        - CXX=g++-8
-        - CC=gcc-8
-        #build settings
-        - build_type=Debug
-        - SANITIZER=false
-        - CXX_STANDARD=11
-      addons:
-        apt:
-          packages: ['gcc-8', 'g++-8', 'cmake']
-
-    - name: "C++14 build g++-8"
-      env:
-        - ARCH=amd64
-        #compiler
-        - CXX=g++-8
-        - CC=gcc-8
-        #build settings
-        - build_type=Release
-        - SANITIZER=false
-        - CXX_STANDARD=14
-      addons:
-        apt:
-          packages: ['gcc-8', 'g++-8', 'cmake']
-
     - name: "C++17 build g++-8"
       env:
         - ARCH=amd64
@@ -54,15 +26,15 @@ matrix:
       env:
         - ARCH=amd64
         #compiler
-        - CXX=g++-8
-        - CC=gcc-8
+        - CXX=g++-9
+        - CC=gcc-9
         #build settings
         - build_type=Release
         - SANITIZER=false
         - CXX_STANDARD=17
       addons:
         apt:
-          packages: ['gcc-8', 'g++-8', 'cmake']
+          packages: ['gcc-9', 'g++-9', 'cmake']
 
     - name: "address sanitizer build, g++-8"
       if: branch = main AND false #disabled
@@ -75,6 +47,24 @@ matrix:
         - build_type=Release
         - SANITIZER=true
         - CXX_STANDARD=17
+      addons:
+        apt:
+          packages: ['gcc-8', 'g++-8', 'cmake']
+    
+    - name: "address sanitizer build, g++-9"
+      if: branch = main AND false #disabled
+      env:
+        - ARCH=amd64
+        #compiler
+        - CXX=g++-9
+        - CC=gcc-9
+        #build settings
+        - build_type=Release
+        - SANITIZER=true
+        - CXX_STANDARD=17
+      addons:
+        apt:
+          packages: ['gcc-9', 'g++-9', 'cmake']
 
     - name: "coverage build, g++-9"
       if: branch = main

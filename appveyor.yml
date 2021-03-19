@@ -7,7 +7,7 @@ build:
 build_script:
   - if not exist %APPVEYOR_BUILD_FOLDER%\build mkdir %APPVEYOR_BUILD_FOLDER%\build
   - cd %APPVEYOR_BUILD_FOLDER%\build
-  - cmake -G "Visual Studio 14 Win64" -DHashType=xxhash -DBuildTests=ON -DBuildVelocyPackExamples=ON -DBuildLargeTests=OFF -DCMAKE_BUILD_TYPE=Release ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DHashType=xxhash -DBuildTests=ON -DBuildVelocyPackExamples=ON -DBuildLargeTests=OFF -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build . --config Release
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%\build\tests
