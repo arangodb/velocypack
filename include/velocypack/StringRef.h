@@ -46,6 +46,9 @@ class StringRef {
  public:
   /// @brief create an empty StringRef
   constexpr StringRef() noexcept : _data(""), _length(0) {}
+  
+  /// @brief create a StringRef from an std::string
+  explicit StringRef(std::string_view sv) noexcept : StringRef(sv.data(), sv.size()) {}
 
   /// @brief create a StringRef from an std::string
   explicit StringRef(std::string const& str) noexcept : StringRef(str.data(), str.size()) {}
@@ -69,6 +72,10 @@ class StringRef {
   /// @brief move a StringRef from another StringRef
   constexpr StringRef(StringRef&& other) noexcept
       : _data(other._data), _length(other._length) {}
+
+  constexpr operator std::string_view() const noexcept { 
+    return std::string_view(_data, _length); 
+  }
   
   /// @brief create a StringRef from another StringRef
   StringRef& operator=(StringRef const& other) noexcept {
