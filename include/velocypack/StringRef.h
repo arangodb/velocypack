@@ -54,11 +54,7 @@ class StringRef {
   constexpr StringRef(char const* data, std::size_t length) noexcept : _data(data), _length(length) {}
   
   /// @brief create a StringRef from a null-terminated C string
-#if __cplusplus >= 201703
   constexpr explicit StringRef(char const* data) noexcept : StringRef(data, std::char_traits<char>::length(data)) {}
-#else
-  explicit StringRef(char const* data) noexcept : StringRef(data, std::strlen(data)) {}
-#endif
    
   /// @brief create a StringRef from a VPack slice (must be of type String)
   explicit StringRef(Slice slice);
