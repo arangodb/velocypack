@@ -47,7 +47,6 @@ set(VELOCY_SOURCE
     src/Parser.cpp
     src/Serializable.cpp
     src/Slice.cpp
-    src/SliceStaticData.cpp
     src/StringRef.cpp
     src/Utf8Helper.cpp
     src/Validator.cpp

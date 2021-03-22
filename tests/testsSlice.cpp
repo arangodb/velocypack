@@ -229,7 +229,6 @@ TEST(SliceTest, GetOnNonObject) {
   }
 }
 
-#if __cplusplus >= 201300
 TEST(SliceTest, GetOnNestedObject) {
   std::string const value("{\"foo\":{\"bar\":{\"baz\":3,\"bark\":4},\"qux\":5},\"poo\":6}");
 
@@ -321,7 +320,6 @@ TEST(SliceTest, GetOnNestedObject) {
     ASSERT_EQ(3, s.get(lookup.begin(), lookup.end()).getInt());
   }
 }
-#endif
 
 TEST(SliceTest, GetWithIterator) {
   std::string const value("{\"foo\":{\"bar\":{\"baz\":3,\"bark\":4},\"qux\":5},\"poo\":6}");
