@@ -24,97 +24,97 @@ indicates the type (and often the length) of the VPack value at hand:
 We first give an overview with a brief but accurate description for
 reference, for arrays and objects see below for details:
 
-  - 0x00      : none - this indicates absence of any type and value,
-                this is not allowed in VPack values
-  - 0x01      : empty array
-  - 0x02      : array without index table (all subitems have the same
-                byte length), 1-byte byte length
-  - 0x03      : array without index table (all subitems have the same
-                byte length), 2-byte byte length
-  - 0x04      : array without index table (all subitems have the same
-                byte length), 4-byte byte length
-  - 0x05      : array without index table (all subitems have the same
-                byte length), 8-byte byte length
-  - 0x06      : array with 1-byte index table offsets, bytelen and # subvals
-  - 0x07      : array with 2-byte index table offsets, bytelen and # subvals
-  - 0x08      : array with 4-byte index table offsets, bytelen and # subvals
-  - 0x09      : array with 8-byte index table offsets, bytelen and # subvals
-  - 0x0a      : empty object
-  - 0x0b      : object with 1-byte index table offsets, sorted by
-                attribute name, 1-byte bytelen and # subvals
-  - 0x0c      : object with 2-byte index table offsets, sorted by
-                attribute name, 2-byte bytelen and # subvals
-  - 0x0d      : object with 4-byte index table offsets, sorted by
-                attribute name, 4-byte bytelen and # subvals
-  - 0x0e      : object with 8-byte index table offsets, sorted by
-                attribute name, 8-byte bytelen and # subvals
-  - 0x0f      : object with 1-byte index table offsets, not sorted by
-                attribute name, 1-byte bytelen and # subvals
-  - 0x10      : object with 2-byte index table offsets, not sorted by
-                attribute name, 2-byte bytelen and # subvals
-  - 0x11      : object with 4-byte index table offsets, not sorted by
-                attribute name, 4-byte bytelen and # subvals
-  - 0x12      : object with 8-byte index table offsets, not sorted by
-                attribute name, 8-byte bytelen and # subvals
-  - 0x13      : compact array, no index table
-  - 0x14      : compact object, no index table
-  - 0x15-0x16 : reserved
-  - 0x17      : illegal - this type can be used to indicate a value that
-                is illegal in the embedding application
-  - 0x18      : null
-  - 0x19      : false
-  - 0x1a      : true
-  - 0x1b      : double IEEE-754, 8 bytes follow, stored as little
-                endian uint64 equivalent
-  - 0x1c      : UTC-date in milliseconds since the epoch, stored as 8 byte
-                signed int, little endian, two's complement
-  - 0x1d      : external (only in memory): a char* pointing to the actual
-                place in memory, where another VPack item resides, not
-                allowed in VPack values on disk or on the network
-  - 0x1e      : minKey, nonsensical value that compares < than all other values
-  - 0x1f      : maxKey, nonsensical value that compares > than all other values
-  - 0x20-0x27 : signed int, little endian, 1 to 8 bytes, number is V - 0x1f,
-                two's complement
-  - 0x28-0x2f : uint, little endian, 1 to 8 bytes, number is V - 0x27
-  - 0x30-0x39 : small integers 0, 1, ... 9
-  - 0x3a-0x3f : small negative integers -6, -5, ..., -1
-  - 0x40-0xbe : UTF-8-string, using V - 0x40 bytes (not Unicode characters!),
-                length 0 is possible, so 0x40 is the empty string,
-                maximal length is 126, note that strings here are not
-                zero-terminated and may contain NUL bytes
-  - 0xbf      : long UTF-8-string, next 8 bytes are length of string in
-                bytes (not Unicode characters) as little endian unsigned
-                integer, note that long strings are not zero-terminated
-                and may contain NUL bytes
-  - 0xc0-0xc7 : binary blob, next V - 0xbf bytes are the length of blob in
-                bytes, note that binary blobs are not zero-terminated
-  - 0xc8-0xcf : positive long packed BCD-encoded float, V - 0xc7 bytes follow
-                that encode in a little endian way the length of the
-                mantissa in bytes. Directly after that follow 4 bytes
-                encoding the (power of 10) exponent, by which the mantissa
-                is to be multiplied, stored as little endian two's
-                complement signed 32-bit integer. After that, as many
-                bytes follow as the length information at the beginning
-                has specified, each byte encodes two digits in
-                big-endian packed BCD
-                Example: 12345 decimal can be encoded as
-                         0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
-                      or 0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
-  - 0xd0-0xd7 : negative long packed BCD-encoded float, V - 0xcf bytes
-                follow that encode in a little endian way the length of
-                the mantissa in bytes. After that, same as positive long
-                packed BCD-encoded float above.
-  - 0xd8-0xed : reserved
-  - 0xee-0xef : value tagging for logical types
-  - 0xf0-0xff : custom types
+  - `0x00`        : none - this indicates absence of any type and value,
+                    this is not allowed in VPack values
+  - `0x01`        : empty array
+  - `0x02`        : array without index table (all subitems have the same
+                    byte length), 1-byte byte length
+  - `0x03`        : array without index table (all subitems have the same
+                    byte length), 2-byte byte length
+  - `0x04`        : array without index table (all subitems have the same
+                    byte length), 4-byte byte length
+  - `0x05`        : array without index table (all subitems have the same
+                    byte length), 8-byte byte length
+  - `0x06`        : array with 1-byte index table offsets, bytelen and # subvals
+  - `0x07`        : array with 2-byte index table offsets, bytelen and # subvals
+  - `0x08`        : array with 4-byte index table offsets, bytelen and # subvals
+  - `0x09`        : array with 8-byte index table offsets, bytelen and # subvals
+  - `0x0a`        : empty object
+  - `0x0b`        : object with 1-byte index table offsets, sorted by
+                    attribute name, 1-byte bytelen and # subvals
+  - `0x0c`        : object with 2-byte index table offsets, sorted by
+                    attribute name, 2-byte bytelen and # subvals
+  - `0x0d`        : object with 4-byte index table offsets, sorted by
+                    attribute name, 4-byte bytelen and # subvals
+  - `0x0e`        : object with 8-byte index table offsets, sorted by
+                    attribute name, 8-byte bytelen and # subvals
+  - `0x0f`        : object with 1-byte index table offsets, not sorted by
+                    attribute name, 1-byte bytelen and # subvals
+  - `0x10`        : object with 2-byte index table offsets, not sorted by
+                    attribute name, 2-byte bytelen and # subvals
+  - `0x11`        : object with 4-byte index table offsets, not sorted by
+                    attribute name, 4-byte bytelen and # subvals
+  - `0x12`        : object with 8-byte index table offsets, not sorted by
+                    attribute name, 8-byte bytelen and # subvals
+  - `0x13`        : compact array, no index table
+  - `0x14`        : compact object, no index table
+  - `0x15`-`0x16` : reserved
+  - `0x17`        : illegal - this type can be used to indicate a value that
+                    is illegal in the embedding application
+  - `0x18`        : null
+  - `0x19`        : false
+  - `0x1a`        : true
+  - `0x1b`        : double IEEE-754, 8 bytes follow, stored as little
+                    endian uint64 equivalent
+  - `0x1c`        : UTC-date in milliseconds since the epoch, stored as 8 byte
+                    signed int, little endian, two's complement
+  - `0x1d`        : external (only in memory): a char* pointing to the actual
+                    place in memory, where another VPack item resides, not
+                    allowed in VPack values on disk or on the network
+  - `0x1e`        : minKey, nonsensical value that compares < than all other values
+  - `0x1f`        : maxKey, nonsensical value that compares > than all other values
+  - `0x20`-`0x27` : signed int, little endian, 1 to 8 bytes, number is V - `0x1f`,
+                    two's complement
+  - `0x28`-`0x2f` : uint, little endian, 1 to 8 bytes, number is V - `0x27`
+  - `0x30`-`0x39` : small integers 0, 1, ... 9
+  - `0x3a`-`0x3f` : small negative integers -6, -5, ..., -1
+  - `0x40`-`0xbe` : UTF-8-string, using V - `0x40` bytes (not Unicode characters!),
+                    length 0 is possible, so `0x40` is the empty string,
+                    maximal length is 126, note that strings here are not
+                    zero-terminated and may contain NUL bytes
+  - `0xbf`        : long UTF-8-string, next 8 bytes are length of string in
+                    bytes (not Unicode characters) as little endian unsigned
+                    integer, note that long strings are not zero-terminated
+                    and may contain NUL bytes
+  - `0xc0`-`0xc7` : binary blob, next V - `0xbf` bytes are the length of blob in
+                    bytes, note that binary blobs are not zero-terminated
+  - `0xc8`-`0xcf` : positive long packed BCD-encoded float, V - `0xc7` bytes follow
+                    that encode in a little endian way the length of the
+                    mantissa in bytes. Directly after that follow 4 bytes
+                    encoding the (power of 10) exponent, by which the mantissa
+                    is to be multiplied, stored as little endian two's
+                    complement signed 32-bit integer. After that, as many
+                    bytes follow as the length information at the beginning
+                    has specified, each byte encodes two digits in
+                    big-endian packed BCD.
+                    Example: 12345 decimal can be encoded as
+                    `c8 03 00 00 00 00 01 23 45` or
+                    `c8 03 ff ff ff ff 12 34 50`
+  - `0xd0`-`0xd7` : negative long packed BCD-encoded float, V - `0xcf` bytes
+                    follow that encode in a little endian way the length of
+                    the mantissa in bytes. After that, same as positive long
+                    packed BCD-encoded float above.
+  - `0xd8`-`0xed` : reserved
+  - `0xee`-`0xef` : value tagging for logical types
+  - `0xf0`-`0xff` : custom types
 
 
 ## Arrays
 
-Empty arrays are simply a single byte 0x01.
+Empty arrays are simply a single byte `0x01`.
 
-We next describe the type cases 0x02 to 0x09, see below for the
-special compact type 0x13.
+We next describe the type cases `0x02` to `0x09`, see below for the
+special compact type `0x13`.
 
 Non-empty arrays look like one of the following:
 
@@ -165,24 +165,24 @@ entire padding must consist of zero bytes (ASCII NUL).
 
 Numbers (for byte length, number of subvalues and offsets in the
 INDEXTABLE) are little endian unsigned integers, using 1 byte for
-types 0x02 and 0x06, 2 bytes for types 0x03 and 0x07, 4 bytes for types
-0x04 and 0x08, and 8 bytes for types 0x05 and 0x09.
+types `0x02` and `0x06`, 2 bytes for types `0x03` and `0x07`, 4 bytes for types
+`0x04` and `0x08`, and 8 bytes for types `0x05` and `0x09`.
 
 NRITEMS is a single number as described above.
 
 The INDEXTABLE consists of:
-  - for types 0x06-0x09 an array of offsets (unaligned, in the number
+  - for types `0x06`-`0x09` an array of offsets (unaligned, in the number
     format described above) earlier offsets reside at lower addresses.
     Offsets are measured from the start of the VPack value.
 
 
-Non-empty arrays of types 0x06 to 0x09 have a small header including
+Non-empty arrays of types `0x06` to `0x09` have a small header including
 their byte length, the number of subvalues, then all the subvalues and
 finally an index table containing offsets to the subvalues. To find the
 index table, find the number of subvalues, then the end, and from that
 the base of the index table, considering how wide its entries are.
 
-For types 0x02 to 0x05 there is no offset table and no number of items.
+For types `0x02` to `0x05` there is no offset table and no number of items.
 The first item begins at address A+2, A+3, A+5 or respectively A+9,
 depending on the type and thus the width of the byte length field. Note
 the following special rule: The actual position of the first subvalue
@@ -197,7 +197,7 @@ suffice to write the byte length. One can determine the number of
 subvalues by finding the first subvalue, its byte length, and
 dividing the amount of available space by it.
 
-For types 0x06 to 0x09 the offset table describes where the subvalues
+For types `0x06` to `0x09` the offset table describes where the subvalues
 reside. It is not necessary for the subvalues to start immediately after
 the number of subvalues field. 
 
@@ -210,7 +210,7 @@ For example, if both BYTELENGTH and NRITEMS can be expressed using 2 bytes
 each, the sum of their lengths is 4. It is therefore allowed to add 4
 bytes of padding here, so that the first subvalue could be at address A+9.
 
-There is one exception for the 8-byte numbers case (type 0x05): 
+There is one exception for the 8-byte numbers case (type `0x05`): 
 In this case the number of elements is moved behind the index table. 
 This is to get away without moving memory when one has reserved 8 bytes 
 in the beginning and later noticed that all 8 bytes are needed for the
@@ -253,7 +253,7 @@ possible, though not necessarily advised to use:
 Note that it is not recommended to encode short arrays in too long a
 format.
 
-We now describe the special type 0x13, which is useful for a
+We now describe the special type `0x13`, which is useful for a
 particularly compact array representation. Note that to some extent this
 goes against the principles of the VelocyPack format, since quick access
 to subvalues is no longer possible, all items in the array must be
@@ -263,10 +263,10 @@ dumping) and have a particular need for compactness.
 
 The overall format of this array type is
 
-  0x13 as type byte
-  BYTELENGTH
-  sub VPack values
-  NRITEMS
+    0x13 as type byte
+    BYTELENGTH
+    sub VPack values
+    NRITEMS
 
 There is no index table at all, although the sub VelocyPack values can
 have different byte sizes. The BYTELENGTH and NRITEMS are encoded in a
@@ -297,24 +297,24 @@ Here is an example, the array [1, 16] can be encoded as follows:
 
 ## Objects
 
-Empty objects are simply a single byte 0x0a.
+Empty objects are simply a single byte `0x0a`.
 
-We next describe the type cases 0x0b to 0x12, see below for the
-special compact type 0x14.
+We next describe the type cases `0x0b` to `0x12`, see below for the
+special compact type `0x14`.
 
 Non-empty objects look like this:
 
-  one of 0x0b - 0x12
-  BYTELENGTH
-  optional NRITEMS
-  sub VPack values as pairs of attribute and value
-  optional INDEXTABLE
-  NRITEMS for the 8-byte case
+    one of 0x0b - 0x12
+    BYTELENGTH
+    optional NRITEMS
+    sub VPack values as pairs of attribute and value
+    optional INDEXTABLE
+    NRITEMS for the 8-byte case
 
 Numbers (for byte length, number of subvalues and offsets in the
 INDEXTABLE) are little endian unsigned integers, using 1 byte for
-types 0x0b and 0x0f, 2 bytes for types 0x0c and 0x10, 4 bytes for types
-0x0d and 0x11, and 8 bytes for types 0x0e and 0x12.
+types `0x0b` and `0x0f`, 2 bytes for types `0x0c` and `0x10`, 4 bytes for types
+`0x0d` and `0x11`, and 8 bytes for types `0x0e` and `0x12`.
 
 NRITEMS is a single number as described above.
 
@@ -337,9 +337,9 @@ of subvalues and not fill the gap, even though it turns out later that
 offsets and thus the byte length only uses 2 bytes, say.
 
 There is one special case: the empty object is simply stored as the
-single byte 0x0a.
+single byte `0x0a`.
 
-There is another exception: For 8-byte numbers (0x12) the number of
+There is another exception: For 8-byte numbers (`0x12`) the number of
 subvalues is stored behind the INDEXTABLE. This is to get away without
 moving memory when one has reserved 8 bytes in the beginning and later
 noticed that all 8 bytes are needed for the byte length.
@@ -348,19 +348,19 @@ All offsets are measured from base A.
 
 Each entry consists of two parts, the key and the value, they are
 encoded as normal VPack values as above, the first is always a short or
-long UTF-8 string starting with a byte 0x40-0xbf as described below. The
+long UTF-8 string starting with a byte `0x40`-`0xbf` as described below. The
 second is any other VPack value.
 
 There is one extension: For the key it is possible to use the positive
-small integer values 0x30-0x39 or an unsigned integer starting with a
-type byte of 0x28-0x2f. Any such integer value is an index into an
+small integer values `0x30`-`0x39` or an unsigned integer starting with a
+type byte of `0x28`-`0x2f`. Any such integer value is an index into an
 outside-given table of attribute names. These are convenient when only
 very few attribute names occur or some are repeated very often. The
 standard way to encode such an attribute name table is as a VPack array
 of strings as specified here.
 
 Objects are always stored with sorted key/value pairs, sorted by bytewise 
-comparions of the keys on each nesting level. Sorting has some overhead 
+comparisons of the keys on each nesting level. Sorting has some overhead 
 but will allow looking up keys in logarithmic time later. Note that only the 
 index table needs to be sorted, it is not required that the offsets in 
 these tables are increasing. Since the index table resides after the actual 
@@ -386,15 +386,15 @@ entries, as in this example:
     41 63 43 78 79 7a
     0c 00 00 00 09 00 00 00 10 00 00 00
 
-Similarly with type 0x0c and 2-byte offsets, byte length and number of
-subvalues, or with type 0x0e and 8-byte numbers.
+Similarly with type `0x0c` and 2-byte offsets, byte length and number of
+subvalues, or with type `0x0e` and 8-byte numbers.
 
 Note that it is not recommended to encode short objects with too long
 index tables.
 
 ### Special compact objects
 
-We now describe the special type 0x14, which is useful for a
+We now describe the special type `0x14`, which is useful for a
 particularly compact object representation. Note that to some extent
 this goes against the principles of the VelocyPack format, since quick
 access to subvalues is no longer possible, all key/value pairs in the
@@ -404,15 +404,15 @@ certain use cases for VelocyPack which only require sequential access
 
 The overall format of this object type is
 
-  0x14 as type byte
-  BYTELENGTH
-  sub VPack key/value pairs
-  NRPAIRS
+    0x14 as type byte
+    BYTELENGTH
+    sub VPack key/value pairs
+    NRPAIRS
 
 There is no index table at all, although the sub VelocyPack values can
 have different byte sizes. The BYTELENGTH and NRPAIRS are encoded in a
 special format, which we describe now. It is the same as for the special
-compact array type 0x13, which we repeat here for the sake of
+compact array type `0x13`, which we repeat here for the sake of
 completeness.
 
 The BYTELENGTH consists of 1 to 8 bytes, of which all but the last one
@@ -432,7 +432,7 @@ one finds a byte with high bit reset. The last byte (at the highest
 memory address) contains the least significant 7 bits of the NRPAIRS
 value, the second one bits 7 to 13 and so on.
 
-Here is an example, the object {"a":1, "b":16} can be encoded as follows:
+Here is an example, the object `{"a":1, "b":16}` can be encoded as follows:
 
     14 0a
     41 61 31 42 62 28 10
@@ -441,7 +441,7 @@ Here is an example, the object {"a":1, "b":16} can be encoded as follows:
 
 ## Doubles
 
-Type 0x1b indicates a double IEEE-754 value using the 8 bytes following
+Type `0x1b` indicates a double IEEE-754 value using the 8 bytes following
 the type byte. To guarantee platform-independentness the details of the
 byte order are as follows. Encoding is done by using memcpy to copy the
 internal double value to an uint64\_t. This 64-bit unsigned integer is
@@ -452,7 +452,7 @@ byte order in IEEE-754 in practice.
 
 ## Dates
 
-Type 0x1c indicates a signed 64-int integer stored in 8 bytes little
+Type `0x1c` indicates a signed 64-int integer stored in 8 bytes little
 endian two's complement notation directly after the type. The value means
 a universal UTC-time measured in milliseconds since the epoch, which is
 00:00 on 1 January 1970 UTC.
@@ -466,9 +466,9 @@ bytes are the memcpy of a char* on the current architecture. That char*
 points to the actual VPack value elsewhere in memory.
 
 
-## Artifical minimal and maximal keys
+## Artificial minimal and maximal keys
 
-These values of types 0x1e and 0x1f have no meaning other than comparing
+These values of types `0x1e` and `0x1f` have no meaning other than comparing
 smaller or greater respectively than any other VPack value. The idea is
 that these can be used in systems that define a total order on all VPack
 values to specify left or right ends of infinite intervals.
@@ -477,10 +477,10 @@ values to specify left or right ends of infinite intervals.
 ## Integer types
 
 There are different ways to specify integers. For small values -6 to 9
-inclusively there are specific type bytes in the range 0x30 to 0x3f to
+inclusively there are specific type bytes in the range `0x30` to `0x3f` to
 allow for storage in a single byte. After that there are signed and
 unsigned integer types that can code in the type byte the number of
-bytes used (ranges 0x20-0x27 for signed and 0x28-0x2f for unsigned).
+bytes used (ranges `0x20`-`0x27` for signed and `0x28`-`0x2f` for unsigned).
 
 
 ## Null and boolean values
@@ -494,9 +494,9 @@ values.
 Strings are stored as UTF-8 encoded byte sequences. There are two
 variants, a short one and a long one. In the short one, the byte length
 (not the number of UTF-8 characters) is directly encoded in the type,
-and this works up to and including byte length 126. Types 0x40 to 0xbe
-are used for this and the byte length is V - 0x3f, if V is the type
-byte. For strings longer than 126 bytes, the type byte is 0xbf and the
+and this works up to and including byte length 126. Types `0x40` to `0xbe`
+are used for this and the byte length is V - `0x3f`, if V is the type
+byte. For strings longer than 126 bytes, the type byte is `0xbf` and the
 byte length of the string is stored in the first 8 bytes after the type
 byte, using a little endian unsigned integer representation. The actual
 string follows after these 8 bytes. There is no terminating zero byte in
@@ -505,9 +505,9 @@ either case and the string may contain zero bytes.
 
 ## Binary data
 
-The type bytes 0xc0 to 0xc7 allow to store arbitrary binary byte
+The type bytes `0xc0` to `0xc7` allow to store arbitrary binary byte
 sequences as a VPack value. The format is as follows: If V is the type
-byte, then V - 0xbf bytes follow it to make a little endian unsigned
+byte, then V - `0xbf` bytes follow it to make a little endian unsigned
 integer representing the length of the binary data, which directly
 follows these length bytes. No alignment is guaranteed. The content is
 entirely up to the user.
@@ -526,7 +526,7 @@ format of these values is:
 
 The type byte describes the sign of the number as well as the number of
 bytes used to specify the byte length of the mantissa. As usual, if V is
-the type byte, then V - 0xc7 (in the positive case) or V - 0xcf (in the
+the type byte, then V - `0xc7` (in the positive case) or V - `0xcf` (in the
 negative case) bytes are used for the length of the mantissa, stored as
 little endian unsigned integer directly after the byte length. After
 this follow exactly 4 bytes (little endian signed two's complement
@@ -534,35 +534,34 @@ integer) to specify the exponent. After the exponent, the actual
 mantissa bytes follow.
 
 Packed BCD is used, so that each byte stores exactly 2 decimal digits as
-in 0x34 for the decimal digits 34. Therefore, the mantissa always has an
+in `0x34` for the decimal digits 34. Therefore, the mantissa always has an
 even number of decimal digits. Note that the mantissa is stored in big
 endian form, to make parsing and dumping efficient. This leads to the
 "unholy nibble problem": When a JSON parser sees the beginning of a
 longish number, it does not know whether an even or odd number of digits
 follow. However, for efficiency reasons it wants to start writing bytes
 to the output as it reads the input. This is, where the exponent comes
-to the rescue, which is illustrated by the following example:
+to the rescue, which is illustrated by the following example.
+12345 decimal can be encoded as:
 
-    12345 decimal can be encoded as:
-
-    0xc8 0x03 0x00 0x00 0x00 0x00 0x01 0x23 0x45
-    0xc8 0x03 0xff 0xff 0xff 0xff 0x12 0x34 0x50
+    c8 03 00 00 00 00 01 23 45
+    c8 03 ff ff ff ff 12 34 50
 
 The former encoding puts a leading 0 in the first byte and uses exponent
 0, the latter encoding directly starts putting two decimal digits in one
 byte and then in the end has to "erase" the trailing 0 by using exponent
--1, encoded by the 4 byte sequence 0xff 0xff 0xff 0xff.
+-1, encoded by the 4 byte sequence `ff ff ff ff`.
 
-There for the unholy nibble problem is solved and parsing (and indeed
+Therefore, the unholy nibble problem is solved and parsing (and indeed
 dumping) can be efficient.
 
 
 ## Tagging
 
-Types 0xee-0xef are used for tagging of values to implement logical
+Types `0xee`-`0xef` are used for tagging of values to implement logical
 types.
 
-For example, if type 0x1c did not exist, the database driver could
+For example, if type `0x1c` did not exist, the database driver could
 serialize a timestamp object (Date in JavaScript, Instant in Java, etc)
 into a Unix timestamp, a 64-bit integer. Assuming the lack of schema,
 upon deserialization it would not be possible to tell an integer from
@@ -600,22 +599,22 @@ to derive the byte length of each custom data type.
 
 The following user-defined types exist:
 
-  - 0xf0      : 1 byte payload, directly following the type byte
-  - 0xf1      : 2 bytes payload, directly following the type byte
-  - 0xf2      : 4 bytes payload, directly following the type byte
-  - 0xf3      : 8 bytes payload, directly following the type byte
-  - 0xf4-0xf6 : length of the payload is described by a single further 
-                unsigned byte directly following the type byte, the
-                payload of that many bytes follows
-  - 0xf7-0xf9 : length of the payload is described by two bytes (little 
-                endian unsigned integer) directly following the type
-                byte, the payload of that many bytes follows
-  - 0xfa-0xfc : length of the payload is described by four bytes (little 
-                endian unsigned integer) directly following the type
-                byte, the payload of that many bytes follows
-  - 0xfd-0xff : length of the payload is described by eight bytes (little 
-                endian unsigned integer) directly following the type
-                byte, the payload of that many bytes follows
+  - `0xf0`        : 1 byte payload, directly following the type byte
+  - `0xf1`        : 2 bytes payload, directly following the type byte
+  - `0xf2`        : 4 bytes payload, directly following the type byte
+  - `0xf3`        : 8 bytes payload, directly following the type byte
+  - `0xf4`-`0xf6` : length of the payload is described by a single further 
+                    unsigned byte directly following the type byte, the
+                    payload of that many bytes follows
+  - `0xf7`-`0xf9` : length of the payload is described by two bytes (little 
+                    endian unsigned integer) directly following the type
+                    byte, the payload of that many bytes follows
+  - `0xfa`-`0xfc` : length of the payload is described by four bytes (little 
+                    endian unsigned integer) directly following the type
+                    byte, the payload of that many bytes follows
+  - `0xfd`-`0xff` : length of the payload is described by eight bytes (little 
+                    endian unsigned integer) directly following the type
+                    byte, the payload of that many bytes follows
 
-Note: In types 0xf4 to 0xff the "payload" refers to the actual data not
+Note: In types `0xf4` to `0xff` the "payload" refers to the actual data not
 including the length specification.
