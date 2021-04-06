@@ -107,7 +107,7 @@
 #include "velocypack/velocypack-wyhash.h"
 
 //the default secret parameters
-static const uint64_t _wyp[4] = {0xa0761d6478bd642full, 0xe7037ed1a0b428dbull, 0x8ebc6af09c88c6e3ull, 0x589965cc75374cc3ull};
+static constexpr uint64_t _wyp[4] = {0xa0761d6478bd642full, 0xe7037ed1a0b428dbull, 0x8ebc6af09c88c6e3ull, 0x589965cc75374cc3ull};
 
 #define VELOCYPACK_HASH(mem, size, seed) wyhash(mem, size, seed, _wyp)
 #define VELOCYPACK_HASH32(mem, size, seed) static_cast<uint32_t>(wyhash(mem, size, seed, _wyp))

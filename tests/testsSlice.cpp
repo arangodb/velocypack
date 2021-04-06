@@ -2588,7 +2588,7 @@ TEST(SliceTest, HashStringEmpty) {
 
   ASSERT_EQ(5324680019219065241ULL, s.hash());
   ASSERT_EQ(5324680019219065241ULL, s.normalizedHash());
-  ASSERT_EQ(5324680019219065241ULL, s.hashString));
+  ASSERT_EQ(5324680019219065241ULL, s.hashString());
 }
 
 TEST(SliceTest, HashStringShort) {
@@ -2604,20 +2604,20 @@ TEST(SliceTest, HashStringMedium) {
   std::shared_ptr<Builder> b = Parser::fromJson("\"123456foobar,this is a medium sized string\"");
   Slice s = b->slice();
 
-  ASSERT_EQ(13345050106135537218ULL, s.hash());
-  ASSERT_EQ(13345050106135537218ULL, s.normalizedHash());
-  ASSERT_EQ(13345050106135537218ULL, s.hashString());
+  ASSERT_EQ(11452660398945112315ULL, s.hash());
+  ASSERT_EQ(11452660398945112315ULL, s.normalizedHash());
+  ASSERT_EQ(11452660398945112315ULL, s.hashString());
 }
 
-TEST(SliceTest, HashStringLong {
+TEST(SliceTest, HashStringLong) {
   std::shared_ptr<Builder> b = Parser::fromJson("\"the quick brown fox jumped over the lazy dog, and it jumped and jumped "
       "and jumped and went on. But then, the String needed to get even longer "
       "and longer until the test finally worked.\"");
   Slice s = b->slice();
 
-  ASSERT_EQ(13345050106135537218ULL, s.hash());
-  ASSERT_EQ(13345050106135537218ULL, s.normalizedHash());
-  ASSERT_EQ(13345050106135537218ULL, s.hashString());
+  ASSERT_EQ(14870584969143055038ULL, s.hash());
+  ASSERT_EQ(14870584969143055038ULL, s.normalizedHash());
+  ASSERT_EQ(14870584969143055038ULL, s.hashString());
 }
 
 TEST(SliceTest, HashArray) {
@@ -2725,16 +2725,7 @@ TEST(SliceTest, NormalizedHashObject) {
   Slice s2 = b2->slice();
 
   // hash values differ, but normalized hash values shouldn't!
-#ifdef VELOCYPACK_XXHASH
-  ASSERT_EQ(15518419071972093120ULL, s1.hash());
-#endif
-#ifdef VELOCYPACK_WYHASH
-  ASSERT_EQ(15518419071972093120ULL, s1.hash());
-#endif
-#ifdef VELOCYPACK_FASTHASH
   ASSERT_EQ(6865527808070733846ULL, s1.hash());
-#endif
-
   ASSERT_EQ(4048487509578424242ULL, s2.hash());
 
   ASSERT_EQ(18068466095586825298ULL, s1.normalizedHash());
