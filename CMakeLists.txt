@@ -65,7 +65,7 @@ if (CMAKE_CXX_STANDARD GREATER_EQUAL 17)
     )
 endif ()
 
-#Use xxhash or fasthash?
+#Use xxhash, fasthash or wyhash?
 if(HashType STREQUAL "xxhash")
     list(APPEND VELOCY_SOURCE src/xxhash.cpp)
     add_definitions("-DVELOCYPACK_XXHASH=1")
