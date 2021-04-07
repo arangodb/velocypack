@@ -8,21 +8,7 @@ env:
 
 matrix:
   include:
-    - name: "C++17 build g++-8"
-      env:
-        - ARCH=amd64
-        #compiler
-        - CXX=g++-8
-        - CC=gcc-8
-        #build settings
-        - build_type=Release
-        - SANITIZER=false
-        - CXX_STANDARD=17
-      addons:
-        apt:
-          packages: ['gcc-8', 'g++-8', 'cmake']
-    
-    - name: "C++17 build g++-9"
+    - name: "C++17 build g++-9, xxhash"
       env:
         - ARCH=amd64
         #compiler
@@ -30,6 +16,37 @@ matrix:
         - CC=gcc-9
         #build settings
         - build_type=Release
+        - hash_type=xxhash
+        - SANITIZER=false
+        - CXX_STANDARD=17
+      addons:
+        apt:
+          packages: ['gcc-9', 'g++-9', 'cmake']
+    
+    - name: "C++17 build g++-9, fasthash"
+      env:
+        - ARCH=amd64
+        #compiler
+        - CXX=g++-9
+        - CC=gcc-9
+        #build settings
+        - build_type=Release
+        - hash_type=fasthash
+        - SANITIZER=false
+        - CXX_STANDARD=17
+      addons:
+        apt:
+          packages: ['gcc-9', 'g++-9', 'cmake']
+    
+    - name: "C++17 build g++-9, wyhash"
+      env:
+        - ARCH=amd64
+        #compiler
+        - CXX=g++-9
+        - CC=gcc-9
+        #build settings
+        - build_type=Release
+        - hash_type=wyhash
         - SANITIZER=false
         - CXX_STANDARD=17
       addons:
@@ -115,6 +132,7 @@ install:
     - export CC=$CC
     - export CXX_STANDARD=${CXX_STANDARD:-17}
     - export BUILD_TYPE=${build_type}
+    - export HASH_TYPE=${hash_type}
     - cmake --version
     - $CXX --version
 
