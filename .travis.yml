@@ -38,21 +38,6 @@ matrix:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
     
-    - name: "C++17 build g++-9, wyhash"
-      env:
-        - ARCH=amd64
-        #compiler
-        - CXX=g++-9
-        - CC=gcc-9
-        #build settings
-        - build_type=Release
-        - hash_type=wyhash
-        - SANITIZER=false
-        - CXX_STANDARD=17
-      addons:
-        apt:
-          packages: ['gcc-9', 'g++-9', 'cmake']
-
     - name: "address sanitizer build, g++-8"
       if: branch = main AND false #disabled
       env:
