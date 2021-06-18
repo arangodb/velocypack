@@ -25,18 +25,19 @@
 #ifndef VELOCYPACK_SLICE_H
 #define VELOCYPACK_SLICE_H 1
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <string>
-#include <vector>
+#include <functional>
 #include <initializer_list>
 #include <iosfwd>
 #include <iterator>
-#include <algorithm>
-#include <functional>
-#include <tuple>
+#include <limits>
+#include <string>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
+#include <vector>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
@@ -164,7 +165,7 @@ class Slice {
           tag = readIntegerFixed<uint64_t, 8>(start + 1);
           offset = 9;
         } else {
-          throw Exception(Exception::InternalError, "Invalid tag type ID");
+          throw new Exception(Exception::InternalError, "Invalid tag type ID");
         }
 
         ret.push_back(tag);
@@ -190,7 +191,7 @@ class Slice {
         tag = readIntegerFixed<uint64_t, 8>(start + 1);
         offset = 9;
       } else {
-        throw Exception(Exception::InternalError, "Invalid tag type ID");
+        throw new Exception(Exception::InternalError, "Invalid tag type ID");
       }
 
       if (tag == tagId) {
