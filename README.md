@@ -25,8 +25,9 @@ access to sub-objects and rapid conversion from and to JSON.
 
 We have invented VPack because we need a binary format that
 
-  - is self-contained, schemaless and platform independent
+  - is self-contained and schemaless 
   - is compact
+  - is largely platform independent (see [Portability](VelocyPack.md#Portability))
   - covers all of JSON plus dates, integers, binary data and arbitrary
     precision numbers
   - can be used in a database kernel to access sub-documents for
@@ -71,7 +72,7 @@ respect to the above list. To name but a few:
     because of the shared data structures used for interpretation of
     the values
 
-Any new data format must be backed by good C++ classes to allow
+Any new data format must be backed by C++ classes to allow
 
   - easy and fast parsing from JSON
   - easy and convenient buildup without too many memory allocations
@@ -79,13 +80,15 @@ Any new data format must be backed by good C++ classes to allow
   - flexible memory management
   - fast dumping to JSON
 
-The VelocyPack format is an attempt to achieve all this, and our first
-experiments and usage attempts are very encouraging.
+The VelocyPack format is an attempt to achieve all this.
 
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the 
 VelocyPack format*. The library is written in C++17 so it should compile 
 on many up-to-date systems.
+
+The VelocyPack format and library are used extensively in the 
+[ArangoDB database](https://www.arangodb.com/).
 
 
 Specification

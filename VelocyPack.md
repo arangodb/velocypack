@@ -618,3 +618,41 @@ The following user-defined types exist:
 
 Note: In types `0xf4` to `0xff` the "payload" refers to the actual data not
 including the length specification.
+
+## Portability
+
+Serialized booleans, integers, strings, arrays, objects etc. all have a 
+defined endianess and length, which is platform-independent. These types are
+fully portable in serialized VelocyPack.
+
+There are still a few caveats when it comes to portability:
+
+It is possible to build up very large values on a 64 bit system, but it may not be 
+possible to read them back on a 32 bit system. This is because the maximum memory
+allocation size on a 32 bit system may be severely limited compared to a 64 bit system,
+i.e. a 32 bit OS may simply not allow to allocate buffers larger than 4 GB. This 
+is not a limitation of VelocyPack, but a limitation of 32 bit architectures.
+If all VelocyPack values are kept small enough so that they are well below the 
+32 bit length boundaries, this should not matter though.
+
+The VelocyPack type *External* contains just a raw pointer to memory, which should 
+only be used during the buildup of VelocyPack values in memory. The *External* type
+is not supposed to be used in VelocyPack values that are serialized and stored 
+persistently, and then later read back from persistence. Doing it anyway is not
+portable and will also pose a security risk.
+Not using the *External* type for any data that is serialized will avoid this problem
+entirely.
+
+The VelocyPack type *Custom* is completely user-defined, and there is no default
+implementation for them. So it is up to the embedder to make these custom type
+bindings portable if portability of them is a concern.
+
+VelocyPack *Double* values are serialized as integer equivalents in a specific way, 
+and unserialized back into integers that overlay a IEEE-754 double-precision 
+floating point value in memory. We found this to be sufficiently portable for our 
+needs, although at least in theory there may be portability issues with some systems.
+
+The [following](https://en.wikipedia.org/wiki/Endianness#Floating_point) was used as
+a backing for our "reasonably portable in the real world" assumptions:
+
+> It may therefore appear strange that the widespread IEEE 754 floating-point standard does not specify endianness.[17] Theoretically, this means that even standard IEEE floating-point data written by one machine might not be readable by another. However, on modern standard computers (i.e., implementing IEEE 754), one may in practice safely assume that the endianness is the same for floating-point numbers as for integers, making the conversion straightforward regardless of data type. 
