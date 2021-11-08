@@ -15,7 +15,6 @@ if(BuildVelocyPackExamples)
         exampleDumper
         exampleDumperFile
         exampleDumperPretty
-        exampleHash
         exampleObjectHandling
         exampleObjectIterator
         exampleObjectLookup
