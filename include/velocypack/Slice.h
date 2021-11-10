@@ -859,26 +859,26 @@ class Slice {
 
   // return a copy of the value for a String object
   StringRef stringRef() const {
+    auto sv = this->stringView();
+    return StringRef(sv.data(), sv.size());
+  }
+
+  std::string_view stringView() const {
     uint8_t h = head();
     if (h >= 0x40 && h <= 0xbe) {
       // short UTF-8 String
       ValueLength length = h - 0x40;
-      return StringRef(reinterpret_cast<char const*>(start() + 1),
-                       static_cast<std::size_t>(length));
+      return std::string_view(reinterpret_cast<char const*>(start() + 1),
+                              static_cast<std::size_t>(length));
     }
 
     if (h == 0xbf) {
       ValueLength length = readIntegerFixed<ValueLength, 8>(start() + 1);
-      return StringRef(reinterpret_cast<char const*>(start() + 1 + 8),
-                       checkOverflow(length));
+      return std::string_view(reinterpret_cast<char const*>(start() + 1 + 8),
+                              checkOverflow(length));
     }
 
     throw Exception(Exception::InvalidValueType, "Expecting type String");
-  }
-
-  std::string_view stringView() const {
-    StringRef ref  = this->stringRef();
-    return std::string_view(ref.data(), ref.size());
   }
 
   // return the value for a Binary object

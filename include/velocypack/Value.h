@@ -34,7 +34,6 @@
 
 namespace arangodb {
 namespace velocypack {
-class StringRef;
 
 class Value {
   // Convenience class for more compact notation
@@ -196,7 +195,8 @@ class ValuePair {
   constexpr explicit ValuePair(uint64_t size, ValueType type = ValueType::Binary) noexcept
       : _start(nullptr), _size(size), _type(type) {}
 
-  explicit ValuePair(StringRef const& value, ValueType type = ValueType::Binary) noexcept;
+  explicit ValuePair(std::string_view value, ValueType type = ValueType::Binary) noexcept
+      : ValuePair(value.data(), value.size(), type) {}
 
   uint8_t const* getStart() const noexcept { return _start; }
 

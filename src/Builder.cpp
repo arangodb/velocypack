@@ -32,7 +32,6 @@
 #include "velocypack/Dumper.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Sink.h"
-#include "velocypack/StringRef.h"
 
 using namespace arangodb::velocypack;
 
@@ -100,7 +99,7 @@ constexpr size_t minSortEntriesAllocation = 32;
 thread_local std::unique_ptr<std::vector<SortEntry>> sortEntries;
 
 // thread-local, reusable set to track usage of duplicate keys
-thread_local std::unique_ptr<std::unordered_set<StringRef>> duplicateKeys;
+thread_local std::unique_ptr<std::unordered_set<std::string_view>> duplicateKeys;
 
 #endif
 
@@ -131,16 +130,16 @@ uint8_t const* findAttrName(uint8_t const* base, uint64_t& len) {
 }
 
 bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
-  std::array<StringRef, linearAttributeUniquenessCutoff> keys;
+  std::array<std::string_view, linearAttributeUniquenessCutoff> keys;
 
   do {
     // key(true) guarantees a String as returned type
-    StringRef key = it.key(true).stringRef();
+    std::string_view key = it.key(true).stringView();
 
     ValueLength index = it.index();
     // compare with all other already looked-at keys
     for (ValueLength i = 0; i < index; ++i) {
-      if (VELOCYPACK_UNLIKELY(keys[i].equals(key))) {
+      if (VELOCYPACK_UNLIKELY(keys[i] == key)) {
         return false;
       }
     }
@@ -154,22 +153,22 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
 
 bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
 #ifndef VELOCYPACK_NO_THREADLOCALS
-  std::unique_ptr<std::unordered_set<StringRef>>& tmp = ::duplicateKeys;
+  std::unique_ptr<std::unordered_set<std::string_view>>& tmp = ::duplicateKeys;
 
   if (::duplicateKeys == nullptr) {
-    ::duplicateKeys = std::make_unique<std::unordered_set<StringRef>>();
+    ::duplicateKeys = std::make_unique<std::unordered_set<std::string_view>>();
   } else {
     ::duplicateKeys->clear();
   }
 #else
-  auto tmp = std::make_unique<std::unordered_set<StringRef>>();
+  auto tmp = std::make_unique<std::unordered_set<std::string_view>>();
 #endif
 
   do {
-    Slice const key = it.key(true);
+    Slice key = it.key(true);
     // key(true) guarantees a String as returned type
     VELOCYPACK_ASSERT(key.isString());
-    if (VELOCYPACK_UNLIKELY(!tmp->emplace(key).second)) {
+    if (VELOCYPACK_UNLIKELY(!tmp->emplace(key.stringView()).second)) {
       // identical key
       return false;
     }
