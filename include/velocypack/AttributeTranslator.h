@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_ATTRIBUTETRANSLATOR_H
-#define VELOCYPACK_ATTRIBUTETRANSLATOR_H 1
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -32,8 +31,7 @@
 
 #include "velocypack/velocypack-common.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 class Builder;
 
 class AttributeTranslator {
@@ -103,6 +101,5 @@ class AttributeTranslatorScope {
 };
 
 }  // namespace arangodb::velocypack
-}  // namespace arangodb
 
-#endif
+using VPackAttributeTranslator = arangodb::velocypack::AttributeTranslator;

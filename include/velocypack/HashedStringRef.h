@@ -21,8 +21,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_HASHED_STRINGREF_H
-#define VELOCYPACK_HASHED_STRINGREF_H 1
+#pragma once
 
 #include <cstring>
 #include <functional>
@@ -32,8 +31,7 @@
 
 #include "velocypack/velocypack-common.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 class Slice;
 class StringRef;
 
@@ -200,8 +198,7 @@ class HashedStringRef {
 };
 
 std::ostream& operator<<(std::ostream& stream, HashedStringRef const& ref);
-} // namespace velocypack
-} // namespace arangodb
+} // namespace arangodb::velocypack
 
 inline bool operator==(arangodb::velocypack::HashedStringRef const& lhs, arangodb::velocypack::HashedStringRef const& rhs) noexcept {
   // equal tags imply equal length/size
@@ -247,4 +244,4 @@ struct equal_to<arangodb::velocypack::HashedStringRef> {
 
 }
 
-#endif
+using VPackHashedStringRef = arangodb::velocypack::HashedStringRef;

@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_BUFFER_H
-#define VELOCYPACK_BUFFER_H 1
+#pragma once
 
 #include <cstring>
 #include <cstdlib>
@@ -33,8 +32,7 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Exception.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 template <typename T>
 class Buffer {
@@ -342,6 +340,7 @@ struct BufferNonDeleter {
 };
 
 }  // namespace arangodb::velocypack
-}  // namespace arangodb
 
-#endif
+using VPackCharBuffer = arangodb::velocypack::CharBuffer;
+using VPackBufferUInt8 = arangodb::velocypack::UInt8Buffer;
+template<typename T> using VPackBuffer = arangodb::velocypack::Buffer<T>;

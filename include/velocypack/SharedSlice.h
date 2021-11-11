@@ -21,8 +21,7 @@
 /// @author Tobias Gödderz
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_SHAREDSLICE_H
-#define VELOCYPACK_SHAREDSLICE_H
+#pragma once
 
 #include <velocypack/Buffer.h>
 #include <velocypack/Slice.h>
@@ -342,5 +341,3 @@ class SharedSlice {
 };
 
 }  // namespace arangodb::velocypack
-
-#endif  // VELOCYPACK_SHAREDSLICE_H

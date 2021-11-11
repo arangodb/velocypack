@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_VALUE_H
-#define VELOCYPACK_VALUE_H 1
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -32,8 +31,7 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/ValueType.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 class Value {
   // Convenience class for more compact notation
@@ -208,6 +206,6 @@ class ValuePair {
 };
 
 }  // namespace arangodb::velocypack
-}  // namespace arangodb
 
-#endif
+using VPackValue = arangodb::velocypack::Value;
+using VPackValuePair = arangodb::velocypack::ValuePair;

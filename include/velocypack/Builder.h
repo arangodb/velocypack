@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_BUILDER_H
-#define VELOCYPACK_BUILDER_H 1
+#pragma once
 
 #include <algorithm>
 #include <cstring>
@@ -46,8 +45,7 @@
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 class ArrayIterator;
 class ObjectIterator;
 
@@ -1057,6 +1055,9 @@ struct ArrayBuilder final : public BuilderContainer,
 };
 
 }  // namespace arangodb::velocypack
-}  // namespace arangodb
 
-#endif
+using VPackBuilder = arangodb::velocypack::Builder;
+using VPackBuilderNonDeleter = arangodb::velocypack::BuilderNonDeleter;
+using VPackBuilderContainer = arangodb::velocypack::BuilderContainer;
+using VPackObjectBuilder = arangodb::velocypack::ObjectBuilder;
+using VPackArrayBuilder = arangodb::velocypack::ArrayBuilder;

@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_STRINGREF_H
-#define VELOCYPACK_STRINGREF_H 1
+#pragma once
 
 #include <cstring>
 #include <functional>
@@ -33,8 +32,7 @@
 
 #include "velocypack/velocypack-common.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 class HashedStringRef;
 class Slice;
 
@@ -181,8 +179,7 @@ class StringRef {
 };
 
 std::ostream& operator<<(std::ostream& stream, StringRef const& ref);
-} // namespace velocypack
-} // namespace arangodb
+} // namespace arangodb::velocypack
 
 inline bool operator==(arangodb::velocypack::StringRef const& lhs, arangodb::velocypack::StringRef const& rhs) {
   return (lhs.size() == rhs.size() && std::memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
@@ -235,4 +232,4 @@ struct equal_to<arangodb::velocypack::StringRef> {
 
 }
 
-#endif
+using VPackStringRef = arangodb::velocypack::StringRef;

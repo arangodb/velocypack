@@ -22,8 +22,7 @@
 /// @author Jan Steemann
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef VELOCYPACK_SLICE_H
-#define VELOCYPACK_SLICE_H 1
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -48,8 +47,7 @@
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 struct Sink;
 
 template<typename, typename = void>
@@ -1401,9 +1399,7 @@ struct Extractor<std::tuple<Ts...>> {
   }
 };
 
-
 }  // namespace arangodb::velocypack
-}  // namespace arangodb
 
 namespace std {
 // implementation of std::hash for a Slice object
@@ -1424,4 +1420,4 @@ std::ostream& operator<<(std::ostream&, arangodb::velocypack::Slice const*);
 
 std::ostream& operator<<(std::ostream&, arangodb::velocypack::Slice const&);
 
-#endif
+using VPackSlice = arangodb::velocypack::Slice;
