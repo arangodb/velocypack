@@ -694,7 +694,7 @@ TEST(SharedSliceAgainstSliceTest, getPCharPtrLen) {
   auto attrs = std::vector<std::string>{"foo"s, "bar"s};
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
     for (auto const& attr : attrs) {
-      ASSERT_EQ_EX(slice.get(attr.c_str(), attr.length()), sharedSlice.get(attr.c_str(), attr.length()));
+      ASSERT_EQ_EX(slice.get(attr), sharedSlice.get(attr));
     }
   });
 }
@@ -754,7 +754,7 @@ TEST(SharedSliceAgainstSliceTest, hasKeyPCharPtrLen) {
   auto attrs = std::vector<std::string>{"foo"s, "bar"s};
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
     for (auto const& attr : attrs) {
-      ASSERT_EQ_EX(slice.hasKey(attr.c_str(), attr.length()), sharedSlice.hasKey(attr.c_str(), attr.length()));
+      ASSERT_EQ_EX(slice.hasKey(attr), sharedSlice.hasKey(attr));
     }
   });
 }
@@ -970,9 +970,9 @@ TEST(SharedSliceAgainstSliceTest, compareStringPString) {
 
 TEST(SharedSliceAgainstSliceTest, compareStringPCharPtrLen) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.compareString("42", 2), sharedSlice.compareString("42", 2));
-    ASSERT_EQ_EX(slice.compareString("foo", 3), sharedSlice.compareString("foo", 3));
-    ASSERT_EQ_EX(slice.compareString("bar", 3), sharedSlice.compareString("bar", 3));
+    ASSERT_EQ_EX(slice.compareString("42"), sharedSlice.compareString("42"));
+    ASSERT_EQ_EX(slice.compareString("foo"), sharedSlice.compareString("foo"));
+    ASSERT_EQ_EX(slice.compareString("bar"), sharedSlice.compareString("bar"));
   });
 }
 
@@ -1006,12 +1006,12 @@ TEST(SharedSliceAgainstSliceTest, compareStringUncheckedPString) {
 TEST(SharedSliceAgainstSliceTest, compareStringUncheckedPCharPtrLen) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
     if (slice.isString()) {
-      ASSERT_EQ_EX(slice.compareStringUnchecked("42", 2),
-                   sharedSlice.compareStringUnchecked("42", 2));
-      ASSERT_EQ_EX(slice.compareStringUnchecked("foo", 3),
-                   sharedSlice.compareStringUnchecked("foo", 3));
-      ASSERT_EQ_EX(slice.compareStringUnchecked("bar", 3),
-                   sharedSlice.compareStringUnchecked("bar", 3));
+      ASSERT_EQ_EX(slice.compareStringUnchecked("42"),
+                   sharedSlice.compareStringUnchecked("42"));
+      ASSERT_EQ_EX(slice.compareStringUnchecked("foo"),
+                   sharedSlice.compareStringUnchecked("foo"));
+      ASSERT_EQ_EX(slice.compareStringUnchecked("bar"),
+                   sharedSlice.compareStringUnchecked("bar"));
     }
   });
 }

@@ -584,11 +584,22 @@ class Slice {
 
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
+  /*
   template<typename T>
   typename std::enable_if<
       std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<typename T::iterator>::iterator_category>::value,
       Slice>::type get(T const& attributes,
                        bool resolveExternals = false) const {
+    // forward to the iterator-based lookup
+    return this->get(attributes.begin(), attributes.end(), resolveExternals);
+  }
+  */
+  
+  // look for the specified attribute path inside an Object
+  // returns a Slice(ValueType::None) if not found
+  template<typename T>
+  Slice get(std::vector<T> const& attributes,
+            bool resolveExternals = false) const {
     // forward to the iterator-based lookup
     return this->get(attributes.begin(), attributes.end(), resolveExternals);
   }
@@ -604,41 +615,32 @@ class Slice {
 
   // look for the specified attribute inside an Object
   // returns a Slice(ValueType::None) if not found
-  Slice get(StringRef const& attribute) const;
-
-  Slice get(std::string_view attribute) const {
-    return get(StringRef{attribute.data(), attribute.size()});
-  }
+  Slice get(std::string_view attribute) const;
 
   Slice get(HashedStringRef const& attribute) const {
     return get(StringRef(attribute));
   }
 
-  Slice get(std::string const& attribute) const {
-    return get(StringRef(attribute.data(), attribute.size()));
+  [[deprecated]] Slice get(char const* attribute, std::size_t length) const {
+    return get(std::string_view(attribute, length));
   }
 
-  Slice get(char const* attribute) const {
-    return get(StringRef(attribute, std::char_traits<char>::length(attribute)));
-  }
-
-  Slice get(char const* attribute, std::size_t length) const {
-    return get(StringRef(attribute, length));
-  }
-
-  Slice operator[](StringRef const& attribute) const {
+  Slice operator[](std::string_view attribute) const {
     return get(attribute);
   }
 
-  Slice operator[](std::string const& attribute) const {
-    return get(attribute.data(), attribute.size());
-  }
-
   // whether or not an Object has a specific sub-key
+  /*
   template<typename T>
   typename std::enable_if<
       std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<typename T::iterator>::iterator_category>::value,
       bool>::type hasKey(T const& attributes) const {
+    return !this->get(attributes.begin(), attributes.end()).isNone();
+  }
+  */
+  // whether or not an Object has a specific key
+  template<typename T>
+  bool hasKey(std::vector<T> const& attributes) const {
     return !this->get(attributes.begin(), attributes.end()).isNone();
   }
 
@@ -649,25 +651,17 @@ class Slice {
   }
 
   // whether or not an Object has a specific key
-  bool hasKey(StringRef const& attribute) const {
+  bool hasKey(std::string_view attribute) const {
     return !get(attribute).isNone();
   }
-
+  
   // whether or not an Object has a specific key
   bool hasKey(HashedStringRef const& attribute) const {
-    return hasKey(StringRef(attribute));
+    return hasKey(std::string_view(attribute.data(), attribute.size()));
   }
 
-  bool hasKey(std::string const& attribute) const {
-    return hasKey(StringRef(attribute));
-  }
-
-  bool hasKey(char const* attribute) const {
-    return hasKey(StringRef(attribute, std::char_traits<char>::length(attribute)));
-  }
-
-  bool hasKey(char const* attribute, std::size_t length) const {
-    return hasKey(StringRef(attribute, length));
+  [[deprecated]] bool hasKey(char const* attribute, std::size_t length) const {
+    return hasKey(std::string_view(attribute, length));
   }
 
   // return the pointer to the data for an External object
@@ -961,45 +955,29 @@ class Slice {
   ValueLength getNthOffset(ValueLength index) const;
 
   Slice makeKey() const;
-
-  int compareString(StringRef const& value) const;
-
-  inline int compareString(std::string const& value) const {
-    return compareString(StringRef(value.data(), value.size()));
+  
+  int compareString(std::string_view value) const;
+  
+  [[deprecated]] int compareString(char const* value, std::size_t length) const {
+    return compareString(std::string_view(value, length));
   }
+  
+  int compareStringUnchecked(std::string_view value) const noexcept;
 
-  int compareString(char const* value, std::size_t length) const {
-    return compareString(StringRef(value, length));
+  [[deprecated]] int compareStringUnchecked(char const* value, std::size_t length) const noexcept {
+    return compareStringUnchecked(std::string_view(value, length));
   }
-
-  int compareStringUnchecked(StringRef const& value) const noexcept;
-
-  int compareStringUnchecked(std::string const& value) const noexcept {
-    return compareStringUnchecked(StringRef(value.data(), value.size()));
-  }
-
-  int compareStringUnchecked(char const* value, std::size_t length) const noexcept {
-    return compareStringUnchecked(StringRef(value, length));
-  }
-
-  bool isEqualString(StringRef const& attribute) const;
-
-  bool isEqualString(std::string const& attribute) const {
-    return isEqualString(StringRef(attribute.data(), attribute.size()));
-  }
-
-  bool isEqualStringUnchecked(StringRef const& attribute) const noexcept;
-
-  bool isEqualStringUnchecked(std::string const& attribute) const noexcept {
-    return isEqualStringUnchecked(StringRef(attribute.data(), attribute.size()));
-  }
-
+  
+  bool isEqualString(std::string_view attribute) const;
+  
+  bool isEqualStringUnchecked(std::string_view attribute) const noexcept;
+  
   // check if two Slices are equal on the binary level
   // please note that for several values there are multiple possible representations,
   // which differ on the binary level but will still resolve to the same logical
   // values. For example, smallint(1) and int(1) are logically the same, but will
   // resolve to either 0x31 or 0x28 0x01.
-  bool binaryEquals(Slice const& other) const {
+  bool binaryEquals(Slice other) const {
     if (start() == other.start()) {
       // same underlying data, so the slices must be identical
       return true;
@@ -1185,7 +1163,7 @@ class Slice {
   // translates an integer key into a string, without checks
   Slice translateUnchecked() const;
 
-  Slice getFromCompactObject(StringRef const& attribute) const;
+  Slice getFromCompactObject(std::string_view attribute) const;
 
   // extract the nth member from an Array
   Slice getNth(ValueLength index) const;
@@ -1218,12 +1196,12 @@ class Slice {
   }
 
   // perform a linear search for the specified attribute inside an Object
-  Slice searchObjectKeyLinear(StringRef const& attribute, ValueLength ieBase,
+  Slice searchObjectKeyLinear(std::string_view attribute, ValueLength ieBase,
                               ValueLength offsetSize, ValueLength n) const;
 
   // perform a binary search for the specified attribute inside an Object
   template<ValueLength offsetSize>
-  Slice searchObjectKeyBinary(StringRef const& attribute, ValueLength ieBase, ValueLength n) const;
+  Slice searchObjectKeyBinary(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
 
   // extracts a pointer from the slice and converts it into a
   // built-in pointer type
