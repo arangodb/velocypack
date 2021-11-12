@@ -1759,7 +1759,7 @@ TEST(BuilderTest, ShortStringViaValuePair) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
   
   ASSERT_EQ(p, b.slice().copyString());
-  ASSERT_TRUE(StringRef(p).equals(b.slice().stringRef()));
+  ASSERT_EQ(std::string_view(p), b.slice().stringView());
 }
 
 TEST(BuilderTest, LongStringViaValuePair) {
@@ -1795,7 +1795,7 @@ TEST(BuilderTest, LongStringViaValuePair) {
   ASSERT_EQ(0, memcmp(result, correctResult, len));
 
   ASSERT_EQ(p, b.slice().copyString());
-  ASSERT_TRUE(StringRef(p).equals(b.slice().stringRef()));
+  ASSERT_EQ(std::string_view(p), b.slice().stringView());
 }
 
 TEST(BuilderTest, CustomViaValuePair) {

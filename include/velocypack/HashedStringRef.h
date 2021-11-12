@@ -30,10 +30,10 @@
 #include <iosfwd>
 
 #include "velocypack/velocypack-common.h"
+#include "velocypack/StringRef.h"
 
 namespace arangodb::velocypack {
 class Slice;
-class StringRef;
 
 /// a non-owning string reference with a computed hash value.
 /// it can be used for fast equality comparisons, for example as keys

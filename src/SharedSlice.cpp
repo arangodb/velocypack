@@ -298,7 +298,7 @@ ValueLength SharedSlice::getStringLength() const {
 
 std::string SharedSlice::copyString() const { return slice().copyString(); }
 
-StringRef SharedSlice::stringRef() const { return slice().stringRef(); }
+[[deprecated("use stringView")]] StringRef SharedSlice::stringRef() const { return slice().stringRef(); }
 
 std::string_view SharedSlice::stringView() const {
   return slice().stringView();

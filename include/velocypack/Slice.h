@@ -616,7 +616,7 @@ class Slice {
   Slice get(std::string_view attribute) const;
 
   Slice get(HashedStringRef const& attribute) const {
-    return get(StringRef(attribute));
+    return get(std::string_view(attribute.data(), attribute.size()));
   }
 
   [[deprecated]] Slice get(char const* attribute, std::size_t length) const {
@@ -850,7 +850,7 @@ class Slice {
   }
 
   // return a copy of the value for a String object
-  StringRef stringRef() const {
+  [[deprecated("use stringView")]] StringRef stringRef() const {
     auto sv = this->stringView();
     return StringRef(sv.data(), sv.size());
   }
@@ -1361,13 +1361,6 @@ template<>
 struct Extractor<std::string> {
   static std::string extract(Slice slice) {
     return slice.copyString();
-  }
-};
-
-template<>
-struct Extractor<StringRef> {
-  static StringRef extract(Slice slice) {
-    return slice.stringRef();
   }
 };
 
