@@ -3620,6 +3620,24 @@ TEST(BuilderTest, stealSharedSlice) {
   check(largeBuilder, false);
 }
 
+TEST(BuilderTest, syntacticSugar) {
+  Builder b;
+
+  b(Value(ValueType::Object))("b", Value(12))("a", Value(true))(
+      "l", Value(ValueType::Array))(Value(1))(Value(2))(Value(3))()(
+      "name", Value("Gustav"))();
+
+  ASSERT_FALSE(b.isOpenObject());
+  ASSERT_TRUE(b.slice().get("b").isInteger());
+  ASSERT_EQ(12, b.slice().get("b").getInt());
+  ASSERT_TRUE(b.slice().get("a").isBoolean());
+  ASSERT_TRUE(b.slice().get("a").getBoolean());
+  ASSERT_TRUE(b.slice().get("l").isArray());
+  ASSERT_EQ(3, b.slice().get("l").length());
+  ASSERT_TRUE(b.slice().get("name").isString());
+  ASSERT_EQ("Gustav", b.slice().get("name").copyString());
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
