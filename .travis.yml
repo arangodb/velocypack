@@ -39,7 +39,6 @@ matrix:
           packages: ['gcc-9', 'g++-9', 'cmake']
     
     - name: "address sanitizer build, g++-9"
-      if: branch = main 
       env:
         - ARCH=amd64
         #compiler
@@ -54,7 +53,6 @@ matrix:
           packages: ['gcc-9', 'g++-9', 'cmake']
 
     - name: "coverage build, g++-9"
-      if: branch = main
       env:
         - ARCH=amd64
         #compiler
@@ -72,7 +70,6 @@ matrix:
         - ./scripts/travis-after-success.sh
 
     - name: "clang build, clang++-10"
-      if: branch = main 
       compiler: clang++-10
       env:
         - ARCH=amd64
