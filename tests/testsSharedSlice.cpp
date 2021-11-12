@@ -741,7 +741,9 @@ TEST(SharedSliceAgainstSliceTest, operatorIndexPString) {
 
 TEST(SharedSliceAgainstSliceTest, findDataOffset) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.findDataOffset(slice.head()), sharedSlice.findDataOffset(slice.head()));
+    if (slice.isArray() || slice.isObject()) {
+      ASSERT_EQ_EX(slice.findDataOffset(slice.head()), sharedSlice.findDataOffset(slice.head()));
+    }
   });
 }
 
