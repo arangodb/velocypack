@@ -80,10 +80,10 @@ matrix:
         #build settings
         - build_type=Release
         - CXX_STANDARD=17
-        - LDFLAGS="-fuse-ld=lld"
+        - LDFLAGS="-fuse-ld=lld-10"
       addons:
         apt:
-          packages: ['clang-10', 'clang++-10', 'clang-format-10', 'clang-tools-9', 'cmake']
+          packages: ['clang-10', 'clang++-10', 'clang-format-10', 'clang-tools-10', 'cmake']
 
     - name: "mac"
       os: osx
