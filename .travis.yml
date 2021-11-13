@@ -83,7 +83,7 @@ matrix:
         - LDFLAGS="-fuse-ld=lld-10"
       addons:
         apt:
-          packages: ['clang-10', 'clang++-10', 'clang-format-10', 'clang-tools-10', 'cmake']
+          packages: ['clang-10', 'clang++-10', 'clang-format-10', 'clang-tools-10', 'lld-10', 'cmake']
 
     - name: "mac"
       os: osx
