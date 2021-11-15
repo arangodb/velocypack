@@ -741,7 +741,8 @@ TEST(SharedSliceAgainstSliceTest, operatorIndexPString) {
 
 TEST(SharedSliceAgainstSliceTest, findDataOffset) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    if (slice.isArray() || slice.isObject()) {
+    if ((slice.isArray() && !slice.isEmptyArray()) ||
+        (slice.isObject() && !slice.isEmptyObject())) {
       ASSERT_EQ_EX(slice.findDataOffset(slice.head()), sharedSlice.findDataOffset(slice.head()));
     }
   });
@@ -1234,7 +1235,7 @@ TEST(SharedSliceRefcountTest, createFromUInt8Move) {
   *p++ = 'a';
   *p++ = 'r';
 
-  SharedSlice sharedSlice{std::move(std::const_pointer_cast<uint8_t const>(data))};
+  SharedSlice sharedSlice{std::const_pointer_cast<uint8_t const>(data)};
   ASSERT_TRUE(sharedSlice.isString());
   ASSERT_EQ("foobar", sharedSlice.copyString());
 }
