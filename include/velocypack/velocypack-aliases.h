@@ -23,3 +23,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "velocypack/velocypack-common.h"
+
+// this file is deprecated and shouldn't be used anymore.
+// aliases are now present in the individual header files.
