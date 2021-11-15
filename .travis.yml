@@ -80,7 +80,7 @@ matrix:
         #build settings
         - build_type=Release
         - CXX_STANDARD=17
-        - LDFLAGS="-fuse-ld=lld-10"
+        - LDFLAGS="-fuse-ld=lld"
       addons:
         apt:
           packages: ['clang-10', 'clang++-10', 'clang-format-10', 'clang-tools-10', 'lld-10', 'cmake']
