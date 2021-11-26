@@ -1209,7 +1209,7 @@ TEST(SharedSliceRefcountTest, createFromOpenBuffer) {
 }
 
 TEST(SharedSliceRefcountTest, createFromUInt8) {
-  std::shared_ptr<uint8_t> data(new uint8_t[7]);
+  std::shared_ptr<uint8_t[]> data(new uint8_t[7]);
   char* p = reinterpret_cast<char*>(data.get());
   *p++ = '\x46';
   *p++ = 'f';
@@ -1225,7 +1225,7 @@ TEST(SharedSliceRefcountTest, createFromUInt8) {
 }
 
 TEST(SharedSliceRefcountTest, createFromUInt8Move) {
-  std::shared_ptr<uint8_t> data(new uint8_t[7]);
+  std::shared_ptr<uint8_t[]> data(new uint8_t[7]);
   char* p = reinterpret_cast<char*>(data.get());
   *p++ = '\x46';
   *p++ = 'f';
