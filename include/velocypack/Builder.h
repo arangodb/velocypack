@@ -89,11 +89,13 @@ class Builder {
     ValueLength indexStartPos;
   };
 
+  static constexpr std::size_t arenaSize = 64;
+
   // Start positions of open objects/arrays
   // we are using a SmallVector here, so we can stuff the first few
   // levels into the vector without making any allocations
-  SmallVector<CompoundInfo, 64>::allocator_type::arena_type _arena;
-  SmallVector<CompoundInfo, 64> _stack;
+  SmallVector<CompoundInfo, arenaSize>::allocator_type::arena_type _arena;
+  SmallVector<CompoundInfo, arenaSize> _stack;
 
   // Indices for starts of subindex
   std::vector<ValueLength> _indexes;

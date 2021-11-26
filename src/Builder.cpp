@@ -189,7 +189,10 @@ Builder::Builder()
         _arena(),
         _stack(_arena),
         _keyWritten(false),
-        options(&Options::Defaults) {}
+        options(&Options::Defaults) {
+  // do a full initial allocation in the arena, so we can maximize its usage
+  _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
+}
   
 // create an empty Builder, using Options 
 Builder::Builder(Options const* opts)
@@ -215,6 +218,9 @@ Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer)
   }
   _start = _bufferPtr->data();
   _pos = _bufferPtr->size();
+  
+  // do a full initial allocation in the arena, so we can maximize its usage
+  _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
   
 // create an empty Builder, using an existing buffer
@@ -235,7 +241,10 @@ Builder::Builder(Buffer<uint8_t>& buffer) noexcept
         _arena(),
         _stack(_arena),
         _keyWritten(false), 
-        options(&Options::Defaults) {}
+        options(&Options::Defaults) {
+  // do a full initial allocation in the arena, so we can maximize its usage
+  _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
+}
   
 // create a Builder that uses an existing Buffer. the Builder will not
 // claim ownership for its Buffer
@@ -276,6 +285,9 @@ Builder::Builder(Builder const& that)
   if (_bufferPtr != nullptr) {
     _start = _bufferPtr->data();
   }
+  
+  // do a full initial allocation in the arena, so we can maximize its usage
+  _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
 
 Builder& Builder::operator=(Builder const& that) {
@@ -313,6 +325,8 @@ Builder::Builder(Builder&& that) noexcept
       _keyWritten(that._keyWritten),
       options(that.options) {
       
+  // do a full initial allocation in the arena, so we can maximize its usage
+  _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
   _stack = std::move(that._stack);
   
   if (_buffer != nullptr) {
@@ -342,6 +356,8 @@ Builder& Builder::operator=(Builder&& that) noexcept {
       _start = nullptr;
     }
     _pos = that._pos;
+    // do a full initial allocation in the arena, so we can maximize its usage
+    _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
     _stack = std::move(that._stack);
     _indexes = std::move(that._indexes);
     _keyWritten = that._keyWritten;
