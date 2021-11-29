@@ -27,10 +27,10 @@
 #include <functional>
 #include <algorithm>
 #include <string>
+#include <string_view>
 #include <iosfwd>
 
 #include "velocypack/velocypack-common.h"
-#include "velocypack/StringRef.h"
 
 namespace arangodb::velocypack {
 class Slice;
@@ -133,7 +133,7 @@ class HashedStringRef {
     return std::string(_data, _length);
   }
 
-  StringRef stringRef() const noexcept;
+  std::string_view stringView() const noexcept;
 
   constexpr inline bool empty() const noexcept {
     return (_length == 0);
