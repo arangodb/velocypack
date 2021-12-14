@@ -2611,6 +2611,68 @@ TEST(BuilderTest, ArrayBuilderClosed) {
   ASSERT_EQ("[\n  \"foo\",\n  \"bar\"\n]", b.toString());
 }
 
+TEST(BuilderTest, IsOpenObject) {
+  Builder b;
+  ASSERT_FALSE(b.isOpenObject());
+  b.openObject();
+  ASSERT_TRUE(b.isOpenObject());
+  b.add("baz", Value("bark"));
+  ASSERT_TRUE(b.isOpenObject());
+  b.add("bar", Value(ValueType::Object));
+  ASSERT_TRUE(b.isOpenObject());
+  b.close();
+  ASSERT_TRUE(b.isOpenObject());
+  b.close();
+  ASSERT_FALSE(b.isOpenObject());
+}
+
+TEST(BuilderTest, IsOpenObjectNoObject) {
+  {
+    Builder b;
+    b.add(Value(ValueType::Null));
+    ASSERT_FALSE(b.isOpenObject());
+  }
+  
+  {
+    Builder b;
+    b.add(Value(false));
+    ASSERT_FALSE(b.isOpenObject());
+  }
+  
+  {
+    Builder b;
+    b.add(Value(1234));
+    ASSERT_FALSE(b.isOpenObject());
+  }
+  
+  {
+    Builder b;
+    b.add(Value("foobar"));
+    ASSERT_FALSE(b.isOpenObject());
+  }
+  
+  {
+    Builder b;
+    b.openArray();
+    ASSERT_FALSE(b.isOpenObject());
+    b.close();
+    ASSERT_FALSE(b.isOpenObject());
+  }
+}
+
+TEST(BuilderTest, Data) {
+  Builder b;
+  ASSERT_NE(b.data(), nullptr);
+  ASSERT_EQ(b.data(), b.buffer()->data());
+}
+
+TEST(BuilderTest, DataWithExternalBuffer) {
+  Buffer<uint8_t> buffer;
+  Builder b(buffer);
+  ASSERT_NE(b.data(), nullptr);
+  ASSERT_EQ(b.data(), buffer.data());
+}
+
 TEST(BuilderTest, AddUnchecked) {
   Builder b;
   b.openObject();
