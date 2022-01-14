@@ -98,6 +98,83 @@ static std::string readFile(std::string filename) {
   throw "cannot open input file";
 }
 
+static ValueType fromSimdJsonType(simdjson::dom::element_type type) {
+  using etype = simdjson::dom::element_type;
+  switch (type) {
+  case etype::ARRAY:      return ValueType::Array;
+  case etype::OBJECT:     return ValueType::Object;
+  case etype::BOOL:       return ValueType::Bool;
+  case etype::INT64:      return ValueType::Int;
+  case etype::UINT64:     return ValueType::UInt;
+  case etype::STRING:     return ValueType::String;
+  case etype::DOUBLE:     return ValueType::Double;
+  case etype::NULL_VALUE: return ValueType::Null;
+  default:
+    assert(false);
+  }
+}
+
+static Value drain_simdjson(simdjson::dom::element& doc, Builder* builder, bool opened) {
+  using namespace simdjson;
+  
+  // std::cerr << opened << " parsing: " << doc.type() << " " << doc << std::endl;
+  
+  switch (doc.type()) {
+  case dom::element_type::OBJECT: {
+    if (!opened) {
+      builder->add(Value(ValueType::Object));
+    }
+    for (auto field : doc.get_object()) {
+      auto subType = fromSimdJsonType(field.value.type());
+      if (subType == ValueType::Array || subType == ValueType::Object) {
+        builder->add(field.key, Value(subType));
+        drain_simdjson(field.value, builder, true);
+        builder->close();
+      } else {
+        Value sub = drain_simdjson(field.value, builder, true);
+        builder->add(field.key, sub);
+      }
+    }
+    if (!opened) {
+      builder->close();
+    }
+    return Value(ValueType::Object);
+  }
+  case dom::element_type::ARRAY: {
+    if (!opened) {
+      builder->add(Value(ValueType::Array));
+    }
+    for (auto field : doc.get_array()) {
+      auto subType = fromSimdJsonType(field.type());
+      if (subType == ValueType::Array || subType == ValueType::Object) {
+        builder->add(Value(subType));
+        drain_simdjson(field, builder, true);
+        builder->close();
+      } else {
+        Value sub = drain_simdjson(field, builder, false);
+        builder->add(sub);
+      }
+    }
+    if (!opened) {
+      builder->close();
+    }
+    return Value(ValueType::Array);
+  }
+  case dom::element_type::INT64: 
+    return (Value(doc.get_int64()));
+  case dom::element_type::UINT64: 
+    return (Value(doc.get_uint64()));
+  case dom::element_type::DOUBLE:
+    return (Value(doc.get_double()));
+  case dom::element_type::STRING:
+    return (Value(doc.get_c_str()));
+  case dom::element_type::BOOL:
+    return (Value(doc.get_bool()));
+  case dom::element_type::NULL_VALUE:
+    return (Value(ValueType::Null));
+  }
+}
+
 static void run(std::string& data, int runTime, size_t copies, ParserType parserType,
                 bool fullOutput) {
   Options options;
@@ -123,7 +200,10 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
   size_t total = 0;
   auto start = std::chrono::high_resolution_clock::now();
   decltype(start) now;
-
+  
+  simdjson::dom::parser parser;
+  Builder simd_buffer;
+  
   try {
     do {
       for (int i = 0; i < 2; i++) {
@@ -139,10 +219,18 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
           break;
         }
         case SIMDJSON: {
-          simdjson::ondemand::parser parser;
-          auto doc = parser.iterate(inputs[count]);
+          simdjson::dom::element doc;
+          
+          auto error = parser.parse(inputs[count]).get(doc);
+          if (error) {
+            std::cerr << "simdjson parse failed" << error << std::endl;
+            exit(EXIT_FAILURE);
+          }
+          simd_buffer.clear();
+          drain_simdjson(doc, &simd_buffer, false);
           break;
         }
+        
         }
         
         count++;
