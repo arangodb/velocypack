@@ -168,13 +168,14 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
                 << std::endl;
     }
     std::cout << std::setprecision(2) << std::fixed 
-              << "This is "
+              << " | "
               << std::setw(14)
               << static_cast<double>(inputs[0].size() * total) /
                      totalTime.count() << " bytes/s"
-              << " or " 
+              << " | " 
               << std::setw(14)
-              << total / totalTime.count() << " JSON docs per second."
+              << total / totalTime.count() 
+              << " | "
               << std::endl;
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while running bench: " << ex.what()
@@ -208,13 +209,13 @@ static void runDefaultBench(bool all) {
     }
     std::cout << std::endl;
 
-    std::cout << "vpack:        ";
+    std::cout << "|" << filename << " | " << "vpack        ";
     run(data, runSeconds, 1, ParserType::VPACK, fullOutput);
 
-    std::cout << "rapidjson:    ";
+    std::cout << "|" << filename << " | " << "rapidjson    ";
     run(data, runSeconds, 1, ParserType::RAPIDJSON, fullOutput);
 
-    std::cout << "simdjson:     ";
+    std::cout << "|" << filename << " | " << "simdjson     ";
     run(data, runSeconds, 1, ParserType::SIMDJSON, fullOutput);
   };
 

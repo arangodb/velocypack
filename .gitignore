@@ -7,6 +7,7 @@ AsmTest
 *.orig
 *.rej
 rapidjson
+simdjson
 .deps
 Makefile
 autom4te.cache
@@ -25,3 +26,6 @@ cmake_install.cmake
 install_manifest.txt
 DartConfiguration.tcl
 tests/CTestTestfile.cmake
+
+
+.vscode
