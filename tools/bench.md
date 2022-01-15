@@ -30,7 +30,7 @@ Provided at `tests/jsonSample/*`.
 
 **Results on Apple Silicon**
 
-| DataSet | Parser | Bytes/second | /seccond | 
+| DataSet | Parser | Bytes/second | JSON Objects/seccond | 
 | ------- | ------ | --------- | ------------ |
 |small.json | vpack         |   321259472.38 bytes/s |     3180786.86 | 
 |small.json | rapidjson     |   251331260.01 bytes/s |     2488428.32 | 
@@ -86,7 +86,7 @@ Provided at `tests/jsonSample/*`.
 
 **Results on Intel Chip**
 
-| DataSet | Parser | ec | document/sec | 
+| DataSet | Parser | Bytes/second | JSON Objects/second | 
 | ------- | ------ | --------- | ------------ |
 |small.json | vpack         |   187441229.00 bytes/s |     2285868.65 | 
 |small.json | rapidjson     |   131513417.47 bytes/s |     1603822.16 | 
