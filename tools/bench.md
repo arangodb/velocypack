@@ -30,6 +30,8 @@ Provided at `tests/jsonSample/*`.
 
 **Results on Apple Silicon**
 
+![result](bench.png)
+
 | DataSet | Parser | Bytes/second | JSON Objects/seccond | 
 | ------- | ------ | --------- | ------------ |
 |small.json | vpack         |   321259472.38 bytes/s |     3180786.86 | 
