@@ -58,7 +58,7 @@ static void usage(char* argv[]) {
   std::cout << "out of cache. The target areas are also in a different memory"
             << std::endl;
   std::cout << "area for each copy." << std::endl;
-  std::cout << "TYPE must b: vpack/rapidjson/simdjson." << std::endl;
+  std::cout << "TYPE must be: vpack/rapidjson/simdjson." << std::endl;
 }
 
 static std::string tryReadFile(std::string const& filename) {
