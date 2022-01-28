@@ -259,11 +259,14 @@ void Validator::validateCompactArray(uint8_t const* ptr, std::size_t length) {
     throw Exception(Exception::ValidatorInvalidLength, "Array length value is out of bounds");
   }
   ++p;
-
+  
   // validate the array members
   uint8_t const* e = p;
   p = data;
   while (nrItems-- > 0) {
+    if (p >= e) {
+      throw Exception(Exception::ValidatorInvalidLength, "Array items number is out of bounds");
+    }
     validate(p, e - p, true);
     p += Slice(p).byteSize();
   }
