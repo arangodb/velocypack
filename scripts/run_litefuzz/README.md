@@ -1,4 +1,3 @@
-
 Script for running litefuzz
 ==========================  
 
