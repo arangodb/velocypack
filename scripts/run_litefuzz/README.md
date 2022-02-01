@@ -3,7 +3,7 @@ Script for running litefuzz
 ==========================  
 
 Litefuzz
-========  
+--------
 Litefuzz is a program that creates fuzz tests for finding bugs and improving programs. It can be found in this  
 repository:  
 [litefuzz](https://github.com/sec-tools/litefuzz). For using it, it is required to have python3 installed.  
