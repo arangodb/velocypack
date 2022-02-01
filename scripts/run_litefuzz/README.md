@@ -8,7 +8,12 @@ Litefuzz is a program that creates fuzz tests for finding bugs and improving pro
 repository:  
 [litefuzz](https://github.com/sec-tools/litefuzz). For using it, it is required to have either python2 or python3  
 installed.  
-After cloning the repository, the script can be run without extra steps.
+The repository litefuzz has a subdirectory named `setup`.
+After cloning the repository, run the setup script in accordance to the OS being used. For example, for Linux, 
+run 
+`<litefuzz-directory>/setup/linux.sh`.
+If necessary, make the setup file an executable with command `chmod +x <litefuzz-directory>/setup/<script-name>.sh`.
+Now the script can be run without extra steps.
 
 Usage of the script
 ===================  
