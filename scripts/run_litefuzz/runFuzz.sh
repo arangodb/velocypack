@@ -1,0 +1,108 @@
+#!/bin/bash
+
+usage() {
+  echo "Usage: $0 [ -e path-to-executable ] [ -f path-to-litefuzz-dir ] [ -n number-of-iterations (default: 30000) ] [ -o output-dir (default: \"./crashes\") ] [ -i input-files ]" 1>&2
+}
+
+exit_abnormal() {
+  usage
+  exit 1
+}
+
+while getopts ":e:f:n:o:i:" options; do
+  case "${options}" in
+  e)
+    EXECUTABLE_PATH=${OPTARG}
+    ;;
+  f)
+    TESTER_PATH=${OPTARG}
+    ;;
+  n)
+    ITERATIONS=${OPTARG}
+    ;;
+  o)
+    OUTPUT_DIR=${OPTARG}
+    ;;
+  i)
+    echo $OPTARG
+    INPUT_FILES+=("$OPTARG")
+    ;;
+  :)
+    echo "Error: -${OPTARG} without argument"
+    exit_abnormal
+    ;;
+  *)
+    exit_abnormal
+    ;;
+  esac
+done
+
+if [[ -z "${EXECUTABLE_PATH}" || ! -e "${EXECUTABLE_PATH}" ]]; then
+  echo "Error: must provide a valid executable path"
+  exit_abnormal
+fi
+
+if [[ -z "${TESTER_PATH}" || ! -d ${TESTER_PATH} ]]; then
+  echo "Error: must provide valid path of litefuzz"
+  exit_abnormal
+fi
+
+if [[ -z "${OUTPUT_PATH}" ]]; then
+  OUTPUT_PATH="./crashes"
+elif ! [[ -d "${OUTPUT_PATH}" ]]; then
+  echo "Error: output path ${OUTPUT_PATH} is not valid"
+  exit_abnormal
+fi
+
+LIST_OF_INPUT_FILES=()
+input_files_dir_all=""
+if [[ -z "${INPUT_FILES}" ]]; then
+  echo "Error: must provide input files"
+  exit_abnormal
+else
+  for file in ${INPUT_FILES[@]}; do
+    if [[ "$file" =~ .*\/\*\.* ]]; then
+      files=$(ls ${file})
+      echo $files
+      for file2 in "$files{@}"; do
+        echo "file2 $file2"
+        LIST_OF_INPUT_FILES+=("$file2")
+      done
+    elif [[ "$file" =~ .*\/\*.* ]]; then
+      files=$(ls ${file//\/\*/})
+      echo $files
+      for file2 in "$files{@}"; do
+        echo "file2 $file2"
+        LIST_OF_INPUT_FILES+=("$file2")
+      done
+    elif [[ -d $file ]]; then
+      files=$(ls ${file})
+      for file2 in $files{@}; do
+        input_file="$file/$file2"
+        LIST_OF_INPUT_FILES+=("${input_file/\/\//\/}")
+      done
+    else
+      LIST_OF_INPUT_FILES+=("$file")
+    fi
+  done
+fi
+
+IS_NUMBER='^[0-9]+$'
+
+if [[ -z ${ITERATIONS} ]]; then
+  ITERATIONS=30000
+elif ! [[ $ITERATIONS =~ $IS_NUMBER ]]; then
+  echo "Error: Iterations argument must be a number."
+  exit_abnormal
+fi
+
+for input_file in ${LIST_OF_INPUT_FILES[@]}; do
+  if ! [[ -f $input_file ]]; then
+    echo "Error: $input_file is not a valid file"
+  else
+    echo "----------------------------------------------------------------------------------------------------------------------------"
+    echo "Running test ${input_file} with ${ITERATIONS} iterations..."
+    eval "python3 ${TESTER_PATH}/litefuzz.py -l -c \"${EXECUTABLE_PATH} FUZZ\" -n ${ITERATIONS} -i \"${input_file}\" -o \"${OUTPUT_DIR}\""
+    echo "----------------------------------------------------------------------------------------------------------------------------"
+  fi
+done
