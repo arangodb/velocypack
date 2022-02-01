@@ -6,8 +6,7 @@ Litefuzz
 ========  
 Litefuzz is a program that creates fuzz tests for finding bugs and improving programs. It can be found in this  
 repository:  
-[litefuzz](https://github.com/sec-tools/litefuzz). For using it, it is required to have either python2 or python3  
-installed.  
+[litefuzz](https://github.com/sec-tools/litefuzz). For using it, it is required to have python3 installed.  
 The repository litefuzz has a subdirectory named `setup`.
 After cloning the repository, run the setup script in accordance to the OS being used. For example, for Linux, 
 run 
