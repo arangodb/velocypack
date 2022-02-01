@@ -24,7 +24,6 @@ while getopts ":e:f:n:o:i:" options; do
     OUTPUT_DIR=${OPTARG}
     ;;
   i)
-    echo $OPTARG
     INPUT_FILES+=("$OPTARG")
     ;;
   :)
@@ -47,12 +46,10 @@ if [[ -z "${TESTER_PATH}" || ! -d ${TESTER_PATH} ]]; then
   exit_abnormal
 fi
 
-if [[ -z "${OUTPUT_PATH}" ]]; then
-  OUTPUT_PATH="./crashes"
-elif ! [[ -d "${OUTPUT_PATH}" ]]; then
-  echo "Error: output path ${OUTPUT_PATH} is not valid"
-  exit_abnormal
+if [[ -z "${OUTPUT_DIR}" ]]; then
+  OUTPUT_DIR="./crashes"
 fi
+eval "	rm -r ${OUTPUT_DIR} ; mkdir ${OUTPUT_DIR}"
 
 LIST_OF_INPUT_FILES=()
 input_files_dir_all=""
@@ -96,13 +93,15 @@ elif ! [[ $ITERATIONS =~ $IS_NUMBER ]]; then
   exit_abnormal
 fi
 
+count=0
 for input_file in ${LIST_OF_INPUT_FILES[@]}; do
   if ! [[ -f $input_file ]]; then
     echo "Error: $input_file is not a valid file"
   else
+    ((count = count + 1))
     echo "----------------------------------------------------------------------------------------------------------------------------"
     echo "Running test ${input_file} with ${ITERATIONS} iterations..."
-    eval "python3 ${TESTER_PATH}/litefuzz.py -l -c \"${EXECUTABLE_PATH} FUZZ\" -n ${ITERATIONS} -i \"${input_file}\" -o \"${OUTPUT_DIR}\""
+    eval "python3 ${TESTER_PATH}/litefuzz.py -l -c \"${EXECUTABLE_PATH} FUZZ\" -n ${ITERATIONS} -i \"${input_file}\" -o \"${OUTPUT_DIR}/crashes${count}\""
     echo "----------------------------------------------------------------------------------------------------------------------------"
   fi
 done
