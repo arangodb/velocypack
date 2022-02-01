@@ -1,5 +1,5 @@
 
-Scrit for running litefuzz
+Script for running litefuzz
 ==========================  
 
 Litefuzz
