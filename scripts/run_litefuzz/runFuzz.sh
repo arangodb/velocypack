@@ -15,7 +15,7 @@ while getopts ":e:f:n:o:i:" options; do
     EXECUTABLE_PATH=${OPTARG}
     ;;
   f)
-    TESTER_PATH=${OPTARG}
+    TESTER_PATH=${OPTARG/\/\/\//}
     ;;
   n)
     ITERATIONS=${OPTARG}
@@ -24,6 +24,7 @@ while getopts ":e:f:n:o:i:" options; do
     OUTPUT_DIR=${OPTARG}
     ;;
   i)
+    sed -e 's/^"//' -e 's/"$//' <<<"$OPTARG"
     INPUT_FILES+=("$OPTARG")
     ;;
   :)
@@ -36,12 +37,12 @@ while getopts ":e:f:n:o:i:" options; do
   esac
 done
 
-if [[ -z "${EXECUTABLE_PATH}" || ! -e "${EXECUTABLE_PATH}" ]]; then
+if [[ -z "${EXECUTABLE_PATH}" || ! -f "${EXECUTABLE_PATH}" ]]; then
   echo "Error: must provide a valid executable path"
   exit_abnormal
 fi
 
-if [[ -z "${TESTER_PATH}" || ! -d ${TESTER_PATH} ]]; then
+if [[ -z "${TESTER_PATH}" || ! -f "${TESTER_PATH}/litefuzz.py" ]]; then
   echo "Error: must provide valid path of litefuzz"
   exit_abnormal
 fi
@@ -49,7 +50,7 @@ fi
 if [[ -z "${OUTPUT_DIR}" ]]; then
   OUTPUT_DIR="./crashes"
 fi
-eval "	rm -r ${OUTPUT_DIR} ; mkdir ${OUTPUT_DIR}"
+eval "	rm -rf ${OUTPUT_DIR} ; mkdir ${OUTPUT_DIR}"
 
 LIST_OF_INPUT_FILES=()
 input_files_dir_all=""
@@ -58,15 +59,19 @@ if [[ -z "${INPUT_FILES}" ]]; then
   exit_abnormal
 else
   for file in ${INPUT_FILES[@]}; do
-    if [[ "$file" =~ .*\/\*\.* ]]; then
-      files=$(ls ${file})
-      echo $files
+    echo "File $file"
+    if [[ "$file" =~ .*\/\*\..* ]]; then
+      echo "OI 1 $file"
+      files=$(ls ${file/\"/})
+      echo "OI 6  $files"
       for file2 in "$files{@}"; do
         echo "file2 $file2"
         LIST_OF_INPUT_FILES+=("$file2")
       done
     elif [[ "$file" =~ .*\/\*.* ]]; then
-      files=$(ls ${file//\/\*/})
+      echo "OI 2 $file"
+      file=${file/\"/}
+      files=$(ls ${file/\/\*/})
       echo $files
       for file2 in "$files{@}"; do
         echo "file2 $file2"
