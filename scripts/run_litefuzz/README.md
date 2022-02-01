@@ -14,7 +14,7 @@ If necessary, make the setup file an executable with command `chmod +x <litefuzz
 Now the script can be run without extra steps.
 
 Usage of the script
-===================  
+-------------------
 
 This script will invoke litefuzz to test a specific program for crashes. The usage of this script is the following:
 
