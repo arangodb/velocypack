@@ -198,9 +198,3 @@ TEST(ParserTest, EmptyAttributeName) {
   ss = s.get("b");
   ASSERT_TRUE(ss.isNone());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

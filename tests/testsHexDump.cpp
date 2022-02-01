@@ -153,9 +153,3 @@ TEST(HexDumpTest, TestEmptySeparator) {
       "060x070x080x090x0a0x0b0x0c",
       HexDump(b->slice(), 16, "").toString());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

@@ -143,9 +143,3 @@ TEST(CommonTest, AsmFunctions) {
   ASSERT_TRUE(assemblerFunctionsDisabled());
   ASSERT_FALSE(assemblerFunctionsEnabled());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

@@ -1053,9 +1053,3 @@ TEST(LookupTest, ValueAtObjectEmpty) {
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(0), Exception::IndexOutOfBounds);
   ASSERT_VELOCYPACK_EXCEPTION(s.valueAt(1), Exception::IndexOutOfBounds);
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

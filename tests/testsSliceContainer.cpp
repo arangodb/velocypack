@@ -203,10 +203,4 @@ TEST(SliceContainerTest, SizeLengthByteSize) {
   ASSERT_EQ(1UL, sb.length());
   ASSERT_EQ(1UL, sb.byteSize());
   ASSERT_EQ(sb.data(), sb.begin());
-} 
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
 }

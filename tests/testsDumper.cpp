@@ -1775,9 +1775,3 @@ TEST(DumperLengthTest, EscapeUnicodeOff) {
   dumper.dump(s);
   ASSERT_EQ(strlen("\"mötör\""), sink.length);
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

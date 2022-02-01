@@ -154,9 +154,3 @@ TEST(StaticFilesTest, Fail31Json) { ASSERT_FALSE(parseFile("fail31.json")); }
 TEST(StaticFilesTest, Fail32Json) { ASSERT_FALSE(parseFile("fail32.json")); }
 
 TEST(StaticFilesTest, Fail33Json) { ASSERT_FALSE(parseFile("fail33.json")); }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

@@ -2113,9 +2113,3 @@ TEST(CollectionTest, SortNonArray) {
   
   ASSERT_VELOCYPACK_EXCEPTION(Collection::sort(b.slice(), &lt), Exception::InvalidValueType);
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

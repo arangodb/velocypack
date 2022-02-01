@@ -535,9 +535,3 @@ TEST(BufferTest, BufferNonDeleterTest) {
   
   ASSERT_EQ(2308, buffer.size());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

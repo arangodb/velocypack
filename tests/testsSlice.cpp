@@ -3563,9 +3563,3 @@ TEST(SliceTest, ExtractTuple) {
   ASSERT_EQ(std::get<2>(t), false);
   ASSERT_TRUE(std::get<3>(t).isString());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

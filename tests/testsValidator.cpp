@@ -2407,9 +2407,3 @@ TEST(ValidatorTest, ObjectFourByteManyEntries) {
   Validator validator;
   ASSERT_TRUE(validator.validate(b.slice().start(), b.slice().byteSize()));
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

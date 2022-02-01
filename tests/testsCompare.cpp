@@ -410,9 +410,3 @@ TEST(NormalizedCompareTest, Custom) {
 
   ASSERT_VELOCYPACK_EXCEPTION(NormalizedCompare::equals(b.slice(), b.slice()), Exception::NotImplemented);
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

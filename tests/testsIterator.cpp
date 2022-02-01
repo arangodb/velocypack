@@ -1235,9 +1235,3 @@ TEST(IteratorTest, ArrayIteratorUnpackTuple) {
   ASSERT_TRUE(iter.valid());
   ASSERT_TRUE(iter.value().isEqualString("extracted as slice"));
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

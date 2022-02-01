@@ -109,9 +109,3 @@ TEST(SinkTest, StringStreamSink) {
   s.append("foobarbaz", 9);
   ASSERT_EQ("xfoobarbazfoobarbazfoobarbaz", out.str());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}

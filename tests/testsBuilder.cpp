@@ -3719,9 +3719,3 @@ TEST(BuilderTest, syntacticSugar) {
   ASSERT_TRUE(b.slice().get("name").isString());
   ASSERT_EQ("Gustav", b.slice().get("name").copyString());
 }
-
-int main(int argc, char* argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}
