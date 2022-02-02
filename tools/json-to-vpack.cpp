@@ -28,6 +28,9 @@
 #include <string>
 #include <unordered_map>
 #include <fstream>
+#include <ctime>
+#include <iostream>
+#include <random>
 
 #include "velocypack/vpack.h"
 #include "velocypack/velocypack-exception-macros.h"
