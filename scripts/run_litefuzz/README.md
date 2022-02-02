@@ -13,6 +13,8 @@ run
 If necessary, make the setup file an executable with command `chmod +x <litefuzz-directory>/setup/<script-name>.sh`.
 Now the script can be run without extra steps.
 
+Disclaimer: litefuzz might not work properly for every single machine with a linux distro and its specific software configurations, being able to show some dependency issues and errors. Also, `setup/linux.sh` will install many different libraries, and there may be the case in which litefuzz only needs some of them. 
+
 Usage of the script
 -------------------
 
