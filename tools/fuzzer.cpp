@@ -33,7 +33,6 @@
 
 using namespace arangodb::velocypack;
 
-static std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
 enum class Format {
     VPACK, JSON
 };
@@ -47,27 +46,27 @@ struct RandomGenerator {
 
 RandomGenerator randomGenerator;
 
-static void usage(char *argv[]) {
+static void usage(char* argv[]) {
     std::cout << "Usage: " << argv[0] << " [OPTIONS] [ITERATIONS]"
               << std::endl;
     std::cout << "This program creates random VPack or JSON structures and validates them."
               << std::endl;
-    std::cout << "The amout of times it does this is supplied by <iterations>;"
+    std::cout << "The amout of times it does this is supplied by <iterations>."
               << std::endl;
     std::cout << "Available options are:" << std::endl;
     std::cout << " --vpack       create VPack."
               << std::endl;
     std::cout << " --json        create JSON."
               << std::endl;
-    std::cout << " <iterations>  number of iterations."
+    std::cout << " <iterations>  number of iterations. Default: 1"
               << std::endl;
 }
 
-static inline bool isOption(char const *arg, char const *expected) {
+static inline bool isOption(char const* arg, char const* expected) {
     return (strcmp(arg, expected) == 0);
 }
 
-static void addString(Builder &builder) {
+static void addString(Builder& builder) {
     static auto &availableChars = "0123456789"
                                   "abcdefghijklmnopqrstuvwxyz"
                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -80,9 +79,9 @@ static void addString(Builder &builder) {
     builder.add(Value(s));
 }
 
-static void generateVelocypack(Builder &builder, size_t depth) {
+static void generateVelocypack(Builder& builder, size_t depth) {
     while (true) {
-        size_t value = randomGenerator.mt() % 11;
+        size_t value = randomGenerator.mt() % 10;
         if (depth > 10 && value < 2) {
             continue;
         }
@@ -135,7 +134,7 @@ static void generateVelocypack(Builder &builder, size_t depth) {
             case 8:
                 builder.add(Value(int64_t(INT64_MIN)));
                 break;
-            case 10: {
+            case 9: {
                 int value = randomGenerator.mt();
                 if (value > 0) {
                     value *= -1;
@@ -149,8 +148,7 @@ static void generateVelocypack(Builder &builder, size_t depth) {
     }
 }
 
-
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     VELOCYPACK_GLOBAL_EXCEPTION_TRY
         bool isTypeAssigned = false;
         size_t iterations = 1;
@@ -174,7 +172,6 @@ int main(int argc, char *argv[]) {
                 usage(argv);
                 return EXIT_FAILURE;
             }
-
             ++i;
         }
 
