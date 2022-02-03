@@ -37,11 +37,14 @@ enum class Format {
   VPACK, JSON
 };
 
+enum RandomBuilderAdditions {ADD_ARRAY=0, ADD_OBJECT, ADD_BOOLEAN, ADD_STRING, ADD_NULL, ADD_UINT64, ADD_INT64, ADD_DOUBLE};
+
 struct RandomGenerator {
-  RandomGenerator() : mt{rd()} {}
+  RandomGenerator() : mt{rd()}, mt64{rd()} {}
 
   std::random_device rd;
   std::mt19937 mt;
+  std::mt19937_64 mt64;
 };
 
 RandomGenerator randomGenerator;
@@ -80,13 +83,14 @@ static void addString(Builder& builder) {
 }
 
 static void generateVelocypack(Builder& builder, size_t depth) {
+  RandomBuilderAdditions randomBuilderAdds;
   while (true) {
-    size_t value = randomGenerator.mt() % 10;
-    if (depth > 10 && value < 2) {
+    randomBuilderAdds = static_cast<RandomBuilderAdditions>(randomGenerator.mt64() % 9);
+    if (depth > 10 && randomBuilderAdds < 2) {
       continue;
     }
-    switch (value) {
-      case 0: {
+    switch (randomBuilderAdds) {
+      case ADD_ARRAY: {
         builder.openArray(randomGenerator.mt() % 2 ? true : false);
         size_t numMembers = randomGenerator.mt() % 10;
         for (size_t i = 0; i < numMembers; ++i) {
@@ -95,7 +99,7 @@ static void generateVelocypack(Builder& builder, size_t depth) {
         builder.close();
         break;
       }
-      case 1: {
+      case ADD_OBJECT: {
         builder.openObject(randomGenerator.mt() % 2 ? true : false);
         size_t numMembers = randomGenerator.mt() % 10;
         for (size_t i = 0; i < numMembers; ++i) {
@@ -106,40 +110,34 @@ static void generateVelocypack(Builder& builder, size_t depth) {
         builder.close();
         break;
       }
-      case 2:
-        builder.add(Value(randomGenerator.mt() % 2 ? true : false));
+      case ADD_BOOLEAN:
+        builder.add(Value(randomGenerator.mt64() % 2 ? true : false));
         break;
-      case 3:
+      case ADD_STRING:
         addString(builder);
         break;
-      case 4:
-        builder.add(Value(randomGenerator.mt()));
-        break;
-      case 5: {
-        double value1 = randomGenerator.mt();
-        double value2 = randomGenerator.mt();
-        double result = 0;
-        if (value2 != 0) {
-          result = value1 / value2;
-        }
-        builder.add(Value(result));
-        break;
-      }
-      case 6:
+      case ADD_NULL:
         builder.add(Value(ValueType::Null));
         break;
-      case 7:
-        builder.add(Value(""));
+      case ADD_UINT64:
+        builder.add(Value(randomGenerator.mt64()));
         break;
-      case 8:
-        builder.add(Value(int64_t(INT64_MIN)));
-        break;
-      case 9: {
-        int value = randomGenerator.mt();
-        if (value > 0) {
-          value *= -1;
+      case ADD_INT64: {
+        uint64_t uintValue = randomGenerator.mt64();
+        int64_t intValue;
+        if (uintValue <= std::numeric_limits<uint64_t>::max() ) {
+          intValue = uintValue;
+        } else {
+          intValue = 1; // to be changed
         }
-        builder.add(Value(value));
+        builder.add(Value(intValue));
+        break;
+      }
+      case ADD_DOUBLE: {
+        uint64_t uintValue = randomGenerator.mt64();
+        double doubleValue;
+        memcpy(&doubleValue, &uintValue, sizeof(uintValue));
+        builder.add(Value(doubleValue));
       }
       default:
         break;
