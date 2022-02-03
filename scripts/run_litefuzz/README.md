@@ -13,7 +13,7 @@ run
 If necessary, make the setup file an executable with command `chmod +x <litefuzz-directory>/setup/<script-name>.sh`.
 Now the script can be run without extra steps.
 
-Disclaimer: litefuzz might not work properly for every single machine with a linux distro and its specific software configurations, being able to show some dependency issues and errors. Also, `setup/linux.sh` will install many different libraries, and there may be the case in which litefuzz only needs some of them. 
+Disclaimer: litefuzz might not work properly for every single machine with a linux distro and its specific software configurations, being able to show some dependency issues and errors. For Ubuntu, lietfuzz was primarily tested on distro Ubuntu 20.04, so it is not fully guaranteed to work properly on other versions. Also, `setup/linux.sh` will install many different libraries, and there may be the case in which litefuzz only needs some of them. 
 
 Usage of the script
 -------------------
@@ -21,7 +21,7 @@ Usage of the script
 This script will invoke litefuzz to test a specific program for crashes. The usage of this script is the following:
 
 ```  
-./runFuzz.sh [ -e path-to-executable ] [ -f path-to-litefuzz-dir ] [ -n number-of-iterations (default: 30000) ] [ -o output-dir (default: "./crashes") ] [ -i input-files ]  
+./runFuzz.sh [ -e path-to-executable ] [ -f path-to-litefuzz-dir ] [ -n number-of-iterations (default: 30000) ] [ -o output-dir (default: ./crashes) ] [ -i input-files ]  
 ```  
 
 Here,
@@ -31,7 +31,7 @@ Here,
 * `-o` is the output directory in which the results from the crashes encountered are saved.  If more than one input file is provided, the crashes for each input file would be saved inside this directory with the name "crashes" + a sequential number, e.g. if two input files are provided, their crashes results will be saved at `<directory-name>/crashes1` and `<directory-name>/crashes2`. If not provided, the default name is `./crashes`.
 * `-i` are the input files. The user can provide one input file with the argument `-i <path-to-input-file>`, or also specify a directory, as in `-i <directory-name>`, or a list of files within a directory, as in `-i <directory-name>/*.json`. Also all the files in the directory can be provided as argument, but then it must be in quotes and the absolute path must be provided, e.g. `"/home/<username/<directory-name>/*"`. All these input values can be combined within the same command, but, for each separate argument, it must follow a `-i` option.
   Example of a run:
-  `./runFuzz.sh -e ~/velocypack/build/tools/vpack-to-json -f ./ -n 10 -o outputDir -i ~/velocypack/tests/jsonSample/api-docs.json -i ~/velocypack/tests/jsonSample/commits.json -i "~/velocypack/tests/jsonSample/*"`.
+  `./runFuzz.sh -e ~/velocypack/build/tools/vpack-to-json -f ./ -n 10 -o outputDir -i ~/velocypack/tests/jsonSample/api-docs.json -i /home/<username>/velocypack/tests/jsonSample/commits.json -i "/home/<username>/velocypack/tests/jsonSample/*"`.
   The result for each of the input files is displayed like this:
 ```
 ----------------------------------------------------------------------------------------------------------------------------
