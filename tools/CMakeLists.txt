@@ -11,6 +11,7 @@ message(STATUS "VelocyPack building support programs and tools: ${BuildTools}")
 
 # build json-to-vpack.cpp
 if(BuildTools)
+  # build json-to-vpack.cpp
   add_executable("json-to-vpack" json-to-vpack.cpp)
   target_link_libraries("json-to-vpack" velocypack)
   install(TARGETS "json-to-vpack" DESTINATION bin)
@@ -25,6 +26,7 @@ if(BuildTools)
   target_link_libraries("vpack-validate" velocypack)
   install(TARGETS "vpack-validate" DESTINATION bin)
 
+  # build fuzzer.cpp
   add_executable("fuzzer" fuzzer.cpp)
   target_link_libraries("fuzzer" velocypack)
   install(TARGETS "fuzzer" DESTINATION bin)
