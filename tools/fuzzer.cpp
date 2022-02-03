@@ -49,9 +49,7 @@ struct RandomGenerator {
 static void usage(char* argv[]) {
   std::cout << "Usage: " << argv[0] << " [OPTIONS] [ITERATIONS]"
             << std::endl;
-  std::cout << "This program creates random VPack or JSON structures and validates them."
-            << std::endl;
-  std::cout << "The amout of times it does this is supplied by <iterations>."
+  std::cout << "This program creates <iterations> random VPack or JSON structures and validates them."
             << std::endl;
   std::cout << "The paralelization is supplied by <threads>."
             << std::endl;
