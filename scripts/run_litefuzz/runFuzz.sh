@@ -59,22 +59,15 @@ if [[ -z "${INPUT_FILES}" ]]; then
   exit_abnormal
 else
   for file in ${INPUT_FILES[@]}; do
-    echo "File $file"
     if [[ "$file" =~ .*\/\*\..* ]]; then
-      echo "OI 1 $file"
       files=$(ls ${file/\"/})
-      echo "OI 6  $files"
       for file2 in "$files{@}"; do
-        echo "file2 $file2"
         LIST_OF_INPUT_FILES+=("$file2")
       done
     elif [[ "$file" =~ .*\/\*.* ]]; then
-      echo "OI 2 $file"
       file=${file/\"/}
       files=$(ls ${file/\/\*/})
-      echo $files
       for file2 in "$files{@}"; do
-        echo "file2 $file2"
         LIST_OF_INPUT_FILES+=("$file2")
       done
     elif [[ -d $file ]]; then
