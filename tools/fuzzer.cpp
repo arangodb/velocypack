@@ -23,13 +23,15 @@
 /// @author Copyright 2022, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <bitset>
+#include <charconv>
 #include <iostream>
+#include <random>
 #include <string>
+#include <thread>
 
 #include "velocypack/vpack.h"
 #include "velocypack/velocypack-exception-macros.h"
-#include <random>
-#include <thread>
 
 using namespace arangodb::velocypack;
 
@@ -37,7 +39,23 @@ enum class Format {
   VPACK, JSON
 };
 
-enum RandomBuilderAdditions {ADD_ARRAY=0, ADD_OBJECT, ADD_BOOLEAN, ADD_STRING, ADD_NULL, ADD_UINT64, ADD_INT64, ADD_DOUBLE};
+enum RandomBuilderAdditions {
+  ADD_ARRAY = 0,
+  ADD_OBJECT,
+  ADD_BOOLEAN,
+  ADD_STRING,
+  ADD_NULL,
+  ADD_UINT64,
+  ADD_INT64,
+  ADD_DOUBLE, // here starts values that are only for vpack
+  ADD_UTC_DATE,
+  ADD_BINARY,
+  ADD_EXTERNAL,
+  ADD_ILLEGAL,
+  ADD_MIN_KEY,
+  ADD_MAX_KEY,
+  ADD_MAX_VPACK_VALUE
+};
 
 struct RandomGenerator {
   RandomGenerator() : mt64{rd()} {}
@@ -46,8 +64,18 @@ struct RandomGenerator {
   std::mt19937_64 mt64;
 };
 
+std::vector<std::jthread> jthreads;
+
+
+static void finalize() {
+  for (auto& jthread : jthreads) {
+    jthread.request_stop(); // this is said to be safely called concurrently for the same object
+  }
+}
+
+
 static void usage(char* argv[]) {
-  std::cout << "Usage: " << argv[0] << " [OPTIONS] [ITERATIONS]"
+  std::cout << "Usage: " << argv[0] << " [OPTIONS] [ITERATIONS] [THREADS]"
             << std::endl;
   std::cout << "This program creates <iterations> random VPack or JSON structures and validates them."
             << std::endl;
@@ -81,11 +109,13 @@ static void addString(Builder& builder, RandomGenerator& randomGenerator) {
   builder.add(Value(s));
 }
 
-static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& randomGenerator) {
-  RandomBuilderAdditions randomBuilderAdds;
+static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& randomGenerator, Format const& format) {
   while (true) {
-    randomBuilderAdds = static_cast<RandomBuilderAdditions>(randomGenerator.mt64() % 8);
-    if (depth > 10 && randomBuilderAdds < 2) {
+    RandomBuilderAdditions randomBuilderAdds = static_cast<RandomBuilderAdditions>(randomGenerator.mt64() %
+                                                                                   (format == Format::JSON
+                                                                                    ? ADD_DOUBLE
+                                                                                    : ADD_MAX_VPACK_VALUE));
+    if (depth > 10 && randomBuilderAdds <= ADD_OBJECT) {
       continue;
     }
     switch (randomBuilderAdds) {
@@ -93,7 +123,7 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
         builder.openArray(randomGenerator.mt64() % 2 ? true : false);
         size_t numMembers = randomGenerator.mt64() % 10;
         for (size_t i = 0; i < numMembers; ++i) {
-          generateVelocypack(builder, depth + 1, randomGenerator);
+          generateVelocypack(builder, depth + 1, randomGenerator, format);
         }
         builder.close();
         break;
@@ -104,7 +134,7 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
         for (size_t i = 0; i < numMembers; ++i) {
           std::string key = "test" + std::to_string(i);
           builder.add(Value(key));
-          generateVelocypack(builder, depth + 1, randomGenerator);
+          generateVelocypack(builder, depth + 1, randomGenerator, format);
         }
         builder.close();
         break;
@@ -128,12 +158,33 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
         builder.add(Value(intValue));
         break;
       }
-      case ADD_DOUBLE: {
+      case ADD_DOUBLE: { //exception was thrown saying JSON doesn't support this type
         uint64_t uintValue = randomGenerator.mt64();
         double doubleValue;
         memcpy(&doubleValue, &uintValue, sizeof(uintValue));
         builder.add(Value(doubleValue));
+        break;
       }
+      case ADD_UTC_DATE:
+        builder.add(Value(randomGenerator.mt64(), ValueType::UTCDate));
+        break;
+      case ADD_BINARY:
+        builder.add(Value(std::bitset<64>(randomGenerator.mt64()).to_string()));
+        break;
+      case ADD_EXTERNAL: {
+        Builder extBuilder;
+        extBuilder.add(Value(randomGenerator.mt64()));
+        builder.add(Value(static_cast<void const *>(extBuilder.slice().start()), ValueType::External));
+        break;
+      }
+      case ADD_ILLEGAL:
+        builder.add(Value(ValueType::Illegal));
+        break;
+      case ADD_MIN_KEY:
+        builder.add(Value(ValueType::MinKey));
+        break;
+      case ADD_MAX_KEY:
+        builder.add(Value(ValueType::MaxKey));
       default:
         break;
     }
@@ -143,11 +194,10 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
 
 int main(int argc, char* argv[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
-    std::vector<std::thread> threads;
     bool isTypeAssigned = false;
     size_t numIterations = 1;
     size_t numThreads = 1;
-    Format format;
+    Format format = Format::VPACK;
 
     int i = 1;
     while (i < argc) {
@@ -161,16 +211,20 @@ int main(int argc, char* argv[]) {
       } else if (isOption(p, "--json") && !isTypeAssigned) {
         isTypeAssigned = true;
         format = Format::JSON;
-      } else if (int value = atoi(p); value >= 1) {
-        if (i == 3) { // as threads and iterations are optional arguments, threads must be preceeded by iterations
-                      // in the command line, hence, argument 3
-          numThreads = value;
-        } else {
-          numIterations = value;
-        }
       } else {
-        usage(argv);
-        return EXIT_FAILURE;
+        int value;
+        std::from_chars(p, p + sizeof(p), value);
+        if (value >= 1) {
+          if (i == 3) { // as threads and iterations are optional arguments, threads must be preceeded by iterations
+            // in the command line, hence, argument 3
+            numThreads = value;
+          } else {
+            numIterations = value;
+          }
+        } else {
+          usage(argv);
+          return EXIT_FAILURE;
+        }
       }
       ++i;
     }
@@ -178,34 +232,43 @@ int main(int argc, char* argv[]) {
     size_t itsPerThread = numIterations / numThreads;
     size_t leftoverIts = numIterations % numThreads;
 
-    auto threadCallback = [format] (size_t iterations) {
-      RandomGenerator randomGenerator;
-      while (iterations-- > 0) {
-        Builder builder;
-        generateVelocypack(builder, 0, randomGenerator);
+    auto threadCallback = [format](std::stop_token const& stoken, size_t iterations) {
+      try {
+        RandomGenerator randomGenerator;
+        while (iterations-- > 0) {
+          if (stoken.stop_requested()) {
+            return;
+          }
+          Builder builder;
+          generateVelocypack(builder, 0, randomGenerator, format);
 
-        if (format == Format::JSON) {
-          Parser parser;
-          parser.parse(builder.slice().toJson());
-        } else {
-          Validator validator;
-          validator.validate(builder.slice().start(), builder.slice().byteSize());
+          if (format == Format::JSON) {
+            Parser parser;
+            parser.parse(builder.slice().toJson());
+          } else {
+            Validator validator;
+            validator.validate(builder.slice().start(), builder.slice().byteSize());
+          }
         }
+      } catch (std::exception const& e) {
+        std::cerr << "Program encountered exception on thread execution: " << e.what() << std::endl;
+        finalize();
+        return;
       }
     };
 
+    std::vector<std::thread> threads;
     for (size_t i = 0; i < numThreads; ++i) {
       size_t iterations = itsPerThread;
       if (i == numThreads - 1) {
         iterations += leftoverIts;
       }
-      threads.emplace_back(std::thread(threadCallback, iterations));
+      jthreads.emplace_back(std::jthread(threadCallback, iterations));
     }
 
-    for (auto &thread: threads) {
-      if (thread.joinable()) {
-        thread.join();
-      }
+    for (auto& jthread: jthreads) {
+      jthread.join();
     }
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }
