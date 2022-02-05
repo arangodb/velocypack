@@ -60,7 +60,7 @@ enum RandomBuilderAdditions {
 struct KnownLimitValues {
   static constexpr size_t maxDepth = 10;
   static constexpr size_t utf81ByteFirstLowerBound = 0x00;
-  static constexpr size_t utf81ByteFirstUpperBound = 0x1F;
+  static constexpr size_t utf81ByteFirstUpperBound = 0x7F;
   static constexpr size_t utf82BytesFirstLowerBound = 0xc0;
   static constexpr size_t utf82BytesFirstUpperBound = 0xDF;
   static constexpr size_t utf83BytesFirstLowerBound = 0xE0;
@@ -69,9 +69,8 @@ struct KnownLimitValues {
   static constexpr size_t utf84BytesFirstUpperBound = 0xF7;
   static constexpr size_t utf8CommonLowerBound = 0x80;
   static constexpr size_t utf8CommonUpperBound = 0xBF;
-  static constexpr size_t minRandStringLength = 1;
-  static constexpr size_t maxRandStringLength = 1000;
-
+  static constexpr size_t minUtf8RandStringLength = 1;
+  static constexpr size_t maxUtf8RandStringLength = 1000;
 };
 
 struct RandomGenerator {
@@ -111,9 +110,11 @@ static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-uint8_t randWithinRange(size_t min, size_t max, RandomGenerator& randomGenerator) {
+size_t randWithinRange(size_t min, size_t max, RandomGenerator& randomGenerator) {
   std::uniform_int_distribution<> distr(min, max);
-  return distr(randomGenerator.mt64);
+  size_t num = distr(randomGenerator.mt64);
+//  std::cout << "Random generated in range (" << min << ", " << max << ") " << num << std::endl;
+  return num;
 }
 
 void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffer) {
@@ -124,6 +125,8 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffe
       char c[2];
       c[0] = randWithinRange(limits.utf81ByteFirstLowerBound, limits.utf81ByteFirstUpperBound, randomGenerator);
       c[1] = '\0';
+  //    std::cout << "c[0] is " << std::hex << (0xff & (unsigned int) c[0]) << std::endl;
+  //    std::cout << "Will append 1 " << c << std::endl;
       utf8Buffer.append(c);
       break;
     }
@@ -133,7 +136,11 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffe
                              randomGenerator);
       c[1] = randWithinRange(limits.utf8CommonLowerBound, limits.utf8CommonUpperBound, randomGenerator);
       c[2] = '\0';
+  //    std::cout << "c[0] is " << std::hex << (0xff & (unsigned int) c[0]) << " c[1] is " << std::hex
+  //              << (0xff & (unsigned int) c[1]) << std::endl;
+  //    std::cout << "Will append 2 " << c << std::endl;
       utf8Buffer.append(c);
+  //    std::cout << "utf8 buffer so far " << utf8Buffer << std::endl;
       break;
     }
     case 3: {
@@ -143,7 +150,11 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffe
       c[1] = randWithinRange(limits.utf8CommonLowerBound, limits.utf8CommonUpperBound, randomGenerator);
       c[2] = randWithinRange(limits.utf8CommonLowerBound, limits.utf8CommonUpperBound, randomGenerator);
       c[3] = '\0';
+  //    std::cout << "Will append 3 " << c << std::endl;
+  //    std::cout << "c[0] is " << std::hex << (0xff & (unsigned int) c[0]) << " c[1] is " << std::hex
+  //              << (0xff & (unsigned int) c[1]) << " c[2] is " << std::hex << (0xff & (unsigned int) c[2]) << std::endl;
       utf8Buffer.append(c);
+  //    std::cout << "utf8 buffer so far " << utf8Buffer << std::endl;
       break;
     }
     case 4: {
@@ -154,7 +165,12 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffe
       c[2] = randWithinRange(limits.utf8CommonLowerBound, limits.utf8CommonUpperBound, randomGenerator);
       c[3] = randWithinRange(limits.utf8CommonLowerBound, limits.utf8CommonUpperBound, randomGenerator);
       c[4] = '\0';
+  //    std::cout << "Will append 4 " << c << std::endl;
+  //    std::cout << "c[0] is " << std::hex << (0xff & (unsigned int) c[0]) << " c[1] is " << std::hex
+  //              << (0xff & (unsigned int) c[1]) << " c[2] is " << std::hex << (0xff & (unsigned int) c[2])
+  //              << " c[3] is " << std::hex << (0xff & (unsigned int) c[3]) << std::endl;
       utf8Buffer.append(c);
+  //    std::cout << "utf8 buffer so far " << utf8Buffer << std::endl;
     }
     default:
       break;
@@ -163,11 +179,12 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Buffe
 
 static void generateUtf8String(RandomGenerator& randomGenerator, std::string& utf8Str) {
   KnownLimitValues limits;
-  std::uniform_int_distribution<> distr(limits.minRandStringLength, limits.maxRandStringLength);
+  std::uniform_int_distribution<> distr(limits.minUtf8RandStringLength, limits.maxUtf8RandStringLength);
   size_t length = distr(randomGenerator.mt64);
   for (size_t i = 0; i < length; ++i) {
     appendRandUtf8Char(randomGenerator, utf8Str);
   }
+ // std::cout << "Generated string " << utf8Str << std::endl;
 }
 
 template <typename Format>
@@ -201,7 +218,7 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
         for (size_t i = 0; i < numMembers; ++i) {
           std::string key;
           generateUtf8String(randomGenerator, key);
-          //std::string key = "test" + std::to_string(i);
+    //      std::cout << "generated key " << key << std::endl;
           builder.add(Value(key));
           generateVelocypack<Format>(builder, depth + 1, randomGenerator);
         }
@@ -243,7 +260,7 @@ static void generateVelocypack(Builder& builder, size_t depth, RandomGenerator& 
         builder.add(Value(randomGenerator.mt64(), ValueType::UTCDate));
         break;
       case ADD_BINARY: {
-        std::string binaries; // stuff
+        std::string binaries;
         generateUtf8String(randomGenerator, binaries);
         builder.add(ValuePair(binaries.data(), binaries.size(), ValueType::Binary));
         break;
@@ -333,8 +350,6 @@ int main(int argc, char* argv[]) {
       ++i;
     }
 
-    // validator options = uniqueness, utf-8
-
     std::cout << "Initial seed is " << seed << std::endl;
 
     size_t itsPerThread = numIterations / numThreads;
@@ -348,17 +363,20 @@ int main(int argc, char* argv[]) {
         options.validateUtf8Strings = true;
         options.checkAttributeUniqueness = true;
         RandomGenerator randomGenerator(seed);
-        std::cout << "Initial thread seed is " << seed << std::endl;
+        std::cout << "Initial thread seed is " << seed
+                  << std::endl; //TODO: add a mutex here for threads not to write in the middle of the other's cout
         Parser parser(&options);
         Validator validator(&options);
         while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
           builder.clear();
           if constexpr (std::is_same_v<Format, JSONFormat>) {
             generateVelocypack<JSONFormat>(builder, 0, randomGenerator);
+      //      std::cout << "builder " << builder.slice().toJson() << std::endl;
             parser.parse(builder.slice().toJson());
           } else {
             generateVelocypack<VPackFormat>(builder, 0, randomGenerator);
             validator.validate(builder.slice().start(), builder.slice().byteSize());
+      //      std::cout << "builder " << builder.slice().toJson() << std::endl;
           }
         }
       } catch (std::exception const& e) {
