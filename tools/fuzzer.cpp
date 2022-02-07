@@ -68,8 +68,12 @@ struct KnownLimitValues {
   static constexpr uint32_t utf82BytesFirstUpperBound = 0xDF;
   static constexpr uint32_t utf83BytesFirstLowerBound = 0xE0;
   static constexpr uint32_t utf83BytesFirstUpperBound = 0xEF;
+  static constexpr uint32_t utf83BytesE0ValidatorLowerBound = 0xA0;
+  static constexpr uint32_t utf83BytesEDValidatorUpperBound = 0x9F;
   static constexpr uint32_t utf84BytesFirstLowerBound = 0xF0;
-  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF3;
+  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF4;
+  static constexpr uint32_t utf84BytesF0ValidatorLowerBound = 0x90;
+  static constexpr uint32_t utf84BytesF4ValidatorUpperBound = 0x8F;
   static constexpr uint32_t utf8CommonLowerBound = 0x80;
   static constexpr uint32_t utf8CommonUpperBound = 0xBF;
   static constexpr uint32_t minUtf8RandStringLength = 1;
@@ -91,7 +95,7 @@ static std::mutex mtx;
 static void usage(char const* argv[]) {
   std::cout << "Usage: " << argv[0] << " options"
             << std::endl;
-  std::cout << "This program creates random VPack or JSON structures and validates them."
+  std::cout << "This program creates random VPack or JSON structures and validates them. (Default: VPack)"
             << std::endl;
   std::cout << "Available format options are:" << std::endl;
   std::cout << " --vpack       create VPack."
@@ -129,24 +133,45 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) 
     }
     case 2: {
       utf8Str.push_back(randWithinRange(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
-                                                 randomGenerator));
+                                        randomGenerator));
       utf8Str.push_back(
           randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 3: {
-      utf8Str.push_back(randWithinRange(limits::utf83BytesFirstLowerBound, limits::utf83BytesFirstUpperBound,
-                                                 randomGenerator));
-      for (uint32_t i = 0; i < 2; ++i) {
+      uint32_t randFirstByte = randWithinRange(limits::utf83BytesFirstLowerBound, limits::utf83BytesFirstUpperBound,
+                                               randomGenerator);
+      utf8Str.push_back(randFirstByte);
+      if (randFirstByte == 0xE0) {
+        utf8Str.push_back(
+            randWithinRange(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+      } else if (randFirstByte == 0xED) {
+        utf8Str.push_back(
+            randWithinRange(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
+                            randomGenerator));
+      } else {
         utf8Str.push_back(
             randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
+      utf8Str.push_back(
+          randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 4: {
-      utf8Str.push_back(randWithinRange(limits::utf84BytesFirstLowerBound, limits::utf84BytesFirstUpperBound,
-                                                 randomGenerator));
-      for (uint32_t i = 0; i < 3; ++i) {
+      uint32_t randFirstByte = randWithinRange(limits::utf84BytesFirstLowerBound, limits::utf84BytesFirstUpperBound,
+                                               randomGenerator);
+      utf8Str.push_back(randFirstByte);
+      if (randFirstByte == 0xF0) {
+        utf8Str.push_back(
+            randWithinRange(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+      } else if (randFirstByte == 0xF4) {
+        utf8Str.push_back(
+            randWithinRange(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound, randomGenerator));
+      } else {
+        utf8Str.push_back(
+            randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+      }
+      for (uint32_t i = 0; i < 2; ++i) {
         utf8Str.push_back(
             randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
@@ -302,29 +327,41 @@ int main(int argc, char const* argv[]) {
       } else if (isOption(p, "--json") && !isTypeAssigned) {
         isTypeAssigned = true;
         isJSON = true;
-      } else if (isOption(p, "--iterations") && (++i < argc)) {
-        char const *p = argv[i];
-        uint64_t value = 0;
-        if (!isParamValid(p, value) || !value) {
+      } else if (isOption(p, "--iterations")) {
+        if (++i >= argc) {
           isFailure = true;
         } else {
-          numIterations = value;
+          char const *p = argv[i];
+          uint64_t value = 0;
+          if (!isParamValid(p, value) || !value) {
+            isFailure = true;
+          } else {
+            numIterations = value;
+          }
         }
-      } else if (isOption(p, "--threads") && (++i < argc)) {
-        char const *p = argv[i];
-        uint64_t value = 0;
-        if (!isParamValid(p, value) || !value) {
+      } else if (isOption(p, "--threads")) {
+        if (++i >= argc) {
           isFailure = true;
         } else {
-          numThreads = value;
+          char const *p = argv[i];
+          uint64_t value = 0;
+          if (!isParamValid(p, value) || !value) {
+            isFailure = true;
+          } else {
+            numThreads = value;
+          }
         }
-      } else if (isOption(p, "--seed") && (++i < argc)) {
-        char const *p = argv[i];
-        uint64_t value = 0;
-        if (!isParamValid(p, value)) {
+      } else if (isOption(p, "--seed")) {
+        if (++i >= argc) {
           isFailure = true;
         } else {
-          seed = value;
+          char const *p = argv[i];
+          uint64_t value = 0;
+          if (!isParamValid(p, value)) {
+            isFailure = true;
+          } else {
+            seed = value;
+          }
         }
       } else {
         isFailure = true;
