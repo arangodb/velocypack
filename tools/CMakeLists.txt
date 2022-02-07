@@ -27,8 +27,10 @@ if(BuildTools)
   install(TARGETS "vpack-validate" DESTINATION bin)
 
   # build fuzzer.cpp
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
   add_executable("fuzzer" fuzzer.cpp)
-  target_link_libraries("fuzzer" velocypack)
+  target_link_libraries("fuzzer" PRIVATE velocypack Threads::Threads)
   install(TARGETS "fuzzer" DESTINATION bin)
 endif()
 
