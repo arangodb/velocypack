@@ -184,6 +184,8 @@ void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) 
 
 static void generateUtf8String(RandomGenerator& randomGenerator, std::string& utf8Str) {
   using limits = KnownLimitValues;
+  static_assert(limits::maxUtf8RandStringLength > limits::minUtf8RandStringLength);
+
   uint32_t length = limits::minUtf8RandStringLength +
                     (randomGenerator.mt64() % (limits::maxUtf8RandStringLength - limits::minUtf8RandStringLength));
   for (uint32_t i = 0; i < length; ++i) {
@@ -192,19 +194,42 @@ static void generateUtf8String(RandomGenerator& randomGenerator, std::string& ut
 }
 
 template <typename Format>
-static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator& randomGenerator) {
-  using limits = KnownLimitValues;
-  RandomBuilderAdditions maxValue = RandomBuilderAdditions::ADD_DOUBLE;
-
+constexpr RandomBuilderAdditions maxRandomType() {
   if constexpr (std::is_same_v<Format, VPackFormat>) {
-    maxValue = RandomBuilderAdditions::ADD_MAX_VPACK_VALUE;
+    return RandomBuilderAdditions::ADD_MAX_VPACK_VALUE;
+  } else {
+    return RandomBuilderAdditions::ADD_DOUBLE;
   }
+}
 
-  std::unordered_set<std::string> keys;
+struct BuilderContext {
+  Builder builder;
+  RandomGenerator randomGenerator;
+  std::string tempString;
+  std::unordered_set<std::string> tempObjectKeys;
+  uint32_t recursionDepth = 0;
+
+  BuilderContext() = delete;
+  BuilderContext(BuilderContext const&) = delete;
+  BuilderContext& operator=(BuilderContext const&) = delete;
+
+  BuilderContext(Options const* options, uint64_t seed) 
+      : builder(options), randomGenerator(seed) {}
+};
+
+template <typename Format>
+static void generateVelocypack(BuilderContext& ctx) {
+  constexpr RandomBuilderAdditions maxValue = maxRandomType<Format>();
+  
+  using limits = KnownLimitValues;
+
+  Builder& builder = ctx.builder;
+  RandomGenerator& randomGenerator = ctx.randomGenerator;
+
   while (true) {
     RandomBuilderAdditions randomBuilderAdds = static_cast<RandomBuilderAdditions>(randomGenerator.mt64() %
                                                                                    maxValue);
-    if (depth > limits::maxDepth && randomBuilderAdds <= ADD_OBJECT) {
+    if (ctx.recursionDepth > limits::maxDepth && randomBuilderAdds <= ADD_OBJECT) {
       continue;
     }
     switch (randomBuilderAdds) {
@@ -212,7 +237,9 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
         builder.openArray(randomGenerator.mt64() % 2 ? true : false);
         uint32_t numMembers = randomGenerator.mt64() % limits::arrayNumMembers;
         for (uint32_t i = 0; i < numMembers; ++i) {
-          generateVelocypack<Format>(builder, depth + 1, randomGenerator);
+          ++ctx.recursionDepth;
+          generateVelocypack<Format>(ctx);
+          --ctx.recursionDepth;
         }
         builder.close();
         break;
@@ -220,18 +247,19 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
       case ADD_OBJECT: {
         builder.openObject(randomGenerator.mt64() % 2 ? true : false);
         uint32_t numMembers = randomGenerator.mt64() % limits::objNumMembers;
-        std::string key;
+        ctx.tempObjectKeys.clear();
         for (uint32_t i = 0; i < numMembers; ++i) {
           while (true) {
-            generateUtf8String(randomGenerator, key);
-            if (keys.emplace(key).second) {
+            ctx.tempString.clear();
+            generateUtf8String(randomGenerator, ctx.tempString);
+            if (ctx.tempObjectKeys.emplace(ctx.tempString).second) {
               break;
             }
-            key.clear();
           }
-          builder.add(Value(key));
-          key.clear();
-          generateVelocypack<Format>(builder, depth + 1, randomGenerator);
+          builder.add(Value(ctx.tempString));
+          ++ctx.recursionDepth;
+          generateVelocypack<Format>(ctx);
+          --ctx.recursionDepth;
         }
         builder.close();
         break;
@@ -240,9 +268,9 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
         builder.add(Value(randomGenerator.mt64() % 2 ? true : false));
         break;
       case ADD_STRING: {
-        std::string key;
-        generateUtf8String(randomGenerator, key);
-        builder.add(Value(key));
+        ctx.tempString.clear();
+        generateUtf8String(randomGenerator, ctx.tempString);
+        builder.add(Value(ctx.tempString));
         break;
       }
       case ADD_NULL:
@@ -271,9 +299,9 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
         builder.add(Value(randomGenerator.mt64(), ValueType::UTCDate));
         break;
       case ADD_BINARY: {
-        std::string binaries;
-        generateUtf8String(randomGenerator, binaries);
-        builder.add(ValuePair(binaries.data(), binaries.size(), ValueType::Binary));
+        ctx.tempString.clear();
+        generateUtf8String(randomGenerator, ctx.tempString);
+        builder.add(ValuePair(ctx.tempString.data(), ctx.tempString.size(), ValueType::Binary));
         break;
       }
       case ADD_EXTERNAL: {
@@ -373,7 +401,11 @@ int main(int argc, char const* argv[]) {
       ++i;
     }
 
-    std::cout << "Initial seed is " << seed << std::endl;
+    std::cout 
+        << "Fuzzing " << (isJSON ? "JSON Parser" : "VPack validator") 
+        << " with " << numThreads << " thread(s)."
+        << " Iterations: " << numIterations
+        << ". Initial seed is " << seed << std::endl;
 
     uint32_t itsPerThread = numIterations / numThreads;
     uint32_t leftoverIts = numIterations % numThreads;
@@ -385,32 +417,39 @@ int main(int argc, char const* argv[]) {
       options.checkAttributeUniqueness = true;
       options.binaryAsHex = true;
       options.datesAsIntegers = true;
-      Builder builder(&options);
+
+      // extra options for parsing
+      Options parseOptions = options;
+      parseOptions.clearBuilderBeforeParse = true;
+      parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
+
+      BuilderContext ctx(&options, seed);
       try {
-        RandomGenerator randomGenerator(seed);
-        {
-          std::lock_guard<std::mutex> lock(mtx);
-          std::cout << "Initial thread seed is " << seed << std::endl;
-        }
+        // temporary output buffer used for JSON-stringification
+        std::string json;
+        // parser used for JSON-parsing
         Parser parser(&options);
+        // validator used for VPack validation
         Validator validator(&options);
         while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
-          builder.clear();
+          ctx.builder.clear();
+          VELOCYPACK_ASSERT(ctx.recursionDepth == 0);
           if constexpr (std::is_same_v<Format, JSONFormat>) {
-            generateVelocypack<JSONFormat>(builder, 0, randomGenerator);
-            parser.parse(builder.slice().toJson(&options));
+            generateVelocypack<JSONFormat>(ctx);
+            ctx.tempString.clear();
+            parser.parse(ctx.builder.slice().toJson(ctx.tempString, &parseOptions));
           } else {
-            generateVelocypack<VPackFormat>(builder, 0, randomGenerator);
-            validator.validate(builder.slice().start(), builder.slice().byteSize());
+            generateVelocypack<VPackFormat>(ctx);
+            validator.validate(ctx.builder.slice().start(), ctx.builder.slice().byteSize());
           }
         }
       } catch (std::exception const& e) {
         std::lock_guard<std::mutex> lock(mtx);
         std::cerr << "Program encountered exception on thread execution: " << e.what() << " in slice ";
         if constexpr (std::is_same_v<Format, JSONFormat>) {
-          std::cerr << builder.slice().toJson() << std::endl;
+          std::cerr << ctx.builder.slice().toJson() << std::endl;
         } else {
-          std::cerr << HexDump(builder.slice()) << std::endl;
+          std::cerr << HexDump(ctx.builder.slice()) << std::endl;
         }
         return;
       }
