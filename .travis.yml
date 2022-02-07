@@ -87,7 +87,7 @@ matrix:
 
     - name: "mac"
       os: osx
-      osx_image: xcode11.2
+      osx_image: xcode13.2
       compiler: clang
       env:
         - build_type=Release
