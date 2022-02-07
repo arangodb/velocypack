@@ -64,12 +64,12 @@ struct KnownLimitValues {
   static constexpr uint32_t maxDepth = 10;
   static constexpr uint32_t utf81ByteFirstLowerBound = 0x00;
   static constexpr uint32_t utf81ByteFirstUpperBound = 0x7F;
-  static constexpr uint32_t utf82BytesFirstLowerBound = 0xC2; // was C0
+  static constexpr uint32_t utf82BytesFirstLowerBound = 0xC2;
   static constexpr uint32_t utf82BytesFirstUpperBound = 0xDF;
   static constexpr uint32_t utf83BytesFirstLowerBound = 0xE0;
   static constexpr uint32_t utf83BytesFirstUpperBound = 0xEF;
   static constexpr uint32_t utf84BytesFirstLowerBound = 0xF0;
-  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF3; // was F7
+  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF3; 
   static constexpr uint32_t utf8CommonLowerBound = 0x80;
   static constexpr uint32_t utf8CommonUpperBound = 0xBF;
   static constexpr uint32_t minUtf8RandStringLength = 1;
