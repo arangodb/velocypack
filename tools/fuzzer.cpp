@@ -69,7 +69,7 @@ struct KnownLimitValues {
   static constexpr uint32_t utf83BytesFirstLowerBound = 0xE0;
   static constexpr uint32_t utf83BytesFirstUpperBound = 0xEF;
   static constexpr uint32_t utf84BytesFirstLowerBound = 0xF0;
-  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF3; 
+  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF3;
   static constexpr uint32_t utf8CommonLowerBound = 0x80;
   static constexpr uint32_t utf8CommonUpperBound = 0xBF;
   static constexpr uint32_t minUtf8RandStringLength = 1;
@@ -88,14 +88,10 @@ Slice nullSlice(Slice::nullSlice());
 
 static std::mutex mtx;
 
-static void usage(char* argv[]) {
-  std::cout << "Usage: " << argv[0] << " [format] [iterations] [threads] seed"
+static void usage(char const* argv[]) {
+  std::cout << "Usage: " << argv[0] << " options"
             << std::endl;
-  std::cout << "This program creates <iterations> random VPack or JSON structures and validates them."
-            << std::endl;
-  std::cout << "The paralelization is supplied by <threads>."
-            << std::endl;
-  std::cout << "The seed value supplied by <seed> is used as seed for random generation."
+  std::cout << "This program creates random VPack or JSON structures and validates them."
             << std::endl;
   std::cout << "Available format options are:" << std::endl;
   std::cout << " --vpack       create VPack."
@@ -110,7 +106,7 @@ static void usage(char* argv[]) {
             << std::endl;
   std::cout << "For providing a seed for random generation:" << std::endl;
   std::cout
-      << " --s <number> number that will be used as seed for random generation (number >= 0). Default: random_device"
+      << " --seed <number> number that will be used as seed for random generation (number >= 0). Default: random_device"
       << std::endl;
 }
 
@@ -124,7 +120,7 @@ uint32_t randWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGene
 
 void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) {
   using limits = KnownLimitValues;
-  int numBytes = randWithinRange(1, 4, randomGenerator);
+  uint32_t numBytes = randWithinRange(1, 4, randomGenerator);
   switch (numBytes) {
     case 1: {
       utf8Str.push_back(
@@ -199,14 +195,17 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
       case ADD_OBJECT: {
         builder.openObject(randomGenerator.mt64() % 2 ? true : false);
         uint32_t numMembers = randomGenerator.mt64() % limits::objNumMembers;
+        std::string key;
         for (uint32_t i = 0; i < numMembers; ++i) {
-          std::string key;
-          do {
-            key = "";
+          while (true) {
             generateUtf8String(randomGenerator, key);
-          } while(keys.find(key) != keys.end());
-          keys.insert(key);
-          builder.add(Value(key + std::to_string(i)));
+            if (keys.emplace(key).second) {
+              break;
+            }
+            key.clear();
+          }
+          builder.add(Value(key));
+          key.clear();
           generateVelocypack<Format>(builder, depth + 1, randomGenerator);
         }
         builder.close();
@@ -237,7 +236,7 @@ static void generateVelocypack(Builder& builder, uint32_t depth, RandomGenerator
       case ADD_DOUBLE: {
         double doubleValue;
         do {
-          uint32_t uintValue = static_cast<uint32_t>(randomGenerator.mt64());
+          uint64_t uintValue = randomGenerator.mt64();
           memcpy(&doubleValue, &uintValue, sizeof(uintValue));
         } while (!std::isfinite(doubleValue));
         builder.add(Value(doubleValue));
@@ -281,7 +280,7 @@ static bool isParamValid(char const* p, uint64_t& value) {
   return true;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char const* argv[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
     bool isTypeAssigned = false;
     uint32_t numIterations = 1;
@@ -319,7 +318,7 @@ int main(int argc, char* argv[]) {
         } else {
           numThreads = value;
         }
-      } else if (isOption(p, "--s") && (++i < argc)) {
+      } else if (isOption(p, "--seed") && (++i < argc)) {
         char const *p = argv[i];
         uint64_t value = 0;
         if (!isParamValid(p, value)) {
