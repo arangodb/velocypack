@@ -23,6 +23,7 @@
 /// @author Copyright 2022, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <atomic>
 #include <charconv>
 #include <cmath>
 #include <iostream>
