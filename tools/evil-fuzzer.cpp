@@ -158,7 +158,7 @@ uint8_t getBytePosFromNumber(T number, FuzzBytes const& fuzzByte) {
     std::cout << "byte pos 1 " << numByte << std::endl;
     return numByte;
   } else if (fuzzByte == FuzzBytes::LAST_BYTE) {
-    number = sizeof(number) - 1;
+    numByte = sizeof(number) - 1;
     std::cout << "byte pos 2 " << numByte << std::endl;
     return numByte;
   }
