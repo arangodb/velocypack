@@ -31,6 +31,13 @@ if(BuildTools)
   add_executable("fuzzer" fuzzer.cpp)
   target_link_libraries("fuzzer" PRIVATE velocypack Threads::Threads)
   install(TARGETS "fuzzer" DESTINATION bin)
+
+  # build fuzzer.cpp
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
+  add_executable("evil-fuzzer" evil-fuzzer.cpp)
+  target_link_libraries("evil-fuzzer" PRIVATE velocypack Threads::Threads)
+  install(TARGETS "fuzzer" DESTINATION bin)
 endif()
 
 # build bench.cpp
