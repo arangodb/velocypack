@@ -6,7 +6,7 @@ ferr(){
 }
 
 
-CXX_STANDARD=${CXX_STANDARD:-17}
+CXX_STANDARD=${CXX_STANDARD:-20}
 echo "requesting c++ standard ${CXX_STANDARD}"
 BUILD_TYPE=${BUILD_TYPE:-Release}
 HASH_TYPE=${HASH_TYPE:-xxhash}

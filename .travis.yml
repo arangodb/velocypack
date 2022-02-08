@@ -8,7 +8,7 @@ env:
 
 matrix:
   include:
-    - name: "C++17 build g++-9, xxhash"
+    - name: "C++20 build g++-9, xxhash"
       env:
         - ARCH=amd64
         #compiler
@@ -18,12 +18,11 @@ matrix:
         - build_type=Release
         - hash_type=xxhash
         - SANITIZER=false
-        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
     
-    - name: "C++17 build g++-9, fasthash"
+    - name: "C++20 build g++-9, fasthash"
       env:
         - ARCH=amd64
         #compiler
@@ -33,7 +32,6 @@ matrix:
         - build_type=Release
         - hash_type=fasthash
         - SANITIZER=false
-        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
@@ -47,7 +45,6 @@ matrix:
         #build settings
         - build_type=Release
         - SANITIZER=true
-        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
@@ -61,7 +58,6 @@ matrix:
         #build settings
         - build_type=Debug
         - CXXFLAGS="-O0 -fno-inline --coverage"
-        - CXX_STANDARD=17
       addons:
         apt:
           packages: ['gcc-9', 'g++-9', 'lcov', 'cmake']
@@ -79,7 +75,6 @@ matrix:
         - CC=clang-10
         #build settings
         - build_type=Release
-        - CXX_STANDARD=17
         - LDFLAGS="-fuse-ld=lld"
       addons:
         apt:
@@ -87,7 +82,7 @@ matrix:
 
     - name: "mac"
       os: osx
-      osx_image: xcode11.2
+      osx_image: xcode13.2
       compiler: clang
       env:
         - build_type=Release
@@ -95,7 +90,7 @@ matrix:
 install:
     - export CXX=$CXX
     - export CC=$CC
-    - export CXX_STANDARD=${CXX_STANDARD:-17}
+    - export CXX_STANDARD=${CXX_STANDARD:-20}
     - export BUILD_TYPE=${build_type}
     - export HASH_TYPE=${hash_type}
     - cmake --version
