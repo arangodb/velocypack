@@ -76,7 +76,7 @@ struct KnownLimitValues {
   static constexpr uint32_t utf84BytesF4ValidatorUpperBound = 0x8F;
   static constexpr uint32_t utf8CommonLowerBound = 0x80;
   static constexpr uint32_t utf8CommonUpperBound = 0xBF;
-  static constexpr uint32_t minUtf8RandStringLength = 1;
+  static constexpr uint32_t minUtf8RandStringLength = 0;  
   static constexpr uint32_t maxUtf8RandStringLength = 1000;
   static constexpr uint32_t maxBinaryRandStringLength = 1000;
   static constexpr uint32_t objNumMembers = 10;
@@ -221,7 +221,7 @@ struct BuilderContext {
   Builder builder;
   RandomGenerator randomGenerator;
   std::string tempString;
-  std::unordered_set<std::string> tempObjectKeys;
+  std::vector<std::unordered_set<std::string>> tempObjectKeys;
   uint32_t recursionDepth = 0;
 
   BuilderContext() = delete;
@@ -262,20 +262,28 @@ static void generateVelocypack(BuilderContext& ctx) {
       case ADD_OBJECT: {
         builder.openObject(randomGenerator.mt64() % 2 ? true : false);
         uint32_t numMembers = randomGenerator.mt64() % limits::objNumMembers;
-        ctx.tempObjectKeys.clear();
+        if (ctx.tempObjectKeys.size() <= ctx.recursionDepth) {
+          ctx.tempObjectKeys.resize(ctx.recursionDepth + 1);
+        } else {
+          ctx.tempObjectKeys[ctx.recursionDepth].clear();
+        }
+        VELOCYPACK_ASSERT(ctx.tempObjectKeys.size() > ctx.recursionDepth);
+        ++ctx.recursionDepth;
         for (uint32_t i = 0; i < numMembers; ++i) {
           while (true) {
             ctx.tempString.clear();
             generateUtf8String(randomGenerator, ctx.tempString);
-            if (ctx.tempObjectKeys.emplace(ctx.tempString).second) {
+            if (ctx.tempObjectKeys[ctx.recursionDepth - 1].emplace(ctx.tempString).second) {
               break;
             }
           }
+          // key
           builder.add(Value(ctx.tempString));
-          ++ctx.recursionDepth;
+          // value
           generateVelocypack<Format>(ctx);
-          --ctx.recursionDepth;
         }
+        --ctx.recursionDepth;
+        ctx.tempObjectKeys[ctx.recursionDepth].clear();
         builder.close();
         break;
       }
@@ -325,13 +333,13 @@ static void generateVelocypack(BuilderContext& ctx) {
       }
       case ADD_ILLEGAL:
         builder.add(Value(ValueType::Illegal));
-      break;
+        break;
       case ADD_MIN_KEY:
         builder.add(Value(ValueType::MinKey));
-      break;
+        break;
       case ADD_MAX_KEY:
         builder.add(Value(ValueType::MaxKey));
-      break;
+        break;
       default:
         VELOCYPACK_ASSERT(false);
     }
@@ -376,7 +384,7 @@ int main(int argc, char const* argv[]) {
         } else {
           char const *p = argv[i];
           uint64_t value = 0; //these values are uint64_t only for using the same isParamValid function as the seed
-          if (!isParamValid(p, value) || !value) {
+          if (!isParamValid(p, value) || !value || value > std::numeric_limits<uint32_t>::max()) {
             isFailure = true;
           } else {
             numIterations = static_cast<uint32_t>(value);
@@ -448,6 +456,7 @@ int main(int argc, char const* argv[]) {
         Validator validator(&options);
         while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
           ctx.builder.clear();
+          ctx.tempObjectKeys.clear();
           VELOCYPACK_ASSERT(ctx.recursionDepth == 0);
           if constexpr (std::is_same_v<Format, JSONFormat>) {
             generateVelocypack<JSONFormat>(ctx);
