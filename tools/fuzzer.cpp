@@ -360,11 +360,11 @@ int main(int argc, char const* argv[]) {
           isFailure = true;
         } else {
           char const *p = argv[i];
-          uint64_t value = 0;
+          uint64_t value = 0; //these values are uint64_t only for using the same isParamValid function as the seed
           if (!isParamValid(p, value) || !value) {
             isFailure = true;
           } else {
-            numIterations = value;
+            numIterations = static_cast<uint32_t>(value);
           }
         }
       } else if (isOption(p, "--threads")) {
@@ -376,7 +376,7 @@ int main(int argc, char const* argv[]) {
           if (!isParamValid(p, value) || !value) {
             isFailure = true;
           } else {
-            numThreads = value;
+            numThreads = static_cast<uint32_t>(value);
           }
         }
       } else if (isOption(p, "--seed")) {
