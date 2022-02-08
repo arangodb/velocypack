@@ -500,7 +500,7 @@ int main(int argc, char const* argv[]) {
         }
       }
       joinThreads();
-    } catch (std::exception const &ex) {
+    } catch (std::exception const&) {
       stopThreads.store(true);
       joinThreads();
     }
