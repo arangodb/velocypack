@@ -84,7 +84,7 @@ The VelocyPack format is an attempt to achieve all this.
 
 This repository contains a C++ library for building, manipulating and
 serializing VPack data. It is the *reference implementation for the 
-VelocyPack format*. The library is written in C++17 so it should compile 
+VelocyPack format*. The library is written in C++20 so it should compile 
 on many up-to-date systems.
 
 The VelocyPack format and library are used extensively in the 
@@ -111,7 +111,7 @@ Building the VPack library
 
 The VPack library can be built on Linux, MacOS and Windows. It will likely
 compile and work on other platforms for which a recent version of *cmake* and
-a working C++17-enabled compiler are available.
+a working C++20-enabled compiler are available.
 
 See the file [Install.md](Install.md) for compilation and installation
 instructions.
@@ -123,6 +123,16 @@ Using the VPack library
 Please consult the file [examples/API.md](examples/API.md) for usage examples, 
 and the file [examples/Embedding.md](examples/Embedding.md) for information
 about how to embed the library into client applications.
+
+
+Testing and validating with fuzzer
+----------------------------------
+
+The fuzzer tool can be used to generate random VPack or JSON structures and
+validate them. The tool can be run with multiple iterations, parallelism, and 
+a seed can be provided for the random generation.
+Please consult the file [tools/README.md](tools/README.md) for usage 
+information.
 
 
 Contributing
