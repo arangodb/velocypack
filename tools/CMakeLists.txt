@@ -9,7 +9,6 @@ message(STATUS "VelocyPack building bench performance test suite: ${BuildBench}"
 option(BuildTools "Build support programs and tools" ON)
 message(STATUS "VelocyPack building support programs and tools: ${BuildTools}")
 
-# build json-to-vpack.cpp
 if(BuildTools)
   # build json-to-vpack.cpp
   add_executable("json-to-vpack" json-to-vpack.cpp)
