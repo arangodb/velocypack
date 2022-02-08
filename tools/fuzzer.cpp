@@ -78,6 +78,7 @@ struct KnownLimitValues {
   static constexpr uint32_t utf8CommonUpperBound = 0xBF;
   static constexpr uint32_t minUtf8RandStringLength = 1;
   static constexpr uint32_t maxUtf8RandStringLength = 1000;
+  static constexpr uint32_t maxBinaryRandStringLength = 1000;
   static constexpr uint32_t objNumMembers = 10;
   static constexpr uint32_t arrayNumMembers = 10;
 };
@@ -118,62 +119,76 @@ static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-uint32_t randWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
+uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max - min));
+}
+
+void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
+  using limits = KnownLimitValues;
+  uint32_t length = randomGenerator.mt64() % limits::maxBinaryRandStringLength;
+  output.reserve(length);
+  for (uint32_t i = 0; i < length; ++i) {
+    output.push_back(static_cast<std::string::value_type>(randomGenerator.mt64() % 256));
+  }
 }
 
 void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) {
   using limits = KnownLimitValues;
-  uint32_t numBytes = randWithinRange(1, 4, randomGenerator);
+  uint32_t numBytes = generateRandWithinRange(1, 4, randomGenerator);
   switch (numBytes) {
     case 1: {
       utf8Str.push_back(
-          randWithinRange(limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound, randomGenerator));
+          generateRandWithinRange(limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound, randomGenerator));
       break;
     }
     case 2: {
-      utf8Str.push_back(randWithinRange(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
-                                        randomGenerator));
+      utf8Str.push_back(generateRandWithinRange(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
+                                                randomGenerator));
       utf8Str.push_back(
-          randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+          generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 3: {
-      uint32_t randFirstByte = randWithinRange(limits::utf83BytesFirstLowerBound, limits::utf83BytesFirstUpperBound,
-                                               randomGenerator);
+      uint32_t randFirstByte = generateRandWithinRange(limits::utf83BytesFirstLowerBound,
+                                                       limits::utf83BytesFirstUpperBound,
+                                                       randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xE0) {
         utf8Str.push_back(
-            randWithinRange(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound,
+                                    randomGenerator));
       } else if (randFirstByte == 0xED) {
         utf8Str.push_back(
-            randWithinRange(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
-                            randomGenerator));
+            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
+                                    randomGenerator));
       } else {
         utf8Str.push_back(
-            randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       utf8Str.push_back(
-          randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+          generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 4: {
-      uint32_t randFirstByte = randWithinRange(limits::utf84BytesFirstLowerBound, limits::utf84BytesFirstUpperBound,
-                                               randomGenerator);
+      uint32_t randFirstByte = generateRandWithinRange(limits::utf84BytesFirstLowerBound,
+                                                       limits::utf84BytesFirstUpperBound,
+                                                       randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xF0) {
         utf8Str.push_back(
-            randWithinRange(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound,
+                                    randomGenerator));
       } else if (randFirstByte == 0xF4) {
         utf8Str.push_back(
-            randWithinRange(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound,
+                                    randomGenerator));
       } else {
         utf8Str.push_back(
-            randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       for (uint32_t i = 0; i < 2; ++i) {
         utf8Str.push_back(
-            randWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       break;
     }
@@ -300,7 +315,7 @@ static void generateVelocypack(BuilderContext& ctx) {
         break;
       case ADD_BINARY: {
         ctx.tempString.clear();
-        generateUtf8String(randomGenerator, ctx.tempString);
+        generateRandBinary(randomGenerator, ctx.tempString);
         builder.add(ValuePair(ctx.tempString.data(), ctx.tempString.size(), ValueType::Binary));
         break;
       }

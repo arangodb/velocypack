@@ -125,6 +125,16 @@ and the file [examples/Embedding.md](examples/Embedding.md) for information
 about how to embed the library into client applications.
 
 
+Testing and validating with fuzzer
+----------------------------------
+
+The fuzzer tool can be used to generate random VPack or JSON structures and
+validate them. The tool can be run with multiple iterations, parallelism, and 
+a seed can be provided for the random generation.
+Please consult the file [tools/README.md](tools/README.md) for usage 
+information.
+
+
 Contributing
 ------------
 
