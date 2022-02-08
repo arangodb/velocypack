@@ -554,9 +554,9 @@ int main(int argc, char const* argv[]) {
         }
       } else if (isOption(p, "--evil")) {
         isEvil = true;
-      }else {
-          isFailure = true;
-        }
+      } else {
+        isFailure = true;
+      }
       if (isFailure) {
         usage(argv);
         return EXIT_FAILURE;
@@ -574,7 +574,7 @@ int main(int argc, char const* argv[]) {
     uint32_t leftoverIts = numIterations % numThreads;
     std::atomic<bool> stopThreads{false};
 
-    auto threadCallback = [isEvil, &stopThreads]<typename Format>(uint32_t iterations, Format, uint64_t seed) {
+    auto threadCallback = [&stopThreads]<typename Format>(uint32_t iterations, Format, uint64_t seed, bool isEvil) {
       Options options;
       options.validateUtf8Strings = true;
       options.checkAttributeUniqueness = true;
@@ -634,9 +634,9 @@ int main(int argc, char const* argv[]) {
           iterations += leftoverIts;
         }
         if (isJSON) {
-          threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i);
+          threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i, isEvil);
         } else {
-          threads.emplace_back(threadCallback, iterations, VPackFormat{}, seed + i);
+          threads.emplace_back(threadCallback, iterations, VPackFormat{}, seed + i, isEvil);
         }
       }
       joinThreads();
