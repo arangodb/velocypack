@@ -30,8 +30,10 @@
 #include <mutex>
 #include <random>
 #include <string>
-#include <unordered_set>
+#include <string_view>
 #include <thread>
+#include <unordered_set>
+#include <vector>
 
 #include "velocypack/vpack.h"
 #include "velocypack/velocypack-exception-macros.h"
@@ -75,24 +77,24 @@ enum RandomBuilderAdditions {
 };
 
 struct KnownLimitValues {
-  static constexpr uint32_t maxDepth = 10;
-  static constexpr uint32_t utf81ByteFirstLowerBound = 0x00;
-  static constexpr uint32_t utf81ByteFirstUpperBound = 0x7F;
-  static constexpr uint32_t utf82BytesFirstLowerBound = 0xC2;
-  static constexpr uint32_t utf82BytesFirstUpperBound = 0xDF;
-  static constexpr uint32_t utf83BytesFirstLowerBound = 0xE0;
-  static constexpr uint32_t utf83BytesFirstUpperBound = 0xEF;
-  static constexpr uint32_t utf83BytesE0ValidatorLowerBound = 0xA0;
-  static constexpr uint32_t utf83BytesEDValidatorUpperBound = 0x9F;
-  static constexpr uint32_t utf84BytesFirstLowerBound = 0xF0;
-  static constexpr uint32_t utf84BytesFirstUpperBound = 0xF4;
-  static constexpr uint32_t utf84BytesF0ValidatorLowerBound = 0x90;
-  static constexpr uint32_t utf84BytesF4ValidatorUpperBound = 0x8F;
-  static constexpr uint32_t utf8CommonLowerBound = 0x80;
-  static constexpr uint32_t utf8CommonUpperBound = 0xBF;
+  static constexpr uint8_t utf81ByteFirstLowerBound = 0x00;
+  static constexpr uint8_t utf81ByteFirstUpperBound = 0x7F;
+  static constexpr uint8_t utf82BytesFirstLowerBound = 0xC2;
+  static constexpr uint8_t utf82BytesFirstUpperBound = 0xDF;
+  static constexpr uint8_t utf83BytesFirstLowerBound = 0xE0;
+  static constexpr uint8_t utf83BytesFirstUpperBound = 0xEF;
+  static constexpr uint8_t utf83BytesE0ValidatorLowerBound = 0xA0;
+  static constexpr uint8_t utf83BytesEDValidatorUpperBound = 0x9F;
+  static constexpr uint8_t utf84BytesFirstLowerBound = 0xF0;
+  static constexpr uint8_t utf84BytesFirstUpperBound = 0xF4;
+  static constexpr uint8_t utf84BytesF0ValidatorLowerBound = 0x90;
+  static constexpr uint8_t utf84BytesF4ValidatorUpperBound = 0x8F;
+  static constexpr uint8_t utf8CommonLowerBound = 0x80;
+  static constexpr uint8_t utf8CommonUpperBound = 0xBF;
   static constexpr uint32_t minUtf8RandStringLength = 0;
   static constexpr uint32_t maxUtf8RandStringLength = 1000;
-  static constexpr uint32_t maxBinaryRandStringLength = 1000;
+  static constexpr uint32_t maxBinaryRandLength = 1000;
+  static constexpr uint32_t maxDepth = 10;
   static constexpr uint32_t objNumMembers = 10;
   static constexpr uint32_t arrayNumMembers = 10;
   static constexpr uint32_t randBytePosOffset = 8;
@@ -132,23 +134,19 @@ static void usage(char const* argv[]) {
   std::cout << "This program creates random VPack or JSON structures and validates them. (Default: VPack)"
             << std::endl;
   std::cout << "Available format options are:" << std::endl;
-  std::cout << " --vpack       create VPack."
+  std::cout << " --vpack                create VPack"
             << std::endl;
-  std::cout << " --json        create JSON."
+  std::cout << " --json                 create JSON"
             << std::endl;
-  std::cout << "For iterations:" << std::endl;
+  std::cout << " --evil                 purposefully fuzz generated VPack, to test for crashes"
+            << std::endl;
   std::cout << " --iterations <number>  number of iterations (number > 0). Default: 1"
             << std::endl;
-  std::cout << "For threads:" << std::endl;
-  std::cout << " --threads <number>  number of threads (number > 0). Default: 1"
+  std::cout << " --threads <number>     number of threads (number > 0). Default: 1"
             << std::endl;
-  std::cout << "For providing a seed for random generation:" << std::endl;
-  std::cout
-      << " --seed <number> number that will be used as seed for random generation (number >= 0). Default: random_device"
-      << std::endl;
-  std::cout
-      << " --evil        purposefully fuzz entries in the structures, by either removing bytes randomly or overwriting them to test for crashes"
-      << std::endl;
+  std::cout << " --seed <number>        number that will be used as seed for random generation (number >= 0). Default: random value"
+            << std::endl;
+  std::cout << std::endl;
 }
 
 static inline bool isOption(char const* arg, char const* expected) {
@@ -207,13 +205,13 @@ static void fuzzBytes(BuilderContext& ctx) {
         VELOCYPACK_ASSERT(false);
     }
     builderBuffer.clear();
-    builderBuffer.append(reinterpret_cast<uint8_t const *>(vpackBytes.data()), vpackBytes.size());
+    builderBuffer.append(reinterpret_cast<uint8_t const*>(vpackBytes.data()), vpackBytes.size());
   }
 }
 
 static void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
   using limits = KnownLimitValues;
-  uint32_t length = randomGenerator.mt64() % limits::maxBinaryRandStringLength;
+  uint32_t length = randomGenerator.mt64() % limits::maxBinaryRandLength;
   output.reserve(length);
   for (uint32_t i = 0; i < length; ++i) {
     output.push_back(static_cast<std::string::value_type>(randomGenerator.mt64() % 256));
@@ -405,10 +403,7 @@ static void generateVelocypack(BuilderContext& ctx) {
         break;
       }
       case ADD_EXTERNAL: {
-        if (ctx.isEvil) {
-          continue;
-        }
-        builder.add(Value(static_cast<void const *>(&nullSlice), ValueType::External));
+        builder.add(Value(static_cast<void const*>(&nullSlice), ValueType::External));
         break;
       }
       case ADD_ILLEGAL:
@@ -438,172 +433,207 @@ static bool isParamValid(char const* p, uint64_t& value) {
 
 int main(int argc, char const* argv[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
-    bool isTypeAssigned = false;
-    uint32_t numIterations = 1;
-    uint32_t numThreads = 1;
-    bool isJSON = false;
-    std::random_device rd;
-    uint64_t seed = rd();
-    bool isEvil = false;
 
-    int i = 1;
-    while (i < argc) {
-      bool isFailure = false;
-      char const *p = argv[i];
-      if (isOption(p, "--help")) {
-        usage(argv);
-        return EXIT_SUCCESS;
-      } else if (isOption(p, "--vpack") && !isTypeAssigned) {
-        isTypeAssigned = true;
-        isJSON = false;
-      } else if (isOption(p, "--json") && !isTypeAssigned) {
-        isTypeAssigned = true;
-        isJSON = true;
-      } else if (isOption(p, "--iterations")) {
-        if (++i >= argc) {
-          isFailure = true;
-        } else {
-          char const *p = argv[i];
-          uint64_t value = 0; //these values are uint64_t only for using the same isParamValid function as the seed
-          if (!isParamValid(p, value) || !value || value > std::numeric_limits<uint32_t>::max()) {
-            isFailure = true;
-          } else {
-            numIterations = static_cast<uint32_t>(value);
-          }
-        }
-      } else if (isOption(p, "--threads")) {
-        if (++i >= argc) {
-          isFailure = true;
-        } else {
-          char const *p = argv[i];
-          uint64_t value = 0;
-          if (!isParamValid(p, value) || !value) {
-            isFailure = true;
-          } else {
-            numThreads = static_cast<uint32_t>(value);
-          }
-        }
-      } else if (isOption(p, "--seed")) {
-        if (++i >= argc) {
-          isFailure = true;
-        } else {
-          char const *p = argv[i];
-          uint64_t value = 0;
-          if (!isParamValid(p, value)) {
-            isFailure = true;
-          } else {
-            seed = value;
-          }
-        }
-      } else if (isOption(p, "--evil")) {
-        isEvil = true;
-      } else {
+  bool isTypeAssigned = false;
+  uint32_t numIterations = 1;
+  uint32_t numThreads = 1;
+  bool isJSON = false;
+  std::random_device rd;
+  uint64_t seed = rd();
+  bool isEvil = false;
+
+  int i = 1;
+  while (i < argc) {
+    bool isFailure = false;
+    char const* p = argv[i];
+    if (isOption(p, "--help")) {
+      usage(argv);
+      return EXIT_SUCCESS;
+    } else if (isOption(p, "--vpack") && !isTypeAssigned) {
+      isTypeAssigned = true;
+      isJSON = false;
+    } else if (isOption(p, "--json") && !isTypeAssigned) {
+      isTypeAssigned = true;
+      isJSON = true;
+    } else if (isOption(p, "--iterations")) {
+      if (++i >= argc) {
         isFailure = true;
-      }
-      if (isFailure) {
-        usage(argv);
-        return EXIT_FAILURE;
-      }
-      ++i;
-    }
-
-    std::cout
-        << "Evil-fuzzing " << (isJSON ? "JSON Parser" : "VPack validator")
-        << " with " << numThreads << " thread(s)."
-        << " Iterations: " << numIterations
-        << ". Initial seed is " << seed << std::endl;
-
-    uint32_t itsPerThread = numIterations / numThreads;
-    uint32_t leftoverIts = numIterations % numThreads;
-    std::atomic<bool> stopThreads{false};
-
-    auto threadCallback = [&stopThreads]<typename Format>(uint32_t iterations, Format, uint64_t seed, bool isEvil) {
-      Options options;
-      options.validateUtf8Strings = true;
-      options.checkAttributeUniqueness = true;
-      options.binaryAsHex = true;
-      options.datesAsIntegers = true;
-
-      // extra options for parsing
-      Options parseOptions = options;
-      parseOptions.clearBuilderBeforeParse = true;
-      parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
-
-      Options validationOptions = options;
-      if (isEvil) {
-        validationOptions.disallowExternals = true;
-        validationOptions.disallowBCD = true;
-      }
-
-      BuilderContext ctx(&options, seed, isEvil);
-      try {
-        // temporary output buffer used for JSON-stringification
-        std::string json;
-        // parser used for JSON-parsing
-        Parser parser(&parseOptions);
-        // validator used for VPack validation
-        Validator validator(&validationOptions);
-        while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
-          ctx.builder.clear();
-          ctx.tempObjectKeys.clear();
-          VELOCYPACK_ASSERT(ctx.recursionDepth == 0);
-          generateVelocypack<Format>(ctx);
-          if (isEvil) {
-            fuzzBytes(ctx);
-          }
-          try {
-            if constexpr (std::is_same_v<Format, JSONFormat>) {
-              ctx.tempString.clear();
-              parser.parse(ctx.builder.slice().toJson(ctx.tempString));
-            } else {
-              auto& builderBuffer = ctx.builder.bufferRef();
-              validator.validate(ctx.builder.slice().start(), builderBuffer.size());
-            }
-          } catch (std::exception const &e) {
-            if (!isEvil) {
-              throw;
-            } else {
-              std::cerr << "Program encountered exception on thread execution: " << e.what() << std::endl;
-            }
-          }
-        }
-      } catch (std::exception const &e) {
-        std::lock_guard<std::mutex> lock(mtx);
-        std::cerr << "Program encountered exception on thread execution: " << e.what() << " in slice ";
-        if constexpr (std::is_same_v<Format, JSONFormat>) {
-          std::cerr << ctx.builder.slice().toJson() << std::endl;
+      } else {
+        char const* p = argv[i];
+        uint64_t value = 0; //these values are uint64_t only for using the same isParamValid function as the seed
+        if (!isParamValid(p, value) || !value || value > std::numeric_limits<uint32_t>::max()) {
+          isFailure = true;
         } else {
-          std::cerr << HexDump(ctx.builder.slice()) << std::endl;
+          numIterations = static_cast<uint32_t>(value);
         }
-        return;
       }
-    };
+    } else if (isOption(p, "--threads")) {
+      if (++i >= argc) {
+        isFailure = true;
+      } else {
+        char const* p = argv[i];
+        uint64_t value = 0;
+        if (!isParamValid(p, value) || !value) {
+          isFailure = true;
+        } else {
+          numThreads = static_cast<uint32_t>(value);
+        }
+      }
+    } else if (isOption(p, "--seed")) {
+      if (++i >= argc) {
+        isFailure = true;
+      } else {
+        char const* p = argv[i];
+        uint64_t value = 0;
+        if (!isParamValid(p, value)) {
+          isFailure = true;
+        } else {
+          seed = value;
+        }
+      }
+    } else if (isOption(p, "--evil")) {
+      isEvil = true;
+    } else {
+      isFailure = true;
+    }
+    if (isFailure) {
+      usage(argv);
+      return EXIT_FAILURE;
+    }
+    ++i;
+  }
 
-    std::vector<std::thread> threads;
-    threads.reserve(numThreads);
-    auto joinThreads = [&threads]() {
-      for (auto &t: threads) {
-        t.join();
-      }
-    };
+  if (isEvil && isJSON) {
+    std::cerr << "combining --evil and --json is currently not supported" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  std::string_view const progName(isEvil ? "Darkness fuzzer" : "Sunshine fuzzer");
+
+  std::cout
+      << progName << " is fuzzing " << (isJSON ? "JSON Parser" : "VPack validator")
+      << " with " << numThreads << " thread(s)..."
+      << " Iterations: " << numIterations
+      << ". Initial seed is " << seed << std::endl;
+
+  uint32_t itsPerThread = numIterations / numThreads;
+  uint32_t leftoverIts = numIterations % numThreads;
+  std::atomic<bool> stopThreads{false};
+  std::atomic<uint64_t> totalValidationErrors{0};
+
+  auto threadCallback = [&stopThreads, &totalValidationErrors]<typename Format>(uint32_t iterations, Format, uint64_t seed, bool isEvil) {
+    Options options;
+    options.validateUtf8Strings = true;
+    options.checkAttributeUniqueness = true;
+    options.binaryAsHex = true;
+    options.datesAsIntegers = true;
+
+    // extra options for parsing
+    Options parseOptions = options;
+    parseOptions.clearBuilderBeforeParse = true;
+    parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
+
+    Options validationOptions = options;
+    if (isEvil) {
+      validationOptions.disallowExternals = true;
+      validationOptions.disallowBCD = true;
+      validationOptions.disallowCustom = true;
+    }
+      
+    // parser used for JSON-parsing
+    Parser parser(&parseOptions);
+    // validator used for VPack validation
+    Validator validator(&validationOptions);
+
+    uint64_t validationErrors = 0;
+    BuilderContext ctx(&options, seed, isEvil);
 
     try {
-      for (uint32_t i = 0; i < numThreads; ++i) {
-        uint32_t iterations = itsPerThread;
-        if (i == numThreads - 1) {
-          iterations += leftoverIts;
+      while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
+        // clean up for new iteration
+        ctx.builder.clear();
+        ctx.tempObjectKeys.clear();
+        VELOCYPACK_ASSERT(ctx.recursionDepth == 0);
+
+        // generate vpack
+        generateVelocypack<Format>(ctx);
+
+        if (isEvil) {
+          // intentionally bork the velocypack
+          fuzzBytes(ctx);
         }
-        if (isJSON) {
-          threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i, isEvil);
-        } else {
-          threads.emplace_back(threadCallback, iterations, VPackFormat{}, seed + i, isEvil);
+
+        try {
+          if constexpr (std::is_same_v<Format, JSONFormat>) {
+            ctx.tempString.clear();
+            parser.parse(ctx.builder.slice().toJson(ctx.tempString));
+          } else {
+            auto& builderBuffer = ctx.builder.bufferRef();
+            validator.validate(builderBuffer.data(), builderBuffer.size());
+          }
+        } catch (std::exception const &e) {
+          ++validationErrors;
+          if (!isEvil) {
+            // we don't expect any exceptions in non-evil mode, so rethrow them.
+            throw;
+          }
+          // in evil mode, we can't tell if the borked velocypack is valid or not.
+          // so have to catch the exception and silence it.
         }
       }
-      joinThreads();
-    } catch (std::exception const&) {
+    } catch (std::exception const &e) {
+      // need a mutex to prevent multiple threads from writing to std::cerr at the
+      // same time
+      std::lock_guard<std::mutex> lock(mtx);
+      std::cerr 
+          << "Caught unexpected exception during fuzzing: " << e.what() << std::endl
+          << "Slice data:" << std::endl;
+      if constexpr (std::is_same_v<Format, JSONFormat>) {
+        std::cerr << ctx.builder.slice().toJson() << std::endl;
+      } else {
+        auto& builderBuffer = ctx.builder.bufferRef();
+        std::cerr << HexDump(builderBuffer.data(), builderBuffer.size()) << std::endl;
+      }
       stopThreads.store(true);
-      joinThreads();
     }
+    // add to global counter
+    totalValidationErrors.fetch_add(validationErrors);
+  };
+
+  std::vector<std::thread> threads;
+  threads.reserve(numThreads);
+  auto joinThreads = [&threads]() {
+    for (auto &t: threads) {
+      t.join();
+    }
+  };
+
+  try {
+    for (uint32_t i = 0; i < numThreads; ++i) {
+      uint32_t iterations = itsPerThread;
+      if (i == numThreads - 1) {
+        iterations += leftoverIts;
+      }
+      if (isJSON) {
+        threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i, isEvil);
+      } else {
+        threads.emplace_back(threadCallback, iterations, VPackFormat{}, seed + i, isEvil);
+      }
+    }
+    joinThreads();
+  } catch (std::exception const&) {
+    stopThreads.store(true);
+    joinThreads();
+  }
+
+  std::cout << "Caught " << totalValidationErrors.load() << " validation error(s).";
+  if (isEvil) {
+    std::cout << " These are potentially legitimate.";
+  }
+  std::cout << std::endl;
+
+  // return proper exit code
+  return stopThreads.load() ? EXIT_FAILURE : EXIT_SUCCESS;
 
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }
