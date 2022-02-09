@@ -44,7 +44,7 @@ struct JSONFormat {};
 
 enum FuzzBytes {
   FIRST_BYTE = 0,
-  MEDIAN_BYTE,
+  RANDOM_BYTE,
   LAST_BYTE,
   NUM_OPTIONS_BYTES
 };
@@ -52,7 +52,8 @@ enum FuzzBytes {
 enum FuzzActions {
   NO_FUZZ = 0,
   REMOVE_BYTE,
-  OVERWRITE_BYTE,
+  REPLACE_BYTE,
+  INSERT_BYTE,
   NUM_OPTIONS_ACTIONS
 };
 
@@ -95,13 +96,30 @@ struct KnownLimitValues {
   static constexpr uint32_t maxBinaryRandStringLength = 1000;
   static constexpr uint32_t objNumMembers = 10;
   static constexpr uint32_t arrayNumMembers = 10;
+  static constexpr uint32_t firstNBytes = 10;
+  static constexpr uint32_t lastNBytes = 10;
 };
 
 struct RandomGenerator {
   RandomGenerator(uint64_t seed) : mt64(seed) {}
 
   std::mt19937_64 mt64; // this is 64 bits for generating uint64_t in ADD_UINT64 for velocypack
-  bool generateEvilBytes = false;
+};
+
+
+struct BuilderContext {
+  Builder builder;
+  RandomGenerator randomGenerator;
+  std::string tempString;
+  std::vector<std::unordered_set<std::string>> tempObjectKeys;
+  uint32_t recursionDepth = 0;
+
+  BuilderContext() = delete;
+  BuilderContext(BuilderContext const&) = delete;
+  BuilderContext& operator=(BuilderContext const&) = delete;
+
+  BuilderContext(Options const* options, uint64_t seed)
+      : builder(options), randomGenerator(seed) {}
 };
 
 Slice nullSlice(Slice::nullSlice());
@@ -140,99 +158,59 @@ static inline bool isOption(char const* arg, char const* expected) {
 uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max - min));
 }
-
-uint8_t getBytePosFromString(std::string const& input, FuzzBytes const& fuzzByte) {
-  uint8_t numByte = 0;
-  if (fuzzByte == FuzzBytes::MEDIAN_BYTE) {
-    numByte = input.size() / 2 - 1;
-    std::cout << "Median byte will return " << numByte<< std::endl;
-    return numByte;
-  } else {
-    numByte = input.size() - 1;
-    std::cout << "Last byte will return " << numByte << std::endl;
-    return numByte;
-  }
+// TODO: refactor with template
+uint8_t generateRandByteWithinRange(uint8_t min, uint8_t max, RandomGenerator& randomGenerator) {
+  return min + (randomGenerator.mt64() % (max - min));
 }
 
-template <typename T>
-uint8_t getBytePosFromNumber(T number, FuzzBytes const& fuzzByte) {
-  uint8_t numByte = 0;
-  if (fuzzByte == FuzzBytes::MEDIAN_BYTE) {
-    numByte = sizeof(number) / 2 - 1;
-    std::cout << "byte pos 1 " << numByte << std::endl;
-    return numByte;
+uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
+  using limits = KnownLimitValues;
+  uint8_t bytePos = 0;
+  if (fuzzByte == FuzzBytes::FIRST_BYTE) {
+    bytePos = static_cast<uint8_t>(ctx.randomGenerator.mt64() % (limits::firstNBytes + 1)); // first 10 bytes inclusive
+  } else if (fuzzByte == FuzzBytes::RANDOM_BYTE) {
+    bytePos = static_cast<uint8_t>(ctx.randomGenerator.mt64() % ctx.builder.slice().byteSize());
   } else if (fuzzByte == FuzzBytes::LAST_BYTE) {
-    numByte = sizeof(number) - 1;
-    std::cout << "byte pos 2 " << numByte << std::endl;
-    return numByte;
+    bytePos = static_cast<uint8_t>(ctx.builder.slice().byteSize() - 1 - limits::lastNBytes +
+                                   (ctx.randomGenerator.mt64() %
+                                    (ctx.builder.slice().byteSize() - limits::lastNBytes)));
   }
+  return bytePos;
 }
 
-template <typename T>
-void performFuzzOnByte(RandomGenerator& randomGenerator, T& dataToFuzz) {
-  FuzzActions fuzzAction = static_cast<FuzzActions>(randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
-  bool isString = false;
+void fuzzBytes(BuilderContext& ctx) {
+  FuzzActions fuzzAction = static_cast<FuzzActions>(ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
   if (fuzzAction == FuzzActions::NO_FUZZ) {
-    std::cout << "No fuzz" <<std::endl;
     return;
   } else {
-    FuzzBytes fuzzByte = static_cast<FuzzBytes>(randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
-    uint8_t bytePos = 0;
-    if (fuzzByte == FuzzBytes::MEDIAN_BYTE) {
-      if constexpr (std::is_same_v<T, std::string>) {
-        isString = true;
-        bytePos = getBytePosFromString(dataToFuzz fuzzByte);
-        std::cout << "Byte to fuzz 1 " << bytePos << std::endl;
-      } else {
-        bytePos = getBytePosFromNumber<decltype(dataToFuzz)>(dataToFuzz, fuzzByte);
-        std::cout << "Byte to fuzz 2 " << bytePos << std::endl;
-      }
-    }
+    FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
+    uint8_t bytePos = getBytePos(ctx, fuzzByte);
+    auto builderBuffer = ctx.builder.bufferRef();
+    std::string vpackBytes = builderBuffer.toString();
+    //  uint8_t* builderBytes = ctx.builder.data();
+    uint8_t *builderBytes = nullptr;
+    std::for_each(vpackBytes.begin(), vpackBytes.end(), [&builderBytes](char c) {
+      builderBytes = (uint8_t*)malloc(sizeof(uint8_t));
+      *builderBytes++ = static_cast<uint8_t>(c);
+    });
     switch (fuzzAction) {
       case REMOVE_BYTE:
-        if (isString) {
-          std::cout << "Remove byte" << std::endl;
-          std::cout << "String before " << dataToFuzz << std::endl;
-          dataToFuzz.erase(bytePos, 1);
-          std::cout << "String after " << dataToFuzz << std::endl;
-        }
-        else {
-          std::string validBytes;
-          for (uint8_t i = 0; i < sizeof(decltype(dataToFuzz)); ++ i) {
-            if (i != bytePos) {
-              validBytes.push_back(dataToFuzz >> (8 * i) & 0xff);
-            }
-          }
-          dataToFuzz = validBytes;
-        }
+        vpackBytes.erase(bytePos, 1);
         break;
-      case OVERWRITE_BYTE:
-        if (isString) {
-          std::cout << "Remove byte" << std::endl;
-          std::cout << "String before " << dataToFuzz << std::endl;
-          dataToFuzz[bytePos] = randomGenerator.mt64() % 256;
-          std::cout << "String after " << dataToFuzz << std::endl;
-        }
-        else {
-          std::string validBytes;
-          for (uint8_t i = 0; i < sizeof(decltype(dataToFuzz)); ++ i) {
-            if (i != bytePos) {
-              validBytes.push_back(dataToFuzz >> (8 * i) & 0xff);
-            } else {
-              validBytes.push_back(randomGenerator.mt64() % 256);
-            }
-          }
-          dataToFuzz = validBytes;
-        }
-        std::cout << "Overwrite byte" << std::endl;
+      case REPLACE_BYTE:
+        vpackBytes.data()[bytePos] = generateRandByteWithinRange(0, 255, ctx.randomGenerator);
+        break;
+      case INSERT_BYTE:
+        vpackBytes.insert(bytePos, static_cast<std::string::value_type>(generateRandByteWithinRange(0, 255,
+                          ctx.randomGenerator)), 1);
         break;
       default:
         VELOCYPACK_ASSERT(false);
     }
+
+    ctx.builder = Builder(Slice(builderBytes));
   }
 }
-
-
 
 void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
   using limits = KnownLimitValues;
@@ -328,22 +306,6 @@ constexpr RandomBuilderAdditions maxRandomType() {
   }
 }
 
-struct BuilderContext {
-  Builder builder;
-  RandomGenerator randomGenerator;
-  std::string tempString;
-  std::vector<std::unordered_set<std::string>> tempObjectKeys;
-  uint32_t recursionDepth = 0;
-  bool isEvil = false;
-
-  BuilderContext() = delete;
-  BuilderContext(BuilderContext const&) = delete;
-  BuilderContext& operator=(BuilderContext const&) = delete;
-
-  BuilderContext(Options const* options, uint64_t seed, bool isEvil)
-      : builder(options), randomGenerator(seed), isEvil(isEvil) {}
-};
-
 template <typename Format>
 static void generateVelocypack(BuilderContext& ctx) {
   constexpr RandomBuilderAdditions maxValue = maxRandomType<Format>();
@@ -390,9 +352,6 @@ static void generateVelocypack(BuilderContext& ctx) {
             }
           }
           // key
-          if (ctx.isEvil) {
-            performFuzzOnByte(randomGenerator, ctx.tempString);
-          }
           builder.add(Value(ctx.tempString));
           // value
           generateVelocypack<Format>(ctx);
@@ -408,9 +367,6 @@ static void generateVelocypack(BuilderContext& ctx) {
       case ADD_STRING: {
         ctx.tempString.clear();
         generateUtf8String(randomGenerator, ctx.tempString);
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, ctx.tempString);
-        }
         builder.add(Value(ctx.tempString));
         break;
       }
@@ -419,9 +375,6 @@ static void generateVelocypack(BuilderContext& ctx) {
         break;
       case ADD_UINT64: {
         uint64_t value = randomGenerator.mt64();
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, value);
-        }
         builder.add(Value(value));
         break;
       }
@@ -429,9 +382,6 @@ static void generateVelocypack(BuilderContext& ctx) {
         uint64_t uintValue = randomGenerator.mt64();
         int64_t intValue;
         memcpy(&intValue, &uintValue, sizeof(uintValue));
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, intValue);
-        }
         builder.add(Value(intValue));
         break;
       }
@@ -441,26 +391,17 @@ static void generateVelocypack(BuilderContext& ctx) {
           uint64_t uintValue = randomGenerator.mt64();
           memcpy(&doubleValue, &uintValue, sizeof(uintValue));
         } while (!std::isfinite(doubleValue));
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, doubleValue);
-        }
         builder.add(Value(doubleValue));
         break;
       }
       case ADD_UTC_DATE: {
         uint64_t utcDateValue = randomGenerator.mt64();
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, utcDateValue);
-        }
         builder.add(Value(utcDateValue, ValueType::UTCDate));
       }
         break;
       case ADD_BINARY: {
         ctx.tempString.clear();
         generateRandBinary(randomGenerator, ctx.tempString);
-        if (ctx.isEvil) {
-          performFuzzOnByte(randomGenerator, ctx.tempString);
-        }
         builder.add(ValuePair(ctx.tempString.data(), ctx.tempString.size(), ValueType::Binary));
         break;
       }
@@ -586,7 +527,7 @@ int main(int argc, char const* argv[]) {
       parseOptions.clearBuilderBeforeParse = true;
       parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
 
-      BuilderContext ctx(&options, seed, isEvil);
+      BuilderContext ctx(&options, seed);
       try {
         // temporary output buffer used for JSON-stringification
         std::string json;
@@ -598,16 +539,24 @@ int main(int argc, char const* argv[]) {
           ctx.builder.clear();
           ctx.tempObjectKeys.clear();
           VELOCYPACK_ASSERT(ctx.recursionDepth == 0);
-          if constexpr (std::is_same_v<Format, JSONFormat>) {
-            generateVelocypack<JSONFormat>(ctx);
-            ctx.tempString.clear();
-            parser.parse(ctx.builder.slice().toJson(ctx.tempString, &parseOptions));
-          } else {
-            generateVelocypack<VPackFormat>(ctx);
-            validator.validate(ctx.builder.slice().start(), ctx.builder.slice().byteSize());
+          generateVelocypack<Format>(ctx);
+          if (isEvil) {
+            fuzzBytes(ctx);
+          }
+          try {
+            if constexpr (std::is_same_v<Format, JSONFormat>) {
+              ctx.tempString.clear();
+              parser.parse(ctx.builder.slice().toJson(ctx.tempString, &parseOptions));
+            } else {
+              validator.validate(ctx.builder.slice().start(), ctx.builder.slice().byteSize());
+            }
+          } catch (std::exception const &) {
+            if (isEvil) {
+              throw;
+            }
           }
         }
-      } catch (std::exception const& e) {
+      } catch (std::exception const &e) {
         std::lock_guard<std::mutex> lock(mtx);
         std::cerr << "Program encountered exception on thread execution: " << e.what() << " in slice ";
         if constexpr (std::is_same_v<Format, JSONFormat>) {
