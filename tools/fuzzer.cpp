@@ -50,8 +50,7 @@ enum FuzzBytes {
 };
 
 enum FuzzActions {
-  NO_FUZZ = 0,
-  REMOVE_BYTE,
+  REMOVE_BYTE = 0,
   REPLACE_BYTE,
   INSERT_BYTE,
   NUM_OPTIONS_ACTIONS
@@ -113,13 +112,14 @@ struct BuilderContext {
   std::string tempString;
   std::vector<std::unordered_set<std::string>> tempObjectKeys;
   uint32_t recursionDepth = 0;
+  bool isEvil;
 
   BuilderContext() = delete;
   BuilderContext(BuilderContext const&) = delete;
   BuilderContext& operator=(BuilderContext const&) = delete;
 
-  BuilderContext(Options const* options, uint64_t seed)
-      : builder(options), randomGenerator(seed) {}
+  BuilderContext(Options const* options, uint64_t seed, bool isEvil)
+      : builder(options), randomGenerator(seed), isEvil(isEvil) {}
 };
 
 Slice nullSlice(Slice::nullSlice());
@@ -155,25 +155,25 @@ static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-static uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
-  return min + (randomGenerator.mt64() % (max + 1 - min));
-}
-// TODO: refactor with template
-static uint8_t generateRandByteWithinRange(uint8_t min, uint8_t max, RandomGenerator& randomGenerator) {
+template <typename T>
+static T generateRandWithinRange(T min, T max, RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max + 1 - min));
 }
 
-static uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
+static size_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte, std::string const& input) {
+  size_t inputSize = input.size();
+  if (!inputSize) {
+    return 0;
+  }
   using limits = KnownLimitValues;
-  uint8_t sliceSize = ctx.builder.slice().byteSize();
-  uint8_t offset = sliceSize > (3 * limits::randBytePosOffset) ? limits::randBytePosOffset : 0;
-  uint8_t bytePos = 0;
+  size_t offset = inputSize > (3 * limits::randBytePosOffset) ? limits::randBytePosOffset : 0;
+  size_t bytePos = 0;
   if (fuzzByte == FuzzBytes::FIRST_BYTE) {
-    bytePos = generateRandByteWithinRange(0, offset, ctx.randomGenerator);
+    bytePos = generateRandWithinRange<size_t>(0, offset, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::RANDOM_BYTE) {
-    bytePos = generateRandByteWithinRange(0, sliceSize - 1, ctx.randomGenerator);
+    bytePos = generateRandWithinRange<size_t>(0, inputSize - 1, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::LAST_BYTE) {
-    bytePos = generateRandByteWithinRange(sliceSize - 1 - offset, sliceSize - 1, ctx.randomGenerator);
+    bytePos = generateRandWithinRange<size_t>(inputSize - 1 - offset, inputSize - 1, ctx.randomGenerator);
   }
   return bytePos;
 }
@@ -182,30 +182,32 @@ static void fuzzBytes(BuilderContext& ctx) {
   using limits = KnownLimitValues;
   for (uint32_t i = 0; i < limits::numFuzzIterations; ++i) {
     FuzzActions fuzzAction = static_cast<FuzzActions>(ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
-    if (fuzzAction == FuzzActions::NO_FUZZ) {
-      return;
-    } else {
-      FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
-      uint8_t bytePos = getBytePos(ctx, fuzzByte);
-      auto builderBuffer = ctx.builder.bufferRef();
-      std::string vpackBytes = builderBuffer.toString();
-      switch (fuzzAction) {
-        case REMOVE_BYTE:
-          vpackBytes.erase(bytePos, 1);
-          break;
-        case REPLACE_BYTE:
-          vpackBytes.data()[bytePos] = generateRandByteWithinRange(0, 255, ctx.randomGenerator);
-          break;
-        case INSERT_BYTE:
-          vpackBytes.insert(bytePos, static_cast<std::string::value_type>(generateRandByteWithinRange(0, 255,
-                           ctx.randomGenerator)), 1);
-          break;
-        default:
-          VELOCYPACK_ASSERT(false);
-      }
-      builderBuffer.clear();
-      builderBuffer.append(reinterpret_cast<uint8_t const*>(vpackBytes.data()), vpackBytes.size());
+    FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
+    auto& builderBuffer = ctx.builder.bufferRef();
+    std::string vpackBytes = builderBuffer.toString();
+    size_t bytePos = getBytePos(ctx, fuzzByte, vpackBytes);
+    switch (fuzzAction) {
+      case REMOVE_BYTE:
+        if (vpackBytes.empty()) {
+          continue;
+        }
+        vpackBytes.erase(bytePos, 1);
+        break;
+      case REPLACE_BYTE:
+        if (vpackBytes.empty()) {
+          continue;
+        }
+        vpackBytes[bytePos] = generateRandWithinRange<uint8_t>(0, 255, ctx.randomGenerator);
+        break;
+      case INSERT_BYTE:
+        vpackBytes.insert(bytePos, 1, static_cast<std::string::value_type>(generateRandWithinRange<uint8_t>(0, 255,
+                                                                                                            ctx.randomGenerator)));
+        break;
+      default:
+        VELOCYPACK_ASSERT(false);
     }
+    builderBuffer.clear();
+    builderBuffer.append(reinterpret_cast<uint8_t const *>(vpackBytes.data()), vpackBytes.size());
   }
 }
 
@@ -224,57 +226,57 @@ static void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& ut
   switch (numBytes) {
     case 1: {
       utf8Str.push_back(
-          generateRandWithinRange(limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound, randomGenerator));
+          generateRandWithinRange<uint8_t>(limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound, randomGenerator));
       break;
     }
     case 2: {
-      utf8Str.push_back(generateRandWithinRange(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
+      utf8Str.push_back(generateRandWithinRange<uint8_t>(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
                                                 randomGenerator));
       utf8Str.push_back(
-          generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+          generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 3: {
-      uint32_t randFirstByte = generateRandWithinRange(limits::utf83BytesFirstLowerBound,
+      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(limits::utf83BytesFirstLowerBound,
                                                        limits::utf83BytesFirstUpperBound,
                                                        randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xE0) {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound,
+            generateRandWithinRange<uint8_t>(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound,
                                     randomGenerator));
       } else if (randFirstByte == 0xED) {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
+            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
                                     randomGenerator));
       } else {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       utf8Str.push_back(
-          generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+          generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       break;
     }
     case 4: {
-      uint32_t randFirstByte = generateRandWithinRange(limits::utf84BytesFirstLowerBound,
+      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(limits::utf84BytesFirstLowerBound,
                                                        limits::utf84BytesFirstUpperBound,
                                                        randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xF0) {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound,
+            generateRandWithinRange<uint8_t>(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound,
                                     randomGenerator));
       } else if (randFirstByte == 0xF4) {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound,
+            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound,
                                     randomGenerator));
       } else {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       for (uint32_t i = 0; i < 2; ++i) {
         utf8Str.push_back(
-            generateRandWithinRange(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
       }
       break;
     }
@@ -394,8 +396,8 @@ static void generateVelocypack(BuilderContext& ctx) {
       case ADD_UTC_DATE: {
         uint64_t utcDateValue = randomGenerator.mt64();
         builder.add(Value(utcDateValue, ValueType::UTCDate));
-      }
         break;
+      }
       case ADD_BINARY: {
         ctx.tempString.clear();
         generateRandBinary(randomGenerator, ctx.tempString);
@@ -403,6 +405,9 @@ static void generateVelocypack(BuilderContext& ctx) {
         break;
       }
       case ADD_EXTERNAL: {
+        if (ctx.isEvil) {
+          continue;
+        }
         builder.add(Value(static_cast<void const *>(&nullSlice), ValueType::External));
         break;
       }
@@ -527,9 +532,10 @@ int main(int argc, char const* argv[]) {
       Options validationOptions = options;
       if (isEvil) {
         validationOptions.disallowExternals = true;
+        validationOptions.disallowBCD = true;
       }
 
-      BuilderContext ctx(&options, seed);
+      BuilderContext ctx(&options, seed, isEvil);
       try {
         // temporary output buffer used for JSON-stringification
         std::string json;
@@ -550,11 +556,14 @@ int main(int argc, char const* argv[]) {
               ctx.tempString.clear();
               parser.parse(ctx.builder.slice().toJson(ctx.tempString));
             } else {
-              validator.validate(ctx.builder.slice().start(), ctx.builder.slice().byteSize());
+              auto& builderBuffer = ctx.builder.bufferRef();
+              validator.validate(ctx.builder.slice().start(), builderBuffer.size());
             }
-          } catch (std::exception const &) {
-            if (isEvil) {
+          } catch (std::exception const &e) {
+            if (!isEvil) {
               throw;
+            } else {
+              std::cerr << "Program encountered exception on thread execution: " << e.what() << std::endl;
             }
           }
         }
