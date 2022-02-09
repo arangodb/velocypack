@@ -98,6 +98,7 @@ struct KnownLimitValues {
   static constexpr uint32_t arrayNumMembers = 10;
   static constexpr uint32_t firstNBytes = 10;
   static constexpr uint32_t lastNBytes = 10;
+  static constexpr uint32_t numFuzzIterations = 10;
 };
 
 struct RandomGenerator {
@@ -155,15 +156,15 @@ static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
+static uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max - min));
 }
 // TODO: refactor with template
-uint8_t generateRandByteWithinRange(uint8_t min, uint8_t max, RandomGenerator& randomGenerator) {
+static uint8_t generateRandByteWithinRange(uint8_t min, uint8_t max, RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max - min));
 }
 
-uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
+static uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
   using limits = KnownLimitValues;
   uint8_t bytePos = 0;
   if (fuzzByte == FuzzBytes::FIRST_BYTE) {
@@ -178,41 +179,45 @@ uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
   return bytePos;
 }
 
-void fuzzBytes(BuilderContext& ctx) {
-  FuzzActions fuzzAction = static_cast<FuzzActions>(ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
-  if (fuzzAction == FuzzActions::NO_FUZZ) {
-    return;
-  } else {
-    FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
-    uint8_t bytePos = getBytePos(ctx, fuzzByte);
-    auto builderBuffer = ctx.builder.bufferRef();
-    std::string vpackBytes = builderBuffer.toString();
-    //  uint8_t* builderBytes = ctx.builder.data();
-    uint8_t *builderBytes = nullptr;
-    std::for_each(vpackBytes.begin(), vpackBytes.end(), [&builderBytes](char c) {
-      builderBytes = (uint8_t*)malloc(sizeof(uint8_t));
-      *builderBytes++ = static_cast<uint8_t>(c);
-    });
-    switch (fuzzAction) {
-      case REMOVE_BYTE:
-        vpackBytes.erase(bytePos, 1);
-        break;
-      case REPLACE_BYTE:
-        vpackBytes.data()[bytePos] = generateRandByteWithinRange(0, 255, ctx.randomGenerator);
-        break;
-      case INSERT_BYTE:
-        vpackBytes.insert(bytePos, static_cast<std::string::value_type>(generateRandByteWithinRange(0, 255,
-                          ctx.randomGenerator)), 1);
-        break;
-      default:
-        VELOCYPACK_ASSERT(false);
-    }
+static void fuzzBytes(BuilderContext& ctx) {
+  using limits = KnownLimitValues;
+  for (uint32_t i = 0; i < limits::numFuzzIterations; ++i) {
+    FuzzActions fuzzAction = static_cast<FuzzActions>(ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
+    if (fuzzAction == FuzzActions::NO_FUZZ) {
+      return;
+    } else {
+      FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
+      uint8_t bytePos = getBytePos(ctx, fuzzByte);
+      auto builderBuffer = ctx.builder.bufferRef();
+      std::string vpackBytes = builderBuffer.toString();
+      //  uint8_t* builderBytes = ctx.builder.data();
+      uint8_t *builderBytes = nullptr;
+      switch (fuzzAction) {
+        case REMOVE_BYTE:
+          vpackBytes.erase(bytePos, 1);
+          break;
+        case REPLACE_BYTE:
+          vpackBytes.data()[bytePos] = generateRandByteWithinRange(0, 255, ctx.randomGenerator);
+          break;
+        case INSERT_BYTE:
+          vpackBytes.insert(bytePos, static_cast<std::string::value_type>(generateRandByteWithinRange(0, 255,
+                           ctx.randomGenerator)), 1);
+          break;
+        default:
+          VELOCYPACK_ASSERT(false);
+      }
 
-    ctx.builder = Builder(Slice(builderBytes));
+      std::for_each(vpackBytes.begin(), vpackBytes.end(), [&builderBytes](char c) {
+        builderBytes = (uint8_t *) malloc(sizeof(uint8_t));
+        *(builderBytes++) = static_cast<uint8_t>(c);
+      });
+      ctx.builder = Builder(Slice(builderBytes));
+      free(builderBytes);
+    }
   }
 }
 
-void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
+static void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
   using limits = KnownLimitValues;
   uint32_t length = randomGenerator.mt64() % limits::maxBinaryRandStringLength;
   output.reserve(length);
@@ -221,7 +226,7 @@ void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
   }
 }
 
-void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) {
+static void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) {
   using limits = KnownLimitValues;
   uint32_t numBytes = generateRandWithinRange(1, 4, randomGenerator);
   switch (numBytes) {
