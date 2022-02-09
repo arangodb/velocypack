@@ -96,8 +96,7 @@ struct KnownLimitValues {
   static constexpr uint32_t maxBinaryRandStringLength = 1000;
   static constexpr uint32_t objNumMembers = 10;
   static constexpr uint32_t arrayNumMembers = 10;
-  static constexpr uint32_t firstNBytes = 10;
-  static constexpr uint32_t lastNBytes = 10;
+  static constexpr uint32_t randBytePosOffset = 8;
   static constexpr uint32_t numFuzzIterations = 10;
 };
 
@@ -157,24 +156,24 @@ static inline bool isOption(char const* arg, char const* expected) {
 }
 
 static uint32_t generateRandWithinRange(uint32_t min, uint32_t max, RandomGenerator& randomGenerator) {
-  return min + (randomGenerator.mt64() % (max - min));
+  return min + (randomGenerator.mt64() % (max + 1 - min));
 }
 // TODO: refactor with template
 static uint8_t generateRandByteWithinRange(uint8_t min, uint8_t max, RandomGenerator& randomGenerator) {
-  return min + (randomGenerator.mt64() % (max - min));
+  return min + (randomGenerator.mt64() % (max + 1 - min));
 }
 
 static uint8_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte) {
   using limits = KnownLimitValues;
+  uint8_t sliceSize = ctx.builder.slice().byteSize();
+  uint8_t offset = sliceSize > (3 * limits::randBytePosOffset) ? limits::randBytePosOffset : 0;
   uint8_t bytePos = 0;
   if (fuzzByte == FuzzBytes::FIRST_BYTE) {
-    bytePos = static_cast<uint8_t>(ctx.randomGenerator.mt64() % (limits::firstNBytes + 1)); // first 10 bytes inclusive
+    bytePos = generateRandByteWithinRange(0, offset, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::RANDOM_BYTE) {
-    bytePos = static_cast<uint8_t>(ctx.randomGenerator.mt64() % ctx.builder.slice().byteSize());
+    bytePos = generateRandByteWithinRange(0, sliceSize - 1, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::LAST_BYTE) {
-    bytePos = static_cast<uint8_t>(ctx.builder.slice().byteSize() - 1 - limits::lastNBytes +
-                                   (ctx.randomGenerator.mt64() %
-                                    (ctx.builder.slice().byteSize() - limits::lastNBytes)));
+    bytePos = generateRandByteWithinRange(sliceSize - 1 - offset, sliceSize - 1, ctx.randomGenerator);
   }
   return bytePos;
 }
@@ -190,8 +189,6 @@ static void fuzzBytes(BuilderContext& ctx) {
       uint8_t bytePos = getBytePos(ctx, fuzzByte);
       auto builderBuffer = ctx.builder.bufferRef();
       std::string vpackBytes = builderBuffer.toString();
-      //  uint8_t* builderBytes = ctx.builder.data();
-      uint8_t *builderBytes = nullptr;
       switch (fuzzAction) {
         case REMOVE_BYTE:
           vpackBytes.erase(bytePos, 1);
@@ -206,13 +203,8 @@ static void fuzzBytes(BuilderContext& ctx) {
         default:
           VELOCYPACK_ASSERT(false);
       }
-
-      std::for_each(vpackBytes.begin(), vpackBytes.end(), [&builderBytes](char c) {
-        builderBytes = (uint8_t *) malloc(sizeof(uint8_t));
-        *(builderBytes++) = static_cast<uint8_t>(c);
-      });
-      ctx.builder = Builder(Slice(builderBytes));
-      free(builderBytes);
+      builderBuffer.clear();
+      builderBuffer.append(reinterpret_cast<uint8_t const*>(vpackBytes.data()), vpackBytes.size());
     }
   }
 }
@@ -532,14 +524,19 @@ int main(int argc, char const* argv[]) {
       parseOptions.clearBuilderBeforeParse = true;
       parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
 
+      Options validationOptions = options;
+      if (isEvil) {
+        validationOptions.disallowExternals = true;
+      }
+
       BuilderContext ctx(&options, seed);
       try {
         // temporary output buffer used for JSON-stringification
         std::string json;
         // parser used for JSON-parsing
-        Parser parser(&options);
+        Parser parser(&parseOptions);
         // validator used for VPack validation
-        Validator validator(&options);
+        Validator validator(&validationOptions);
         while (iterations-- > 0 && !stopThreads.load(std::memory_order_relaxed)) {
           ctx.builder.clear();
           ctx.tempObjectKeys.clear();
@@ -551,7 +548,7 @@ int main(int argc, char const* argv[]) {
           try {
             if constexpr (std::is_same_v<Format, JSONFormat>) {
               ctx.tempString.clear();
-              parser.parse(ctx.builder.slice().toJson(ctx.tempString, &parseOptions));
+              parser.parse(ctx.builder.slice().toJson(ctx.tempString));
             } else {
               validator.validate(ctx.builder.slice().start(), ctx.builder.slice().byteSize());
             }
