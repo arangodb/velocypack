@@ -532,6 +532,7 @@ int main(int argc, char const* argv[]) {
     Options parseOptions = options;
     parseOptions.clearBuilderBeforeParse = true;
     parseOptions.paddingBehavior = Options::PaddingBehavior::UsePadding;
+    parseOptions.dumpAttributesInIndexOrder = false;
 
     Options validationOptions = options;
     if (isEvil) {
@@ -564,11 +565,13 @@ int main(int argc, char const* argv[]) {
         }
 
         try {
+          auto& builderBuffer = ctx.builder.bufferRef();
           if constexpr (std::is_same_v<Format, JSONFormat>) {
+            Slice s(builderBuffer.data());
+            VELOCYPACK_ASSERT(s.byteSize() == builderBuffer.size());
             ctx.tempString.clear();
-            parser.parse(ctx.builder.slice().toJson(ctx.tempString));
+            parser.parse(s.toJson(ctx.tempString));
           } else {
-            auto& builderBuffer = ctx.builder.bufferRef();
             validator.validate(builderBuffer.data(), builderBuffer.size());
           }
         } catch (std::exception const &e) {
@@ -588,10 +591,10 @@ int main(int argc, char const* argv[]) {
       std::cerr 
           << "Caught unexpected exception during fuzzing: " << e.what() << std::endl
           << "Slice data:" << std::endl;
+      auto& builderBuffer = ctx.builder.bufferRef();
       if constexpr (std::is_same_v<Format, JSONFormat>) {
-        std::cerr << ctx.builder.slice().toJson() << std::endl;
+        std::cerr << Slice(builderBuffer.data()).toJson() << std::endl;
       } else {
-        auto& builderBuffer = ctx.builder.bufferRef();
         std::cerr << HexDump(builderBuffer.data(), builderBuffer.size()) << std::endl;
       }
       stopThreads.store(true);
