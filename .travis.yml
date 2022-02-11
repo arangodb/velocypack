@@ -8,7 +8,7 @@ env:
 
 matrix:
   include:
-    - name: "C++20 build g++-9, xxhash"
+    - name: "g++-9, xxhash"
       env:
         - ARCH=amd64
         #compiler
@@ -22,7 +22,7 @@ matrix:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
     
-    - name: "C++20 build g++-9, fasthash"
+    - name: "g++-9, fasthash"
       env:
         - ARCH=amd64
         #compiler
@@ -36,7 +36,7 @@ matrix:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
     
-    - name: "address sanitizer build, g++-9"
+    - name: "g++-9, address sanitizer"
       env:
         - ARCH=amd64
         #compiler
@@ -49,7 +49,7 @@ matrix:
         apt:
           packages: ['gcc-9', 'g++-9', 'cmake']
 
-    - name: "coverage build, g++-9"
+    - name: "g++-9, coverage"
       env:
         - ARCH=amd64
         #compiler
@@ -58,6 +58,7 @@ matrix:
         #build settings
         - build_type=Debug
         - CXXFLAGS="-O0 -fno-inline --coverage"
+        - SANITIZER=false
       addons:
         apt:
           packages: ['gcc-9', 'g++-9', 'lcov', 'cmake']
@@ -65,7 +66,7 @@ matrix:
         - ./scripts/travis-build.sh
         - ./scripts/travis-after-success.sh
 
-    - name: "clang build, clang++-10"
+    - name: "clang++-10"
       compiler: clang++-10
       env:
         - ARCH=amd64
