@@ -24,6 +24,7 @@ set(Tests
     testsFiles
     testsHashedStringRef
     testsHexDump
+    testsInspector
     testsIterator
     testsLookup
     testsParser
