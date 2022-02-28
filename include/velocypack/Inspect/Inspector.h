@@ -23,8 +23,10 @@
 
 #pragma once
 
-namespace arangodb::velocypack {
+#include <optional>
+#include <string>
+namespace arangodb::velocypack::inspection {
 
 struct InspectorBase {};
 
-} // namespace arangodb::velocypack
+}  // namespace arangodb::velocypack::inspection

@@ -49,7 +49,7 @@ struct Dummy {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Dummy& x) {
+auto inspect(Inspector& f, Dummy& x) {
   return f.object().fields(f.field("i", x.i), f.field("d", x.d),
                            f.field("b", x.b), f.field("s", x.s));
 }
@@ -59,7 +59,7 @@ struct Nested {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Nested& x) {
+auto inspect(Inspector& f, Nested& x) {
   return f.object().fields(f.field("dummy", x.dummy));
 }
 
@@ -72,12 +72,12 @@ struct Container {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, TypedInt& x) {
+auto inspect(Inspector& f, TypedInt& x) {
   return f.apply(x.value);
 }
 
 template<class Inspector>
-bool inspect(Inspector& f, Container& x) {
+auto inspect(Inspector& f, Container& x) {
   return f.object().fields(f.field("i", x.i));
 }
 struct List {
@@ -86,7 +86,7 @@ struct List {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, List& x) {
+auto inspect(Inspector& f, List& x) {
   return f.object().fields(f.field("vec", x.vec), f.field("list", x.list));
 }
 
@@ -96,7 +96,7 @@ struct Map {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Map& x) {
+auto inspect(Inspector& f, Map& x) {
   return f.object().fields(f.field("map", x.map),
                            f.field("unordered", x.unordered));
 }
@@ -109,7 +109,7 @@ struct Tuple {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Tuple& x) {
+auto inspect(Inspector& f, Tuple& x) {
   return f.object().fields(f.field("tuple", x.tuple), f.field("pair", x.pair),
                            f.field("array1", x.array1),
                            f.field("array2", x.array2));
@@ -123,7 +123,7 @@ struct Optional {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Optional& x) {
+auto inspect(Inspector& f, Optional& x) {
   return f.object().fields(f.field("x", x.x), f.field("y", x.y),
                            f.field("vec", x.vec), f.field("map", x.map));
 }
@@ -136,7 +136,7 @@ struct Pointer {
 };
 
 template<class Inspector>
-bool inspect(Inspector& f, Pointer& x) {
+auto inspect(Inspector& f, Pointer& x) {
   return f.object().fields(f.field("a", x.a), f.field("b", x.b),
                            f.field("c", x.c), f.field("d", x.d));
 }
@@ -150,29 +150,29 @@ struct SaveInspectorTest : public ::testing::Test {
 
 TEST_F(SaveInspectorTest, store_int) {
   int x = 42;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(x, builder.slice().getInt());
 }
 
 TEST_F(SaveInspectorTest, store_double) {
   double x = 123.456;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(x, builder.slice().getDouble());
 }
 
 TEST_F(SaveInspectorTest, store_bool) {
   bool x = true;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(x, builder.slice().getBool());
 }
 
 TEST_F(SaveInspectorTest, store_string) {
   std::string x = "foobar";
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(x, builder.slice().copyString());
 }
 
@@ -180,8 +180,8 @@ TEST_F(SaveInspectorTest, store_object) {
   static_assert(inspection::HasInspectOverload<Dummy, SaveInspector>);
 
   Dummy f{.i = 42, .d = 123.456, .b = true, .s = "foobar"};
-  auto success = inspector.apply(f);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -195,8 +195,8 @@ TEST_F(SaveInspectorTest, store_nested_object) {
   static_assert(inspection::HasInspectOverload<Nested, SaveInspector>);
 
   Nested b{.dummy = {.i = 42, .d = 123.456, .b = true, .s = "foobar"}};
-  auto success = inspector.apply(b);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(b);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -212,8 +212,8 @@ TEST_F(SaveInspectorTest, store_nested_object_without_nesting) {
   static_assert(inspection::HasInspectOverload<Container, SaveInspector>);
 
   Container c{.i = {.value = 42}};
-  auto success = inspector.apply(c);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(c);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -224,8 +224,8 @@ TEST_F(SaveInspectorTest, store_list) {
   static_assert(inspection::HasInspectOverload<List, SaveInspector>);
 
   List l{.vec = {1, 2, 3}, .list = {4, 5}};
-  auto success = inspector.apply(l);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(l);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -249,8 +249,8 @@ TEST_F(SaveInspectorTest, store_map) {
 
   Map m{.map = {{"1", 1}, {"2", 2}, {"3", 3}},
         .unordered = {{"4", 4}, {"5", 5}}};
-  auto success = inspector.apply(m);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(m);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -275,8 +275,8 @@ TEST_F(SaveInspectorTest, store_tuples) {
           .pair = {987, "bar"},
           .array1 = {"a", "b"},
           .array2 = {1, 2, 3}};
-  auto success = inspector.apply(t);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(t);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -310,8 +310,8 @@ TEST_F(SaveInspectorTest, store_optional) {
              .y = "blubb",
              .vec = {1, std::nullopt, 3},
              .map = {{"1", 1}, {"2", std::nullopt}, {"3", 3}}};
-  auto success = inspector.apply(o);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(o);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -340,8 +340,8 @@ TEST_F(SaveInspectorTest, store_optional_pointer) {
             .b = std::make_shared<int>(42),
             .c = nullptr,
             .d = std::make_unique<int>(43)};
-  auto success = inspector.apply(p);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(p);
+  ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
@@ -359,8 +359,8 @@ TEST_F(LoadInspectorTest, load_int) {
   LoadInspector inspector{builder};
 
   int x = 0;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(42, x);
 }
 
@@ -369,8 +369,8 @@ TEST_F(LoadInspectorTest, load_double) {
   LoadInspector inspector{builder};
 
   double x = 0;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(123.456, x);
 }
 
@@ -379,8 +379,8 @@ TEST_F(LoadInspectorTest, load_bool) {
   LoadInspector inspector{builder};
 
   bool x = false;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ(true, x);
 }
 
@@ -389,8 +389,8 @@ TEST_F(LoadInspectorTest, store_string) {
   LoadInspector inspector{builder};
 
   std::string x;
-  auto success = inspector.apply(x);
-  EXPECT_TRUE(success);
+  auto result = inspector.apply(x);
+  EXPECT_TRUE(result.ok());
   EXPECT_EQ("foobar", x);
 }
 
@@ -404,8 +404,8 @@ TEST_F(LoadInspectorTest, load_object) {
   LoadInspector inspector{builder};
 
   Dummy d;
-  auto success = inspector.apply(d);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(d);
+  ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, d.i);
   EXPECT_EQ(123.456, d.d);
   EXPECT_EQ(true, d.b);
@@ -425,8 +425,8 @@ TEST_F(LoadInspectorTest, load_nested_object) {
   LoadInspector inspector{builder};
 
   Nested n;
-  auto success = inspector.apply(n);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(n);
+  ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, n.dummy.i);
   EXPECT_EQ(123.456, n.dummy.d);
   EXPECT_EQ(true, n.dummy.b);
@@ -440,8 +440,8 @@ TEST_F(LoadInspectorTest, load_nested_object_without_nesting) {
   LoadInspector inspector{builder};
 
   Container c;
-  auto success = inspector.apply(c);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(c);
+  ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, c.i.value);
 }
 
@@ -462,8 +462,8 @@ TEST_F(LoadInspectorTest, load_list) {
   LoadInspector inspector{builder};
 
   List l;
-  auto success = inspector.apply(l);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(l);
+  ASSERT_TRUE(result.ok());
 
   EXPECT_EQ((std::vector<int>{1, 2, 3}), l.vec);
   EXPECT_EQ((std::list<int>{4, 5}), l.list);
@@ -486,8 +486,8 @@ TEST_F(LoadInspectorTest, load_map) {
   LoadInspector inspector{builder};
 
   Map m;
-  auto success = inspector.apply(m);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(m);
+  ASSERT_TRUE(result.ok());
 
   EXPECT_EQ((std::map<std::string, int>{{"1", 1}, {"2", 2}, {"3", 3}}), m.map);
   EXPECT_EQ((std::unordered_map<std::string, int>{{"4", 4}, {"5", 5}}),
@@ -527,8 +527,8 @@ TEST_F(LoadInspectorTest, load_tuples) {
   LoadInspector inspector{builder};
 
   Tuple t;
-  auto success = inspector.apply(t);
-  ASSERT_TRUE(success);
+  auto result = inspector.apply(t);
+  ASSERT_TRUE(result.ok());
 
   Tuple expected{.tuple = {"foo", 42, 12.34},
                  .pair = {987, "bar"},
@@ -562,9 +562,9 @@ TEST_F(LoadInspectorTest, load_optional) {
   builder.close();
   LoadInspector inspector{builder};
 
-  Optional o;
-  auto success = inspector.apply(o);
-  ASSERT_TRUE(success);
+  Optional o{.x = 42};
+  auto result = inspector.apply(o);
+  ASSERT_TRUE(result.ok());
 
   Optional expected{.x = std::nullopt,
                     .y = "blubb",

@@ -29,6 +29,7 @@
 #include <variant>
 
 #include "velocypack/Builder.h"
+#include "velocypack/Inspect/Inspector.h"
 #include "velocypack/Inspect/InspectorAccess.h"
 #include "velocypack/Slice.h"
 #include "velocypack/Value.h"
@@ -40,85 +41,122 @@ struct SaveInspector {
 
   explicit SaveInspector(Builder &builder) : _builder(builder) {}
 
-  [[nodiscard]] bool beginObject() {
+  [[nodiscard]] inspection::Result beginObject() {
     _builder.openObject();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool endObject() {
+  [[nodiscard]] inspection::Result endObject() {
     _builder.close();
-    return true;
+    return {};
   }
 
   template <class T>
-  [[nodiscard]] bool value(T const &v) requires inspection::IsBuiltinType<T> {
+  [[nodiscard]] inspection::Result
+  value(T const &v) requires inspection::IsBuiltinType<T> {
     _builder.add(VPackValue(v));
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool beginArray() {
+  [[nodiscard]] inspection::Result beginArray() {
     _builder.openArray();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool endArray() {
+  [[nodiscard]] inspection::Result endArray() {
     _builder.close();
-    return true;
+    return {};
   }
 
-  template <class T> [[nodiscard]] bool tuple(const T &data) {
-    return [ this, &data ]<std::size_t... Is>(std::index_sequence<Is...>) {
-      return beginArray() &&
-             (inspection::save(*this, std::get<Is>(data)) && ...) && endArray();
+  template <class T> [[nodiscard]] inspection::Result tuple(const T &data) {
+    auto res =  beginArray();
+    assert(res.ok());
+
+    if (auto res = processTuple<0, std::tuple_size_v<T>>(data); !res.ok()) {
+      return res;
     }
-    (std::make_index_sequence<std::tuple_size<T>::value>{});
+
+    return endArray();
   }
 
-  template <class T, size_t N> [[nodiscard]] bool tuple(T (&data)[N]) {
-    if (!beginArray()) {
-      return false;
+  template <std::size_t Idx, std::size_t End, class T> [[nodiscard]] inspection::Result processTuple(const T &data) {
+    if constexpr(Idx < End) {
+      if (auto res = inspection::save(*this, std::get<Idx>(data)); !res.ok()) {
+        return res;
+      }
+      return processTuple<Idx + 1, End>(data);
+    } else {
+      return {};
     }
+  }
+
+  template <class T, size_t N>
+  [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
+    auto res = beginArray();
+    assert(res.ok());
     for (size_t index = 0; index < N; ++index) {
-      if (!inspection::save(*this, data[index])) {
-        return false;
+      if (auto res = inspection::save(*this, data[index]); !res.ok()) {
+        return res;
       }
     }
     return endArray();
   }
 
-  template <class T> [[nodiscard]] bool list(const T &list) {
-    if (!beginArray()) {
-      return false;
-    }
+  template <class T> [[nodiscard]] inspection::Result list(const T &list) {
+    auto res = beginArray();
+    assert(res.ok());
     for (auto &&val : list) {
-      if (!inspection::save(*this, val)) {
-        return false;
+      if (auto res = inspection::save(*this, val); !res.ok()) {
+        return res;
       }
     }
     return endArray();
   }
 
-  template <class T> [[nodiscard]] bool map(const T &map) {
-    if (!beginObject()) {
-      return false;
-    }
+  template <class T> [[nodiscard]] inspection::Result map(const T &map) {
+    auto res = beginObject();
+    assert(res.ok());
     for (auto &&[k, v] : map) {
       _builder.add(VPackValue(k));
-      if (!inspection::save(*this, v)) {
-        return false;
+      if (auto res = inspection::save(*this, v); !res.ok()) {
+        return res;
       }
     }
     return endObject();
   }
 
-  template <class T> [[nodiscard]] bool apply(const T &x) {
+  template <class T> [[nodiscard]] inspection::Result apply(const T &x) {
     return inspection::save(*this, x);
   }
 
   struct Object {
-    template <class... Args> [[nodiscard]] bool fields(Args... args) {
-      return inspector.beginObject() && (args(inspector) && ...) &&
-             inspector.endObject();
+    template <class... Args>
+    [[nodiscard]] inspection::Result fields(Args... args) {
+      auto res = inspector.beginObject();
+      assert(res.ok());
+      
+      if (auto res = applyFields(std::forward<Args>(args)...); !res.ok()) {
+        return res;
+      }
+
+      return inspector.endObject();
+    }
+
+   private:
+    friend struct SaveInspector;
+    explicit Object(SaveInspector& inspector) : inspector(inspector) {}
+
+    template <class Arg>
+    inspection::Result applyFields(Arg arg) {
+      return arg(inspector);
+    }
+
+    template <class Arg, class... Args>
+    inspection::Result applyFields(Arg arg, Args... args) {
+      if (auto res = arg(inspector); !res.ok()) {
+        return res;
+      }
+      return applyFields(std::forward<Args>(args)...);
     }
 
     SaveInspector &inspector;
@@ -136,7 +174,7 @@ struct SaveInspector {
   template <typename T> struct RawField : Field<RawField<T>> {
     using value_type = T;
     T *value;
-    [[nodiscard]] bool operator()(SaveInspector &f) {
+    [[nodiscard]] inspection::Result operator()(SaveInspector &f) {
       return inspection::saveField(f, this->name, *value);
     }
   };

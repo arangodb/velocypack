@@ -33,6 +33,16 @@
 
 namespace arangodb::velocypack::inspection {
 
+struct Result {
+  Result() = default;
+  Result(std::string error) : _errorMsg(std::move(error)) {}
+
+  bool ok() const noexcept { return !_errorMsg.has_value(); }
+
+ private:
+  std::optional<std::string> _errorMsg;
+};
+
 struct AccessType {
   struct Builtin {};
   struct Inspect {};
@@ -47,7 +57,7 @@ struct InspectorAccess;
 
 template<class T, class Inspector>
 concept HasInspectOverload = requires(Inspector f, T a) {
-  { inspect(f, a) } -> std::same_as<bool>;
+  { inspect(f, a) } -> std::same_as<inspection::Result>;
 };
 
 template<class T>
@@ -115,47 +125,47 @@ constexpr auto inspectAccessType() {
 // TODO - use concepts instead of tag type overloads
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x, AccessType::Builtin) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Builtin) {
   return f.value(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x, AccessType::Inspect) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Inspect) {
   return inspect(f, x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x, AccessType::Tuple) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Tuple) {
   return f.tuple(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x, AccessType::List) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::List) {
   return f.list(x);
 }
 
 template<class Inspector, class T>
-bool save(Inspector& f, T& x, AccessType::Map) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Map) {
   return f.map(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x, AccessType::Specialization) {
+[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Specialization) {
   return InspectorAccess<T>::apply(f, x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, T& x) {
+[[nodiscard]] Result save(Inspector& f, T& x) {
   return save(f, x, inspectAccessType<Inspector, T>());
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool save(Inspector& f, const T& x) {
+[[nodiscard]] Result save(Inspector& f, const T& x) {
   return save(f, const_cast<T&>(x), inspectAccessType<Inspector, T>());
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool saveField(Inspector& f, std::string_view name, T& val) {
+[[nodiscard]] Result saveField(Inspector& f, std::string_view name, T& val) {
   if constexpr (HasInspectorAccessSpecialization<T>) {
     return InspectorAccess<T>::saveField(f, name, val);
   } else {
@@ -165,42 +175,42 @@ template<class Inspector, class T>
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::Inspect) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Inspect) {
   return inspect(f, x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::Builtin) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Builtin) {
   return f.value(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::List) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::List) {
   return f.list(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::Map) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Map) {
   return f.map(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::Tuple) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Tuple) {
   return f.tuple(x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector& f, T& x, AccessType::Specialization) {
+[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Specialization) {
   return InspectorAccess<T>::apply(f, x);
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool load(Inspector const& f, T& x) {
-  return load(const_cast<Inspector&>(f), x, inspectAccessType<Inspector, T>());
+[[nodiscard]] Result load(Inspector& f, T& x) {
+  return load(f, x, inspectAccessType<Inspector, T>());
 }
 
 template<class Inspector, class T>
-[[nodiscard]] bool loadField(Inspector& f, std::string_view name, T& val) {
+[[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
   auto s = f._slice[name];
   Inspector ff(s);
   return ff.apply(val);
@@ -209,18 +219,19 @@ template<class Inspector, class T>
 template<class T>
 struct InspectorAccess<std::optional<T>> {
   template<class Inspector>
-  [[nodiscard]] static bool apply(Inspector& f, std::optional<T>& val) {
+  [[nodiscard]] static Result apply(Inspector& f, std::optional<T>& val) {
     if constexpr (Inspector::isLoading) {
       if (f._slice.isNone() || f._slice.isNull()) {
         val.reset();
-        return true;
+        return {};
       } else {
         T v;
-        if (f.apply(v)) {
+        auto res = f.apply(v);
+        if (res.ok()) {
           val = std::move(v);
-          return true;
+          return {};
         }
-        return false;
+        return res;
       }
 
     } else {
@@ -228,32 +239,38 @@ struct InspectorAccess<std::optional<T>> {
         return f.apply(val.value());
       }
       f._builder.add(VPackValue(ValueType::Null));
-      return true;
+      return {};
     }
   }
 
   template<class Inspector>
-  [[nodiscard]] static bool saveField(Inspector& f, std::string_view name,
-                                      std::optional<T>& val) {
-    return !val.has_value() || inspection::saveField(f, name, val.value());
+  [[nodiscard]] static Result saveField(Inspector& f, std::string_view name,
+                                        std::optional<T>& val) {
+    if (!val.has_value()) {
+      return {};
+    }
+    return inspection::saveField(f, name, val.value());
   }
 };
 
 template<class T>
 struct PointerInspectorAccess {
   template<class Inspector>
-  [[nodiscard]] static bool apply(Inspector& f, T& val) {
+  [[nodiscard]] static Result apply(Inspector& f, T& val) {
     if (val != nullptr) {
       return f.apply(*val);
     }
     f._builder.add(VPackValue(ValueType::Null));
-    return true;
+    return {};
   }
 
   template<class Inspector>
-  [[nodiscard]] static bool saveField(Inspector& f, std::string_view name,
-                                      T& val) {
-    return (val == nullptr) || inspection::saveField(f, name, *val);
+  [[nodiscard]] static Result saveField(Inspector& f, std::string_view name,
+                                        T& val) {
+    if (val == nullptr) {
+      return {};
+    }
+    return inspection::saveField(f, name, *val);
   }
 };
 

@@ -29,6 +29,7 @@
 #include <type_traits>
 
 #include "velocypack/Builder.h"
+#include "velocypack/Inspect/Inspector.h"
 #include "velocypack/Inspect/InspectorAccess.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Slice.h"
@@ -39,101 +40,119 @@ namespace arangodb::velocypack {
 struct LoadInspector {
   static constexpr bool isLoading = true;
 
-  explicit LoadInspector(Builder &builder) : _slice(builder.slice()) {}
+  explicit LoadInspector(Builder& builder) : _slice(builder.slice()) {}
   explicit LoadInspector(Slice slice) : _slice(slice) {}
 
-  template <class T> [[nodiscard]] bool apply(T &x) {
+  template<class T>
+  [[nodiscard]] inspection::Result apply(T& x) {
     return inspection::load(*this, x);
   }
 
-  template <class T>
+  template<class T>
   requires std::is_integral_v<T>
-  [[nodiscard]] bool value(T &v) {
+  [[nodiscard]] inspection::Result value(T& v) {
     v = _slice.getNumber<T>();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool value(double &v) {
+  [[nodiscard]] inspection::Result value(double& v) {
     v = _slice.getDouble();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool value(std::string &v) {
+  [[nodiscard]] inspection::Result value(std::string& v) {
     v = _slice.copyString();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool value(bool &v) {
+  [[nodiscard]] inspection::Result value(bool& v) {
     v = _slice.getBool();
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool beginObject() {
+  [[nodiscard]] inspection::Result beginObject() {
     assert(_slice.isObject());
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool endObject() { return true; }
+  [[nodiscard]] inspection::Result endObject() { return {}; }
 
-  [[nodiscard]] bool beginArray() {
+  [[nodiscard]] inspection::Result beginArray() {
     assert(_slice.isArray());
-    return true;
+    return {};
   }
 
-  [[nodiscard]] bool endArray() { return true; }
+  [[nodiscard]] inspection::Result endArray() { return {}; }
 
-  template <class T> [[nodiscard]] bool list(T &list) {
-    if (!beginArray()) {
-      return false;
+  template<class T>
+  [[nodiscard]] inspection::Result list(T& list) {
+    if (auto res = beginArray(); !res.ok()) {
+      return res;
     }
-    for (auto &&s : VPackArrayIterator(_slice)) {
+    for (auto&& s : VPackArrayIterator(_slice)) {
       LoadInspector ff(s);
       typename T::value_type val;
-      if (!inspection::load(ff, val)) {
-        return false;
+      if (auto res = inspection::load(ff, val); !res.ok()) {
+        return res;
       }
       list.push_back(std::move(val));
     }
     return endArray();
   }
 
-  template <class T> [[nodiscard]] bool map(T &map) {
-    if (!beginObject()) {
-      return false;
+  template<class T>
+  [[nodiscard]] inspection::Result map(T& map) {
+    if (auto res = beginObject(); !res.ok()) {
+      return res;
     }
-    for (auto &&pair : VPackObjectIterator(_slice)) {
+    for (auto&& pair : VPackObjectIterator(_slice)) {
       LoadInspector ff(pair.value);
       typename T::mapped_type val;
-      if (!inspection::load(ff, val)) {
-        return false;
+      if (auto res = inspection::load(ff, val); !res.ok()) {
+        return res;
       }
       map.emplace(pair.key.copyString(), std::move(val));
     }
     return endObject();
   }
 
-  template <class T> [[nodiscard]] bool tuple(T &data) {
-    assert(_slice.isArray());
-    assert(_slice.length() == std::tuple_size_v<T>);
-    return [ this, &data ]<std::size_t... Is>(std::index_sequence<Is...>) {
-      return beginArray() &&
-             (inspection::load(LoadInspector{_slice[Is]}, std::get<Is>(data)) &&
-              ...) &&
-             endArray();
+  template<class T>
+  [[nodiscard]] inspection::Result tuple(T& data) {
+    if (auto res = beginArray(); !res.ok()) {
+      return res;
     }
-    (std::make_index_sequence<std::tuple_size<T>::value>{});
+
+    if (auto res = processTuple<0, std::tuple_size_v<T>>(data); !res.ok()) {
+      return res;
+    }
+
+    return endArray();
   }
 
-  template <class T, size_t N> [[nodiscard]] bool tuple(T (&data)[N]) {
-    if (!beginArray()) {
-      return false;
+  template<std::size_t Idx, std::size_t End, class T>
+  [[nodiscard]] inspection::Result processTuple(T& data) {
+    if constexpr (Idx < End) {
+      LoadInspector ff{_slice[Idx]};
+      if (auto res = inspection::load(ff, std::get<Idx>(data)); !res.ok()) {
+        return res;
+      }
+      return processTuple<Idx + 1, End>(data);
+    } else {
+      return {};
+    }
+  }
+
+  template<class T, size_t N>
+  [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
+    if (auto res = beginArray(); !res.ok()) {
+      return res;
     }
     assert(_slice.length() == N);
     std::size_t index = 0;
-    for (auto &&v : VPackArrayIterator(_slice)) {
+    for (auto&& v : VPackArrayIterator(_slice)) {
       LoadInspector ff(v);
-      if (!inspection::load(ff, data[index])) {
-        return false;
+      if (auto res = inspection::load(ff, data[index]); !res.ok()) {
+        return res;
       }
       ++index;
     }
@@ -141,42 +160,72 @@ struct LoadInspector {
   }
 
   struct Object {
-    template <class... Args> [[nodiscard]] bool fields(Args... args) {
-      return inspector.beginObject() && (args(inspector) && ...) &&
-             inspector.endObject();
+    template<class... Args>
+    [[nodiscard]] inspection::Result fields(Args... args) {
+      if (auto res = inspector.beginObject(); !res.ok()) {
+        return res;
+      }
+
+      if (auto res = applyFields(std::forward<Args>(args)...); !res.ok()) {
+        return res;
+      }
+
+      return inspector.endObject();
     }
 
-    LoadInspector &inspector;
+   private:
+    friend struct LoadInspector;
+    explicit Object(LoadInspector& inspector) : inspector(inspector) {}
+
+    template<class Arg>
+    inspection::Result applyFields(Arg arg) {
+      return arg(inspector);
+    }
+
+    template<class Arg, class... Args>
+    inspection::Result applyFields(Arg arg, Args... args) {
+      if (auto res = arg(inspector); !res.ok()) {
+        return res;
+      }
+      return applyFields(std::forward<Args>(args)...);
+    }
+
+    LoadInspector& inspector;
   };
 
-  template <typename Derived> struct Field {
+  template<typename Derived>
+  struct Field {
     std::string_view name;
 
-    template <class Predicate>
+    template<class Predicate>
     [[nodiscard]] auto invariant(Predicate predicate) &&;
 
-    template <class U> [[nodiscard]] auto fallback(U val) &&;
+    template<class U>
+    [[nodiscard]] auto fallback(U val) &&;
   };
 
-  template <typename T> struct RawField : Field<RawField<T>> {
+  template<typename T>
+  struct RawField : Field<RawField<T>> {
     using value_type = T;
-    T *value;
-    [[nodiscard]] bool operator()(LoadInspector &f) {
+    T* value;
+    [[nodiscard]] inspection::Result operator()(LoadInspector& f) {
       return inspection::loadField(f, this->name, *value);
     }
   };
 
-  template <typename T> struct VirtualField : Field<VirtualField<T>> {
+  template<typename T>
+  struct VirtualField : Field<VirtualField<T>> {
     using value_type = T;
   };
 
-  template <class Field> struct Invariant {};
+  template<class Field>
+  struct Invariant {};
 
   [[nodiscard]] Object object() noexcept { return Object{*this}; }
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] RawField<T> field(std::string_view name,
-                                  T &value) const noexcept {
+                                  T& value) const noexcept {
     static_assert(!std::is_const<T>::value);
     return RawField<T>{{name}, std::addressof(value)};
   }
@@ -184,4 +233,4 @@ struct LoadInspector {
   Slice _slice;
 };
 
-} // namespace arangodb::velocypack
+}  // namespace arangodb::velocypack
