@@ -417,7 +417,7 @@ TEST_F(LoadInspectorTest, load_nested_object) {
   builder.add(VPackValue("dummy"));
   builder.openObject();
   builder.add("i", VPackValue(42));
-  builder.add("d", VPackValue(123.456));
+  builder.add("d", VPackValue(123));
   builder.add("b", VPackValue(true));
   builder.add("s", VPackValue("foobar"));
   builder.close();
@@ -428,7 +428,7 @@ TEST_F(LoadInspectorTest, load_nested_object) {
   auto result = inspector.apply(n);
   ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, n.dummy.i);
-  EXPECT_EQ(123.456, n.dummy.d);
+  EXPECT_EQ(123, n.dummy.d);
   EXPECT_EQ(true, n.dummy.b);
   EXPECT_EQ("foobar", n.dummy.s);
 }
@@ -574,6 +574,91 @@ TEST_F(LoadInspectorTest, load_optional) {
   EXPECT_EQ(expected.y, o.y);
   ASSERT_EQ(expected.vec, o.vec);
   EXPECT_EQ(expected.map, o.map);
+}
+
+TEST_F(LoadInspectorTest, error_expecting_int) {
+  builder.add(VPackValue("foo"));
+  LoadInspector inspector{builder};
+
+  int i;
+  auto result = inspector.apply(i);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting type Int", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_int16) {
+  builder.add(VPackValue(123456789));
+  LoadInspector inspector{builder};
+
+  std::int16_t i;
+  auto result = inspector.apply(i);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Number out of range", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_double) {
+  builder.add(VPackValue("foo"));
+  LoadInspector inspector{builder};
+
+  double d;
+  auto result = inspector.apply(d);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting numeric type", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_bool) {
+  builder.add(VPackValue(42));
+  LoadInspector inspector{builder};
+
+  bool b;
+  auto result = inspector.apply(b);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting type Bool", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_string) {
+  builder.add(VPackValue(42));
+  LoadInspector inspector{builder};
+
+  std::string s;
+  auto result = inspector.apply(s);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting type String", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_array) {
+  builder.add(VPackValue(42));
+  LoadInspector inspector{builder};
+
+  std::vector<int> v;
+  auto result = inspector.apply(v);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting type Array", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_object) {
+  builder.add(VPackValue(42));
+  LoadInspector inspector{builder};
+
+  Dummy d;
+  auto result = inspector.apply(d);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expecting type Object", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_type_on_path) {
+  builder.openObject();
+  builder.add(VPackValue("dummy"));
+  builder.openObject();
+  builder.add("i", VPackValue("foo"));
+  builder.close();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Nested n;
+  auto result = inspector.apply(n);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("dummy.i", result.path());
 }
 
 }  // namespace

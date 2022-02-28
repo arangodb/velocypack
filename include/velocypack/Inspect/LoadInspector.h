@@ -51,34 +51,52 @@ struct LoadInspector {
   template<class T>
   requires std::is_integral_v<T>
   [[nodiscard]] inspection::Result value(T& v) {
-    v = _slice.getNumber<T>();
-    return {};
+    try {
+      v = _slice.getNumber<T>();
+      return {};
+    } catch (Exception& e) {
+      return {e.what()};
+    }
   }
 
   [[nodiscard]] inspection::Result value(double& v) {
-    v = _slice.getDouble();
-    return {};
+    try {
+      v = _slice.getNumber<double>();
+      return {};
+    } catch (Exception& e) {
+      return {e.what()};
+    }
   }
 
   [[nodiscard]] inspection::Result value(std::string& v) {
+    if (!_slice.isString()) {
+      return {"Expecting type String"};
+    }
     v = _slice.copyString();
     return {};
   }
 
   [[nodiscard]] inspection::Result value(bool& v) {
-    v = _slice.getBool();
+    if (!_slice.isBool()) {
+      return {"Expecting type Bool"};
+    }
+    v = _slice.isTrue();
     return {};
   }
 
   [[nodiscard]] inspection::Result beginObject() {
-    assert(_slice.isObject());
+    if (!_slice.isObject()) {
+      return {"Expecting type Object"};
+    }
     return {};
   }
 
   [[nodiscard]] inspection::Result endObject() { return {}; }
 
   [[nodiscard]] inspection::Result beginArray() {
-    assert(_slice.isArray());
+    if (!_slice.isArray()) {
+      return {"Expecting type Array"};
+    }
     return {};
   }
 
@@ -209,7 +227,11 @@ struct LoadInspector {
     using value_type = T;
     T* value;
     [[nodiscard]] inspection::Result operator()(LoadInspector& f) {
-      return inspection::loadField(f, this->name, *value);
+      auto res = inspection::loadField(f, this->name, *value);
+      if (!res.ok()) {
+        return {std::move(res), this->name};
+      }
+      return res;
     }
   };
 

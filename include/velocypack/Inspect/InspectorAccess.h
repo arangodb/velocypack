@@ -35,12 +35,26 @@ namespace arangodb::velocypack::inspection {
 
 struct Result {
   Result() = default;
-  Result(std::string error) : _errorMsg(std::move(error)) {}
+  Result(Result&& res, std::string_view path) : _error(std::move(res._error)) {
+    assert(!ok());
+    if (_error->path.empty()) {
+      _error->path = path;
+    } else {
+      _error->path = std::string(path) + "." + _error->path;
+    }
+  }
+  Result(std::string error) : _error({.message = std::move(error)}) {}
 
-  bool ok() const noexcept { return !_errorMsg.has_value(); }
+  bool ok() const noexcept { return !_error.has_value(); }
+  std::string const& error() const noexcept { return _error.value().message; }
+  std::string const& path() const noexcept { return _error.value().path; }
 
  private:
-  std::optional<std::string> _errorMsg;
+  struct Error {
+    std::string message;
+    std::string path;
+  };
+  std::optional<Error> _error;
 };
 
 struct AccessType {
