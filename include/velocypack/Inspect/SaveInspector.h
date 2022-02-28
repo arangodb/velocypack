@@ -36,10 +36,10 @@
 
 namespace arangodb::velocypack {
 
-struct SaveInspector {
+struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   static constexpr bool isLoading = false;
 
-  explicit SaveInspector(Builder &builder) : _builder(builder) {}
+  explicit SaveInspector(Builder& builder) : _builder(builder) {}
 
   [[nodiscard]] inspection::Result beginObject() {
     _builder.openObject();
@@ -51,9 +51,9 @@ struct SaveInspector {
     return {};
   }
 
-  template <class T>
-  [[nodiscard]] inspection::Result
-  value(T const &v) requires inspection::IsBuiltinType<T> {
+  template<class T>
+  [[nodiscard]] inspection::Result value(T const& v) requires
+      inspection::IsBuiltinType<T> {
     _builder.add(VPackValue(v));
     return {};
   }
@@ -68,8 +68,9 @@ struct SaveInspector {
     return {};
   }
 
-  template <class T> [[nodiscard]] inspection::Result tuple(const T &data) {
-    auto res =  beginArray();
+  template<class T>
+  [[nodiscard]] inspection::Result tuple(const T& data) {
+    auto res = beginArray();
     assert(res.ok());
 
     if (auto res = processTuple<0, std::tuple_size_v<T>>(data); !res.ok()) {
@@ -79,9 +80,60 @@ struct SaveInspector {
     return endArray();
   }
 
-  template <std::size_t Idx, std::size_t End, class T> [[nodiscard]] inspection::Result processTuple(const T &data) {
-    if constexpr(Idx < End) {
-      if (auto res = inspection::save(*this, std::get<Idx>(data)); !res.ok()) {
+  template<class T, size_t N>
+  [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
+    auto res = beginArray();
+    assert(res.ok());
+    for (size_t index = 0; index < N; ++index) {
+      if (auto res = inspection::process(*this, data[index]); !res.ok()) {
+        return res;
+      }
+    }
+    return endArray();
+  }
+
+  template<class T>
+  [[nodiscard]] inspection::Result list(const T& list) {
+    auto res = beginArray();
+    assert(res.ok());
+    for (auto&& val : list) {
+      if (auto res = inspection::process(*this, val); !res.ok()) {
+        return res;
+      }
+    }
+    return endArray();
+  }
+
+  template<class T>
+  [[nodiscard]] inspection::Result map(const T& map) {
+    auto res = beginObject();
+    assert(res.ok());
+    for (auto&& [k, v] : map) {
+      _builder.add(VPackValue(k));
+      if (auto res = inspection::process(*this, v); !res.ok()) {
+        return res;
+      }
+    }
+    return endObject();
+  }
+
+  template<class T>
+  [[nodiscard]] inspection::Result applyField(T field) {
+    auto res = inspection::saveField(*this, field.name, *field.value);
+    if (!res.ok()) {
+      return {std::move(res), field.name};
+    }
+    return res;
+  }
+
+  Builder& builder() noexcept { return _builder; }
+
+ private:
+  template<std::size_t Idx, std::size_t End, class T>
+  [[nodiscard]] inspection::Result processTuple(const T& data) {
+    if constexpr (Idx < End) {
+      if (auto res = inspection::process(*this, std::get<Idx>(data));
+          !res.ok()) {
         return res;
       }
       return processTuple<Idx + 1, End>(data);
@@ -90,111 +142,7 @@ struct SaveInspector {
     }
   }
 
-  template <class T, size_t N>
-  [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
-    auto res = beginArray();
-    assert(res.ok());
-    for (size_t index = 0; index < N; ++index) {
-      if (auto res = inspection::save(*this, data[index]); !res.ok()) {
-        return res;
-      }
-    }
-    return endArray();
-  }
-
-  template <class T> [[nodiscard]] inspection::Result list(const T &list) {
-    auto res = beginArray();
-    assert(res.ok());
-    for (auto &&val : list) {
-      if (auto res = inspection::save(*this, val); !res.ok()) {
-        return res;
-      }
-    }
-    return endArray();
-  }
-
-  template <class T> [[nodiscard]] inspection::Result map(const T &map) {
-    auto res = beginObject();
-    assert(res.ok());
-    for (auto &&[k, v] : map) {
-      _builder.add(VPackValue(k));
-      if (auto res = inspection::save(*this, v); !res.ok()) {
-        return res;
-      }
-    }
-    return endObject();
-  }
-
-  template <class T> [[nodiscard]] inspection::Result apply(const T &x) {
-    return inspection::save(*this, x);
-  }
-
-  struct Object {
-    template <class... Args>
-    [[nodiscard]] inspection::Result fields(Args... args) {
-      auto res = inspector.beginObject();
-      assert(res.ok());
-      
-      if (auto res = applyFields(std::forward<Args>(args)...); !res.ok()) {
-        return res;
-      }
-
-      return inspector.endObject();
-    }
-
-   private:
-    friend struct SaveInspector;
-    explicit Object(SaveInspector& inspector) : inspector(inspector) {}
-
-    template <class Arg>
-    inspection::Result applyFields(Arg arg) {
-      return arg(inspector);
-    }
-
-    template <class Arg, class... Args>
-    inspection::Result applyFields(Arg arg, Args... args) {
-      if (auto res = arg(inspector); !res.ok()) {
-        return res;
-      }
-      return applyFields(std::forward<Args>(args)...);
-    }
-
-    SaveInspector &inspector;
-  };
-
-  template <typename Derived> struct Field {
-    std::string_view name;
-
-    template <class Predicate>
-    [[nodiscard]] auto invariant(Predicate predicate) &&;
-
-    template <class U> [[nodiscard]] auto fallback(U val) &&;
-  };
-
-  template <typename T> struct RawField : Field<RawField<T>> {
-    using value_type = T;
-    T *value;
-    [[nodiscard]] inspection::Result operator()(SaveInspector &f) {
-      return inspection::saveField(f, this->name, *value);
-    }
-  };
-
-  template <typename T> struct VirtualField : Field<VirtualField<T>> {
-    using value_type = T;
-  };
-
-  template <class Field> struct Invariant {};
-
-  [[nodiscard]] Object object() noexcept { return Object{*this}; }
-
-  template <typename T>
-  [[nodiscard]] RawField<T> field(std::string_view name,
-                                  T &value) const noexcept {
-    static_assert(!std::is_const<T>::value);
-    return RawField<T>{{name}, std::addressof(value)};
-  }
-
-  Builder &_builder;
+  Builder& _builder;
 };
 
-} // namespace arangodb::velocypack
+}  // namespace arangodb::velocypack

@@ -37,16 +37,11 @@
 
 namespace arangodb::velocypack {
 
-struct LoadInspector {
+struct LoadInspector : inspection::InspectorBase<LoadInspector> {
   static constexpr bool isLoading = true;
 
   explicit LoadInspector(Builder& builder) : _slice(builder.slice()) {}
   explicit LoadInspector(Slice slice) : _slice(slice) {}
-
-  template<class T>
-  [[nodiscard]] inspection::Result apply(T& x) {
-    return inspection::load(*this, x);
-  }
 
   template<class T>
   requires std::is_integral_v<T>
@@ -110,7 +105,7 @@ struct LoadInspector {
     for (auto&& s : VPackArrayIterator(_slice)) {
       LoadInspector ff(s);
       typename T::value_type val;
-      if (auto res = inspection::load(ff, val); !res.ok()) {
+      if (auto res = inspection::process(ff, val); !res.ok()) {
         return res;
       }
       list.push_back(std::move(val));
@@ -126,7 +121,7 @@ struct LoadInspector {
     for (auto&& pair : VPackObjectIterator(_slice)) {
       LoadInspector ff(pair.value);
       typename T::mapped_type val;
-      if (auto res = inspection::load(ff, val); !res.ok()) {
+      if (auto res = inspection::process(ff, val); !res.ok()) {
         return res;
       }
       map.emplace(pair.key.copyString(), std::move(val));
@@ -147,19 +142,6 @@ struct LoadInspector {
     return endArray();
   }
 
-  template<std::size_t Idx, std::size_t End, class T>
-  [[nodiscard]] inspection::Result processTuple(T& data) {
-    if constexpr (Idx < End) {
-      LoadInspector ff{_slice[Idx]};
-      if (auto res = inspection::load(ff, std::get<Idx>(data)); !res.ok()) {
-        return res;
-      }
-      return processTuple<Idx + 1, End>(data);
-    } else {
-      return {};
-    }
-  }
-
   template<class T, size_t N>
   [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
     if (auto res = beginArray(); !res.ok()) {
@@ -169,7 +151,7 @@ struct LoadInspector {
     std::size_t index = 0;
     for (auto&& v : VPackArrayIterator(_slice)) {
       LoadInspector ff(v);
-      if (auto res = inspection::load(ff, data[index]); !res.ok()) {
+      if (auto res = inspection::process(ff, data[index]); !res.ok()) {
         return res;
       }
       ++index;
@@ -177,79 +159,29 @@ struct LoadInspector {
     return endArray();
   }
 
-  struct Object {
-    template<class... Args>
-    [[nodiscard]] inspection::Result fields(Args... args) {
-      if (auto res = inspector.beginObject(); !res.ok()) {
+  template<class T>
+  [[nodiscard]] inspection::Result applyField(T field) {
+    auto res = inspection::loadField(*this, field.name, *field.value);
+    if (!res.ok()) {
+      return {std::move(res), field.name};
+    }
+    return res;
+  }
+
+  Slice slice() noexcept { return _slice; }
+
+ private:
+  template<std::size_t Idx, std::size_t End, class T>
+  [[nodiscard]] inspection::Result processTuple(T& data) {
+    if constexpr (Idx < End) {
+      LoadInspector ff{_slice[Idx]};
+      if (auto res = inspection::process(ff, std::get<Idx>(data)); !res.ok()) {
         return res;
       }
-
-      if (auto res = applyFields(std::forward<Args>(args)...); !res.ok()) {
-        return res;
-      }
-
-      return inspector.endObject();
+      return processTuple<Idx + 1, End>(data);
+    } else {
+      return {};
     }
-
-   private:
-    friend struct LoadInspector;
-    explicit Object(LoadInspector& inspector) : inspector(inspector) {}
-
-    template<class Arg>
-    inspection::Result applyFields(Arg arg) {
-      return arg(inspector);
-    }
-
-    template<class Arg, class... Args>
-    inspection::Result applyFields(Arg arg, Args... args) {
-      if (auto res = arg(inspector); !res.ok()) {
-        return res;
-      }
-      return applyFields(std::forward<Args>(args)...);
-    }
-
-    LoadInspector& inspector;
-  };
-
-  template<typename Derived>
-  struct Field {
-    std::string_view name;
-
-    template<class Predicate>
-    [[nodiscard]] auto invariant(Predicate predicate) &&;
-
-    template<class U>
-    [[nodiscard]] auto fallback(U val) &&;
-  };
-
-  template<typename T>
-  struct RawField : Field<RawField<T>> {
-    using value_type = T;
-    T* value;
-    [[nodiscard]] inspection::Result operator()(LoadInspector& f) {
-      auto res = inspection::loadField(f, this->name, *value);
-      if (!res.ok()) {
-        return {std::move(res), this->name};
-      }
-      return res;
-    }
-  };
-
-  template<typename T>
-  struct VirtualField : Field<VirtualField<T>> {
-    using value_type = T;
-  };
-
-  template<class Field>
-  struct Invariant {};
-
-  [[nodiscard]] Object object() noexcept { return Object{*this}; }
-
-  template<typename T>
-  [[nodiscard]] RawField<T> field(std::string_view name,
-                                  T& value) const noexcept {
-    static_assert(!std::is_const<T>::value);
-    return RawField<T>{{name}, std::addressof(value)};
   }
 
   Slice _slice;

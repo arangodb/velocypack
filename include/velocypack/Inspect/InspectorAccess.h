@@ -57,15 +57,6 @@ struct Result {
   std::optional<Error> _error;
 };
 
-struct AccessType {
-  struct Builtin {};
-  struct Inspect {};
-  struct Specialization {};
-  struct Tuple {};
-  struct List {};
-  struct Map {};
-};
-
 template<class T>
 struct InspectorAccess;
 
@@ -118,64 +109,27 @@ concept IsInspectable =
     IsMapLike<T> || IsTuple<T> || HasInspectorAccessSpecialization<T>;
 
 template<class Inspector, class T>
-constexpr auto inspectAccessType() {
+[[nodiscard]] Result process(Inspector& f, T& x) {
   using TT = std::remove_cvref_t<T>;
   static_assert(IsInspectable<TT, Inspector>);
   if constexpr (HasInspectOverload<TT, Inspector>) {
-    return AccessType::Inspect{};
+    return inspect(f, x);
   } else if constexpr (HasInspectorAccessSpecialization<TT>) {
-    return AccessType::Specialization{};
+    return InspectorAccess<T>::apply(f, x);
   } else if constexpr (IsBuiltinType<TT>) {
-    return AccessType::Builtin{};
+    return f.value(x);
   } else if constexpr (IsTuple<T>) {
-    return AccessType::Tuple{};
+    return f.tuple(x);
   } else if constexpr (IsMapLike<T>) {
-    return AccessType::Map{};
+    return f.map(x);
   } else if constexpr (IsListLike<T>) {
-    return AccessType::List{};
+    return f.list(x);
   }
 }
 
-// TODO - use concepts instead of tag type overloads
-
 template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Builtin) {
-  return f.value(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Inspect) {
-  return inspect(f, x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Tuple) {
-  return f.tuple(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::List) {
-  return f.list(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Map) {
-  return f.map(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x, AccessType::Specialization) {
-  return InspectorAccess<T>::apply(f, x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, T& x) {
-  return save(f, x, inspectAccessType<Inspector, T>());
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result save(Inspector& f, const T& x) {
-  return save(f, const_cast<T&>(x), inspectAccessType<Inspector, T>());
+[[nodiscard]] Result process(Inspector& f, const T& x) {
+  return process(f, const_cast<T&>(x));
 }
 
 template<class Inspector, class T>
@@ -183,49 +137,14 @@ template<class Inspector, class T>
   if constexpr (HasInspectorAccessSpecialization<T>) {
     return InspectorAccess<T>::saveField(f, name, val);
   } else {
-    f._builder.add(VPackValue(name));
+    f.builder().add(VPackValue(name));
     return f.apply(val);
   }
 }
 
 template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Inspect) {
-  return inspect(f, x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Builtin) {
-  return f.value(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::List) {
-  return f.list(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Map) {
-  return f.map(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Tuple) {
-  return f.tuple(x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x, AccessType::Specialization) {
-  return InspectorAccess<T>::apply(f, x);
-}
-
-template<class Inspector, class T>
-[[nodiscard]] Result load(Inspector& f, T& x) {
-  return load(f, x, inspectAccessType<Inspector, T>());
-}
-
-template<class Inspector, class T>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
-  auto s = f._slice[name];
+  auto s = f.slice()[name];
   Inspector ff(s);
   return ff.apply(val);
 }
@@ -235,7 +154,7 @@ struct InspectorAccess<std::optional<T>> {
   template<class Inspector>
   [[nodiscard]] static Result apply(Inspector& f, std::optional<T>& val) {
     if constexpr (Inspector::isLoading) {
-      if (f._slice.isNone() || f._slice.isNull()) {
+      if (f.slice().isNone() || f.slice().isNull()) {
         val.reset();
         return {};
       } else {
@@ -252,7 +171,7 @@ struct InspectorAccess<std::optional<T>> {
       if (val.has_value()) {
         return f.apply(val.value());
       }
-      f._builder.add(VPackValue(ValueType::Null));
+      f.builder().add(VPackValue(ValueType::Null));
       return {};
     }
   }

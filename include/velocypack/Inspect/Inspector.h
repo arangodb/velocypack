@@ -23,10 +23,88 @@
 
 #pragma once
 
-#include <optional>
-#include <string>
+#include "velocypack/Inspect/InspectorAccess.h"
+
 namespace arangodb::velocypack::inspection {
 
-struct InspectorBase {};
+template<class Derived>
+struct InspectorBase {
+  Derived& self() { return static_cast<Derived&>(*this); }
+
+  template<class T>
+  [[nodiscard]] inspection::Result apply(T& x) {
+    return inspection::process(self(), x);
+  }
+
+  struct Object {
+    template<class... Args>
+    [[nodiscard]] inspection::Result fields(Args... args) {
+      if (auto res = inspector.beginObject(); !res.ok()) {
+        return res;
+      }
+
+      if (auto res = inspector.applyFields(std::forward<Args>(args)...);
+          !res.ok()) {
+        return res;
+      }
+
+      return inspector.endObject();
+    }
+
+   private:
+    friend struct InspectorBase;
+    explicit Object(Derived& inspector) : inspector(inspector) {}
+
+    Derived& inspector;
+  };
+
+  template<typename DerivedField>
+  struct Field {
+    std::string_view name;
+
+    template<class Predicate>
+    [[nodiscard]] auto invariant(Predicate predicate) &&;
+
+    template<class U>
+    [[nodiscard]] auto fallback(U val) &&;
+  };
+
+  template<typename T>
+  struct RawField : Field<RawField<T>> {
+    using value_type = T;
+    T* value;
+  };
+
+  template<typename T>
+  struct VirtualField : Field<VirtualField<T>> {
+    using value_type = T;
+  };
+
+  template<class Field>
+  struct Invariant {};
+
+  [[nodiscard]] Object object() noexcept { return Object{self()}; }
+
+  template<typename T>
+  [[nodiscard]] RawField<T> field(std::string_view name,
+                                  T& value) const noexcept {
+    static_assert(!std::is_const<T>::value);
+    return RawField<T>{{name}, std::addressof(value)};
+  }
+
+ private:
+  template<class Arg>
+  inspection::Result applyFields(Arg arg) {
+    return self().applyField(arg);
+  }
+
+  template<class Arg, class... Args>
+  inspection::Result applyFields(Arg arg, Args... args) {
+    if (auto res = self().applyField(arg); !res.ok()) {
+      return res;
+    }
+    return applyFields(std::forward<Args>(args)...);
+  }
+};
 
 }  // namespace arangodb::velocypack::inspection
