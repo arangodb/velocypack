@@ -34,8 +34,8 @@
 #include <vector>
 
 #include "tests-common.h"
-#include "velocypack/Inspect/LoadInspector.h"
-#include "velocypack/Inspect/SaveInspector.h"
+#include "velocypack/inspection/LoadInspector.h"
+#include "velocypack/inspection/SaveInspector.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 
@@ -142,6 +142,8 @@ auto inspect(Inspector& f, Pointer& x) {
 }
 
 using namespace arangodb::velocypack;
+using LoadInspector = inspection::LoadInspector;
+using SaveInspector = inspection::SaveInspector;
 
 struct SaveInspectorTest : public ::testing::Test {
   Builder builder;

@@ -62,7 +62,7 @@ struct InspectorAccess;
 
 template<class T, class Inspector>
 concept HasInspectOverload = requires(Inspector f, T a) {
-  { inspect(f, a) } -> std::same_as<inspection::Result>;
+  { inspect(f, a) } -> std::same_as<Result>;
 };
 
 template<class T>

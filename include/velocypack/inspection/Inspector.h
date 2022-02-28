@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "velocypack/Inspect/InspectorAccess.h"
+#include "velocypack/inspection/InspectorAccess.h"
 
 namespace arangodb::velocypack::inspection {
 
@@ -32,13 +32,13 @@ struct InspectorBase {
   Derived& self() { return static_cast<Derived&>(*this); }
 
   template<class T>
-  [[nodiscard]] inspection::Result apply(T& x) {
-    return inspection::process(self(), x);
+  [[nodiscard]] Result apply(T& x) {
+    return process(self(), x);
   }
 
   struct Object {
     template<class... Args>
-    [[nodiscard]] inspection::Result fields(Args... args) {
+    [[nodiscard]] Result fields(Args... args) {
       if (auto res = inspector.beginObject(); !res.ok()) {
         return res;
       }
@@ -94,12 +94,12 @@ struct InspectorBase {
 
  private:
   template<class Arg>
-  inspection::Result applyFields(Arg arg) {
+  Result applyFields(Arg arg) {
     return self().applyField(arg);
   }
 
   template<class Arg, class... Args>
-  inspection::Result applyFields(Arg arg, Args... args) {
+  Result applyFields(Arg arg, Args... args) {
     if (auto res = self().applyField(arg); !res.ok()) {
       return res;
     }

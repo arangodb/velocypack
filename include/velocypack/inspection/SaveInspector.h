@@ -29,47 +29,45 @@
 #include <variant>
 
 #include "velocypack/Builder.h"
-#include "velocypack/Inspect/Inspector.h"
-#include "velocypack/Inspect/InspectorAccess.h"
+#include "velocypack/inspection/Inspector.h"
 #include "velocypack/Slice.h"
 #include "velocypack/Value.h"
 
-namespace arangodb::velocypack {
+namespace arangodb::velocypack::inspection {
 
-struct SaveInspector : inspection::InspectorBase<SaveInspector> {
+struct SaveInspector : InspectorBase<SaveInspector> {
   static constexpr bool isLoading = false;
 
   explicit SaveInspector(Builder& builder) : _builder(builder) {}
 
-  [[nodiscard]] inspection::Result beginObject() {
+  [[nodiscard]] Result beginObject() {
     _builder.openObject();
     return {};
   }
 
-  [[nodiscard]] inspection::Result endObject() {
+  [[nodiscard]] Result endObject() {
     _builder.close();
     return {};
   }
 
   template<class T>
-  [[nodiscard]] inspection::Result value(T const& v) requires
-      inspection::IsBuiltinType<T> {
+  [[nodiscard]] Result value(T const& v) requires IsBuiltinType<T> {
     _builder.add(VPackValue(v));
     return {};
   }
 
-  [[nodiscard]] inspection::Result beginArray() {
+  [[nodiscard]] Result beginArray() {
     _builder.openArray();
     return {};
   }
 
-  [[nodiscard]] inspection::Result endArray() {
+  [[nodiscard]] Result endArray() {
     _builder.close();
     return {};
   }
 
   template<class T>
-  [[nodiscard]] inspection::Result tuple(const T& data) {
+  [[nodiscard]] Result tuple(const T& data) {
     auto res = beginArray();
     assert(res.ok());
 
@@ -81,11 +79,11 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   }
 
   template<class T, size_t N>
-  [[nodiscard]] inspection::Result tuple(T (&data)[N]) {
+  [[nodiscard]] Result tuple(T (&data)[N]) {
     auto res = beginArray();
     assert(res.ok());
     for (size_t index = 0; index < N; ++index) {
-      if (auto res = inspection::process(*this, data[index]); !res.ok()) {
+      if (auto res = process(*this, data[index]); !res.ok()) {
         return res;
       }
     }
@@ -93,11 +91,11 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] inspection::Result list(const T& list) {
+  [[nodiscard]] Result list(const T& list) {
     auto res = beginArray();
     assert(res.ok());
     for (auto&& val : list) {
-      if (auto res = inspection::process(*this, val); !res.ok()) {
+      if (auto res = process(*this, val); !res.ok()) {
         return res;
       }
     }
@@ -105,12 +103,12 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] inspection::Result map(const T& map) {
+  [[nodiscard]] Result map(const T& map) {
     auto res = beginObject();
     assert(res.ok());
     for (auto&& [k, v] : map) {
       _builder.add(VPackValue(k));
-      if (auto res = inspection::process(*this, v); !res.ok()) {
+      if (auto res = process(*this, v); !res.ok()) {
         return res;
       }
     }
@@ -118,8 +116,8 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] inspection::Result applyField(T field) {
-    auto res = inspection::saveField(*this, field.name, *field.value);
+  [[nodiscard]] Result applyField(T field) {
+    auto res = saveField(*this, field.name, *field.value);
     if (!res.ok()) {
       return {std::move(res), field.name};
     }
@@ -130,10 +128,9 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
 
  private:
   template<std::size_t Idx, std::size_t End, class T>
-  [[nodiscard]] inspection::Result processTuple(const T& data) {
+  [[nodiscard]] Result processTuple(const T& data) {
     if constexpr (Idx < End) {
-      if (auto res = inspection::process(*this, std::get<Idx>(data));
-          !res.ok()) {
+      if (auto res = process(*this, std::get<Idx>(data)); !res.ok()) {
         return res;
       }
       return processTuple<Idx + 1, End>(data);
@@ -145,4 +142,4 @@ struct SaveInspector : inspection::InspectorBase<SaveInspector> {
   Builder& _builder;
 };
 
-}  // namespace arangodb::velocypack
+}  // namespace arangodb::velocypack::inspection
