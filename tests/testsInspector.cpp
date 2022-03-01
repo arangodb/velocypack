@@ -648,6 +648,61 @@ TEST_F(LoadInspectorTest, error_expecting_object) {
   EXPECT_EQ("Expecting type Object", result.error());
 }
 
+TEST_F(LoadInspectorTest, error_tuple_array_too_short) {
+  builder.openArray();
+  builder.add(VPackValue("foo"));
+  builder.add(VPackValue(42));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  std::tuple<std::string, int, double> t;
+  auto result = inspector.apply(t);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expected array of length 3", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_tuple_array_too_large) {
+  builder.openArray();
+  builder.add(VPackValue("foo"));
+  builder.add(VPackValue(42));
+  builder.add(VPackValue(123.456));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  std::tuple<std::string, int> t;
+  auto result = inspector.apply(t);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expected array of length 2", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_c_style_array_too_short) {
+  builder.openArray();
+  builder.add(VPackValue(1));
+  builder.add(VPackValue(2));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  int a[4];
+  auto result = inspector.apply(a);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expected array of length 4", result.error());
+}
+
+TEST_F(LoadInspectorTest, error_c_style_array_too_long) {
+  builder.openArray();
+  builder.add(VPackValue(1));
+  builder.add(VPackValue(2));
+  builder.add(VPackValue(3));
+  builder.add(VPackValue(4));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  int a[3];
+  auto result = inspector.apply(a);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Expected array of length 3", result.error());
+}
+
 TEST_F(LoadInspectorTest, error_expecting_type_on_path) {
   builder.openObject();
   builder.add(VPackValue("dummy"));

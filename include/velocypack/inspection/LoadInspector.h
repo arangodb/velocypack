@@ -130,11 +130,15 @@ struct LoadInspector : InspectorBase<LoadInspector> {
 
   template<class T>
   [[nodiscard]] Result tuple(T& data) {
+    constexpr auto arrayLength = std::tuple_size_v<T>;
     if (auto res = beginArray(); !res.ok()) {
       return res;
     }
+    if (_slice.length() != arrayLength) {
+      return {"Expected array of length " + std::to_string(arrayLength)};
+    }
 
-    if (auto res = processTuple<0, std::tuple_size_v<T>>(data); !res.ok()) {
+    if (auto res = processTuple<0, arrayLength>(data); !res.ok()) {
       return res;
     }
 
@@ -146,7 +150,9 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     if (auto res = beginArray(); !res.ok()) {
       return res;
     }
-    assert(_slice.length() == N);
+    if (_slice.length() != N) {
+      return {"Expected array of length " + std::to_string(N)};
+    }
     std::size_t index = 0;
     for (auto&& v : VPackArrayIterator(_slice)) {
       LoadInspector ff(v);
