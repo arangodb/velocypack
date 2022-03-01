@@ -165,17 +165,63 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result applyField(T field) {
-    auto res = loadField(*this, field.name, *field.value);
+  [[nodiscard]] Result applyField(T& field) {
+    auto res = [&]() {
+      if constexpr (!std::is_void_v<decltype(getFallbackValue(field))>) {
+        // static_assert(std::is_same_v<decltype(getFallbackValue(field)),
+        //                             typename T::value_type&>);
+        return loadField(*this, getFieldName(field), getFieldValue(field),
+                         getFallbackValue(field));
+      } else {
+        return loadField(*this, getFieldName(field), getFieldValue(field));
+      }
+    }();
+    if (res.ok()) {
+      res = checkInvariant(field);
+    }
+
     if (!res.ok()) {
-      return {std::move(res), field.name};
+      return {std::move(res), getFieldName(field)};
     }
     return res;
   }
 
   Slice slice() noexcept { return _slice; }
 
+  template<class U>
+  struct FallbackContainer {
+    explicit FallbackContainer(U&& val) : fallbackValue(std::move(val)) {}
+    U fallbackValue;
+  };
+
+  template<class Predicate>
+  struct PredicateContainer {
+    explicit PredicateContainer(Predicate&& predicate)
+        : predicate(std::move(predicate)) {}
+    Predicate predicate;
+  };
+
  private:
+  template<class T>
+  struct HasFallback : std::false_type {};
+
+  template<class T, class U>
+  struct HasFallback<FallbackField<T, U>> : std::true_type {};
+
+  template<class T>
+  Result checkInvariant(T& field) {
+    if constexpr (requires() { field.predicate; }) {
+      if (!field.predicate(getFieldValue(field))) {
+        return {"Invariant failed"};
+      }
+      return {};
+    } else if constexpr (requires() { field.inner; }) {
+      return checkInvariant(field.inner);
+    } else {
+      return {};
+    }
+  }
+
   template<std::size_t Idx, std::size_t End, class T>
   [[nodiscard]] Result processTuple(T& data) {
     if constexpr (Idx < End) {

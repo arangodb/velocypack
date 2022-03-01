@@ -117,14 +117,19 @@ struct SaveInspector : InspectorBase<SaveInspector> {
 
   template<class T>
   [[nodiscard]] Result applyField(T field) {
-    auto res = saveField(*this, field.name, *field.value);
+    auto res = saveField(*this, getFieldName(field), getFieldValue(field));
     if (!res.ok()) {
-      return {std::move(res), field.name};
+      return {std::move(res), getFieldName(field)};
     }
     return res;
   }
 
   Builder& builder() noexcept { return _builder; }
+
+  template<class U>
+  struct FallbackContainer {
+    explicit FallbackContainer(U&&) {}
+  };
 
  private:
   template<std::size_t Idx, std::size_t End, class T>

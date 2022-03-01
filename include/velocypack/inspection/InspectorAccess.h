@@ -43,18 +43,28 @@ struct Result {
       _error->path = std::string(path) + "." + _error->path;
     }
   }
-  Result(std::string error) : _error({.message = std::move(error)}) {}
+  Result(std::string error)
+      : _error(std::make_unique<Error>(std::move(error))) {}
 
-  bool ok() const noexcept { return !_error.has_value(); }
-  std::string const& error() const noexcept { return _error.value().message; }
-  std::string const& path() const noexcept { return _error.value().path; }
+  bool ok() const noexcept { return _error == nullptr; }
+
+  std::string const& error() const noexcept {
+    assert(!ok());
+    return _error->message;
+  }
+
+  std::string const& path() const noexcept {
+    assert(!ok());
+    return _error->path;
+  }
 
  private:
   struct Error {
+    explicit Error(std::string&& msg) : message(std::move(msg)) {}
     std::string message;
     std::string path;
   };
-  std::optional<Error> _error;
+  std::unique_ptr<Error> _error;
 };
 
 template<class T>
@@ -145,6 +155,18 @@ template<class Inspector, class T>
 template<class Inspector, class T>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
   auto s = f.slice()[name];
+  Inspector ff(s);
+  return ff.apply(val);
+}
+
+template<class Inspector, class T, class U>
+[[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val,
+                               U& fallback) {
+  auto s = f.slice()[name];
+  if (s.isNone()) {
+    val = T{std::move(fallback)};
+    return {};
+  }
   Inspector ff(s);
   return ff.apply(val);
 }

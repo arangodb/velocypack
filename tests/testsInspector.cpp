@@ -38,6 +38,7 @@
 #include "velocypack/inspection/SaveInspector.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
+#include "velocypack/velocypack-memory.h"
 
 namespace {
 
@@ -141,6 +142,65 @@ auto inspect(Inspector& f, Pointer& x) {
                            f.field("c", x.c), f.field("d", x.d));
 }
 
+struct Fallback {
+  int i;
+  std::string s;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, Fallback& x) {
+  return f.object().fields(f.field("i", x.i).fallback(42),
+                           f.field("s", x.s).fallback("foobar"));
+}
+
+struct Invariant {
+  int i;
+  std::string s;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, Invariant& x) {
+  return f.object().fields(
+      f.field("i", x.i).invariant([](int v) { return v != 0; }),
+      f.field("s", x.s).invariant(
+          [](std::string const& v) { return !v.empty(); }));
+}
+
+struct InvariantAndFallback {
+  int i;
+  std::string s;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, InvariantAndFallback& x) {
+  return f.object().fields(
+      f.field("i", x.i).fallback(42).invariant([](int v) { return v != 0; }),
+      f.field("s", x.s)
+          .invariant([](std::string const& v) { return !v.empty(); })
+          .fallback("foobar"));
+}
+
+struct Specialization {
+  int i;
+  std::string s;
+};
+}  // namespace
+
+namespace arangodb::velocypack::inspection {
+template<>
+struct InspectorAccess<Specialization> {
+  template<class Inspector>
+  [[nodiscard]] static Result apply(Inspector& f, Specialization& val) {
+    f.beginArray();
+    f.apply(val.i);
+    f.apply(val.s);
+    f.endArray();
+    return {};
+  }
+};
+}  // namespace arangodb::velocypack::inspection
+
+namespace {
 using namespace arangodb::velocypack;
 using LoadInspector = inspection::LoadInspector;
 using SaveInspector = inspection::SaveInspector;
@@ -350,6 +410,15 @@ TEST_F(SaveInspectorTest, store_optional_pointer) {
   EXPECT_EQ(2, slice.length());
   EXPECT_EQ(42, slice["b"].getInt());
   EXPECT_EQ(43, slice["d"].getInt());
+}
+
+TEST_F(SaveInspectorTest, save_object_with_fallbacks) {
+  Fallback f;
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+
+  static_assert(sizeof(inspector.field("i", f.i)) ==
+                sizeof(inspector.field("i", f.i).fallback(42)));
 }
 
 struct LoadInspectorTest : public ::testing::Test {
@@ -716,6 +785,75 @@ TEST_F(LoadInspectorTest, error_expecting_type_on_path) {
   auto result = inspector.apply(n);
   ASSERT_FALSE(result.ok());
   EXPECT_EQ("dummy.i", result.path());
+}
+
+TEST_F(LoadInspectorTest, load_object_with_fallbacks) {
+  builder.openObject();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Fallback f;
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, f.i);
+  EXPECT_EQ("foobar", f.s);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_invariant_fulfilled) {
+  builder.openObject();
+  builder.add("i", VPackValue(42));
+  builder.add("s", VPackValue("foobar"));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Invariant i;
+  auto result = inspector.apply(i);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, i.i);
+  EXPECT_EQ("foobar", i.s);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_invariant_not_fulfilled) {
+  {
+    builder.openObject();
+    builder.add("i", VPackValue(0));
+    builder.add("s", VPackValue("foobar"));
+    builder.close();
+    LoadInspector inspector{builder};
+
+    Invariant i;
+    auto result = inspector.apply(i);
+    ASSERT_FALSE(result.ok());
+    EXPECT_EQ("Invariant failed", result.error());
+    EXPECT_EQ("i", result.path());
+  }
+
+  {
+    builder.clear();
+    builder.openObject();
+    builder.add("i", VPackValue(42));
+    builder.add("s", VPackValue(""));
+    builder.close();
+    LoadInspector inspector{builder};
+
+    Invariant i;
+    auto result = inspector.apply(i);
+    ASSERT_FALSE(result.ok());
+    EXPECT_EQ("Invariant failed", result.error());
+    EXPECT_EQ("s", result.path());
+  }
+}
+
+TEST_F(LoadInspectorTest, load_object_with_invariant_and_fallback) {
+  builder.openObject();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  InvariantAndFallback i;
+  auto result = inspector.apply(i);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, i.i);
+  EXPECT_EQ("foobar", i.s);
 }
 
 }  // namespace
