@@ -421,6 +421,30 @@ TEST_F(SaveInspectorTest, save_object_with_fallbacks) {
                 sizeof(inspector.field("i", f.i).fallback(42)));
 }
 
+TEST_F(SaveInspectorTest, save_object_with_invariant) {
+  Invariant i;
+  auto result = inspector.apply(i);
+  ASSERT_TRUE(result.ok());
+
+  auto invariant = [](auto) { return true; };
+  static_assert(sizeof(inspector.field("i", i.i)) ==
+                sizeof(inspector.field("i", i.i).invariant(invariant)));
+}
+
+TEST_F(SaveInspectorTest, save_object_with_invariant_and_fallback) {
+  InvariantAndFallback i;
+  auto result = inspector.apply(i);
+  ASSERT_TRUE(result.ok());
+
+  auto invariant = [](auto) { return true; };
+  static_assert(
+      sizeof(inspector.field("i", i.i)) ==
+      sizeof(inspector.field("i", i.i).invariant(invariant).fallback(42)));
+  static_assert(
+      sizeof(inspector.field("i", i.i)) ==
+      sizeof(inspector.field("i", i.i).fallback(42).invariant(invariant)));
+}
+
 struct LoadInspectorTest : public ::testing::Test {
   Builder builder;
 };

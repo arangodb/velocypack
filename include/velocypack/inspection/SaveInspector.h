@@ -130,6 +130,10 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   struct FallbackContainer {
     explicit FallbackContainer(U&&) {}
   };
+  template<class Predicate>
+  struct PredicateContainer {
+    explicit PredicateContainer(Predicate&&) {}
+  };
 
  private:
   template<std::size_t Idx, std::size_t End, class T>

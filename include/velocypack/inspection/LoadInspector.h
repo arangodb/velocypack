@@ -168,8 +168,6 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   [[nodiscard]] Result applyField(T& field) {
     auto res = [&]() {
       if constexpr (!std::is_void_v<decltype(getFallbackValue(field))>) {
-        // static_assert(std::is_same_v<decltype(getFallbackValue(field)),
-        //                             typename T::value_type&>);
         return loadField(*this, getFieldName(field), getFieldValue(field),
                          getFallbackValue(field));
       } else {
