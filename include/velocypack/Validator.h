@@ -68,7 +68,7 @@ class Validator {
   Options const* options;
 
  private:
-  uint32_t _level;
+  uint32_t _nesting;
 };
 
 }  // namespace arangodb::velocypack
