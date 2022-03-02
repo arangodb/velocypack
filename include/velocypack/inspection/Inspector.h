@@ -38,26 +38,59 @@ struct InspectorBase {
     return process(self(), x);
   }
 
+  template<class T>
+  struct Object;
+
+  template<class T>
+  struct FieldsResult {
+    template<class Predicate>
+    Result invariant(Predicate predicate) {
+      if constexpr (Derived::isLoading) {
+        if (!result.ok()) {
+          return std::move(result);
+        }
+        if (!predicate(object)) {
+          return {"Object invariant failed"};
+        }
+        return {};
+      } else {
+        return std::move(result);
+      }
+    }
+    operator Result() && { return std::move(result); }
+
+   private:
+    template<class TT>
+    friend struct Object;
+    FieldsResult(Result&& res, T& object)
+        : result(std::move(res)), object(object) {}
+    Result result;
+    T& object;
+  };
+
+  template<class T>
   struct Object {
     template<class... Args>
-    [[nodiscard]] Result fields(Args... args) {
+    [[nodiscard]] FieldsResult<T> fields(Args... args) {
       if (auto res = inspector.beginObject(); !res.ok()) {
-        return res;
+        return {std::move(res), object};
       }
 
       if (auto res = inspector.applyFields(std::forward<Args>(args)...);
           !res.ok()) {
-        return res;
+        return {std::move(res), object};
       }
 
-      return inspector.endObject();
+      return {inspector.endObject(), object};
     }
 
    private:
     friend struct InspectorBase;
-    explicit Object(Derived& inspector) : inspector(inspector) {}
+    explicit Object(Derived& inspector, T& o)
+        : inspector(inspector), object(o) {}
 
     Derived& inspector;
+    T& object;
   };
 
   template<class Field>
@@ -142,7 +175,10 @@ struct InspectorBase {
   template<class Field>
   struct Invariant {};
 
-  [[nodiscard]] Object object() noexcept { return Object{self()}; }
+  template<class T>
+  [[nodiscard]] Object<T> object(T& o) noexcept {
+    return Object<T>{self(), o};
+  }
 
   template<typename T>
   [[nodiscard]] RawField<T> field(std::string_view name,

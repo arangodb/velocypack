@@ -210,7 +210,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   Result checkInvariant(T& field) {
     if constexpr (requires() { field.predicate; }) {
       if (!field.predicate(getFieldValue(field))) {
-        return {"Invariant failed"};
+        return {"Field invariant failed"};
       }
       return {};
     } else if constexpr (requires() { field.inner; }) {

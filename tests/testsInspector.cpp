@@ -51,8 +51,8 @@ struct Dummy {
 
 template<class Inspector>
 auto inspect(Inspector& f, Dummy& x) {
-  return f.object().fields(f.field("i", x.i), f.field("d", x.d),
-                           f.field("b", x.b), f.field("s", x.s));
+  return f.object(x).fields(f.field("i", x.i), f.field("d", x.d),
+                            f.field("b", x.b), f.field("s", x.s));
 }
 
 struct Nested {
@@ -61,7 +61,7 @@ struct Nested {
 
 template<class Inspector>
 auto inspect(Inspector& f, Nested& x) {
-  return f.object().fields(f.field("dummy", x.dummy));
+  return f.object(x).fields(f.field("dummy", x.dummy));
 }
 
 struct TypedInt {
@@ -79,7 +79,7 @@ auto inspect(Inspector& f, TypedInt& x) {
 
 template<class Inspector>
 auto inspect(Inspector& f, Container& x) {
-  return f.object().fields(f.field("i", x.i));
+  return f.object(x).fields(f.field("i", x.i));
 }
 struct List {
   std::vector<int> vec;
@@ -88,7 +88,7 @@ struct List {
 
 template<class Inspector>
 auto inspect(Inspector& f, List& x) {
-  return f.object().fields(f.field("vec", x.vec), f.field("list", x.list));
+  return f.object(x).fields(f.field("vec", x.vec), f.field("list", x.list));
 }
 
 struct Map {
@@ -98,8 +98,8 @@ struct Map {
 
 template<class Inspector>
 auto inspect(Inspector& f, Map& x) {
-  return f.object().fields(f.field("map", x.map),
-                           f.field("unordered", x.unordered));
+  return f.object(x).fields(f.field("map", x.map),
+                            f.field("unordered", x.unordered));
 }
 
 struct Tuple {
@@ -111,9 +111,9 @@ struct Tuple {
 
 template<class Inspector>
 auto inspect(Inspector& f, Tuple& x) {
-  return f.object().fields(f.field("tuple", x.tuple), f.field("pair", x.pair),
-                           f.field("array1", x.array1),
-                           f.field("array2", x.array2));
+  return f.object(x).fields(f.field("tuple", x.tuple), f.field("pair", x.pair),
+                            f.field("array1", x.array1),
+                            f.field("array2", x.array2));
 }
 
 struct Optional {
@@ -125,8 +125,8 @@ struct Optional {
 
 template<class Inspector>
 auto inspect(Inspector& f, Optional& x) {
-  return f.object().fields(f.field("x", x.x), f.field("y", x.y),
-                           f.field("vec", x.vec), f.field("map", x.map));
+  return f.object(x).fields(f.field("x", x.x), f.field("y", x.y),
+                            f.field("vec", x.vec), f.field("map", x.map));
 }
 
 struct Pointer {
@@ -138,8 +138,8 @@ struct Pointer {
 
 template<class Inspector>
 auto inspect(Inspector& f, Pointer& x) {
-  return f.object().fields(f.field("a", x.a), f.field("b", x.b),
-                           f.field("c", x.c), f.field("d", x.d));
+  return f.object(x).fields(f.field("a", x.a), f.field("b", x.b),
+                            f.field("c", x.c), f.field("d", x.d));
 }
 
 struct Fallback {
@@ -149,8 +149,8 @@ struct Fallback {
 
 template<class Inspector>
 auto inspect(Inspector& f, Fallback& x) {
-  return f.object().fields(f.field("i", x.i).fallback(42),
-                           f.field("s", x.s).fallback("foobar"));
+  return f.object(x).fields(f.field("i", x.i).fallback(42),
+                            f.field("s", x.s).fallback("foobar"));
 }
 
 struct Invariant {
@@ -160,7 +160,7 @@ struct Invariant {
 
 template<class Inspector>
 auto inspect(Inspector& f, Invariant& x) {
-  return f.object().fields(
+  return f.object(x).fields(
       f.field("i", x.i).invariant([](int v) { return v != 0; }),
       f.field("s", x.s).invariant(
           [](std::string const& v) { return !v.empty(); }));
@@ -173,11 +173,23 @@ struct InvariantAndFallback {
 
 template<class Inspector>
 auto inspect(Inspector& f, InvariantAndFallback& x) {
-  return f.object().fields(
+  return f.object(x).fields(
       f.field("i", x.i).fallback(42).invariant([](int v) { return v != 0; }),
       f.field("s", x.s)
           .invariant([](std::string const& v) { return !v.empty(); })
           .fallback("foobar"));
+}
+
+struct ObjectInvariant {
+  int i;
+  std::string s;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, ObjectInvariant& x) {
+  return f.object(x)
+      .fields(f.field("i", x.i), f.field("s", x.s))
+      .invariant([](ObjectInvariant& o) { return o.i != 0 && !o.s.empty(); });
 }
 
 struct Specialization {
@@ -848,7 +860,7 @@ TEST_F(LoadInspectorTest, load_object_with_invariant_not_fulfilled) {
     Invariant i;
     auto result = inspector.apply(i);
     ASSERT_FALSE(result.ok());
-    EXPECT_EQ("Invariant failed", result.error());
+    EXPECT_EQ("Field invariant failed", result.error());
     EXPECT_EQ("i", result.path());
   }
 
@@ -863,7 +875,7 @@ TEST_F(LoadInspectorTest, load_object_with_invariant_not_fulfilled) {
     Invariant i;
     auto result = inspector.apply(i);
     ASSERT_FALSE(result.ok());
-    EXPECT_EQ("Invariant failed", result.error());
+    EXPECT_EQ("Field invariant failed", result.error());
     EXPECT_EQ("s", result.path());
   }
 }
@@ -878,6 +890,19 @@ TEST_F(LoadInspectorTest, load_object_with_invariant_and_fallback) {
   ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, i.i);
   EXPECT_EQ("foobar", i.s);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_object_invariant) {
+  builder.openObject();
+  builder.add("i", VPackValue(42));
+  builder.add("s", VPackValue(""));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  ObjectInvariant o;
+  auto result = inspector.apply(o);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Object invariant failed", result.error());
 }
 
 }  // namespace

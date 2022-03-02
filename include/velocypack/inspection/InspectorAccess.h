@@ -72,7 +72,7 @@ struct InspectorAccess;
 
 template<class T, class Inspector>
 concept HasInspectOverload = requires(Inspector f, T a) {
-  { inspect(f, a) } -> std::same_as<Result>;
+  { inspect(f, a) } -> std::convertible_to<Result>;
 };
 
 template<class T>
@@ -123,7 +123,7 @@ template<class Inspector, class T>
   using TT = std::remove_cvref_t<T>;
   static_assert(IsInspectable<TT, Inspector>);
   if constexpr (HasInspectOverload<TT, Inspector>) {
-    return inspect(f, x);
+    return static_cast<Result>(inspect(f, x));
   } else if constexpr (HasInspectorAccessSpecialization<TT>) {
     return InspectorAccess<T>::apply(f, x);
   } else if constexpr (IsBuiltinType<TT>) {
