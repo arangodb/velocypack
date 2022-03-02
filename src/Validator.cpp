@@ -60,7 +60,7 @@ static ValueLength ReadVariableLengthValue(uint8_t const*& p, uint8_t const* end
 }
   
 Validator::Validator(Options const* options)
-      : options(options), _level(0) {
+      : options(options), _nesting(0) {
   if (options == nullptr) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
@@ -68,7 +68,7 @@ Validator::Validator(Options const* options)
 
 bool Validator::validate(uint8_t const* ptr, std::size_t length, bool isSubPart) {
   // reset internal state
-  _level = 0;
+  _nesting = 0;
   validatePart(ptr, length, isSubPart);
   return true;
 }
@@ -129,20 +129,20 @@ void Validator::validatePart(uint8_t const* ptr, std::size_t length, bool isSubP
     }
 
     case ValueType::Array: {
-      if (++_level >= options->nestingLimit) {
+      if (++_nesting >= options->nestingLimit) {
         throw Exception(Exception::TooDeepNesting);
       }
       validateArray(ptr, length);
-      --_level;
+      --_nesting;
       break;
     }
 
     case ValueType::Object: {
-      if (++_level >= options->nestingLimit) {
+      if (++_nesting >= options->nestingLimit) {
         throw Exception(Exception::TooDeepNesting);
       }
       validateObject(ptr, length);
-      --_level;
+      --_nesting;
       break;
     }
 

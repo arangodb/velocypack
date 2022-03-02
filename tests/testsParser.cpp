@@ -1550,6 +1550,32 @@ TEST(ParserTest, ArrayNestingBeyondLimit2) {
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::TooDeepNesting);
 }
 
+TEST(ParserTest, ArrayNestingCloseToLimitReusingParser) {
+  Options options;
+  options.nestingLimit = 6;
+
+  std::string const value("[1, [2, [3, [4, [5] ] ] ] ]");
+
+  Parser parser(&options);
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+ 
+  // reuse parser object
+  len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+  
+  // intentionally broken array
+  std::string const valueBroken("[1, [2, [3, [4, [5");
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
+  
+  // parse again with same parser object
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
+
+  // parse a valid value with same parser object
+  len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+}
+
 TEST(ParserTest, BrokenArray1) {
   std::string const value("[");
 
@@ -2384,6 +2410,32 @@ TEST(ParserTest, ObjectNestingBeyondLimit1) {
 
   Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::TooDeepNesting);
+}
+
+TEST(ParserTest, ObjectNestingCloseToLimitReusingParser) {
+  Options options;
+  options.nestingLimit = 6;
+
+  std::string const value("{ \"a\": { \"b\": { \"c\": { \"d\": { } } } } }");
+
+  Parser parser(&options);
+  ValueLength len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+ 
+  // reuse parser object
+  len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
+  
+  // intentionally broken object
+  std::string const valueBroken("{ \"a\": { \"b\": { \"c\": { \"d\": {");
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
+  
+  // parse again with same parser object
+  ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
+
+  // parse a valid value with same parser object
+  len = parser.parse(value);
+  ASSERT_EQ(1ULL, len);
 }
 
 TEST(ParserTest, ObjectNestingBeyondLimit2) {
