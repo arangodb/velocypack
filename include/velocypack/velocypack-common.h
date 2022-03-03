@@ -263,13 +263,13 @@ static inline void storeVariableValueLength(uint8_t* dst, ValueLength value) noe
       *dst-- = static_cast<uint8_t>(value | 0x80U);
       value >>= 7;
     }
-    *dst-- = static_cast<uint8_t>(value & 0x7fU);
+    *dst = static_cast<uint8_t>(value & 0x7fU);
   } else {
     while (value >= 0x80U) {
       *dst++ = static_cast<uint8_t>(value | 0x80U);
       value >>= 7;
     }
-    *dst++ = static_cast<uint8_t>(value & 0x7fU);
+    *dst = static_cast<uint8_t>(value & 0x7fU);
   }
 }
 
