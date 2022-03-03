@@ -1182,12 +1182,12 @@ class Slice {
   // extracts a pointer from the slice and converts it into a
   // built-in pointer type
   char const* extractPointer() const {
-    union {
+    union Converter {
       char const* value;
       char binary[sizeof(char const*)];
-    };
-    std::memcpy(&binary[0], start() + 1, sizeof(char const*));
-    return value;
+    } converter;
+    std::memcpy(&converter.binary[0], start() + 1, sizeof(char const*));
+    return converter.value;
   }
 
   constexpr uint8_t tagOffset(uint8_t const* start) const noexcept {
