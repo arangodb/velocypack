@@ -24,10 +24,12 @@
 #pragma once
 
 #include <concepts>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 #include "velocypack/Value.h"
 
@@ -154,21 +156,32 @@ template<class Inspector, class T>
 
 template<class Inspector, class T>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
-  auto s = f.slice()[name];
-  Inspector ff(s);
-  return ff.apply(val);
+  if constexpr (HasInspectorAccessSpecialization<T>) {
+    return InspectorAccess<T>::loadField(f, name, val);
+  } else {
+    auto s = f.slice()[name];
+    if (s.isNone()) {
+      return {"Missing required attribute '" + std::string(name) + "'"};
+    }
+    Inspector ff(s);
+    return ff.apply(val);
+  }
 }
 
 template<class Inspector, class T, class U>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val,
                                U& fallback) {
-  auto s = f.slice()[name];
-  if (s.isNone()) {
-    val = T{std::move(fallback)};
-    return {};
+  if constexpr (HasInspectorAccessSpecialization<T>) {
+    return InspectorAccess<T>::loadField(f, name, val, fallback);
+  } else {
+    auto s = f.slice()[name];
+    if (s.isNone()) {
+      val = T{std::move(fallback)};  // TODO - do we want to move?
+      return {};
+    }
+    Inspector ff(s);
+    return ff.apply(val);
   }
-  Inspector ff(s);
-  return ff.apply(val);
 }
 
 template<class T>
@@ -206,17 +219,46 @@ struct InspectorAccess<std::optional<T>> {
     }
     return inspection::saveField(f, name, val.value());
   }
+
+  template<class Inspector>
+  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+                                        std::optional<T>& val) {
+    auto s = f.slice()[name];
+    Inspector ff(s);
+    return ff.apply(val);
+  }
+
+  template<class Inspector, class U>
+  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+                                        std::optional<T>& val, U& fallback) {
+    auto s = f.slice()[name];
+    if (s.isNone()) {
+      val = fallback;
+      return {};
+    }
+    Inspector ff(s);
+    return ff.apply(val);
+  }
 };
 
-template<class T>
+template<class Derived, class T>
 struct PointerInspectorAccess {
   template<class Inspector>
   [[nodiscard]] static Result apply(Inspector& f, T& val) {
-    if (val != nullptr) {
+    if constexpr (Inspector::isLoading) {
+      if (f.slice().isNone() || f.slice().isNull()) {
+        val.reset();
+        return {};
+      }
+      val = Derived::make();  // TODO - reuse existing object?
       return f.apply(*val);
+    } else {
+      if (val != nullptr) {
+        return f.apply(*val);
+      }
+      f.builder().add(VPackValue(ValueType::Null));
+      return {};
     }
-    f._builder.add(VPackValue(ValueType::Null));
-    return {};
   }
 
   template<class Inspector>
@@ -227,14 +269,49 @@ struct PointerInspectorAccess {
     }
     return inspection::saveField(f, name, *val);
   }
+
+  template<class Inspector>
+  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+                                        T& val) {
+    auto s = f.slice()[name];
+    if (s.isNone() || s.isNull()) {
+      val.reset();
+      return {};
+    }
+    val = Derived::make();  // TODO - reuse existing object?
+    Inspector ff(s);
+    return ff.apply(val);
+  }
+
+  template<class Inspector, class U>
+  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+                                        T& val, U& fallback) {
+    auto s = f.slice()[name];
+    if (s.isNone()) {
+      val = fallback;
+      return {};
+    } else if (s.isNull()) {
+      val.reset();
+      return {};
+    }
+    val = Derived::make();  // TODO - reuse existing object?
+    Inspector ff(s);
+    return ff.apply(val);
+  }
 };
 
 template<class T, class Deleter>
 struct InspectorAccess<std::unique_ptr<T, Deleter>>
-    : PointerInspectorAccess<std::unique_ptr<T, Deleter>> {};
+    : PointerInspectorAccess<InspectorAccess<std::unique_ptr<T, Deleter>>,
+                             std::unique_ptr<T, Deleter>> {
+  static auto make() { return std::make_unique<T>(); }
+};
 
 template<class T>
 struct InspectorAccess<std::shared_ptr<T>>
-    : PointerInspectorAccess<std::shared_ptr<T>> {};
+    : PointerInspectorAccess<InspectorAccess<std::shared_ptr<T>>,
+                             std::shared_ptr<T>> {
+  static auto make() { return std::make_shared<T>(); }
+};
 
 }  // namespace arangodb::velocypack::inspection

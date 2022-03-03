@@ -117,6 +117,8 @@ auto inspect(Inspector& f, Tuple& x) {
 }
 
 struct Optional {
+  std::optional<int> a;
+  std::optional<int> b;
   std::optional<int> x;
   std::optional<std::string> y;
   std::vector<std::optional<int>> vec;
@@ -125,21 +127,29 @@ struct Optional {
 
 template<class Inspector>
 auto inspect(Inspector& f, Optional& x) {
-  return f.object(x).fields(f.field("x", x.x), f.field("y", x.y),
-                            f.field("vec", x.vec), f.field("map", x.map));
+  return f.object(x).fields(f.field("a", x.a).fallback(123),
+                            f.field("b", x.b).fallback(456), f.field("x", x.x),
+                            f.field("y", x.y), f.field("vec", x.vec),
+                            f.field("map", x.map));
 }
 
 struct Pointer {
   std::shared_ptr<int> a;
   std::shared_ptr<int> b;
   std::unique_ptr<int> c;
-  std::unique_ptr<int> d;
+  std::unique_ptr<Container> d;
+  std::vector<std::unique_ptr<int>> vec;
+  std::shared_ptr<int> x;
+  std::shared_ptr<int> y;
 };
 
 template<class Inspector>
 auto inspect(Inspector& f, Pointer& x) {
-  return f.object(x).fields(f.field("a", x.a), f.field("b", x.b),
-                            f.field("c", x.c), f.field("d", x.d));
+  return f.object(x).fields(
+      f.field("a", x.a), f.field("b", x.b), f.field("c", x.c),
+      f.field("d", x.d), f.field("vec", x.vec),
+      f.field("x", x.x).fallback(std::make_shared<int>(123)),
+      f.field("y", x.y).fallback(std::make_shared<int>(456)));
 }
 
 struct Fallback {
@@ -380,7 +390,9 @@ TEST_F(SaveInspectorTest, store_tuples) {
 TEST_F(SaveInspectorTest, store_optional) {
   static_assert(inspection::HasInspectOverload<Optional, SaveInspector>);
 
-  Optional o{.x = std::nullopt,
+  Optional o{.a = std::nullopt,
+             .b = std::nullopt,
+             .x = std::nullopt,
              .y = "blubb",
              .vec = {1, std::nullopt, 3},
              .map = {{"1", 1}, {"2", std::nullopt}, {"3", 3}}};
@@ -413,15 +425,25 @@ TEST_F(SaveInspectorTest, store_optional_pointer) {
   Pointer p{.a = nullptr,
             .b = std::make_shared<int>(42),
             .c = nullptr,
-            .d = std::make_unique<int>(43)};
+            .d = std::make_unique<Container>(Container{.i = {.value = 43}}),
+            .vec = {}};
+  p.vec.push_back(std::make_unique<int>(1));
+  p.vec.push_back(nullptr);
+  p.vec.push_back(std::make_unique<int>(2));
   auto result = inspector.apply(p);
   ASSERT_TRUE(result.ok());
 
   Slice slice = builder.slice();
   ASSERT_TRUE(slice.isObject());
-  EXPECT_EQ(2, slice.length());
+  EXPECT_EQ(3, slice.length());
   EXPECT_EQ(42, slice["b"].getInt());
-  EXPECT_EQ(43, slice["d"].getInt());
+  EXPECT_EQ(43, slice["d"]["i"].getInt());
+  auto vec = slice["vec"];
+  EXPECT_TRUE(vec.isArray());
+  EXPECT_EQ(3, vec.length());
+  EXPECT_EQ(1, vec[0].getInt());
+  EXPECT_TRUE(vec[1].isNull());
+  EXPECT_EQ(2, vec[2].getInt());
 }
 
 TEST_F(SaveInspectorTest, save_object_with_fallbacks) {
@@ -666,21 +688,79 @@ TEST_F(LoadInspectorTest, load_optional) {
   builder.add("3", VPackValue(3));
   builder.close();
 
+  builder.add("a", VPackValue(ValueType::Null));
   builder.close();
   LoadInspector inspector{builder};
 
-  Optional o{.x = 42};
+  Optional o{.a = 1, .b = 2, .x = 42};
   auto result = inspector.apply(o);
   ASSERT_TRUE(result.ok());
 
-  Optional expected{.x = std::nullopt,
+  Optional expected{.a = std::nullopt,
+                    .b = 456,
+                    .x = std::nullopt,
                     .y = "blubb",
                     .vec = {1, std::nullopt, 3},
                     .map = {{"1", 1}, {"2", std::nullopt}, {"3", 3}}};
+  EXPECT_EQ(expected.a, o.a);
+  EXPECT_EQ(expected.b, o.b);
   EXPECT_EQ(expected.x, o.x);
   EXPECT_EQ(expected.y, o.y);
   ASSERT_EQ(expected.vec, o.vec);
   EXPECT_EQ(expected.map, o.map);
+}
+
+TEST_F(LoadInspectorTest, load_optional_pointer) {
+  builder.openObject();
+  builder.add(VPackValue("vec"));
+  builder.openArray();
+  builder.add(VPackValue(1));
+  builder.add(VPackValue(VPackValueType::Null));
+  builder.add(VPackValue(2));
+  builder.close();
+
+  builder.add("a", VPackValue(VPackValueType::Null));
+
+  builder.add("b", VPackValue(42));
+
+  builder.add(VPackValue("d"));
+  builder.openObject();
+  builder.add("i", VPackValue(43));
+  builder.close();
+
+  builder.add("x", VPackValue(VPackValueType::Null));
+
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Pointer p{
+      .a = std::make_shared<int>(0),
+      .b = std::make_shared<int>(0),
+      .c = std::make_unique<int>(0),
+      .d = std::make_unique<Container>(Container{.i = {.value = 0}}),
+      .x = std::make_shared<int>(0),
+      .y = std::make_shared<int>(0),
+  };
+  auto result = inspector.apply(p);
+  ASSERT_TRUE(result.ok()) << result.error() << "; " << result.path();
+
+  EXPECT_EQ(nullptr, p.a);
+  ASSERT_NE(nullptr, p.b);
+  EXPECT_EQ(42, *p.b);
+  EXPECT_EQ(nullptr, p.c);
+  ASSERT_NE(nullptr, p.d);
+  EXPECT_EQ(43, p.d->i.value);
+
+  ASSERT_EQ(3, p.vec.size());
+  ASSERT_NE(nullptr, p.vec[0]);
+  EXPECT_EQ(1, *p.vec[0]);
+  EXPECT_EQ(nullptr, p.vec[1]);
+  ASSERT_NE(nullptr, p.vec[2]);
+  EXPECT_EQ(2, *p.vec[2]);
+
+  EXPECT_EQ(nullptr, p.x);
+  ASSERT_NE(nullptr, p.y);
+  EXPECT_EQ(456, *p.y);
 }
 
 TEST_F(LoadInspectorTest, error_expecting_int) {
@@ -820,6 +900,22 @@ TEST_F(LoadInspectorTest, error_expecting_type_on_path) {
   Nested n;
   auto result = inspector.apply(n);
   ASSERT_FALSE(result.ok());
+  EXPECT_EQ("dummy.i", result.path());
+}
+
+TEST_F(LoadInspectorTest, error_missing_field) {
+  builder.openObject();
+  builder.add(VPackValue("dummy"));
+  builder.openObject();
+  builder.add("s", VPackValue("foo"));
+  builder.close();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Nested n;
+  auto result = inspector.apply(n);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Missing required attribute 'i'", result.error());
   EXPECT_EQ("dummy.i", result.path());
 }
 
