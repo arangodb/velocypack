@@ -36,11 +36,17 @@
 
 namespace arangodb::velocypack::inspection {
 
+struct ParseOptions {
+  bool ignoreUnknownFields = false;
+};
+
 struct LoadInspector : InspectorBase<LoadInspector> {
   static constexpr bool isLoading = true;
 
-  explicit LoadInspector(Builder& builder) : _slice(builder.slice()) {}
-  explicit LoadInspector(Slice slice) : _slice(slice) {}
+  explicit LoadInspector(Builder& builder, ParseOptions options = {})
+      : LoadInspector(builder.slice(), options) {}
+  explicit LoadInspector(Slice slice, ParseOptions options)
+      : _slice(slice), _options(options) {}
 
   template<class T>
   requires std::is_integral_v<T>
@@ -103,7 +109,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     }
     std::size_t idx = 0;
     for (auto&& s : VPackArrayIterator(_slice)) {
-      LoadInspector ff(s);
+      LoadInspector ff(s, _options);
       typename T::value_type val;
       if (auto res = process(ff, val); !res.ok()) {
         return {std::move(res), "[" + std::to_string(idx) + "]"};
@@ -120,7 +126,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
       return res;
     }
     for (auto&& pair : VPackObjectIterator(_slice)) {
-      LoadInspector ff(pair.value);
+      LoadInspector ff(pair.value, _options);
       typename T::mapped_type val;
       if (auto res = process(ff, val); !res.ok()) {
         return {std::move(res), "['" + pair.key.copyString() + "']"};
@@ -157,7 +163,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     }
     std::size_t index = 0;
     for (auto&& v : VPackArrayIterator(_slice)) {
-      LoadInspector ff(v);
+      LoadInspector ff(v, _options);
       if (auto res = process(ff, data[index]); !res.ok()) {
         return {std::move(res), "[" + std::to_string(index) + "]"};
         return res;
@@ -168,13 +174,14 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result applyField(T& field) {
+  [[nodiscard]] Result parseField(Slice slice, T& field) {
+    LoadInspector ff(slice, _options);
     auto res = [&]() {
       if constexpr (!std::is_void_v<decltype(getFallbackValue(field))>) {
-        return loadField(*this, getFieldName(field), getFieldValue(field),
+        return loadField(ff, getFieldName(field), getFieldValue(field),
                          getFallbackValue(field));
       } else {
-        return loadField(*this, getFieldName(field), getFieldValue(field));
+        return loadField(ff, getFieldName(field), getFieldValue(field));
       }
     }();
     if (res.ok()) {
@@ -188,6 +195,8 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   Slice slice() noexcept { return _slice; }
+
+  ParseOptions options() const noexcept { return _options; }
 
   template<class U>
   struct FallbackContainer {
@@ -205,12 +214,52 @@ struct LoadInspector : InspectorBase<LoadInspector> {
         "Field invariant failed";
   };
 
+  template<class... Args>
+  Result applyFields(Args... args) {
+    std::array<Slice, sizeof...(args)> slices;
+    for (auto [k, v] : VPackObjectIterator(slice())) {
+      auto idx = findField<0>(k.stringView(), args...);
+      if (idx == -1 && !_options.ignoreUnknownFields) {
+        return {"Found unexpected attribute '" + k.copyString() + "'"};
+      } else {
+        slices[idx] = v;
+      }
+    }
+    return parseFields(slices.data(), args...);
+  }
+
  private:
   template<class T>
   struct HasFallback : std::false_type {};
 
   template<class T, class U>
   struct HasFallback<FallbackField<T, U>> : std::true_type {};
+
+  template<int Idx>
+  static int findField(std::string_view) {
+    return -1;
+  }
+
+  template<int Idx, class Arg, class... Args>
+  static int findField(std::string_view name, Arg& arg, Args&... args) {
+    if (name == getFieldName(arg)) {
+      return Idx;
+    }
+    return findField<Idx + 1>(name, args...);
+  }
+
+  template<class Arg>
+  Result parseFields(Slice* slices, Arg arg) {
+    return parseField(*slices, arg);
+  }
+
+  template<class Arg, class... Args>
+  Result parseFields(Slice* slices, Arg arg, Args... args) {
+    if (auto res = parseField(*slices, arg); !res.ok()) {
+      return res;
+    }
+    return parseFields(++slices, std::forward<Args>(args)...);
+  }
 
   template<class T>
   Result checkInvariant(T& field) {
@@ -227,7 +276,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   template<std::size_t Idx, std::size_t End, class T>
   [[nodiscard]] Result processTuple(T& data) {
     if constexpr (Idx < End) {
-      LoadInspector ff{_slice[Idx]};
+      LoadInspector ff{_slice[Idx], _options};
       if (auto res = process(ff, std::get<Idx>(data)); !res.ok()) {
         return {std::move(res), "[" + std::to_string(Idx) + "]"};
       }
@@ -238,6 +287,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   Slice _slice;
+  ParseOptions _options;
 };
 
 }  // namespace arangodb::velocypack::inspection

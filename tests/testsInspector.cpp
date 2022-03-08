@@ -1120,6 +1120,31 @@ TEST_F(LoadInspectorTest, error_missing_field) {
   EXPECT_EQ("dummy.i", result.path());
 }
 
+TEST_F(LoadInspectorTest, error_found_unexpected_attribute) {
+  builder.openObject();
+  builder.add("i", VPackValue(42));
+  builder.add("should_not_be_here", VPackValue(123));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Container c;
+  auto result = inspector.apply(c);
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("Found unexpected attribute 'should_not_be_here'", result.error());
+}
+
+TEST_F(LoadInspectorTest, load_object_ignoring_unknown_attributes) {
+  builder.openObject();
+  builder.add("i", VPackValue(42));
+  builder.add("ignore_me", VPackValue(123));
+  builder.close();
+  LoadInspector inspector{builder, {.ignoreUnknownFields = true}};
+
+  Container c;
+  auto result = inspector.apply(c);
+  ASSERT_TRUE(result.ok());
+}
+
 TEST_F(LoadInspectorTest, load_object_with_fallbacks) {
   builder.openObject();
   builder.close();

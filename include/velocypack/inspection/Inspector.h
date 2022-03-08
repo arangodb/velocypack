@@ -23,9 +23,11 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
 #include <type_traits>
 #include <variant>
+#include "velocypack/Iterator.h"
 #include "velocypack/inspection/InspectorAccess.h"
 
 namespace arangodb::velocypack::inspection {
@@ -232,20 +234,6 @@ struct InspectorBase {
     } else if constexpr (requires() { field.inner; }) {
       return getFallbackValue(field.inner);
     }
-  }
-
- private:
-  template<class Arg>
-  Result applyFields(Arg arg) {
-    return self().applyField(arg);
-  }
-
-  template<class Arg, class... Args>
-  Result applyFields(Arg arg, Args... args) {
-    if (auto res = self().applyField(arg); !res.ok()) {
-      return res;
-    }
-    return applyFields(std::forward<Args>(args)...);
   }
 };
 

@@ -163,12 +163,11 @@ template<class Inspector, class T>
   if constexpr (HasInspectorAccessSpecialization<T>) {
     return InspectorAccess<T>::loadField(f, name, val);
   } else {
-    auto s = f.slice()[name];
+    auto s = f.slice();
     if (s.isNone()) {
       return {"Missing required attribute '" + std::string(name) + "'"};
     }
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 }
 
@@ -178,13 +177,12 @@ template<class Inspector, class T, class U>
   if constexpr (HasInspectorAccessSpecialization<T>) {
     return InspectorAccess<T>::loadField(f, name, val, fallback);
   } else {
-    auto s = f.slice()[name];
+    auto s = f.slice();
     if (s.isNone()) {
       val = T{std::move(fallback)};  // TODO - do we want to move?
       return {};
     }
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 }
 
@@ -225,23 +223,22 @@ struct InspectorAccess<std::optional<T>> {
   }
 
   template<class Inspector>
-  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+  [[nodiscard]] static Result loadField(Inspector& f,
+                                        [[maybe_unused]] std::string_view name,
                                         std::optional<T>& val) {
-    auto s = f.slice()[name];
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 
   template<class Inspector, class U>
-  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+  [[nodiscard]] static Result loadField(Inspector& f,
+                                        [[maybe_unused]] std::string_view name,
                                         std::optional<T>& val, U& fallback) {
-    auto s = f.slice()[name];
+    auto s = f.slice();
     if (s.isNone()) {
       val = fallback;
       return {};
     }
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 };
 
@@ -275,22 +272,23 @@ struct PointerInspectorAccess {
   }
 
   template<class Inspector>
-  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+  [[nodiscard]] static Result loadField(Inspector& f,
+                                        [[maybe_unused]] std::string_view name,
                                         T& val) {
-    auto s = f.slice()[name];
+    auto s = f.slice();
     if (s.isNone() || s.isNull()) {
       val.reset();
       return {};
     }
     val = Derived::make();  // TODO - reuse existing object?
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 
   template<class Inspector, class U>
-  [[nodiscard]] static Result loadField(Inspector& f, std::string_view name,
+  [[nodiscard]] static Result loadField(Inspector& f,
+                                        [[maybe_unused]] std::string_view name,
                                         T& val, U& fallback) {
-    auto s = f.slice()[name];
+    auto s = f.slice();
     if (s.isNone()) {
       val = fallback;
       return {};
@@ -299,8 +297,7 @@ struct PointerInspectorAccess {
       return {};
     }
     val = Derived::make();  // TODO - reuse existing object?
-    Inspector ff(s);
-    return ff.apply(val);
+    return f.apply(val);
   }
 };
 

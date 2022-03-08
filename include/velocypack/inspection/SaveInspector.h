@@ -115,13 +115,17 @@ struct SaveInspector : InspectorBase<SaveInspector> {
     return endObject();
   }
 
-  template<class T>
-  [[nodiscard]] Result applyField(T const& field) {
-    auto res = saveField(*this, getFieldName(field), getFieldValue(field));
-    if (!res.ok()) {
-      return {std::move(res), getFieldName(field)};
+  template<class Arg>
+  Result applyFields(Arg arg) {
+    return applyField(arg);
+  }
+
+  template<class Arg, class... Args>
+  Result applyFields(Arg arg, Args... args) {
+    if (auto res = self().applyField(arg); !res.ok()) {
+      return res;
     }
-    return res;
+    return applyFields(std::forward<Args>(args)...);
   }
 
   Builder& builder() noexcept { return _builder; }
@@ -136,6 +140,15 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   };
 
  private:
+  template<class T>
+  [[nodiscard]] Result applyField(T const& field) {
+    auto res = saveField(*this, getFieldName(field), getFieldValue(field));
+    if (!res.ok()) {
+      return {std::move(res), getFieldName(field)};
+    }
+    return res;
+  }
+
   template<std::size_t Idx, std::size_t End, class T>
   [[nodiscard]] Result processTuple(T const& data) {
     if constexpr (Idx < End) {
