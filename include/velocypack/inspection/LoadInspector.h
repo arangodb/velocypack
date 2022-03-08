@@ -197,6 +197,9 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     explicit PredicateContainer(Predicate&& predicate)
         : predicate(std::move(predicate)) {}
     Predicate predicate;
+
+    static constexpr const char InvariantFailedError[] =
+        "Field invariant failed";
   };
 
  private:
@@ -209,10 +212,8 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   template<class T>
   Result checkInvariant(T& field) {
     if constexpr (requires() { field.predicate; }) {
-      if (!field.predicate(getFieldValue(field))) {
-        return {"Field invariant failed"};
-      }
-      return {};
+      return checkPredicate<T, T::InvariantFailedError>(field.predicate,
+                                                        getFieldValue(field));
     } else if constexpr (requires() { field.inner; }) {
       return checkInvariant(field.inner);
     } else {

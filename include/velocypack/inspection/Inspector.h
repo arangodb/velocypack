@@ -41,23 +41,35 @@ struct InspectorBase {
   template<class T>
   struct Object;
 
+  template<class T, const char ErrorMsg[], class Func, class... Args>
+  static Result checkPredicate(Func&& func, Args&&... args) {
+    using result_t = std::invoke_result_t<Func, Args...>;
+    if constexpr (std::same_as<result_t, bool>) {
+      if (!std::invoke(std::forward<Func>(func), std::forward<Args>(args)...)) {
+        return {ErrorMsg};
+      }
+      return {};
+    }
+  }
+
   template<class T>
   struct FieldsResult {
     template<class Predicate>
-    Result invariant(Predicate predicate) {
+    Result invariant(Predicate&& predicate) {
       if constexpr (Derived::isLoading) {
         if (!result.ok()) {
           return std::move(result);
         }
-        if (!predicate(object)) {
-          return {"Object invariant failed"};
-        }
-        return {};
+        return checkPredicate<FieldsResult, FieldsResult::InvariantFailedError>(
+            std::forward<Predicate>(predicate), object);
       } else {
         return std::move(result);
       }
     }
     operator Result() && { return std::move(result); }
+
+    static constexpr const char InvariantFailedError[] =
+        "Object invariant failed";
 
    private:
     template<class TT>
