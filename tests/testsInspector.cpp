@@ -188,6 +188,22 @@ auto inspect(Inspector& f, Invariant& x) {
           [](std::string const& v) { return !v.empty(); }));
 }
 
+struct InvariantWithResult {
+  int i;
+  std::string s;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, InvariantWithResult& x) {
+  return f.object(x).fields(f.field("i", x.i).invariant(
+      [](int v) -> arangodb::velocypack::inspection::Result {
+        if (v == 0) {
+          return {"Must not be zero"};
+        }
+        return {};
+      }));
+}
+
 struct InvariantAndFallback {
   int i;
   std::string s;
@@ -1155,6 +1171,36 @@ TEST_F(LoadInspectorTest, load_object_with_invariant_not_fulfilled) {
     auto result = inspector.apply(i);
     ASSERT_FALSE(result.ok());
     EXPECT_EQ("Field invariant failed", result.error());
+    EXPECT_EQ("i", result.path());
+  }
+
+  {
+    builder.clear();
+    builder.openObject();
+    builder.add("i", VPackValue(42));
+    builder.add("s", VPackValue(""));
+    builder.close();
+    LoadInspector inspector{builder};
+
+    Invariant i;
+    auto result = inspector.apply(i);
+    ASSERT_FALSE(result.ok());
+    EXPECT_EQ("Field invariant failed", result.error());
+    EXPECT_EQ("s", result.path());
+  }
+}
+
+TEST_F(LoadInspectorTest, load_object_with_invariant_Result_not_fulfilled) {
+  {
+    builder.openObject();
+    builder.add("i", VPackValue(0));
+    builder.close();
+    LoadInspector inspector{builder};
+
+    InvariantWithResult i;
+    auto result = inspector.apply(i);
+    ASSERT_FALSE(result.ok());
+    EXPECT_EQ("Must not be zero", result.error());
     EXPECT_EQ("i", result.path());
   }
 

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <functional>
 #include <type_traits>
 #include <variant>
 #include "velocypack/inspection/InspectorAccess.h"
@@ -42,26 +43,32 @@ struct InspectorBase {
   struct Object;
 
   template<class T, const char ErrorMsg[], class Func, class... Args>
-  static Result checkPredicate(Func&& func, Args&&... args) {
+  static Result checkInvariant(Func&& func, Args&&... args) {
     using result_t = std::invoke_result_t<Func, Args...>;
-    if constexpr (std::same_as<result_t, bool>) {
+    if constexpr (std::is_same_v<result_t, bool>) {
       if (!std::invoke(std::forward<Func>(func), std::forward<Args>(args)...)) {
         return {ErrorMsg};
       }
       return {};
+    } else {
+      static_assert(std::is_same_v<result_t, Result>,
+                    "Invariants must either return bool or "
+                    "velocypack::inspection::Result");
+      // TODO
+      return std::invoke(std::forward<Func>(func), std::forward<Args>(args)...);
     }
   }
 
   template<class T>
   struct FieldsResult {
-    template<class Predicate>
-    Result invariant(Predicate&& predicate) {
+    template<class Invariant>
+    Result invariant(Invariant&& func) {
       if constexpr (Derived::isLoading) {
         if (!result.ok()) {
           return std::move(result);
         }
-        return checkPredicate<FieldsResult, FieldsResult::InvariantFailedError>(
-            std::forward<Predicate>(predicate), object);
+        return checkInvariant<FieldsResult, FieldsResult::InvariantFailedError>(
+            std::forward<Invariant>(func), object);
       } else {
         return std::move(result);
       }
@@ -144,11 +151,11 @@ struct InspectorBase {
   using WithFallback = std::conditional_t<HasFallbackMethod<Inner>,
                                           std::monostate, FallbackMixin<Inner>>;
 
-  template<class InnerField, class Predicate>
-  struct InvariantField : Derived::template PredicateContainer<Predicate>,
-                          WithFallback<InvariantField<InnerField, Predicate>> {
-    InvariantField(InnerField inner, Predicate&& predicate)
-        : Derived::template PredicateContainer<Predicate>(std::move(predicate)),
+  template<class InnerField, class Invariant>
+  struct InvariantField : Derived::template InvariantContainer<Invariant>,
+                          WithFallback<InvariantField<InnerField, Invariant>> {
+    InvariantField(InnerField inner, Invariant&& invariant)
+        : Derived::template InvariantContainer<Invariant>(std::move(invariant)),
           inner(std::move(inner)) {}
     using value_type = typename InnerField::value_type;
     InnerField inner;

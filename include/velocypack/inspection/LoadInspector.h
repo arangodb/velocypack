@@ -195,11 +195,11 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     U fallbackValue;
   };
 
-  template<class Predicate>
-  struct PredicateContainer {
-    explicit PredicateContainer(Predicate&& predicate)
-        : predicate(std::move(predicate)) {}
-    Predicate predicate;
+  template<class Invariant>
+  struct InvariantContainer {
+    explicit InvariantContainer(Invariant&& invariant)
+        : invariantFunc(std::move(invariant)) {}
+    Invariant invariantFunc;
 
     static constexpr const char InvariantFailedError[] =
         "Field invariant failed";
@@ -214,9 +214,9 @@ struct LoadInspector : InspectorBase<LoadInspector> {
 
   template<class T>
   Result checkInvariant(T& field) {
-    if constexpr (requires() { field.predicate; }) {
-      return checkPredicate<T, T::InvariantFailedError>(field.predicate,
-                                                        getFieldValue(field));
+    if constexpr (requires() { field.invariantFunc; }) {
+      return InspectorBase::checkInvariant<T, T::InvariantFailedError>(
+          field.invariantFunc, getFieldValue(field));
     } else if constexpr (requires() { field.inner; }) {
       return checkInvariant(field.inner);
     } else {
