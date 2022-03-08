@@ -140,7 +140,8 @@ template<class Inspector, class T>
 }
 
 template<class Inspector, class T>
-[[nodiscard]] Result process(Inspector& f, const T& x) {
+[[nodiscard]] Result process(Inspector& f, T const& x) {
+  static_assert(!Inspector::isLoading);
   return process(f, const_cast<T&>(x));
 }
 

@@ -67,7 +67,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result tuple(const T& data) {
+  [[nodiscard]] Result tuple(T const& data) {
     auto res = beginArray();
     assert(res.ok());
 
@@ -91,7 +91,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result list(const T& list) {
+  [[nodiscard]] Result list(T const& list) {
     auto res = beginArray();
     assert(res.ok());
     for (auto&& val : list) {
@@ -103,7 +103,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result map(const T& map) {
+  [[nodiscard]] Result map(T const& map) {
     auto res = beginObject();
     assert(res.ok());
     for (auto&& [k, v] : map) {
@@ -116,7 +116,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result applyField(T field) {
+  [[nodiscard]] Result applyField(T const& field) {
     auto res = saveField(*this, getFieldName(field), getFieldValue(field));
     if (!res.ok()) {
       return {std::move(res), getFieldName(field)};
@@ -137,7 +137,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
 
  private:
   template<std::size_t Idx, std::size_t End, class T>
-  [[nodiscard]] Result processTuple(const T& data) {
+  [[nodiscard]] Result processTuple(T const& data) {
     if constexpr (Idx < End) {
       if (auto res = process(*this, std::get<Idx>(data)); !res.ok()) {
         return res;

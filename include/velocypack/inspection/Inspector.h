@@ -220,8 +220,8 @@ struct InspectorBase {
   template<class T>
   static decltype(auto) getFallbackValue(T& field) noexcept {
     if constexpr (requires() { field.fallbackValue; }) {
-      return (field.fallbackValue);  // intentially use braces so the return
-                                     // value is an l-value ref
+      auto& result = field.fallbackValue;  // We want to return a reference!
+      return result;
     } else if constexpr (requires() { field.inner; }) {
       return getFallbackValue(field.inner);
     }
