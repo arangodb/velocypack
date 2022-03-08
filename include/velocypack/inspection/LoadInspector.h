@@ -101,13 +101,15 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     if (auto res = beginArray(); !res.ok()) {
       return res;
     }
+    std::size_t idx = 0;
     for (auto&& s : VPackArrayIterator(_slice)) {
       LoadInspector ff(s);
       typename T::value_type val;
       if (auto res = process(ff, val); !res.ok()) {
-        return res;
+        return {std::move(res), "[" + std::to_string(idx) + "]"};
       }
       list.push_back(std::move(val));
+      ++idx;
     }
     return endArray();
   }
@@ -121,7 +123,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
       LoadInspector ff(pair.value);
       typename T::mapped_type val;
       if (auto res = process(ff, val); !res.ok()) {
-        return res;
+        return {std::move(res), "['" + pair.key.copyString() + "']"};
       }
       map.emplace(pair.key.copyString(), std::move(val));
     }
@@ -157,6 +159,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     for (auto&& v : VPackArrayIterator(_slice)) {
       LoadInspector ff(v);
       if (auto res = process(ff, data[index]); !res.ok()) {
+        return {std::move(res), "[" + std::to_string(index) + "]"};
         return res;
       }
       ++index;
@@ -226,7 +229,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     if constexpr (Idx < End) {
       LoadInspector ff{_slice[Idx]};
       if (auto res = process(ff, std::get<Idx>(data)); !res.ok()) {
-        return res;
+        return {std::move(res), "[" + std::to_string(Idx) + "]"};
       }
       return processTuple<Idx + 1, End>(data);
     } else {

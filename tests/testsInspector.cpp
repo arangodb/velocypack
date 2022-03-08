@@ -66,15 +66,27 @@ auto inspect(Inspector& f, Nested& x) {
 
 struct TypedInt {
   int value;
+  int getValue() { return value; }
+  bool operator==(TypedInt const& r) const = default;
 };
 
 struct Container {
-  TypedInt i;
+  TypedInt i{.value = 0};
+  bool operator==(Container const& r) const = default;
 };
 
 template<class Inspector>
 auto inspect(Inspector& f, TypedInt& x) {
-  return f.apply(x.value);
+  if constexpr (Inspector::isLoading) {
+    int v;
+    auto res = f.apply(v);
+    if (res.ok()) {
+      x = TypedInt{.value = v};
+    }
+    return res;
+  } else {
+    return f.apply(x.value);
+  }
 }
 
 template<class Inspector>
@@ -82,7 +94,7 @@ auto inspect(Inspector& f, Container& x) {
   return f.object(x).fields(f.field("i", x.i));
 }
 struct List {
-  std::vector<int> vec;
+  std::vector<Container> vec;
   std::list<int> list;
 };
 
@@ -92,7 +104,7 @@ auto inspect(Inspector& f, List& x) {
 }
 
 struct Map {
-  std::map<std::string, int> map;
+  std::map<std::string, Container> map;
   std::unordered_map<std::string, int> unordered;
 };
 
@@ -202,6 +214,17 @@ auto inspect(Inspector& f, ObjectInvariant& x) {
       .invariant([](ObjectInvariant& o) { return o.i != 0 && !o.s.empty(); });
 }
 
+struct FallbackReference {
+  int x;
+  int y;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, FallbackReference& x) {
+  return f.object(x).fields(f.field("x", x.x),
+                            f.field("y", x.y).fallback(std::ref(x.x)));
+}
+
 struct Specialization {
   int i;
   std::string s;
@@ -263,7 +286,7 @@ TEST_F(SaveInspectorTest, store_string) {
 TEST_F(SaveInspectorTest, store_object) {
   static_assert(inspection::HasInspectOverload<Dummy, SaveInspector>);
 
-  Dummy f{.i = 42, .d = 123.456, .b = true, .s = "foobar"};
+  Dummy const f{.i = 42, .d = 123.456, .b = true, .s = "foobar"};
   auto result = inspector.apply(f);
   ASSERT_TRUE(result.ok());
 
@@ -307,7 +330,7 @@ TEST_F(SaveInspectorTest, store_nested_object_without_nesting) {
 TEST_F(SaveInspectorTest, store_list) {
   static_assert(inspection::HasInspectOverload<List, SaveInspector>);
 
-  List l{.vec = {1, 2, 3}, .list = {4, 5}};
+  List l{.vec = {{1}, {2}, {3}}, .list = {4, 5}};
   auto result = inspector.apply(l);
   ASSERT_TRUE(result.ok());
 
@@ -316,9 +339,9 @@ TEST_F(SaveInspectorTest, store_list) {
   auto list = slice["vec"];
   ASSERT_TRUE(list.isArray());
   ASSERT_EQ(3, list.length());
-  EXPECT_EQ(l.vec[0], list[0].getInt());
-  EXPECT_EQ(l.vec[1], list[1].getInt());
-  EXPECT_EQ(l.vec[2], list[2].getInt());
+  EXPECT_EQ(l.vec[0].i.value, list[0]["i"].getInt());
+  EXPECT_EQ(l.vec[1].i.value, list[1]["i"].getInt());
+  EXPECT_EQ(l.vec[2].i.value, list[2]["i"].getInt());
 
   list = slice["list"];
   ASSERT_TRUE(list.isArray());
@@ -331,7 +354,7 @@ TEST_F(SaveInspectorTest, store_list) {
 TEST_F(SaveInspectorTest, store_map) {
   static_assert(inspection::HasInspectOverload<Map, SaveInspector>);
 
-  Map m{.map = {{"1", 1}, {"2", 2}, {"3", 3}},
+  Map m{.map = {{"1", {1}}, {"2", {2}}, {"3", {3}}},
         .unordered = {{"4", 4}, {"5", 5}}};
   auto result = inspector.apply(m);
   ASSERT_TRUE(result.ok());
@@ -341,9 +364,9 @@ TEST_F(SaveInspectorTest, store_map) {
   auto obj = slice["map"];
   ASSERT_TRUE(obj.isObject());
   ASSERT_EQ(3, obj.length());
-  EXPECT_EQ(m.map["1"], obj["1"].getInt());
-  EXPECT_EQ(m.map["2"], obj["2"].getInt());
-  EXPECT_EQ(m.map["3"], obj["3"].getInt());
+  EXPECT_EQ(m.map["1"].i.value, obj["1"]["i"].getInt());
+  EXPECT_EQ(m.map["2"].i.value, obj["2"]["i"].getInt());
+  EXPECT_EQ(m.map["3"].i.value, obj["3"]["i"].getInt());
 
   obj = slice["unordered"];
   ASSERT_TRUE(obj.isObject());
@@ -446,7 +469,7 @@ TEST_F(SaveInspectorTest, store_optional_pointer) {
   EXPECT_EQ(2, vec[2].getInt());
 }
 
-TEST_F(SaveInspectorTest, save_object_with_fallbacks) {
+TEST_F(SaveInspectorTest, store_object_with_fallbacks) {
   Fallback f;
   auto result = inspector.apply(f);
   ASSERT_TRUE(result.ok());
@@ -455,7 +478,7 @@ TEST_F(SaveInspectorTest, save_object_with_fallbacks) {
                 sizeof(inspector.field("i", f.i).fallback(42)));
 }
 
-TEST_F(SaveInspectorTest, save_object_with_invariant) {
+TEST_F(SaveInspectorTest, store_object_with_invariant) {
   Invariant i;
   auto result = inspector.apply(i);
   ASSERT_TRUE(result.ok());
@@ -465,7 +488,7 @@ TEST_F(SaveInspectorTest, save_object_with_invariant) {
                 sizeof(inspector.field("i", i.i).invariant(invariant)));
 }
 
-TEST_F(SaveInspectorTest, save_object_with_invariant_and_fallback) {
+TEST_F(SaveInspectorTest, store_object_with_invariant_and_fallback) {
   InvariantAndFallback i;
   auto result = inspector.apply(i);
   ASSERT_TRUE(result.ok());
@@ -578,9 +601,15 @@ TEST_F(LoadInspectorTest, load_list) {
   builder.openObject();
   builder.add(VPackValue("vec"));
   builder.openArray();
-  builder.add(VPackValue(1));
-  builder.add(VPackValue(2));
-  builder.add(VPackValue(3));
+  builder.openObject();
+  builder.add("i", VPackValue(1));
+  builder.close();
+  builder.openObject();
+  builder.add("i", VPackValue(2));
+  builder.close();
+  builder.openObject();
+  builder.add("i", VPackValue(3));
+  builder.close();
   builder.close();
   builder.add(VPackValue("list"));
   builder.openArray();
@@ -594,7 +623,10 @@ TEST_F(LoadInspectorTest, load_list) {
   auto result = inspector.apply(l);
   ASSERT_TRUE(result.ok());
 
-  EXPECT_EQ((std::vector<int>{1, 2, 3}), l.vec);
+  EXPECT_EQ(3, l.vec.size());
+  EXPECT_EQ(1, l.vec[0].i.value);
+  EXPECT_EQ(2, l.vec[1].i.value);
+  EXPECT_EQ(3, l.vec[2].i.value);
   EXPECT_EQ((std::list<int>{4, 5}), l.list);
 }
 
@@ -602,9 +634,18 @@ TEST_F(LoadInspectorTest, load_map) {
   builder.openObject();
   builder.add(VPackValue("map"));
   builder.openObject();
-  builder.add("1", VPackValue(1));
-  builder.add("2", VPackValue(2));
-  builder.add("3", VPackValue(3));
+  builder.add(VPackValue("1"));
+  builder.openObject();
+  builder.add("i", VPackValue(1));
+  builder.close();
+  builder.add(VPackValue("2"));
+  builder.openObject();
+  builder.add("i", VPackValue(2));
+  builder.close();
+  builder.add(VPackValue("3"));
+  builder.openObject();
+  builder.add("i", VPackValue(3));
+  builder.close();
   builder.close();
   builder.add(VPackValue("unordered"));
   builder.openObject();
@@ -618,7 +659,9 @@ TEST_F(LoadInspectorTest, load_map) {
   auto result = inspector.apply(m);
   ASSERT_TRUE(result.ok());
 
-  EXPECT_EQ((std::map<std::string, int>{{"1", 1}, {"2", 2}, {"3", 3}}), m.map);
+  EXPECT_EQ(
+      (std::map<std::string, Container>{{"1", {1}}, {"2", {2}}, {"3", {3}}}),
+      m.map);
   EXPECT_EQ((std::unordered_map<std::string, int>{{"4", 4}, {"5", 5}}),
             m.unordered);
 }
@@ -903,6 +946,148 @@ TEST_F(LoadInspectorTest, error_expecting_type_on_path) {
   EXPECT_EQ("dummy.i", result.path());
 }
 
+TEST_F(LoadInspectorTest, error_expecting_type_on_path_with_array) {
+  builder.openObject();
+  builder.add(VPackValue("vec"));
+  builder.openArray();
+  builder.openObject();
+  builder.add("i", VPackValue(1));
+  builder.close();
+  builder.openObject();
+  builder.add("i", VPackValue(2));
+  builder.close();
+  builder.openObject();
+  builder.add("i", VPackValue("foobar"));
+  builder.close();
+  builder.close();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  List l;
+  auto result = inspector.apply(l);
+
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("vec[2].i", result.path());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_type_on_path_with_map) {
+  builder.openObject();
+  builder.add(VPackValue("map"));
+  builder.openObject();
+  builder.add(VPackValue("1"));
+  builder.openObject();
+  builder.add("i", VPackValue(1));
+  builder.close();
+  builder.add(VPackValue("2"));
+  builder.openObject();
+  builder.add("i", VPackValue(2));
+  builder.close();
+  builder.add(VPackValue("3"));
+  builder.openObject();
+  builder.add("i", VPackValue("foobar"));
+  builder.close();
+  builder.close();
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Map m;
+  auto result = inspector.apply(m);
+
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("map['3'].i", result.path());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_type_on_path_with_tuple) {
+  builder.openObject();
+
+  builder.add(VPackValue("tuple"));
+  builder.openArray();
+  builder.add(VPackValue("foo"));
+  builder.add(VPackValue(42));
+  builder.add(VPackValue("bar"));
+  builder.close();
+
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Tuple l;
+  auto result = inspector.apply(l);
+
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("tuple[2]", result.path());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_type_on_path_with_c_style_array) {
+  builder.openObject();
+
+  builder.add(VPackValue("tuple"));
+  builder.openArray();
+  builder.add(VPackValue("foo"));
+  builder.add(VPackValue(42));
+  builder.add(VPackValue(0));
+  builder.close();
+
+  builder.add(VPackValue("pair"));
+  builder.openArray();
+  builder.add(VPackValue(987));
+  builder.add(VPackValue("bar"));
+  builder.close();
+
+  builder.add(VPackValue("array1"));
+  builder.openArray();
+  builder.add(VPackValue("a"));
+  builder.add(VPackValue(42));
+  builder.close();
+
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Tuple l;
+  auto result = inspector.apply(l);
+
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("array1[1]", result.path());
+}
+
+TEST_F(LoadInspectorTest, error_expecting_type_on_path_with_std_array) {
+  builder.openObject();
+
+  builder.add(VPackValue("tuple"));
+  builder.openArray();
+  builder.add(VPackValue("foo"));
+  builder.add(VPackValue(42));
+  builder.add(VPackValue(0));
+  builder.close();
+
+  builder.add(VPackValue("pair"));
+  builder.openArray();
+  builder.add(VPackValue(987));
+  builder.add(VPackValue("bar"));
+  builder.close();
+
+  builder.add(VPackValue("array1"));
+  builder.openArray();
+  builder.add(VPackValue("a"));
+  builder.add(VPackValue("b"));
+  builder.close();
+
+  builder.add(VPackValue("array2"));
+  builder.openArray();
+  builder.add(VPackValue(1));
+  builder.add(VPackValue(2));
+  builder.add(VPackValue("foo"));
+  builder.close();
+
+  builder.close();
+  LoadInspector inspector{builder};
+
+  Tuple l;
+  auto result = inspector.apply(l);
+
+  ASSERT_FALSE(result.ok());
+  EXPECT_EQ("array2[2]", result.path());
+}
+
 TEST_F(LoadInspectorTest, error_missing_field) {
   builder.openObject();
   builder.add(VPackValue("dummy"));
@@ -929,6 +1114,19 @@ TEST_F(LoadInspectorTest, load_object_with_fallbacks) {
   ASSERT_TRUE(result.ok());
   EXPECT_EQ(42, f.i);
   EXPECT_EQ("foobar", f.s);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_fallback_reference) {
+  builder.openObject();
+  builder.add("x", VPackValue(42));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  FallbackReference f;
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, f.x);
+  EXPECT_EQ(42, f.y);
 }
 
 TEST_F(LoadInspectorTest, load_object_with_invariant_fulfilled) {

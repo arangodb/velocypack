@@ -42,7 +42,10 @@ struct Result {
     if (_error->path.empty()) {
       _error->path = path;
     } else {
-      _error->path = std::string(path) + "." + _error->path;
+      if (_error->path[0] != '[') {
+        _error->path = "." + _error->path;
+      }
+      _error->path = std::string(path) + _error->path;
     }
   }
   Result(std::string error)
