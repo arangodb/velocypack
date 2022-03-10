@@ -142,9 +142,17 @@ struct SaveInspector : InspectorBase<SaveInspector> {
  private:
   template<class T>
   [[nodiscard]] Result applyField(T const& field) {
-    auto res = saveField(*this, getFieldName(field), getFieldValue(field));
+    auto name = getFieldName(field);
+    auto& value = getFieldValue(field);
+    auto res = [&]() {
+      if constexpr (!std::is_void_v<decltype(getTransformer(field))>) {
+        return saveTransformedField(*this, name, value, getTransformer(field));
+      } else {
+        return saveField(*this, name, value);
+      }
+    }();
     if (!res.ok()) {
-      return {std::move(res), getFieldName(field)};
+      return {std::move(res), name};
     }
     return res;
   }

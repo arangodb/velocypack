@@ -176,12 +176,22 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   template<class T>
   [[nodiscard]] Result parseField(Slice slice, T& field) {
     LoadInspector ff(slice, _options);
+    auto name = getFieldName(field);
+    auto& value = getFieldValue(field);
     auto res = [&]() {
       if constexpr (!std::is_void_v<decltype(getFallbackValue(field))>) {
-        return loadField(ff, getFieldName(field), getFieldValue(field),
-                         getFallbackValue(field));
+        if constexpr (!std::is_void_v<decltype(getTransformer(field))>) {
+          return loadTransformedField(ff, name, value, getFallbackValue(field),
+                                      getTransformer(field));
+        } else {
+          return loadField(ff, name, value, getFallbackValue(field));
+        }
       } else {
-        return loadField(ff, getFieldName(field), getFieldValue(field));
+        if constexpr (!std::is_void_v<decltype(getTransformer(field))>) {
+          return loadTransformedField(ff, name, value, getTransformer(field));
+        } else {
+          return loadField(ff, name, value);
+        }
       }
     }();
     if (res.ok()) {
@@ -189,7 +199,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     }
 
     if (!res.ok()) {
-      return {std::move(res), getFieldName(field)};
+      return {std::move(res), name};
     }
     return res;
   }

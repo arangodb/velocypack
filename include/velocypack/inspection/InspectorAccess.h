@@ -158,6 +158,21 @@ template<class Inspector, class T>
   }
 }
 
+template<class Inspector, class T, class Transformer>
+[[nodiscard]] Result saveTransformedField(Inspector& f, std::string_view name,
+                                          T& val, Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<T>) {
+    return InspectorAccess<T>::saveTransformedField(f, name, val, transformer);
+  } else {
+    typename Transformer::SerializedType v;
+    if (auto res = transformer.toSerialized(val, v); !res.ok()) {
+      return res;
+    }
+    f.builder().add(VPackValue(name));
+    return f.apply(v);
+  }
+}
+
 template<class Inspector, class T>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
   if constexpr (HasInspectorAccessSpecialization<T>) {
@@ -186,6 +201,44 @@ template<class Inspector, class T, class U>
   }
 }
 
+template<class Inspector, class T, class Transformer>
+[[nodiscard]] Result loadTransformedField(Inspector& f, std::string_view name,
+                                          T& val, Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<T>) {
+    return InspectorAccess<T>::loadTransformedField(f, name, val, transformer);
+  } else {
+    auto s = f.slice();
+    if (s.isNone()) {
+      return {"Missing required attribute '" + std::string(name) + "'"};
+    }
+    typename Transformer::SerializedType v;
+    if (auto res = f.apply(v); !res.ok()) {
+      return res;
+    }
+    return transformer.fromSerialized(v, val);
+  }
+}
+
+template<class Inspector, class T, class U, class Transformer>
+[[nodiscard]] Result loadTransformedField(Inspector& f, std::string_view name,
+                                          T& val, U& fallback,
+                                          Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<T>) {
+    return InspectorAccess<T>::loadTransformedField(f, name, val, fallback,
+                                                    transformer);
+  } else {
+    auto s = f.slice();
+    if (s.isNone()) {
+      val = T{std::move(fallback)};  // TODO - do we want to move?
+      return {};
+    }
+    typename Transformer::SerializedType v;
+    if (auto res = f.apply(v); !res.ok()) {
+      return res;
+    }
+    return transformer.fromSerialized(v, val);
+  }
+}
 template<class T>
 struct InspectorAccess<std::optional<T>> {
   template<class Inspector>
@@ -222,6 +275,21 @@ struct InspectorAccess<std::optional<T>> {
     return inspection::saveField(f, name, val.value());
   }
 
+  template<class Inspector, class Transformer>
+  [[nodiscard]] static Result saveTransformedField(Inspector& f,
+                                                   std::string_view name,
+                                                   std::optional<T>& val,
+                                                   Transformer& transformer) {
+    if (!val.has_value()) {
+      return {};
+    }
+    typename Transformer::SerializedType v;
+    if (auto res = transformer.toSerialized(*val, v); !res.ok()) {
+      return res;
+    }
+    return inspection::saveField(f, name, v);
+  }
+
   template<class Inspector>
   [[nodiscard]] static Result loadField(Inspector& f,
                                         [[maybe_unused]] std::string_view name,
@@ -239,6 +307,36 @@ struct InspectorAccess<std::optional<T>> {
       return {};
     }
     return f.apply(val);
+  }
+
+  template<class Inspector, class Transformer>
+  [[nodiscard]] static Result loadTransformedField(
+      Inspector& f, [[maybe_unused]] std::string_view name,
+      std::optional<T>& val, Transformer& transformer) {
+    std::optional<typename Transformer::SerializedType> v;
+    if (auto res = f.apply(v); !res.ok()) {
+      return res;
+    }
+    if (!v.has_value()) {
+      val.reset();
+      return {};
+    }
+    T vv;
+    auto res = transformer.fromSerialized(*v, vv);
+    val = vv;
+    return res;
+  }
+
+  template<class Inspector, class U, class Transformer>
+  [[nodiscard]] static Result loadTransformedField(
+      Inspector& f, [[maybe_unused]] std::string_view name,
+      std::optional<T>& val, U& fallback, Transformer& transformer) {
+    auto s = f.slice();
+    if (s.isNone()) {
+      val = fallback;
+      return {};
+    }
+    return loadTransformedField(f, name, val, transformer);
   }
 };
 

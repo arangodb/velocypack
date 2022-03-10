@@ -241,6 +241,57 @@ auto inspect(Inspector& f, FallbackReference& x) {
                             f.field("y", x.y).fallback(std::ref(x.x)));
 }
 
+struct MyTransformer {
+  using MemoryType = int;
+  using SerializedType = std::string;
+
+  arangodb::velocypack::inspection::Result toSerialized(
+      MemoryType v, SerializedType& result) const {
+    result = std::to_string(v);
+    return {};
+  }
+  arangodb::velocypack::inspection::Result fromSerialized(
+      SerializedType const& v, MemoryType& result) const {
+    result = std::stoi(v);
+    return {};
+  }
+};
+
+struct FieldTransform {
+  int x;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, FieldTransform& x) {
+  return f.object(x).fields(f.field("x", x.x).transformWith(MyTransformer{}));
+}
+
+struct FieldTransformWithFallback {
+  int x;
+  int y;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, FieldTransformWithFallback& x) {
+  return f.object(x).fields(
+      f.field("x", x.x).fallback(1).transformWith(MyTransformer{}),
+      f.field("y", x.y).transformWith(MyTransformer{}).fallback(2));
+}
+
+struct OptionalFieldTransform {
+  std::optional<int> x;
+  std::optional<int> y;
+  std::optional<int> z;
+};
+
+template<class Inspector>
+auto inspect(Inspector& f, OptionalFieldTransform& x) {
+  return f.object(x).fields(
+      f.field("x", x.x).transformWith(MyTransformer{}),
+      f.field("y", x.y).transformWith(MyTransformer{}),
+      f.field("z", x.z).transformWith(MyTransformer{}).fallback(123));
+}
+
 struct Specialization {
   int i;
   std::string s;
@@ -516,6 +567,27 @@ TEST_F(SaveInspectorTest, store_object_with_invariant_and_fallback) {
   static_assert(
       sizeof(inspector.field("i", i.i)) ==
       sizeof(inspector.field("i", i.i).fallback(42).invariant(invariant)));
+}
+
+TEST_F(SaveInspectorTest, store_object_with_field_transform) {
+  FieldTransform f{.x = 42};
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+
+  Slice slice = builder.slice();
+  ASSERT_TRUE(slice.isObject());
+  EXPECT_EQ("42", slice["x"].copyString());
+}
+
+TEST_F(SaveInspectorTest, store_object_with_optional_field_transform) {
+  OptionalFieldTransform f{.x = 1, .y = std::nullopt, .z = 3};
+  auto result = inspector.apply(f);
+
+  Slice slice = builder.slice();
+  ASSERT_TRUE(slice.isObject());
+  EXPECT_EQ(2, slice.length());
+  EXPECT_EQ("1", slice["x"].copyString());
+  EXPECT_EQ("3", slice["z"].copyString());
 }
 
 struct LoadInspectorTest : public ::testing::Test {
@@ -1268,6 +1340,45 @@ TEST_F(LoadInspectorTest, load_object_with_object_invariant) {
   auto result = inspector.apply(o);
   ASSERT_FALSE(result.ok());
   EXPECT_EQ("Object invariant failed", result.error());
+}
+
+TEST_F(LoadInspectorTest, load_object_with_field_transform) {
+  builder.openObject();
+  builder.add("x", VPackValue("42"));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  FieldTransform f;
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, f.x);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_field_transform_and_fallback) {
+  builder.openObject();
+  builder.add("x", VPackValue("42"));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  FieldTransformWithFallback f;
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, f.x);
+  EXPECT_EQ(2, f.y);
+}
+
+TEST_F(LoadInspectorTest, load_object_with_optional_field_transform) {
+  builder.openObject();
+  builder.add("x", VPackValue("42"));
+  builder.close();
+  LoadInspector inspector{builder};
+
+  OptionalFieldTransform f{.x = 1, .y = 2, .z = 3};
+  auto result = inspector.apply(f);
+  ASSERT_TRUE(result.ok());
+  EXPECT_EQ(42, *f.x);
+  EXPECT_FALSE(f.y.has_value());
+  EXPECT_EQ(123, *f.z);
 }
 
 }  // namespace
