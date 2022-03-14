@@ -1,0 +1,107 @@
+name: velocypack-test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+  CXX_STANDARD: 20
+  SANITIZER: false
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # GCC builds
+          - {os: ubuntu-latest, compiler: gcc, version:  '9',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '10',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: gcc, version: '11',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '10',
+             build_type: Debug, hash_type: xxhash,
+             flags: '-O0 -fno-inline --coverage', coverage: true}
+          - {os: ubuntu-latest, compiler: gcc, version: '10',
+             build_type: Debug, hash_type: xxhash,
+             flags: '-fsanitize=address -fno-omit-frame-pointer',
+             ld_flags: '-fsanitize=address -fno-omit-frame-pointer'}
+
+          # Clang builds
+          - {os: ubuntu-latest, compiler: clang, version: '10',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: clang, version: '11',
+             build_type: Release, hash_type: xxhash }
+
+          # Windows builds
+          - {os: windows-2019,   compiler: msvc,
+             build_type: Release, hash_type: xxhash }
+          - {os: windows-latest, compiler: msvc,
+             build_type: Release, hash_type: xxhash }
+
+          # macOS builds
+          - {os: macos-latest, compiler: clang,
+             build_type: Release, hash_type: xxhash }
+
+          # This seems to trigger a bug, so re-enable it after it is
+          # fixed
+          # - {os: macos-latest, compiler: clang,
+          #    build_type: Release, hash_type: xxhash,
+          #    flags: '-O0 -fno-inline --coverage', coverage: true}
+
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install gcc
+      if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'gcc'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install g++-${{ matrix.version }}
+        echo "CXX=g++-${{ matrix.version }}" >> ${GITHUB_ENV}
+    - name: Install clang
+      if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
+      run: |
+        export CODENAME=`lsb_release -c | sed 's/Codename:\t//'`
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${{ matrix.version }} main"
+        sudo apt-get update
+        sudo apt-get install clang-${{ matrix.version }}
+        echo "CC=clang-${{ matrix.version }}" >> ${GITHUB_ENV}
+        echo "CXX=clang++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
+    - name: Initialize MSVC ${{ matrix.version }}
+      if: startsWith(matrix.os, 'windows-')
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        toolset: ${{ matrix.version }}
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHashType=${{ matrix.hash_type }} -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=${{env.CXX_STANDARD}} -DCMAKE_CXX_FLAGS="${{ matrix.flags }}" -DCMAKE_LINKER_FLAGS="${{ matrix.ld_flags }}"
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: ${{github.workspace}}
+      run: scripts/travis-test.sh
+
+    - name: Coverage
+      if: matrix.coverage == true
+      run: |
+        sudo apt-get install lcov
+        scripts/gh-action-after-success.sh
+
+    - name: Coveralls Upload
+      if: matrix.coverage == true
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ${{ github.workspace }}/coverage.info
