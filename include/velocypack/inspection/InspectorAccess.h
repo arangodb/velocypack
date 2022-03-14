@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -236,27 +237,33 @@ template<class Inspector, class T>
   }
 }
 
-template<class Inspector, class T, class U>
+template<class Inspector, class Value, class Fallback>
 [[nodiscard]] Result loadField(Inspector& f,
-                               [[maybe_unused]] std::string_view name, T& val,
-                               U& fallback) {
-  if constexpr (HasInspectorAccessSpecialization<T>()) {
-    return InspectorAccess<T>::loadField(f, name, val, fallback);
+                               [[maybe_unused]] std::string_view name,
+                               Value& val, Fallback&& fallback) {
+  if constexpr (HasInspectorAccessSpecialization<Value>()) {
+    return InspectorAccess<Value>::loadField(f, name, val, fallback);
   } else {
     auto s = f.slice();
     if (s.isNone()) {
-      val = T{std::move(fallback)};  // TODO - do we want to move?
+      if constexpr (std::is_assignable_v<Value, Fallback>) {
+        val = std::forward<Fallback>(fallback);
+      } else {
+        val = Value{std::forward<Fallback>(fallback)};
+      }
       return {};
     }
     return f.apply(val);
   }
 }
 
-template<class Inspector, class T, class Transformer>
+template<class Inspector, class Value, class Transformer>
 [[nodiscard]] Result loadTransformedField(Inspector& f, std::string_view name,
-                                          T& val, Transformer& transformer) {
-  if constexpr (HasInspectorAccessSpecialization<T>()) {
-    return InspectorAccess<T>::loadTransformedField(f, name, val, transformer);
+                                          Value& val,
+                                          Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<Value>()) {
+    return InspectorAccess<Value>::loadTransformedField(f, name, val,
+                                                        transformer);
   } else {
     auto s = f.slice();
     if (s.isNone()) {
@@ -270,17 +277,21 @@ template<class Inspector, class T, class Transformer>
   }
 }
 
-template<class Inspector, class T, class U, class Transformer>
+template<class Inspector, class Value, class Fallback, class Transformer>
 [[nodiscard]] Result loadTransformedField(
-    Inspector& f, [[maybe_unused]] std::string_view name, T& val, U& fallback,
-    Transformer& transformer) {
-  if constexpr (HasInspectorAccessSpecialization<T>()) {
-    return InspectorAccess<T>::loadTransformedField(f, name, val, fallback,
-                                                    transformer);
+    Inspector& f, [[maybe_unused]] std::string_view name, Value& val,
+    Fallback&& fallback, Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<Value>()) {
+    return InspectorAccess<Value>::loadTransformedField(f, name, val, fallback,
+                                                        transformer);
   } else {
     auto s = f.slice();
     if (s.isNone()) {
-      val = T{std::move(fallback)};  // TODO - do we want to move?
+      if constexpr (std::is_assignable_v<Value, Fallback>) {
+        val = std::forward<Fallback>(fallback);
+      } else {
+        val = Value{std::forward<Fallback>(fallback)};
+      }
       return {};
     }
     typename Transformer::SerializedType v;
@@ -378,13 +389,17 @@ struct InspectorAccess<std::optional<T>> {
     return res;
   }
 
-  template<class Inspector, class U, class Transformer>
+  template<class Inspector, class Fallback, class Transformer>
   [[nodiscard]] static Result loadTransformedField(
       Inspector& f, [[maybe_unused]] std::string_view name,
-      std::optional<T>& val, U& fallback, Transformer& transformer) {
+      std::optional<T>& val, Fallback&& fallback, Transformer& transformer) {
     auto s = f.slice();
     if (s.isNone()) {
-      val = fallback;
+      if constexpr (std::is_assignable_v<std::optional<T>, Fallback>) {
+        val = std::forward<Fallback>(fallback);
+      } else {
+        val = std::optional<T>{std::forward<Fallback>(fallback)};
+      }
       return {};
     }
     return loadTransformedField(f, name, val, transformer);
