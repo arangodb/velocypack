@@ -112,7 +112,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
       LoadInspector ff(s, _options);
       typename T::value_type val;
       if (auto res = process(ff, val); !res.ok()) {
-        return {std::move(res), "[" + std::to_string(idx) + "]"};
+        return {std::move(res), std::to_string(idx), Result::ArrayTag{}};
       }
       list.push_back(std::move(val));
       ++idx;
@@ -129,7 +129,8 @@ struct LoadInspector : InspectorBase<LoadInspector> {
       LoadInspector ff(pair.value, _options);
       typename T::mapped_type val;
       if (auto res = process(ff, val); !res.ok()) {
-        return {std::move(res), "['" + pair.key.copyString() + "']"};
+        return {std::move(res), "'" + pair.key.copyString() + "'",
+                Result::ArrayTag{}};
       }
       map.emplace(pair.key.copyString(), std::move(val));
     }
@@ -165,7 +166,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     for (auto&& v : VPackArrayIterator(_slice)) {
       LoadInspector ff(v, _options);
       if (auto res = process(ff, data[index]); !res.ok()) {
-        return {std::move(res), "[" + std::to_string(index) + "]"};
+        return {std::move(res), std::to_string(index), Result::ArrayTag{}};
         return res;
       }
       ++index;
@@ -199,7 +200,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     }
 
     if (!res.ok()) {
-      return {std::move(res), name};
+      return {std::move(res), name, Result::AttributeTag{}};
     }
     return res;
   }
@@ -288,7 +289,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     if constexpr (Idx < End) {
       LoadInspector ff{_slice[Idx], _options};
       if (auto res = process(ff, std::get<Idx>(data)); !res.ok()) {
-        return {std::move(res), "[" + std::to_string(Idx) + "]"};
+        return {std::move(res), std::to_string(Idx), Result::ArrayTag{}};
       }
       return processTuple<Idx + 1, End>(data);
     } else {

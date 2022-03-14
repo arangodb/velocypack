@@ -37,17 +37,7 @@ namespace arangodb::velocypack::inspection {
 
 struct Result {
   Result() = default;
-  Result(Result&& res, std::string_view path) : _error(std::move(res._error)) {
-    assert(!ok());
-    if (_error->path.empty()) {
-      _error->path = path;
-    } else {
-      if (_error->path[0] != '[') {
-        _error->path = "." + _error->path;
-      }
-      _error->path = std::string(path) + _error->path;
-    }
-  }
+
   Result(std::string error)
       : _error(std::make_unique<Error>(std::move(error))) {}
 
@@ -64,6 +54,38 @@ struct Result {
   }
 
  private:
+  friend struct LoadInspector;
+  friend struct SaveInspector;
+
+  struct AttributeTag {};
+  struct ArrayTag {};
+
+  Result(Result&& res, std::string const& index, ArrayTag)
+      : Result(std::move(res)) {
+    prependPath("[" + index + "]");
+  }
+
+  Result(Result&& res, std::string_view attribute, AttributeTag)
+      : Result(std::move(res)) {
+    if (attribute.find('.') != std::string::npos) {
+      prependPath("['" + std::string(attribute) + "']");
+    } else {
+      prependPath(std::string(attribute));
+    }
+  }
+
+  void prependPath(std::string const& s) {
+    assert(!ok());
+    if (_error->path.empty()) {
+      _error->path = s;
+    } else {
+      if (_error->path[0] != '[') {
+        _error->path = "." + _error->path;
+      }
+      _error->path = s + _error->path;
+    }
+  }
+
   struct Error {
     explicit Error(std::string&& msg) : message(std::move(msg)) {}
     std::string message;

@@ -152,7 +152,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
       }
     }();
     if (!res.ok()) {
-      return {std::move(res), name};
+      return {std::move(res), name, Result::AttributeTag{}};
     }
     return res;
   }
