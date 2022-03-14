@@ -1216,7 +1216,8 @@ TEST_F(LoadInspectorTest, load_object_ignoring_unknown_attributes) {
 
   Container c;
   auto result = inspector.apply(c);
-  ASSERT_TRUE(result.ok());
+  ASSERT_TRUE(result.ok()) << "Error: " << result.error()
+                           << "\nPath: " << result.path();
 }
 
 TEST_F(LoadInspectorTest, load_object_with_fallbacks) {
