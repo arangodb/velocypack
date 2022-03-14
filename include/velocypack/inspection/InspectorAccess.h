@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <concepts>
 #include <memory>
 #include <optional>
 #include <string>
@@ -97,69 +96,98 @@ struct Result {
 template<class T>
 struct InspectorAccess;
 
-template<class T, class Inspector>
-concept HasInspectOverload = requires(Inspector f, T a) {
-  { inspect(f, a) } -> std::convertible_to<Result>;
-};
-
-template<class T>
-concept IsBuiltinType =
-    std::same_as<T, bool> || std::integral<T> || std::floating_point<T> ||
-    std::same_as<T, std::string>;  // TODO - use is-string-like
-
-template<class T>
-concept IsListLike = requires(T a) {
-  a.begin() != a.end();
-  ++a.begin();
-  *a.begin();
-  a.push_back(std::declval<typename T::value_type>());
-};
-
-template<class T>
-concept IsMapLike = requires(T a) {
-  a.begin() != a.end();
-  ++a.begin();
-  *a.begin();
-  typename T::key_type;
-  typename T::mapped_type;
-  // TODO - check that T::key_type is string-like
-  a.emplace(std::declval<std::string>(),
-            std::declval<typename T::mapped_type>());
-};
-
-template<class T>
-concept IsTuple = std::is_array_v<T> || requires(T a) {
-  typename std::tuple_size<T>::type;
-};
-
-template<class T>
-concept IsCompleteType = requires(T a) {
-  sizeof(a);
-};
-
-template<class T>
-concept HasInspectorAccessSpecialization = IsCompleteType<InspectorAccess<T>>;
+template<class T, class Inspector, class = void>
+struct HasInspectOverload : std::false_type {};
 
 template<class T, class Inspector>
-concept IsInspectable =
-    IsBuiltinType<T> || HasInspectOverload<T, Inspector> || IsListLike<T> ||
-    IsMapLike<T> || IsTuple<T> || HasInspectorAccessSpecialization<T>;
+struct HasInspectOverload<T, Inspector,
+                          std::void_t<decltype(inspect(
+                              std::declval<Inspector&>(), std::declval<T&>()))>>
+    : std::conditional_t<
+          std::is_convertible_v<decltype(inspect(std::declval<Inspector&>(),
+                                                 std::declval<T&>())),
+                                Result>,
+          std::true_type, typename std::false_type> {};
+
+template<class T>
+constexpr inline bool IsBuiltinType() {
+  return std::is_same_v<T, bool> || std::is_integral_v<T> ||
+         std::is_floating_point_v<T> ||
+         std::is_same_v<T, std::string>;  // TODO - use is-string-like?
+}
+
+template<class T, class = void>
+struct IsListLike : std::false_type {};
+
+template<class T>
+struct IsListLike<T, std::void_t<decltype(std::declval<T>().begin() !=
+                                          std::declval<T>().end()),
+                                 decltype(++std::declval<T>().begin()),
+                                 decltype(*std::declval<T>().begin()),
+                                 decltype(std::declval<T>().push_back(
+                                     std::declval<typename T::value_type>()))>>
+    : std::true_type {};
+
+template<class T, class = void>
+struct IsMapLike : std::false_type {};
+
+template<class T>
+struct IsMapLike<T, std::void_t<decltype(std::declval<T>().begin() !=
+                                         std::declval<T>().end()),
+                                decltype(++std::declval<T>().begin()),
+                                decltype(*std::declval<T>().begin()),
+                                typename T::key_type, typename T::mapped_type,
+                                decltype(std::declval<T>().emplace(
+                                    std::declval<std::string>(),
+                                    std::declval<typename T::mapped_type>()))>>
+    : std::true_type {};
+
+template<class T, class = void>
+struct IsTuple
+    : std::conditional_t<std::is_array_v<T>, std::true_type, std::false_type> {
+};
+
+template<class T>
+struct IsTuple<T, std::void_t<typename std::tuple_size<T>::type>>
+    : std::true_type {};
+
+template<class T, std::size_t = sizeof(T)>
+std::true_type IsCompleteTypeImpl(T*);
+
+std::false_type IsCompleteTypeImpl(...);
+
+template<class T>
+constexpr inline bool IsCompleteType() {
+  return decltype(IsCompleteTypeImpl(std::declval<T*>()))::value;
+}
+
+template<class T>
+constexpr inline bool HasInspectorAccessSpecialization() {
+  return IsCompleteType<InspectorAccess<T>>();
+}
+
+template<class T, class Inspector>
+constexpr inline bool IsInspectable() {
+  return IsBuiltinType<T>() || HasInspectOverload<T, Inspector>::value ||
+         IsListLike<T>::value || IsMapLike<T>::value || IsTuple<T>::value ||
+         HasInspectorAccessSpecialization<T>();
+}
 
 template<class Inspector, class T>
 [[nodiscard]] Result process(Inspector& f, T& x) {
   using TT = std::remove_cvref_t<T>;
-  static_assert(IsInspectable<TT, Inspector>);
-  if constexpr (HasInspectOverload<TT, Inspector>) {
+  static_assert(IsInspectable<TT, Inspector>());
+  if constexpr (HasInspectOverload<TT, Inspector>::value) {
     return static_cast<Result>(inspect(f, x));
-  } else if constexpr (HasInspectorAccessSpecialization<TT>) {
+  } else if constexpr (HasInspectorAccessSpecialization<TT>()) {
     return InspectorAccess<T>::apply(f, x);
-  } else if constexpr (IsBuiltinType<TT>) {
+  } else if constexpr (IsBuiltinType<TT>()) {
     return f.value(x);
-  } else if constexpr (IsTuple<T>) {
+  } else if constexpr (IsTuple<TT>::value) {
     return f.tuple(x);
-  } else if constexpr (IsMapLike<T>) {
+  } else if constexpr (IsMapLike<TT>::value) {
     return f.map(x);
-  } else if constexpr (IsListLike<T>) {
+  } else if constexpr (IsListLike<TT>::value) {
     return f.list(x);
   }
 }
@@ -172,7 +200,7 @@ template<class Inspector, class T>
 
 template<class Inspector, class T>
 [[nodiscard]] Result saveField(Inspector& f, std::string_view name, T& val) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::saveField(f, name, val);
   } else {
     f.builder().add(VPackValue(name));
@@ -183,7 +211,7 @@ template<class Inspector, class T>
 template<class Inspector, class T, class Transformer>
 [[nodiscard]] Result saveTransformedField(Inspector& f, std::string_view name,
                                           T& val, Transformer& transformer) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::saveTransformedField(f, name, val, transformer);
   } else {
     typename Transformer::SerializedType v;
@@ -197,7 +225,7 @@ template<class Inspector, class T, class Transformer>
 
 template<class Inspector, class T>
 [[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::loadField(f, name, val);
   } else {
     auto s = f.slice();
@@ -209,9 +237,10 @@ template<class Inspector, class T>
 }
 
 template<class Inspector, class T, class U>
-[[nodiscard]] Result loadField(Inspector& f, std::string_view name, T& val,
+[[nodiscard]] Result loadField(Inspector& f,
+                               [[maybe_unused]] std::string_view name, T& val,
                                U& fallback) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::loadField(f, name, val, fallback);
   } else {
     auto s = f.slice();
@@ -226,7 +255,7 @@ template<class Inspector, class T, class U>
 template<class Inspector, class T, class Transformer>
 [[nodiscard]] Result loadTransformedField(Inspector& f, std::string_view name,
                                           T& val, Transformer& transformer) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::loadTransformedField(f, name, val, transformer);
   } else {
     auto s = f.slice();
@@ -242,10 +271,10 @@ template<class Inspector, class T, class Transformer>
 }
 
 template<class Inspector, class T, class U, class Transformer>
-[[nodiscard]] Result loadTransformedField(Inspector& f, std::string_view name,
-                                          T& val, U& fallback,
-                                          Transformer& transformer) {
-  if constexpr (HasInspectorAccessSpecialization<T>) {
+[[nodiscard]] Result loadTransformedField(
+    Inspector& f, [[maybe_unused]] std::string_view name, T& val, U& fallback,
+    Transformer& transformer) {
+  if constexpr (HasInspectorAccessSpecialization<T>()) {
     return InspectorAccess<T>::loadTransformedField(f, name, val, fallback,
                                                     transformer);
   } else {

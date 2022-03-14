@@ -48,8 +48,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   explicit LoadInspector(Slice slice, ParseOptions options)
       : _slice(slice), _options(options) {}
 
-  template<class T>
-  requires std::is_integral_v<T>
+  template<class T, class = std::enable_if_t<std::is_integral_v<T>>>
   [[nodiscard]] Result value(T& v) {
     try {
       v = _slice.getNumber<T>();
@@ -272,12 +271,16 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     return parseFields(++slices, std::forward<Args>(args)...);
   }
 
+  template<class T, class U>
+  Result checkInvariant(InvariantField<T, U>& field) {
+    return InspectorBase::checkInvariant<
+        InvariantField<T, U>, InvariantField<T, U>::InvariantFailedError>(
+        field.invariantFunc, getFieldValue(field));
+  }
+
   template<class T>
   Result checkInvariant(T& field) {
-    if constexpr (requires() { field.invariantFunc; }) {
-      return InspectorBase::checkInvariant<T, T::InvariantFailedError>(
-          field.invariantFunc, getFieldValue(field));
-    } else if constexpr (requires() { field.inner; }) {
+    if constexpr (!IsRawField<std::remove_cvref_t<T>>::value) {
       return checkInvariant(field.inner);
     } else {
       return {};

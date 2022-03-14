@@ -51,7 +51,8 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result value(T const& v) requires IsBuiltinType<T> {
+  [[nodiscard]] Result value(T const& v) {
+    static_assert(IsBuiltinType<T>());
     _builder.add(VPackValue(v));
     return {};
   }
@@ -116,13 +117,13 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class Arg>
-  Result applyFields(Arg arg) {
-    return applyField(arg);
+  Result applyFields(Arg&& arg) {
+    return applyField(std::forward<Arg>(arg));
   }
 
   template<class Arg, class... Args>
-  Result applyFields(Arg arg, Args... args) {
-    if (auto res = self().applyField(arg); !res.ok()) {
+  Result applyFields(Arg&& arg, Args&&... args) {
+    if (auto res = self().applyField(std::forward<Arg>(arg)); !res.ok()) {
       return res;
     }
     return applyFields(std::forward<Args>(args)...);

@@ -113,6 +113,98 @@ struct InspectorBase {
     T& object;
   };
 
+  template<class InnerField, class Fallback>
+  struct FallbackField;
+
+  template<class InnerField, class Invariant>
+  struct InvariantField;
+
+  template<class InnerField, class Transformer>
+  struct TransformField;
+
+  template<typename DerivedField>
+  struct BasicField;
+
+  template<typename T>
+  struct RawField;
+
+  // TODO - support virtual fields with getter/setter
+  // template<typename T>
+  // struct VirtualField : BasicField<VirtualField<T>> {
+  //   using value_type = T;
+  // };
+
+  template<class T>
+  [[nodiscard]] Object<T> object(T& o) noexcept {
+    return Object<T>{self(), o};
+  }
+
+  template<typename T>
+  [[nodiscard]] RawField<T> field(std::string_view name,
+                                  T& value) const noexcept {
+    static_assert(!std::is_const<T>::value);
+    return RawField<T>{{name}, value};
+  }
+
+ private:
+  friend struct LoadInspector;
+  friend struct SaveInspector;
+
+  template<class T>
+  struct IsRawField : std::false_type {};
+  template<class T>
+  struct IsRawField<RawField<T>> : std::true_type {};
+
+  template<class T>
+  struct IsTransformField : std::false_type {};
+  template<class T, class U>
+  struct IsTransformField<TransformField<T, U>> : std::true_type {};
+
+  template<class T>
+  struct IsFallbackField : std::false_type {};
+  template<class T, class U>
+  struct IsFallbackField<FallbackField<T, U>> : std::true_type {};
+
+  template<class T>
+  static std::string_view getFieldName(T& field) noexcept {
+    if constexpr (IsRawField<std::remove_cvref_t<T>>::value) {
+      return field.name;
+    } else {
+      return getFieldName(field.inner);
+    }
+  }
+
+  template<class T>
+  static auto& getFieldValue(T& field) noexcept {
+    if constexpr (IsRawField<std::remove_cvref_t<T>>::value) {
+      return field.value;
+    } else {
+      return getFieldValue(field.inner);
+    }
+  }
+
+  template<class T>
+  static decltype(auto) getFallbackValue(T& field) noexcept {
+    using TT = std::remove_cvref_t<T>;
+    if constexpr (IsFallbackField<TT>::value) {
+      auto& result = field.fallbackValue;  // We want to return a reference!
+      return result;
+    } else if constexpr (!IsRawField<TT>::value) {
+      return getFallbackValue(field.inner);
+    }
+  }
+
+  template<class T>
+  static decltype(auto) getTransformer(T& field) noexcept {
+    using TT = std::remove_cvref_t<T>;
+    if constexpr (IsTransformField<TT>::value) {
+      auto& result = field.transformer;  // We want to return a reference!
+      return result;
+    } else if constexpr (!IsRawField<TT>::value) {
+      return getTransformer(field.inner);
+    }
+  }
+
   template<class Field>
   struct InvariantMixin {
     template<class Predicate>
@@ -122,14 +214,24 @@ struct InspectorBase {
     }
   };
 
-  template<class Field>
-  static constexpr bool HasInvariantMethod = requires(Field f) {
-    f.invariant([](auto) { return true; });
+  template<class Field, class = void>
+  struct HasInvariantMethod : std::false_type {};
+
+  struct True {
+    template<class T>
+    bool operator()(T&&) {
+      return true;
+    }
   };
+
+  template<class Field>
+  struct HasInvariantMethod<
+      Field, std::void_t<decltype(std::declval<Field>().invariant(True{}))>>
+      : std::true_type {};
 
   template<class Inner>
   using WithInvariant =
-      std::conditional_t<HasInvariantMethod<Inner>, std::monostate,
+      std::conditional_t<HasInvariantMethod<Inner>::value, std::monostate,
                          InvariantMixin<Inner>>;
 
   template<class Field>
@@ -143,13 +245,17 @@ struct InspectorBase {
     }
   };
 
+  template<class Field, class = void>
+  struct HasFallbackMethod : std::false_type {};
+
   template<class Field>
-  static constexpr bool HasFallbackMethod = requires(Field f) {
-    f.fallback(std::declval<typename Field::value_type>());
-  };
+  struct HasFallbackMethod<Field,
+                           std::void_t<decltype(std::declval<Field>().fallback(
+                               std::declval<typename Field::value_type>()))>>
+      : std::true_type {};
 
   template<class Inner>
-  using WithFallback = std::conditional_t<HasFallbackMethod<Inner>,
+  using WithFallback = std::conditional_t<HasFallbackMethod<Inner>::value,
                                           std::monostate, FallbackMixin<Inner>>;
 
   template<class Field>
@@ -161,15 +267,30 @@ struct InspectorBase {
     }
   };
 
+  template<class Field, class = void>
+  struct HasTransformMethod : std::false_type {};
+
   template<class Field>
-  static constexpr bool HasTransformMethod = requires(Field f) {
-    f.transform;
-  };
+  struct HasTransformMethod<
+      Field, std::void_t<decltype(std::declval<Field>().transformWith)>>
+      : std::true_type {};
 
   template<class Inner>
   using WithTransform =
-      std::conditional_t<HasTransformMethod<Inner>, std::monostate,
+      std::conditional_t<HasTransformMethod<Inner>::value, std::monostate,
                          TransformMixin<Inner>>;
+
+ public:
+  template<class InnerField, class U>
+  struct FallbackField : Derived::template FallbackContainer<U>,
+                         WithInvariant<FallbackField<InnerField, U>>,
+                         WithTransform<FallbackField<InnerField, U>> {
+    FallbackField(InnerField inner, U&& val)
+        : Derived::template FallbackContainer<U>(std::move(val)),
+          inner(std::move(inner)) {}
+    using value_type = typename InnerField::value_type;
+    InnerField inner;
+  };
 
   template<class InnerField, class Invariant>
   struct InvariantField : Derived::template InvariantContainer<Invariant>,
@@ -177,17 +298,6 @@ struct InspectorBase {
                           WithTransform<InvariantField<InnerField, Invariant>> {
     InvariantField(InnerField inner, Invariant&& invariant)
         : Derived::template InvariantContainer<Invariant>(std::move(invariant)),
-          inner(std::move(inner)) {}
-    using value_type = typename InnerField::value_type;
-    InnerField inner;
-  };
-
-  template<class InnerField, class U>
-  struct FallbackField : Derived::template FallbackContainer<U>,
-                         WithInvariant<FallbackField<InnerField, U>>,
-                         WithTransform<FallbackField<InnerField, U>> {
-    FallbackField(InnerField inner, U&& val)
-        : Derived::template FallbackContainer<U>(std::move(val)),
           inner(std::move(inner)) {}
     using value_type = typename InnerField::value_type;
     InnerField inner;
@@ -218,64 +328,6 @@ struct InspectorBase {
     using value_type = T;
     T& value;
   };
-
-  template<typename T>
-  struct VirtualField : BasicField<VirtualField<T>> {
-    using value_type = T;
-  };
-
-  template<class Field>
-  struct Invariant {};
-
-  template<class T>
-  [[nodiscard]] Object<T> object(T& o) noexcept {
-    return Object<T>{self(), o};
-  }
-
-  template<typename T>
-  [[nodiscard]] RawField<T> field(std::string_view name,
-                                  T& value) const noexcept {
-    static_assert(!std::is_const<T>::value);
-    return RawField<T>{{name}, value};
-  }
-
-  template<class T>
-  static std::string_view getFieldName(T& field) noexcept {
-    if constexpr (requires() { field.inner; }) {
-      return getFieldName(field.inner);
-    } else {
-      return field.name;
-    }
-  }
-
-  template<class T>
-  static auto& getFieldValue(T& field) noexcept {
-    if constexpr (requires() { field.inner; }) {
-      return getFieldValue(field.inner);
-    } else {
-      return field.value;
-    }
-  }
-
-  template<class T>
-  static decltype(auto) getFallbackValue(T& field) noexcept {
-    if constexpr (requires() { field.fallbackValue; }) {
-      auto& result = field.fallbackValue;  // We want to return a reference!
-      return result;
-    } else if constexpr (requires() { field.inner; }) {
-      return getFallbackValue(field.inner);
-    }
-  }
-
-  template<class T>
-  static decltype(auto) getTransformer(T& field) noexcept {
-    if constexpr (requires() { field.transformer; }) {
-      auto& result = field.transformer;  // We want to return a reference!
-      return result;
-    } else if constexpr (requires() { field.inner; }) {
-      return getTransformer(field.inner);
-    }
-  }
 };
 
 }  // namespace arangodb::velocypack::inspection

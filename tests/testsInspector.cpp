@@ -67,12 +67,12 @@ auto inspect(Inspector& f, Nested& x) {
 struct TypedInt {
   int value;
   int getValue() { return value; }
-  bool operator==(TypedInt const& r) const = default;
+  bool operator==(TypedInt const& r) const { return value == r.value; };
 };
 
 struct Container {
   TypedInt i{.value = 0};
-  bool operator==(Container const& r) const = default;
+  bool operator==(Container const& r) const { return i == r.i; };
 };
 
 template<class Inspector>
@@ -351,7 +351,7 @@ TEST_F(SaveInspectorTest, store_string) {
 }
 
 TEST_F(SaveInspectorTest, store_object) {
-  static_assert(inspection::HasInspectOverload<Dummy, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Dummy, SaveInspector>::value);
 
   Dummy const f{.i = 42, .d = 123.456, .b = true, .s = "foobar"};
   auto result = inspector.apply(f);
@@ -366,7 +366,7 @@ TEST_F(SaveInspectorTest, store_object) {
 }
 
 TEST_F(SaveInspectorTest, store_nested_object) {
-  static_assert(inspection::HasInspectOverload<Nested, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Nested, SaveInspector>::value);
 
   Nested b{.dummy = {.i = 42, .d = 123.456, .b = true, .s = "foobar"}};
   auto result = inspector.apply(b);
@@ -383,7 +383,8 @@ TEST_F(SaveInspectorTest, store_nested_object) {
 }
 
 TEST_F(SaveInspectorTest, store_nested_object_without_nesting) {
-  static_assert(inspection::HasInspectOverload<Container, SaveInspector>);
+  static_assert(
+      inspection::HasInspectOverload<Container, SaveInspector>::value);
 
   Container c{.i = {.value = 42}};
   auto result = inspector.apply(c);
@@ -395,7 +396,7 @@ TEST_F(SaveInspectorTest, store_nested_object_without_nesting) {
 }
 
 TEST_F(SaveInspectorTest, store_list) {
-  static_assert(inspection::HasInspectOverload<List, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<List, SaveInspector>::value);
 
   List l{.vec = {{1}, {2}, {3}}, .list = {4, 5}};
   auto result = inspector.apply(l);
@@ -419,7 +420,7 @@ TEST_F(SaveInspectorTest, store_list) {
 }
 
 TEST_F(SaveInspectorTest, store_map) {
-  static_assert(inspection::HasInspectOverload<Map, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Map, SaveInspector>::value);
 
   Map m{.map = {{"1", {1}}, {"2", {2}}, {"3", {3}}},
         .unordered = {{"4", 4}, {"5", 5}}};
@@ -443,7 +444,7 @@ TEST_F(SaveInspectorTest, store_map) {
 }
 
 TEST_F(SaveInspectorTest, store_tuples) {
-  static_assert(inspection::HasInspectOverload<Tuple, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Tuple, SaveInspector>::value);
 
   Tuple t{.tuple = {"foo", 42, 12.34},
           .pair = {987, "bar"},
@@ -478,7 +479,7 @@ TEST_F(SaveInspectorTest, store_tuples) {
 }
 
 TEST_F(SaveInspectorTest, store_optional) {
-  static_assert(inspection::HasInspectOverload<Optional, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Optional, SaveInspector>::value);
 
   Optional o{.a = std::nullopt,
              .b = std::nullopt,
@@ -510,13 +511,15 @@ TEST_F(SaveInspectorTest, store_optional) {
 }
 
 TEST_F(SaveInspectorTest, store_optional_pointer) {
-  static_assert(inspection::HasInspectOverload<Pointer, SaveInspector>);
+  static_assert(inspection::HasInspectOverload<Pointer, SaveInspector>::value);
 
   Pointer p{.a = nullptr,
             .b = std::make_shared<int>(42),
             .c = nullptr,
             .d = std::make_unique<Container>(Container{.i = {.value = 43}}),
-            .vec = {}};
+            .vec = {},
+            .x = {},
+            .y = {}};
   p.vec.push_back(std::make_unique<int>(1));
   p.vec.push_back(nullptr);
   p.vec.push_back(std::make_unique<int>(2));
@@ -823,7 +826,7 @@ TEST_F(LoadInspectorTest, load_optional) {
   builder.close();
   LoadInspector inspector{builder};
 
-  Optional o{.a = 1, .b = 2, .x = 42};
+  Optional o{.a = 1, .b = 2, .x = 42, .y = {}, .vec = {}, .map = {}};
   auto result = inspector.apply(o);
   ASSERT_TRUE(result.ok());
 
@@ -864,14 +867,13 @@ TEST_F(LoadInspectorTest, load_optional_pointer) {
   builder.close();
   LoadInspector inspector{builder};
 
-  Pointer p{
-      .a = std::make_shared<int>(0),
-      .b = std::make_shared<int>(0),
-      .c = std::make_unique<int>(0),
-      .d = std::make_unique<Container>(Container{.i = {.value = 0}}),
-      .x = std::make_shared<int>(0),
-      .y = std::make_shared<int>(0),
-  };
+  Pointer p{.a = std::make_shared<int>(0),
+            .b = std::make_shared<int>(0),
+            .c = std::make_unique<int>(0),
+            .d = std::make_unique<Container>(Container{.i = {.value = 0}}),
+            .vec = {},
+            .x = std::make_shared<int>(0),
+            .y = std::make_shared<int>(0)};
   auto result = inspector.apply(p);
   ASSERT_TRUE(result.ok()) << result.error() << "; " << result.path();
 
