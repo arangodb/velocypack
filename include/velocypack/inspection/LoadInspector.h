@@ -229,8 +229,12 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     std::array<Slice, sizeof...(args)> slices;
     for (auto [k, v] : VPackObjectIterator(slice())) {
       auto idx = findField<0>(k.stringView(), args...);
-      if (idx == -1 && !_options.ignoreUnknownFields) {
-        return {"Found unexpected attribute '" + k.copyString() + "'"};
+      if (idx == -1) {
+        if (_options.ignoreUnknownFields) {
+          continue;
+        } else {
+          return {"Found unexpected attribute '" + k.copyString() + "'"};
+        }
       } else {
         slices[idx] = v;
       }
