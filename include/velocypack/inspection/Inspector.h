@@ -91,7 +91,7 @@ struct InspectorBase {
   template<class T>
   struct Object {
     template<class... Args>
-    [[nodiscard]] FieldsResult<T> fields(Args... args) {
+    [[nodiscard]] FieldsResult<T> fields(Args&&... args) {
       if (auto res = inspector.beginObject(); !res.ok()) {
         return {std::move(res), object};
       }

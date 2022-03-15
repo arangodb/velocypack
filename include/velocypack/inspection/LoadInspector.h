@@ -27,6 +27,7 @@
 #include <string_view>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 
 #include "velocypack/Builder.h"
 #include "velocypack/inspection/Inspector.h"
@@ -174,7 +175,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result parseField(Slice slice, T& field) {
+  [[nodiscard]] Result parseField(Slice slice, T&& field) {
     LoadInspector ff(slice, _options);
     auto name = getFieldName(field);
     auto& value = getFieldValue(field);
@@ -225,21 +226,20 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   };
 
   template<class... Args>
-  Result applyFields(Args... args) {
+  Result applyFields(Args&&... args) {
+    std::array<std::string_view, sizeof...(args)> names{getFieldName(args)...};
     std::array<Slice, sizeof...(args)> slices;
     for (auto [k, v] : VPackObjectIterator(slice())) {
-      auto idx = findField<0>(k.stringView(), args...);
-      if (idx == -1) {
-        if (_options.ignoreUnknownFields) {
-          continue;
-        } else {
-          return {"Found unexpected attribute '" + k.copyString() + "'"};
-        }
+      auto it = std::find(names.begin(), names.end(), k.stringView());
+      if (it != names.end()) {
+        slices[std::distance(names.begin(), it)] = v;
+      } else if (_options.ignoreUnknownFields) {
+        continue;
       } else {
-        slices[idx] = v;
+        return {"Found unexpected attribute '" + k.copyString() + "'"};
       }
     }
-    return parseFields(slices.data(), args...);
+    return parseFields(slices.data(), std::forward<Args>(args)...);
   }
 
  private:
@@ -249,27 +249,14 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   template<class T, class U>
   struct HasFallback<FallbackField<T, U>> : std::true_type {};
 
-  template<int Idx>
-  static int findField(std::string_view) {
-    return -1;
-  }
-
-  template<int Idx, class Arg, class... Args>
-  static int findField(std::string_view name, Arg& arg, Args&... args) {
-    if (name == getFieldName(arg)) {
-      return Idx;
-    }
-    return findField<Idx + 1>(name, args...);
-  }
-
   template<class Arg>
-  Result parseFields(Slice* slices, Arg arg) {
-    return parseField(*slices, arg);
+  Result parseFields(Slice* slices, Arg&& arg) {
+    return parseField(*slices, std::forward<Arg>(arg));
   }
 
   template<class Arg, class... Args>
-  Result parseFields(Slice* slices, Arg arg, Args... args) {
-    if (auto res = parseField(*slices, arg); !res.ok()) {
+  Result parseFields(Slice* slices, Arg&& arg, Args&&... args) {
+    if (auto res = parseField(*slices, std::forward<Arg>(arg)); !res.ok()) {
       return res;
     }
     return parseFields(++slices, std::forward<Args>(args)...);
