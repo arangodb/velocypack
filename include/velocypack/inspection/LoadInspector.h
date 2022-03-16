@@ -91,7 +91,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     return {};
   }
 
-  [[nodiscard]] Result endObject() { return {}; }
+  [[nodiscard]] Result::Success endObject() { return {}; }
 
   [[nodiscard]] Result beginArray() {
     if (!_slice.isArray()) {
@@ -100,78 +100,38 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     return {};
   }
 
-  [[nodiscard]] Result endArray() { return {}; }
+  [[nodiscard]] Result::Success endArray() { return {}; }
 
   template<class T>
   [[nodiscard]] Result list(T& list) {
-    if (auto res = beginArray(); !res.ok()) {
-      return res;
-    }
-    std::size_t idx = 0;
-    for (auto&& s : VPackArrayIterator(_slice)) {
-      LoadInspector ff(s, _options);
-      typename T::value_type val;
-      if (auto res = process(ff, val); !res.ok()) {
-        return {std::move(res), std::to_string(idx), Result::ArrayTag{}};
-      }
-      list.push_back(std::move(val));
-      ++idx;
-    }
-    return endArray();
+    return beginArray()                         //
+         | [&]() { return processList(list); }  //
+         | [&]() { return endArray(); };        //
   }
 
   template<class T>
   [[nodiscard]] Result map(T& map) {
-    if (auto res = beginObject(); !res.ok()) {
-      return res;
-    }
-    for (auto&& pair : VPackObjectIterator(_slice)) {
-      LoadInspector ff(pair.value, _options);
-      typename T::mapped_type val;
-      if (auto res = process(ff, val); !res.ok()) {
-        return {std::move(res), "'" + pair.key.copyString() + "'",
-                Result::ArrayTag{}};
-      }
-      map.emplace(pair.key.copyString(), std::move(val));
-    }
-    return endObject();
+    return beginObject()                      //
+         | [&]() { return processMap(map); }  //
+         | [&]() { return endObject(); };     //
   }
 
   template<class T>
   [[nodiscard]] Result tuple(T& data) {
     constexpr auto arrayLength = std::tuple_size_v<T>;
-    if (auto res = beginArray(); !res.ok()) {
-      return res;
-    }
-    if (_slice.length() != arrayLength) {
-      return {"Expected array of length " + std::to_string(arrayLength)};
-    }
 
-    if (auto res = processTuple<0, arrayLength>(data); !res.ok()) {
-      return res;
-    }
-
-    return endArray();
+    return beginArray()                                          //
+         | [&]() { return checkArrayLength(arrayLength); }       //
+         | [&]() { return processTuple<0, arrayLength>(data); }  //
+         | [&]() { return endArray(); };                         //
   }
 
   template<class T, size_t N>
   [[nodiscard]] Result tuple(T (&data)[N]) {
-    if (auto res = beginArray(); !res.ok()) {
-      return res;
-    }
-    if (_slice.length() != N) {
-      return {"Expected array of length " + std::to_string(N)};
-    }
-    std::size_t index = 0;
-    for (auto&& v : VPackArrayIterator(_slice)) {
-      LoadInspector ff(v, _options);
-      if (auto res = process(ff, data[index]); !res.ok()) {
-        return {std::move(res), std::to_string(index), Result::ArrayTag{}};
-        return res;
-      }
-      ++index;
-    }
-    return endArray();
+    return beginArray()                           //
+         | [&]() { return checkArrayLength(N); }  //
+         | [&]() { return processArray(data); }   //
+         | [&]() { return endArray(); };          //
   }
 
   template<class T>
@@ -179,7 +139,7 @@ struct LoadInspector : InspectorBase<LoadInspector> {
     LoadInspector ff(slice, _options);
     auto name = getFieldName(field);
     auto& value = getFieldValue(field);
-    auto res = [&]() {
+    auto load = [&]() {
       if constexpr (!std::is_void_v<decltype(getFallbackValue(field))>) {
         if constexpr (!std::is_void_v<decltype(getTransformer(field))>) {
           return loadTransformedField(ff, name, value, getFallbackValue(field),
@@ -194,10 +154,10 @@ struct LoadInspector : InspectorBase<LoadInspector> {
           return loadField(ff, name, value);
         }
       }
-    }();
-    if (res.ok()) {
-      res = checkInvariant(field);
-    }
+    };
+
+    auto res = load()                                    //
+             | [&]() { return checkInvariant(field); };  //
 
     if (!res.ok()) {
       return {std::move(res), name, Result::AttributeTag{}};
@@ -256,10 +216,37 @@ struct LoadInspector : InspectorBase<LoadInspector> {
 
   template<class Arg, class... Args>
   Result parseFields(Slice* slices, Arg&& arg, Args&&... args) {
-    if (auto res = parseField(*slices, std::forward<Arg>(arg)); !res.ok()) {
-      return res;
+    return parseField(*slices, std::forward<Arg>(arg)) |
+           [&]() { return parseFields(++slices, std::forward<Args>(args)...); };
+  }
+
+  template<class T>
+  Result processList(T& list) {
+    std::size_t idx = 0;
+    for (auto&& s : VPackArrayIterator(_slice)) {
+      LoadInspector ff(s, _options);
+      typename T::value_type val;
+      if (auto res = process(ff, val); !res.ok()) {
+        return {std::move(res), std::to_string(idx), Result::ArrayTag{}};
+      }
+      list.push_back(std::move(val));
+      ++idx;
     }
-    return parseFields(++slices, std::forward<Args>(args)...);
+    return {};
+  }
+
+  template<class T>
+  Result processMap(T& map) {
+    for (auto&& pair : VPackObjectIterator(_slice)) {
+      LoadInspector ff(pair.value, _options);
+      typename T::mapped_type val;
+      if (auto res = process(ff, val); !res.ok()) {
+        return {std::move(res), "'" + pair.key.copyString() + "'",
+                Result::ArrayTag{}};
+      }
+      map.emplace(pair.key.copyString(), std::move(val));
+    }
+    return {};
   }
 
   template<class T, class U>
@@ -270,11 +257,11 @@ struct LoadInspector : InspectorBase<LoadInspector> {
   }
 
   template<class T>
-  Result checkInvariant(T& field) {
+  auto checkInvariant(T& field) {
     if constexpr (!IsRawField<std::remove_cvref_t<T>>::value) {
       return checkInvariant(field.inner);
     } else {
-      return {};
+      return Result::Success{};
     }
   }
 
@@ -285,10 +272,30 @@ struct LoadInspector : InspectorBase<LoadInspector> {
       if (auto res = process(ff, std::get<Idx>(data)); !res.ok()) {
         return {std::move(res), std::to_string(Idx), Result::ArrayTag{}};
       }
-      return processTuple<Idx + 1, End>(data);
+      return {processTuple<Idx + 1, End>(data)};
     } else {
       return {};
     }
+  }
+
+  template<class T, size_t N>
+  [[nodiscard]] Result processArray(T (&data)[N]) {
+    std::size_t index = 0;
+    for (auto&& v : VPackArrayIterator(_slice)) {
+      LoadInspector ff(v, _options);
+      if (auto res = process(ff, data[index]); !res.ok()) {
+        return {std::move(res), std::to_string(index), Result::ArrayTag{}};
+      }
+      ++index;
+    }
+    return {};
+  }
+
+  Result checkArrayLength(std::size_t arrayLength) {
+    if (_slice.length() != arrayLength) {
+      return {"Expected array of length " + std::to_string(arrayLength)};
+    }
+    return {};
   }
 
   Slice _slice;

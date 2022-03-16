@@ -92,16 +92,13 @@ struct InspectorBase {
   struct Object {
     template<class... Args>
     [[nodiscard]] FieldsResult<T> fields(Args&&... args) {
-      if (auto res = inspector.beginObject(); !res.ok()) {
-        return {std::move(res), object};
-      }
+      auto& i = inspector;
+      auto res =
+          i.beginObject()                                                 //
+          | [&]() { return i.applyFields(std::forward<Args>(args)...); }  //
+          | [&]() { return i.endObject(); };                              //
 
-      if (auto res = inspector.applyFields(std::forward<Args>(args)...);
-          !res.ok()) {
-        return {std::move(res), object};
-      }
-
-      return {inspector.endObject(), object};
+      return {std::move(res), object};
     }
 
    private:

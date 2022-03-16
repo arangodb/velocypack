@@ -36,7 +36,13 @@
 namespace arangodb::velocypack::inspection {
 
 struct Result {
+  // Type that can be returned by a function instead of a Results
+  // to indicate that this function cannot fail.
+  struct Success {};
+
   Result() = default;
+
+  Result(Success) : Result() {}
 
   Result(std::string error)
       : _error(std::make_unique<Error>(std::move(error))) {}
@@ -93,6 +99,19 @@ struct Result {
   };
   std::unique_ptr<Error> _error;
 };
+
+template<class Func>
+Result operator|(Result&& res, Func&& func) {
+  if (!res.ok()) {
+    return std::move(res);
+  }
+  return func();
+}
+
+template<class Func>
+auto operator|(Result::Success&&, Func&& func) {
+  return func();
+}
 
 template<class T>
 struct InspectorAccess;
@@ -216,11 +235,8 @@ template<class Inspector, class T, class Transformer>
     return InspectorAccess<T>::saveTransformedField(f, name, val, transformer);
   } else {
     typename Transformer::SerializedType v;
-    if (auto res = transformer.toSerialized(val, v); !res.ok()) {
-      return res;
-    }
-    f.builder().add(VPackValue(name));
-    return f.apply(v);
+    return transformer.toSerialized(val, v)          //
+         | [&]() { return saveField(f, name, v); };  //
   }
 }
 
@@ -265,15 +281,9 @@ template<class Inspector, class Value, class Transformer>
     return InspectorAccess<Value>::loadTransformedField(f, name, val,
                                                         transformer);
   } else {
-    auto s = f.slice();
-    if (s.isNone()) {
-      return {"Missing required attribute '" + std::string(name) + "'"};
-    }
     typename Transformer::SerializedType v;
-    if (auto res = f.apply(v); !res.ok()) {
-      return res;
-    }
-    return transformer.fromSerialized(v, val);
+    return loadField(f, name, v)                                  //
+         | [&]() { return transformer.fromSerialized(v, val); };  //
   }
 }
 
@@ -295,10 +305,8 @@ template<class Inspector, class Value, class Fallback, class Transformer>
       return {};
     }
     typename Transformer::SerializedType v;
-    if (auto res = f.apply(v); !res.ok()) {
-      return res;
-    }
-    return transformer.fromSerialized(v, val);
+    return f.apply(v)                                             //
+         | [&]() { return transformer.fromSerialized(v, val); };  //
   }
 }
 template<class T>
@@ -311,14 +319,13 @@ struct InspectorAccess<std::optional<T>> {
         return {};
       } else {
         T v;
-        auto res = f.apply(v);
-        if (res.ok()) {
+        auto assign = [&]() -> Result::Success {
           val = std::move(v);
           return {};
-        }
-        return res;
+        };
+        return f.apply(v)  //
+             | assign;     //
       }
-
     } else {
       if (val.has_value()) {
         return f.apply(val.value());
@@ -346,10 +353,8 @@ struct InspectorAccess<std::optional<T>> {
       return {};
     }
     typename Transformer::SerializedType v;
-    if (auto res = transformer.toSerialized(*val, v); !res.ok()) {
-      return res;
-    }
-    return inspection::saveField(f, name, v);
+    return transformer.toSerialized(*val, v) |
+           [&]() { return inspection::saveField(f, name, v); };
   }
 
   template<class Inspector>
@@ -376,17 +381,18 @@ struct InspectorAccess<std::optional<T>> {
       Inspector& f, [[maybe_unused]] std::string_view name,
       std::optional<T>& val, Transformer& transformer) {
     std::optional<typename Transformer::SerializedType> v;
-    if (auto res = f.apply(v); !res.ok()) {
+    auto load = [&]() -> Result {
+      if (!v.has_value()) {
+        val.reset();
+        return {};
+      }
+      T vv;
+      auto res = transformer.fromSerialized(*v, vv);
+      val = vv;
       return res;
-    }
-    if (!v.has_value()) {
-      val.reset();
-      return {};
-    }
-    T vv;
-    auto res = transformer.fromSerialized(*v, vv);
-    val = vv;
-    return res;
+    };
+    return f.apply(v)  //
+         | load;       //
   }
 
   template<class Inspector, class Fallback, class Transformer>
