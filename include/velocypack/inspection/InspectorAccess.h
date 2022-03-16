@@ -38,7 +38,10 @@ namespace arangodb::velocypack::inspection {
 struct Result {
   // Type that can be returned by a function instead of a Results
   // to indicate that this function cannot fail.
-  struct Success {};
+  struct Success {
+    constexpr bool ok() const noexcept { return true; }
+    constexpr bool canFail() const noexcept { return false; }
+  };
 
   Result() = default;
 
@@ -48,6 +51,7 @@ struct Result {
       : _error(std::make_unique<Error>(std::move(error))) {}
 
   bool ok() const noexcept { return _error == nullptr; }
+  constexpr bool canFail() const noexcept { return true; }
 
   std::string const& error() const noexcept {
     assert(!ok());
@@ -194,7 +198,7 @@ constexpr inline bool IsInspectable() {
 }
 
 template<class Inspector, class T>
-[[nodiscard]] Result process(Inspector& f, T& x) {
+[[nodiscard]] auto process(Inspector& f, T& x) {
   using TT = std::remove_cvref_t<T>;
   static_assert(IsInspectable<TT, Inspector>());
   if constexpr (HasInspectOverload<TT, Inspector>::value) {

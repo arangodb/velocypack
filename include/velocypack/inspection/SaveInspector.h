@@ -69,35 +69,35 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class T>
-  [[nodiscard]] Result tuple(T const& data) {
+  [[nodiscard]] auto tuple(T const& data) {
     return beginArray()                                                   //
          | [&]() { return processTuple<0, std::tuple_size_v<T>>(data); }  //
          | [&]() { return endArray(); };                                  //
   }
 
   template<class T, size_t N>
-  [[nodiscard]] Result tuple(T (&data)[N]) {
+  [[nodiscard]] auto tuple(T (&data)[N]) {
     return beginArray()                                                     //
          | [&]() { return processList(std::begin(data), std::end(data)); }  //
          | [&]() { return endArray(); };                                    //
   }
 
   template<class T>
-  [[nodiscard]] Result list(T const& list) {
+  [[nodiscard]] auto list(T const& list) {
     return beginArray()                                                     //
          | [&]() { return processList(std::begin(list), std::end(list)); }  //
          | [&]() { return endArray(); };                                    //
   }
 
   template<class T>
-  [[nodiscard]] Result map(T const& map) {
+  [[nodiscard]] auto map(T const& map) {
     return beginObject()                      //
          | [&]() { return processMap(map); }  //
          | [&]() { return endObject(); };     //
   }
 
   template<class Arg, class... Args>
-  Result applyFields(Arg&& arg, Args&&... args) {
+  auto applyFields(Arg&& arg, Args&&... args) {
     auto res = self().applyField(std::forward<Arg>(arg));
     if constexpr (sizeof...(args) == 0) {
       return res;
@@ -120,7 +120,7 @@ struct SaveInspector : InspectorBase<SaveInspector> {
 
  private:
   template<class T>
-  [[nodiscard]] Result applyField(T const& field) {
+  [[nodiscard]] auto applyField(T const& field) {
     auto name = getFieldName(field);
     auto& value = getFieldValue(field);
     auto res = [&]() {
@@ -130,8 +130,10 @@ struct SaveInspector : InspectorBase<SaveInspector> {
         return saveField(*this, name, value);
       }
     }();
-    if (!res.ok()) {
-      return {std::move(res), name, Result::AttributeTag{}};
+    if constexpr (res.canFail()) {
+      if (!res.ok()) {
+        return Result{std::move(res), name, Result::AttributeTag{}};
+      }
     }
     return res;
   }
@@ -147,7 +149,8 @@ struct SaveInspector : InspectorBase<SaveInspector> {
   }
 
   template<class Iterator>
-  [[nodiscard]] Result processList(Iterator begin, Iterator end) {
+  [[nodiscard]] auto processList(Iterator begin, Iterator end)
+      -> decltype(process(std::declval<SaveInspector&>(), *begin)) {
     for (auto it = begin; it != end; ++it) {
       if (auto res = process(*this, *it); !res.ok()) {
         return res;
@@ -156,7 +159,9 @@ struct SaveInspector : InspectorBase<SaveInspector> {
     return {};
   }
   template<class T>
-  [[nodiscard]] Result processMap(T const& map) {
+  [[nodiscard]] auto processMap(T const& map)
+      -> decltype(process(std::declval<SaveInspector&>(),
+                          map.begin()->second)) {
     for (auto&& [k, v] : map) {
       _builder.add(VPackValue(k));
       if (auto res = process(*this, v); !res.ok()) {
