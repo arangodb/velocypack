@@ -36,6 +36,7 @@
 #include "tests-common.h"
 #include "velocypack/inspection/LoadInspector.h"
 #include "velocypack/inspection/SaveInspector.h"
+#include "velocypack/Inspection.h"
 #include "velocypack/Value.h"
 #include "velocypack/ValueType.h"
 #include "velocypack/velocypack-memory.h"
@@ -1382,6 +1383,57 @@ TEST_F(LoadInspectorTest, load_object_with_optional_field_transform) {
   EXPECT_EQ(42, *f.x);
   EXPECT_FALSE(f.y.has_value());
   EXPECT_EQ(123, *f.z);
+}
+
+struct InspectionTest : public ::testing::Test {};
+
+TEST_F(InspectionTest, serialize) {
+  Builder builder;
+  Dummy const d{.i = 42, .d = 123.456, .b = true, .s = "foobar"};
+  arangodb::velocypack::serialize(builder, d);
+
+  Slice slice = builder.slice();
+  ASSERT_TRUE(slice.isObject());
+  EXPECT_EQ(d.i, slice["i"].getInt());
+  EXPECT_EQ(d.d, slice["d"].getDouble());
+  EXPECT_EQ(d.b, slice["b"].getBool());
+  EXPECT_EQ(d.s, slice["s"].copyString());
+}
+
+TEST_F(InspectionTest, deserialize) {
+  Builder builder;
+  builder.openObject();
+  builder.add("i", VPackValue(42));
+  builder.add("d", VPackValue(123.456));
+  builder.add("b", VPackValue(true));
+  builder.add("s", VPackValue("foobar"));
+  builder.close();
+
+  Dummy d = arangodb::velocypack::deserialize<Dummy>(builder.slice());
+  EXPECT_EQ(42, d.i);
+  EXPECT_EQ(123.456, d.d);
+  EXPECT_EQ(true, d.b);
+  EXPECT_EQ("foobar", d.s);
+}
+
+TEST_F(InspectionTest, deserialize_throws) {
+  Builder builder;
+  builder.openObject();
+  builder.close();
+
+  EXPECT_THROW(
+      {
+        try {
+          arangodb::velocypack::deserialize<Dummy>(builder.slice());
+        } catch (arangodb::velocypack::Exception& e) {
+          EXPECT_EQ(Exception::ParseError, e.errorCode());
+          EXPECT_TRUE(
+              std::string(e.what()).starts_with("Missing required attribute"))
+              << "Actual error message: " << e.what();
+          throw;
+        }
+      },
+      arangodb::velocypack::Exception);
 }
 
 }  // namespace
