@@ -36,6 +36,8 @@ jobs:
           - {os: ubuntu-latest, compiler: clang, version: '10',
              build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: clang, version: '11',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: clang, version: '12',
              build_type: Release, hash_type: xxhash }
 
           # Windows builds
