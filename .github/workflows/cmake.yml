@@ -29,8 +29,8 @@ jobs:
              flags: '-O0 -fno-inline --coverage', coverage: true}
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Debug, hash_type: xxhash,
-             flags: '-fsanitize=address -fno-omit-frame-pointer',
-             ld_flags: '-fsanitize=address -fno-omit-frame-pointer'}
+             flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer',
+             ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=address-use-after-scope -fno-omit-frame-pointer'}
 
           # Clang builds
           - {os: ubuntu-latest, compiler: clang, version: '10',
