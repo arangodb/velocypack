@@ -95,13 +95,13 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}
-      run: scripts/travis-test.sh
+      run: scripts/execute-test.sh
 
     - name: Coverage
       if: matrix.coverage == true
       run: |
         sudo apt-get install lcov
-        scripts/gh-action-after-success.sh
+        scripts/collect-coverage.sh
 
     - name: Coveralls Upload
       if: matrix.coverage == true
