@@ -13,10 +13,6 @@ echo "project directory $project_dir"
 echo "build directory $build_dir"
 cd ${project_dir} || ferr "can not enter build dir"
 
-if ${CI:-false}; then
-  gem install coveralls-lcov || ferr "failed to install gem"
-fi
-
 CXX=${CXX:='gcc'}
 version=${CXX#*-}
 if [[ -n $version ]]; then
@@ -57,10 +53,8 @@ LCOV=(
 "${LCOV[@]}" --list coverage.info || ferr "failed lcov"
 
 sed -i "s#${project_dir}/##" coverage.info
-# upload coverage info
-if ${COVERALLS_TOKEN:-false}; then
-  coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info || ferr "failed to upload"
-else
-  # should not be required on github
-  coveralls-lcov coverage.info || ferr "failed to upload"
-fi
+
+echo $PWD
+ls -lah
+
+echo "Done with lcov"
