@@ -1,7 +1,7 @@
 VelocyPack (VPack) - a fast and compact format for serialization and storage
 ============================================================================
 
-GitHub Action: [![Build](https://github.com/arangodb/velocypack/actions/workflows/github-ci.yml/badge.svg)] Coveralls: [![Coverage Status](https://coveralls.io/repos/arangodb/velocypack/badge.svg?branch=main&service=github)](https://coveralls.io/github/arangodb/velocypack?branch=main)
+GitHub Action: ![Build](https://github.com/arangodb/velocypack/actions/workflows/github-ci.yml/badge.svg) Coveralls: [![Coverage Status](https://coveralls.io/repos/arangodb/velocypack/badge.svg?branch=main&service=github)](https://coveralls.io/github/arangodb/velocypack?branch=main)
 
 Motivation
 ----------
