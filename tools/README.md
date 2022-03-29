@@ -50,7 +50,7 @@ then the following executables will be compiled:
   * `--hex`: try to turn hex-encoded input into binary vpack
 
   On Linux, *vpack-validate* supports the pseudo filename `-` for stdin.
-* 
+ 
 * `fuzzer`: this tool can be used generate random VPack or JSON structures and 
   validate them. 
   These are the options for running this tool:
