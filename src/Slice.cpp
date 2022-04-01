@@ -693,6 +693,110 @@ Slice Slice::searchObjectKeyBinary(std::string_view attribute,
   return Slice();
 }
 
+ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
+  uint8_t h = *start;
+
+  // types with dynamic lengths need special treatment:
+  switch (type(h)) {
+    case ValueType::Array:
+    case ValueType::Object: {
+      if (h == 0x13 || h == 0x14) {
+        // compact Array or Object
+        return readVariableValueLength<false>(start + 1);
+      }
+
+      VELOCYPACK_ASSERT(h > 0x01 && h <= 0x0e && h != 0x0a);
+      if (VELOCYPACK_UNLIKELY(h >= sizeof(SliceStaticData::WidthMap) / sizeof(SliceStaticData::WidthMap[0]))) {
+        throw Exception(Exception::InternalError, "invalid Array/Object type");
+      }
+      return readIntegerNonEmpty<ValueLength>(start + 1,
+                                              SliceStaticData::WidthMap[h]);
+    }
+
+    case ValueType::String: {
+      VELOCYPACK_ASSERT(h == 0xbf);
+
+      if (VELOCYPACK_UNLIKELY(h < 0xbf)) {
+        // we cannot get here, because the FixedTypeLengths lookup
+        // above will have kicked in already. however, the compiler
+        // claims we'll be reading across the bounds of the input
+        // here...
+        return h - 0x40;
+      }
+
+      // long UTF-8 String
+      return static_cast<ValueLength>(
+          1 + 8 + readIntegerFixed<ValueLength, 8>(start + 1));
+    }
+
+    case ValueType::Binary: {
+      VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
+      return static_cast<ValueLength>(
+          1 + h - 0xbf + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xbf));
+    }
+
+    case ValueType::BCD: {
+      if (h <= 0xcf) {
+        // positive BCD
+        VELOCYPACK_ASSERT(h >= 0xc8 && h < 0xcf);
+        return static_cast<ValueLength>(
+            1 + h - 0xc7 + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xc7));
+      }
+
+      // negative BCD
+      VELOCYPACK_ASSERT(h >= 0xd0 && h < 0xd7);
+      return static_cast<ValueLength>(
+          1 + h - 0xcf + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xcf));
+    }
+
+    case ValueType::Tagged: {
+      uint8_t offset = tagsOffset(start);
+      if (VELOCYPACK_UNLIKELY(offset == 0)) {
+        throw Exception(Exception::InternalError, "Invalid tag data in byteSize()");
+      }
+      return byteSize(start + offset) + offset;
+    }
+
+    case ValueType::Custom: {
+      VELOCYPACK_ASSERT(h >= 0xf4);
+      switch (h) {
+        case 0xf4:
+        case 0xf5:
+        case 0xf6: {
+          return 2 + readIntegerFixed<ValueLength, 1>(start + 1);
+        }
+
+        case 0xf7:
+        case 0xf8:
+        case 0xf9:  {
+          return 3 + readIntegerFixed<ValueLength, 2>(start + 1);
+        }
+
+        case 0xfa:
+        case 0xfb:
+        case 0xfc: {
+          return 5 + readIntegerFixed<ValueLength, 4>(start + 1);
+        }
+
+        case 0xfd:
+        case 0xfe:
+        case 0xff: {
+          return 9 + readIntegerFixed<ValueLength, 8>(start + 1);
+        }
+
+        default: {
+          // fallthrough intentional
+        }
+      }
+    }
+    default: {
+      // fallthrough intentional
+    }
+  }
+
+  throw Exception(Exception::InternalError, "Invalid type for byteSize()");
+}
+
 // template instanciations for searchObjectKeyBinary
 template Slice Slice::searchObjectKeyBinary<1>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
 template Slice Slice::searchObjectKeyBinary<2>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
