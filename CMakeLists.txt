@@ -98,8 +98,15 @@ endif()
 message(STATUS "VelocyPack Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
-target_include_directories(velocypack PRIVATE src)
-target_include_directories(velocypack PUBLIC include)
+target_include_directories(
+    velocypack
+    PRIVATE ${PROJECT_SOURCE_DIR}/src
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
+)
+
+if(IS_ARM)
+    target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
+endif()
 
 if(Maintainer)
     add_executable(buildVersion scripts/build-version.cpp)

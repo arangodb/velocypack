@@ -23,9 +23,13 @@
 #include "asm-utf8check.h"
 
 #if ASM_OPTIMIZATIONS == 1
-
 #include <cstring>
+#ifdef __arm__
+#include <sse2neon.h>
+#else
 #include <x86intrin.h>
+#endif
+
 /*
  * legal utf-8 byte sequence
  * http://www.unicode.org/versions/Unicode6.0.0/ch03.pdf - page 94
