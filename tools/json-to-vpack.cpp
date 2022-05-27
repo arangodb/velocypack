@@ -24,16 +24,19 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <fstream>
 
-#include "velocypack/vpack.h"
 #include "velocypack/velocypack-exception-macros.h"
+#include "velocypack/vpack.h"
+
+#include <chrono>
+using namespace std::chrono;
 
 using namespace arangodb::velocypack;
-    
+
 static std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
 
 static void usage(char* argv[]) {
@@ -64,7 +67,8 @@ static void usage(char* argv[]) {
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
   std::cout << " --hex           print a hex dump of the generated VPack value"
             << std::endl;
-  std::cout << " --stringify     print a char array containing the generated VPack value"
+  std::cout << " --stringify     print a char array containing the generated "
+               "VPack value"
             << std::endl;
 }
 
@@ -98,7 +102,7 @@ static bool buildCompressedKeys(
 
 int main(int argc, char* argv[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
-
+  auto start = high_resolution_clock::now();
   char const* infileName = nullptr;
   char const* outfileName = nullptr;
   bool allowFlags = true;
@@ -192,6 +196,11 @@ int main(int argc, char* argv[]) {
   Options options;
   options.buildUnindexedArrays = compact;
   options.buildUnindexedObjects = compact;
+  auto stop = high_resolution_clock::now();
+  std::cout << "Spent " << duration_cast<microseconds>(stop - start).count()
+            << " doing stuff" << std::endl;
+
+  start = high_resolution_clock::now();
 
   // compress object keys?
   if (compress) {
@@ -235,7 +244,12 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+  stop = high_resolution_clock::now();
+  std::cout << "Spent " << duration_cast<microseconds>(stop - start).count()
+            << " compressing" << std::endl;
 
+  start = high_resolution_clock::now();
+  options.validateUtf8Strings = true;
   Parser parser(&options);
   try {
     parser.parse(s);
@@ -249,7 +263,11 @@ int main(int argc, char* argv[]) {
               << infile << "'" << std::endl;
     return EXIT_FAILURE;
   }
+  stop = high_resolution_clock::now();
+  std::cout << "Spent " << duration_cast<microseconds>(stop - start).count()
+            << " parsing" << std::endl;
 
+  start = high_resolution_clock::now();
   std::ofstream ofs(outfileName, std::ofstream::out);
 
   if (!ofs.is_open()) {
@@ -267,7 +285,8 @@ int main(int argc, char* argv[]) {
   if (hexDump) {
     ofs << HexDump(builder->slice()) << std::endl;
   } else if (stringify) {
-    ofs << "\"" << HexDump(builder->slice(), 2048, "", "\\x") << "\"" << std::endl;
+    ofs << "\"" << HexDump(builder->slice(), 2048, "", "\\x") << "\""
+        << std::endl;
   } else {
     uint8_t const* start = builder->start();
     ofs.write(reinterpret_cast<char const*>(start), builder->size());
@@ -275,6 +294,9 @@ int main(int argc, char* argv[]) {
 
   ofs.close();
 
+  stop = high_resolution_clock::now();
+  std::cout << "Spent " << duration_cast<microseconds>(stop - start).count()
+            << " writing" << std::endl;
   if (!toStdOut) {
     std::cout << "Successfully converted JSON infile '" << infile << "'"
               << std::endl;
@@ -284,8 +306,8 @@ int main(int argc, char* argv[]) {
     if (compress) {
       if (translator.get()->count() > 0) {
         std::cout << "Key dictionary size: "
-                  << Slice(translator.get()->builder()->data())
-                        .byteSize() << std::endl;
+                  << Slice(translator.get()->builder()->data()).byteSize()
+                  << std::endl;
       } else {
         std::cout << "Key dictionary size: 0 (no benefit from compression)"
                   << std::endl;
