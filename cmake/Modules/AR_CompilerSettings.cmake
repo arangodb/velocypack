@@ -76,7 +76,7 @@ endif()
 
 message(STATUS "Building with SSE 4.2 optimizations enabled: ${EnableSSE}")
 if(EnableSSE AND NOT MSVC)
-    set(ADD_SSE_FLAG ON)
+  set(ADD_SSE_FLAG ON)
 endif()
 if(IS_ARM OR (EnableSSE AND NOT MSVC))
   set(CAN_USE_SSE ON)
