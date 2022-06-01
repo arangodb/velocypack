@@ -16,21 +16,21 @@ set_property(CACHE UseIPO PROPERTY STRINGS AUTO ON OFF)
 
 # Determine value if IPO_ENABLED from USE_IPO and CMAKE_BUILD_TYPE
 set(IPO_ENABLED False)
-if(UseIPO STREQUAL "AUTO")
-  if(CMAKE_BUILD_TYPE STREQUAL "Release"
-    OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
-    OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+if (UseIPO STREQUAL "AUTO")
+  if (CMAKE_BUILD_TYPE STREQUAL "Release"
+      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     set(IPO_ENABLED True)
   else()
     set(IPO_ENABLED False)
-  endif()
-elseif(UseIPO)
+  endif ()
+elseif (UseIPO)
   set(IPO_ENABLED True)
 else()
   set(IPO_ENABLED False)
 endif()
 
-if(IPO_ENABLED)
+if (IPO_ENABLED)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
 endif()
 
@@ -38,11 +38,11 @@ option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
 option(BuildSseOpt "Build with SSE optimization instructions" ON)
 
-set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash, wyhash)")
+set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash, wyhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
 message(STATUS "VelocyPack build mode: ${CMAKE_BUILD_TYPE}")
@@ -59,74 +59,73 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #Compiler Setting
 include(AR_CompilerSettings)
 if(NOT BuildSseOpt OR NOT CAN_USE_SSE)
-  add_definitions("-DASM_OPTIMIZATIONS=0")
-else()
-  if(ADD_SSE_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
-  elseif(IS_ARM)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_NEON")
-  endif()
-  add_definitions("-DASM_OPTIMIZATIONS=1")
-endif()
-
+   add_definitions("-DASM_OPTIMIZATIONS=0")
+ else()
+   if(ADD_SSE_FLAG)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+   elseif(IS_ARM)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_NEON")
+   endif()
+   add_definitions("-DASM_OPTIMIZATIONS=1")
+ endif()
 
 set(VELOCY_SOURCE
-  src/velocypack-common.cpp
-  src/AttributeTranslator.cpp
-  src/Builder.cpp
-  src/Collection.cpp
-  src/Compare.cpp
-  src/Dumper.cpp
-  src/Exception.cpp
-  src/HashedStringRef.cpp
-  src/HexDump.cpp
-  src/Iterator.cpp
-  src/Options.cpp
-  src/Parser.cpp
-  src/Serializable.cpp
-  src/SharedSlice.cpp
-  src/Slice.cpp
-  src/Utf8Helper.cpp
-  src/Validator.cpp
-  src/Value.cpp
-  src/ValueType.cpp
-  src/Version.cpp
-  src/asm-functions.cpp
-  src/asm-utf8check.cpp
-  src/fpconv.cpp
-  src/string-functions.cpp
-  )
+    src/velocypack-common.cpp
+    src/AttributeTranslator.cpp
+    src/Builder.cpp
+    src/Collection.cpp
+    src/Compare.cpp
+    src/Dumper.cpp
+    src/Exception.cpp
+    src/HashedStringRef.cpp
+    src/HexDump.cpp
+    src/Iterator.cpp
+    src/Options.cpp
+    src/Parser.cpp
+    src/Serializable.cpp
+    src/SharedSlice.cpp
+    src/Slice.cpp
+    src/Utf8Helper.cpp
+    src/Validator.cpp
+    src/Value.cpp
+    src/ValueType.cpp
+    src/Version.cpp
+    src/asm-functions.cpp
+    src/asm-utf8check.cpp
+    src/fpconv.cpp
+    src/string-functions.cpp
+)
 
 #Use xxhash, fasthash?
 if(HashType STREQUAL "xxhash")
-  list(APPEND VELOCY_SOURCE src/xxhash.cpp)
-  add_definitions("-DVELOCYPACK_XXHASH=1")
+    list(APPEND VELOCY_SOURCE src/xxhash.cpp)
+    add_definitions("-DVELOCYPACK_XXHASH=1")
 elseif(HashType STREQUAL "fasthash")
-  list(APPEND VELOCY_SOURCE src/fasthash.cpp)
-  add_definitions("-DVELOCYPACK_FASTHASH=1")
+    list(APPEND VELOCY_SOURCE src/fasthash.cpp)
+    add_definitions("-DVELOCYPACK_FASTHASH=1")
 else()
-  message(FATAL_ERROR "VelocyPack invalid HashType value. supported values: xxhash, fasthash")
+    message(FATAL_ERROR "VelocyPack invalid HashType value. supported values: xxhash, fasthash")
 endif()
 message(STATUS "VelocyPack Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(
-  velocypack
-  PRIVATE ${PROJECT_SOURCE_DIR}/src
-  PUBLIC ${PROJECT_SOURCE_DIR}/include
-)
-
-if(IS_ARM)
-  target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
-endif()
+    velocypack
+    PRIVATE ${PROJECT_SOURCE_DIR}/src
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
+ )
+ 
+ if(IS_ARM)
+   target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
+ endif()
 
 if(Maintainer)
-  add_executable(buildVersion scripts/build-version.cpp)
-  add_custom_target(buildVersionNumber
-    COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
-    ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
-    DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
-    VERBATIM
+    add_executable(buildVersion scripts/build-version.cpp)
+    add_custom_target(buildVersionNumber
+        COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
+        ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
+        DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
+        VERBATIM
     )
 endif()
 
@@ -136,7 +135,7 @@ add_subdirectory(tests)
 
 install(TARGETS velocypack DESTINATION lib)
 install(
-  DIRECTORY "include/velocypack"
-  DESTINATION include
+    DIRECTORY   "include/velocypack"
+    DESTINATION include
 )
 include(CPack)
