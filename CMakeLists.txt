@@ -36,6 +36,7 @@ endif()
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
+option(BuildSseOpt "Build with SSE optimization instructions" ON)
 
 set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash, wyhash)" )
 
@@ -57,6 +58,16 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #Compiler Setting
 include(AR_CompilerSettings)
+if(NOT BuildSseOpt OR NOT CAN_USE_SSE)
+   add_definitions("-DASM_OPTIMIZATIONS=0")
+ else()
+   if(ADD_SSE_FLAG)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+   elseif(IS_ARM)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_NEON")
+   endif()
+   add_definitions("-DASM_OPTIMIZATIONS=1")
+ endif()
 
 set(VELOCY_SOURCE
     src/velocypack-common.cpp
@@ -98,8 +109,15 @@ endif()
 message(STATUS "VelocyPack Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
-target_include_directories(velocypack PRIVATE src)
-target_include_directories(velocypack PUBLIC include)
+target_include_directories(
+    velocypack
+    PRIVATE ${PROJECT_SOURCE_DIR}/src
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
+ )
+ 
+ if(IS_ARM)
+   target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
+ endif()
 
 if(Maintainer)
     add_executable(buildVersion scripts/build-version.cpp)

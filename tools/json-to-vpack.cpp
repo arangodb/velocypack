@@ -33,7 +33,7 @@
 #include "velocypack/velocypack-exception-macros.h"
 
 using namespace arangodb::velocypack;
-    
+
 static std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
 
 static void usage(char* argv[]) {
@@ -64,7 +64,8 @@ static void usage(char* argv[]) {
   std::cout << " --no-compress   don't compress Object keys" << std::endl;
   std::cout << " --hex           print a hex dump of the generated VPack value"
             << std::endl;
-  std::cout << " --stringify     print a char array containing the generated VPack value"
+  std::cout << " --stringify     print a char array containing the generated "
+               "VPack value"
             << std::endl;
 }
 
@@ -236,6 +237,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  options.validateUtf8Strings = true;
   Parser parser(&options);
   try {
     parser.parse(s);
@@ -267,7 +269,8 @@ int main(int argc, char* argv[]) {
   if (hexDump) {
     ofs << HexDump(builder->slice()) << std::endl;
   } else if (stringify) {
-    ofs << "\"" << HexDump(builder->slice(), 2048, "", "\\x") << "\"" << std::endl;
+    ofs << "\"" << HexDump(builder->slice(), 2048, "", "\\x") << "\""
+        << std::endl;
   } else {
     uint8_t const* start = builder->start();
     ofs.write(reinterpret_cast<char const*>(start), builder->size());
@@ -284,8 +287,8 @@ int main(int argc, char* argv[]) {
     if (compress) {
       if (translator.get()->count() > 0) {
         std::cout << "Key dictionary size: "
-                  << Slice(translator.get()->builder()->data())
-                        .byteSize() << std::endl;
+                  << Slice(translator.get()->builder()->data()).byteSize()
+                  << std::endl;
       } else {
         std::cout << "Key dictionary size: 0 (no benefit from compression)"
                   << std::endl;
