@@ -18,8 +18,8 @@ set_property(CACHE UseIPO PROPERTY STRINGS AUTO ON OFF)
 set(IPO_ENABLED False)
 if(UseIPO STREQUAL "AUTO")
   if(CMAKE_BUILD_TYPE STREQUAL "Release"
-      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
-      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+    OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
     set(IPO_ENABLED True)
   else()
     set(IPO_ENABLED False)
@@ -36,7 +36,7 @@ endif()
 
 option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
-option(BuildSseOpt ON)
+option(BuildSseOpt "Build with SSE optimization instructions" ON)
 
 set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash, wyhash)")
 
@@ -63,38 +63,39 @@ if(NOT BuildSseOpt OR NOT CAN_USE_SSE)
 else()
   if(ADD_SSE_FLAG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
-  elseif(ADD_NEON_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_NEON -march=armv8-a")
+  elseif(IS_ARM)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_NEON")
   endif()
   add_definitions("-DASM_OPTIMIZATIONS=1")
 endif()
 
+
 set(VELOCY_SOURCE
-    src/velocypack-common.cpp
-    src/AttributeTranslator.cpp
-    src/Builder.cpp
-    src/Collection.cpp
-    src/Compare.cpp
-    src/Dumper.cpp
-    src/Exception.cpp
-    src/HashedStringRef.cpp
-    src/HexDump.cpp
-    src/Iterator.cpp
-    src/Options.cpp
-    src/Parser.cpp
-    src/Serializable.cpp
-    src/SharedSlice.cpp
-    src/Slice.cpp
-    src/Utf8Helper.cpp
-    src/Validator.cpp
-    src/Value.cpp
-    src/ValueType.cpp
-    src/Version.cpp
-    src/asm-functions.cpp
-    src/asm-utf8check.cpp
-    src/fpconv.cpp
-    src/string-functions.cpp
-    )
+  src/velocypack-common.cpp
+  src/AttributeTranslator.cpp
+  src/Builder.cpp
+  src/Collection.cpp
+  src/Compare.cpp
+  src/Dumper.cpp
+  src/Exception.cpp
+  src/HashedStringRef.cpp
+  src/HexDump.cpp
+  src/Iterator.cpp
+  src/Options.cpp
+  src/Parser.cpp
+  src/Serializable.cpp
+  src/SharedSlice.cpp
+  src/Slice.cpp
+  src/Utf8Helper.cpp
+  src/Validator.cpp
+  src/Value.cpp
+  src/ValueType.cpp
+  src/Version.cpp
+  src/asm-functions.cpp
+  src/asm-utf8check.cpp
+  src/fpconv.cpp
+  src/string-functions.cpp
+  )
 
 #Use xxhash, fasthash?
 if(HashType STREQUAL "xxhash")
@@ -110,9 +111,9 @@ message(STATUS "VelocyPack Building with hash type: ${HashType}")
 
 add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(
-    velocypack
-    PRIVATE ${PROJECT_SOURCE_DIR}/src
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
+  velocypack
+  PRIVATE ${PROJECT_SOURCE_DIR}/src
+  PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
 
 if(IS_ARM)
@@ -122,11 +123,11 @@ endif()
 if(Maintainer)
   add_executable(buildVersion scripts/build-version.cpp)
   add_custom_target(buildVersionNumber
-      COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
-      ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
-      DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
-      VERBATIM
-      )
+    COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
+    ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
+    DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
+    VERBATIM
+    )
 endif()
 
 add_subdirectory(tools)
@@ -135,7 +136,7 @@ add_subdirectory(tests)
 
 install(TARGETS velocypack DESTINATION lib)
 install(
-    DIRECTORY "include/velocypack"
-    DESTINATION include
+  DIRECTORY "include/velocypack"
+  DESTINATION include
 )
 include(CPack)
