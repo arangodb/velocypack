@@ -36,14 +36,15 @@ namespace arangodb {
 namespace velocypack {
 extern void* memrchr(void const* block, int c, std::size_t size);
 }
-}
+}  // namespace arangodb
 
 HashedStringRef::HashedStringRef(Slice slice) {
   VELOCYPACK_ASSERT(slice.isString());
   ValueLength l;
   _data = slice.getString(l);
   if (l > std::numeric_limits<uint32_t>::max()) {
-    throw Exception(Exception::IndexOutOfBounds, "string value too long for HashedStringRef");
+    throw Exception(Exception::IndexOutOfBounds,
+                    "string value too long for HashedStringRef");
   }
   _length = static_cast<uint32_t>(l);
   _hash = hash(_data, _length);
@@ -55,14 +56,16 @@ HashedStringRef& HashedStringRef::operator=(Slice slice) {
   ValueLength l;
   _data = slice.getString(l);
   if (l > std::numeric_limits<uint32_t>::max()) {
-    throw Exception(Exception::IndexOutOfBounds, "string value too long for HashedStringRef");
+    throw Exception(Exception::IndexOutOfBounds,
+                    "string value too long for HashedStringRef");
   }
   _length = static_cast<uint32_t>(l);
   _hash = hash(_data, _length);
   return *this;
 }
 
-HashedStringRef HashedStringRef::substr(std::size_t pos, std::size_t count) const {
+HashedStringRef HashedStringRef::substr(std::size_t pos,
+                                        std::size_t count) const {
   if (VELOCYPACK_UNLIKELY(pos > _length)) {
     throw Exception(Exception::IndexOutOfBounds, "substr index out of bounds");
   }
@@ -78,14 +81,14 @@ char HashedStringRef::at(std::size_t index) const {
   }
   return operator[](index);
 }
-  
+
 std::size_t HashedStringRef::find(char c, std::size_t offset) const noexcept {
   if (offset > _length) {
     offset = _length;
   }
 
-  char const* p =
-      static_cast<char const*>(memchr(static_cast<void const*>(_data + offset), c, _length - offset));
+  char const* p = static_cast<char const*>(
+      memchr(static_cast<void const*>(_data + offset), c, _length - offset));
 
   if (p == nullptr) {
     return std::string::npos;
@@ -93,17 +96,17 @@ std::size_t HashedStringRef::find(char c, std::size_t offset) const noexcept {
 
   return (p - _data);
 }
-  
+
 std::size_t HashedStringRef::rfind(char c, std::size_t offset) const noexcept {
   std::size_t length;
   if (offset >= _length + 1) {
-    length = _length; 
+    length = _length;
   } else {
     length = offset + 1;
   }
 
-  char const* p =
-      static_cast<char const*>(arangodb::velocypack::memrchr(static_cast<void const*>(_data), c, length));
+  char const* p = static_cast<char const*>(arangodb::velocypack::memrchr(
+      static_cast<void const*>(_data), c, length));
 
   if (p == nullptr) {
     return std::string::npos;
@@ -111,7 +114,7 @@ std::size_t HashedStringRef::rfind(char c, std::size_t offset) const noexcept {
 
   return (p - _data);
 }
-  
+
 int HashedStringRef::compare(HashedStringRef const& other) const noexcept {
   int res = std::memcmp(_data, other._data, (std::min)(_length, other._length));
 
@@ -122,8 +125,10 @@ int HashedStringRef::compare(HashedStringRef const& other) const noexcept {
   return static_cast<int>(_length) - static_cast<int>(other._length);
 }
 
-int HashedStringRef::compare(char const* data, std::size_t length) const noexcept {
-  int res = std::memcmp(_data, data, (std::min)(static_cast<std::size_t>(_length), length));
+int HashedStringRef::compare(char const* data,
+                             std::size_t length) const noexcept {
+  int res = std::memcmp(_data, data,
+                        (std::min)(static_cast<std::size_t>(_length), length));
 
   if (res != 0) {
     return res;
@@ -137,14 +142,17 @@ int HashedStringRef::compare(char const* data, std::size_t length) const noexcep
 
 bool HashedStringRef::equals(HashedStringRef const& other) const noexcept {
   // if the tag is equal, then the size is equal too!
-  return (tag() == other.tag() && std::memcmp(data(), other.data(), size()) == 0);
+  return (tag() == other.tag() &&
+          std::memcmp(data(), other.data(), size()) == 0);
 }
-  
-bool HashedStringRef::equals(char const* data, std::size_t length) const noexcept {
+
+bool HashedStringRef::equals(char const* data,
+                             std::size_t length) const noexcept {
   // it does not matter that the std::string can be longer in size here,
   // as we are upcasting our own size to size_t and compare. only for
   // equal lengths we do the memory comparison
-  return (static_cast<std::size_t>(size()) == length && std::memcmp(_data, data, length) == 0);
+  return (static_cast<std::size_t>(size()) == length &&
+          std::memcmp(_data, data, length) == 0);
 }
 
 std::string_view HashedStringRef::stringView() const noexcept {
@@ -152,7 +160,8 @@ std::string_view HashedStringRef::stringView() const noexcept {
 }
 
 #ifdef VELOCYPACK_64BIT
-static_assert(sizeof(HashedStringRef) == 16, "unexpected size of HashedStringRef");
+static_assert(sizeof(HashedStringRef) == 16,
+              "unexpected size of HashedStringRef");
 #endif
 
 namespace arangodb {
@@ -163,5 +172,5 @@ std::ostream& operator<<(std::ostream& stream, HashedStringRef const& ref) {
   return stream;
 }
 
-}
-}
+}  // namespace velocypack
+}  // namespace arangodb

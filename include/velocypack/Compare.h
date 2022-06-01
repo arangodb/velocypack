@@ -32,24 +32,23 @@ class Slice;
 
 // helper struct for comparing VelocyPack Slices on a binary level
 struct BinaryCompare {
-// returns true if the two Slices are identical on the binary level
-static bool equals(Slice lhs, Slice rhs);
+  // returns true if the two Slices are identical on the binary level
+  static bool equals(Slice lhs, Slice rhs);
 
-struct Hash {
-  size_t operator()(arangodb::velocypack::Slice const&) const;
-};
-  
-struct Equal {
-  arangodb::velocypack::Options const* _options;
+  struct Hash {
+    size_t operator()(arangodb::velocypack::Slice const&) const;
+  };
 
-  Equal() : _options(nullptr) {}
-  explicit Equal(arangodb::velocypack::Options const* opts)
-      : _options(opts) {}
+  struct Equal {
+    arangodb::velocypack::Options const* _options;
 
-  bool operator()(arangodb::velocypack::Slice const&,
-                  arangodb::velocypack::Slice const&) const;
-};
+    Equal() : _options(nullptr) {}
+    explicit Equal(arangodb::velocypack::Options const* opts)
+        : _options(opts) {}
 
+    bool operator()(arangodb::velocypack::Slice const&,
+                    arangodb::velocypack::Slice const&) const;
+  };
 };
 
 // helper struct for comparing VelocyPack Slices in a normalized way
@@ -66,7 +65,7 @@ struct NormalizedCompare {
   struct Hash {
     size_t operator()(arangodb::velocypack::Slice const&) const;
   };
-    
+
   struct Equal {
     arangodb::velocypack::Options const* _options;
 
@@ -77,9 +76,8 @@ struct NormalizedCompare {
     bool operator()(arangodb::velocypack::Slice const&,
                     arangodb::velocypack::Slice const&) const;
   };
-
 };
-  
-} // namespace arangodb::velocypack
+
+}  // namespace arangodb::velocypack
 
 using VPackNormalizedCompare = arangodb::velocypack::NormalizedCompare;

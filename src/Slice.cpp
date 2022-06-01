@@ -41,22 +41,22 @@ namespace {
 
 // maximum values for integers of different byte sizes
 constexpr int64_t maxValues[] = {
-  128, 32768, 8388608, 2147483648, 549755813888, 140737488355328, 36028797018963968
-};
+    128,          32768,           8388608,          2147483648,
+    549755813888, 140737488355328, 36028797018963968};
 
-} // namespace
-  
-uint8_t const Slice::noneSliceData[] = { 0x00 };
-uint8_t const Slice::illegalSliceData[] = { 0x17 };
-uint8_t const Slice::nullSliceData[] = { 0x18 };
-uint8_t const Slice::falseSliceData[] = { 0x19 };
-uint8_t const Slice::trueSliceData[] = { 0x1a };
-uint8_t const Slice::zeroSliceData[] = { 0x30 };
-uint8_t const Slice::emptyStringSliceData[] = { 0x40 };
-uint8_t const Slice::emptyArraySliceData[] = { 0x01 };
-uint8_t const Slice::emptyObjectSliceData[] = { 0x0a };
-uint8_t const Slice::minKeySliceData[] = { 0x1e };
-uint8_t const Slice::maxKeySliceData[] = { 0x1f };
+}  // namespace
+
+uint8_t const Slice::noneSliceData[] = {0x00};
+uint8_t const Slice::illegalSliceData[] = {0x17};
+uint8_t const Slice::nullSliceData[] = {0x18};
+uint8_t const Slice::falseSliceData[] = {0x19};
+uint8_t const Slice::trueSliceData[] = {0x1a};
+uint8_t const Slice::zeroSliceData[] = {0x30};
+uint8_t const Slice::emptyStringSliceData[] = {0x40};
+uint8_t const Slice::emptyArraySliceData[] = {0x01};
+uint8_t const Slice::emptyObjectSliceData[] = {0x0a};
+uint8_t const Slice::minKeySliceData[] = {0x1e};
+uint8_t const Slice::maxKeySliceData[] = {0x1f};
 
 // translates an integer key into a string
 Slice Slice::translate() const {
@@ -112,7 +112,8 @@ int64_t Slice::getSmallIntUnchecked() const noexcept {
 
 // translates an integer key into a string, without checks
 Slice Slice::translateUnchecked() const {
-  uint8_t const* result = Options::Defaults.attributeTranslator->translate(getUIntUnchecked());
+  uint8_t const* result =
+      Options::Defaults.attributeTranslator->translate(getUIntUnchecked());
   if (VELOCYPACK_LIKELY(result != nullptr)) {
     return Slice(result);
   }
@@ -121,7 +122,7 @@ Slice Slice::translateUnchecked() const {
 
 std::string Slice::toHex() const {
   HexDump dump(this);
-  return dump.toString(); 
+  return dump.toString();
 }
 
 std::string Slice::toJson(Options const* options) const {
@@ -167,7 +168,7 @@ std::string Slice::toString(Options const* options) const {
 }
 
 std::string Slice::hexType() const { return HexDump::toHex(head()); }
-  
+
 uint64_t Slice::normalizedHash(uint64_t seed) const {
   uint64_t value;
 
@@ -275,7 +276,8 @@ Slice Slice::get(std::string_view attribute) const {
     n = readIntegerNonEmpty<ValueLength>(start() + 1 + offsetSize, offsetSize);
     ieBase = end - n * offsetSize;
   } else {
-    n = readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
+    n = readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
+                                         offsetSize);
     ieBase = end - n * offsetSize - offsetSize;
   }
 
@@ -316,7 +318,8 @@ Slice Slice::get(std::string_view attribute) const {
         return searchObjectKeyBinary<4>(attribute, ieBase, n);
       case 8:
         return searchObjectKeyBinary<8>(attribute, ieBase, n);
-      default: {}
+      default: {
+      }
     }
   }
 
@@ -468,14 +471,14 @@ bool Slice::isEqualString(std::string_view attribute) const {
   ValueLength keyLength;
   char const* k = getString(keyLength);
   return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
-          (std::memcmp(k, attribute.data(), attribute.size()) == 0);
+         (std::memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 bool Slice::isEqualStringUnchecked(std::string_view attribute) const noexcept {
   ValueLength keyLength;
   char const* k = getStringUnchecked(keyLength);
   return (static_cast<std::size_t>(keyLength) == attribute.size()) &&
-          (std::memcmp(k, attribute.data(), attribute.size()) == 0);
+         (std::memcmp(k, attribute.data(), attribute.size()) == 0);
 }
 
 Slice Slice::getFromCompactObject(std::string_view attribute) const {
@@ -502,7 +505,7 @@ ValueLength Slice::getNthOffset(ValueLength index) const {
     // compact Array or Object
     return getNthOffsetFromCompact(index);
   }
-  
+
   if (VELOCYPACK_UNLIKELY(h == 0x01 || h == 0x0a)) {
     // special case: empty Array or empty Object
     throw Exception(Exception::IndexOutOfBounds);
@@ -521,13 +524,15 @@ ValueLength Slice::getNthOffset(ValueLength index) const {
     Slice first(start() + dataOffset);
     ValueLength s = first.byteSize();
     if (VELOCYPACK_UNLIKELY(s == 0)) {
-      throw Exception(Exception::InternalError, "Invalid data for compact object");
+      throw Exception(Exception::InternalError,
+                      "Invalid data for compact object");
     }
     n = (end - dataOffset) / s;
   } else if (offsetSize < 8) {
     n = readIntegerNonEmpty<ValueLength>(start() + 1 + offsetSize, offsetSize);
   } else {
-    n = readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
+    n = readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
+                                         offsetSize);
   }
 
   if (index >= n) {
@@ -619,12 +624,13 @@ Slice Slice::searchObjectKeyLinear(std::string_view attribute,
 
   for (ValueLength index = 0; index < n; ++index) {
     ValueLength offset = ieBase + index * offsetSize;
-    Slice key(start() + readIntegerNonEmpty<ValueLength>(start() + offset, offsetSize));
+    Slice key(start() +
+              readIntegerNonEmpty<ValueLength>(start() + offset, offsetSize));
 
     if (key.isString()) {
       if (!key.isEqualStringUnchecked(attribute)) {
         continue;
-      } 
+      }
     } else if (key.isSmallInt() || key.isUInt()) {
       // translate key
       if (VELOCYPACK_UNLIKELY(!useTranslator)) {
@@ -650,8 +656,7 @@ Slice Slice::searchObjectKeyLinear(std::string_view attribute,
 // perform a binary search for the specified attribute inside an Object
 template<ValueLength offsetSize>
 Slice Slice::searchObjectKeyBinary(std::string_view attribute,
-                                   ValueLength ieBase,
-                                   ValueLength n) const {
+                                   ValueLength ieBase, ValueLength n) const {
   bool const useTranslator = (Options::Defaults.attributeTranslator != nullptr);
   VELOCYPACK_ASSERT(n > 0);
 
@@ -661,7 +666,8 @@ Slice Slice::searchObjectKeyBinary(std::string_view attribute,
 
   do {
     ValueLength offset = ieBase + index * offsetSize;
-    Slice key(start() + readIntegerFixed<ValueLength, offsetSize>(start() + offset));
+    Slice key(start() +
+              readIntegerFixed<ValueLength, offsetSize>(start() + offset));
 
     int res;
     if (key.isString()) {
@@ -684,11 +690,11 @@ Slice Slice::searchObjectKeyBinary(std::string_view attribute,
     } else {
       l = index + 1;
     }
-    
+
     // determine new midpoint
     index = l + ((r - l) / 2);
   } while (r >= l);
-  
+
   // not found
   return Slice();
 }
@@ -706,7 +712,8 @@ ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
       }
 
       VELOCYPACK_ASSERT(h > 0x01 && h <= 0x0e && h != 0x0a);
-      if (VELOCYPACK_UNLIKELY(h >= sizeof(SliceStaticData::WidthMap) / sizeof(SliceStaticData::WidthMap[0]))) {
+      if (VELOCYPACK_UNLIKELY(h >= sizeof(SliceStaticData::WidthMap) /
+                                       sizeof(SliceStaticData::WidthMap[0]))) {
         throw Exception(Exception::InternalError, "invalid Array/Object type");
       }
       return readIntegerNonEmpty<ValueLength>(start + 1,
@@ -740,7 +747,8 @@ ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
         // positive BCD
         VELOCYPACK_ASSERT(h >= 0xc8 && h < 0xcf);
         return static_cast<ValueLength>(
-            1 + h - 0xc7 + readIntegerNonEmpty<ValueLength>(start + 1, h - 0xc7));
+            1 + h - 0xc7 +
+            readIntegerNonEmpty<ValueLength>(start + 1, h - 0xc7));
       }
 
       // negative BCD
@@ -752,7 +760,8 @@ ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
     case ValueType::Tagged: {
       uint8_t offset = tagsOffset(start);
       if (VELOCYPACK_UNLIKELY(offset == 0)) {
-        throw Exception(Exception::InternalError, "Invalid tag data in byteSize()");
+        throw Exception(Exception::InternalError,
+                        "Invalid tag data in byteSize()");
       }
       return byteSize(start + offset) + offset;
     }
@@ -768,7 +777,7 @@ ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
 
         case 0xf7:
         case 0xf8:
-        case 0xf9:  {
+        case 0xf9: {
           return 3 + readIntegerFixed<ValueLength, 2>(start + 1);
         }
 
@@ -798,10 +807,18 @@ ValueLength Slice::byteSizeDynamic(uint8_t const* start) const {
 }
 
 // template instanciations for searchObjectKeyBinary
-template Slice Slice::searchObjectKeyBinary<1>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
-template Slice Slice::searchObjectKeyBinary<2>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
-template Slice Slice::searchObjectKeyBinary<4>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
-template Slice Slice::searchObjectKeyBinary<8>(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
+template Slice Slice::searchObjectKeyBinary<1>(std::string_view attribute,
+                                               ValueLength ieBase,
+                                               ValueLength n) const;
+template Slice Slice::searchObjectKeyBinary<2>(std::string_view attribute,
+                                               ValueLength ieBase,
+                                               ValueLength n) const;
+template Slice Slice::searchObjectKeyBinary<4>(std::string_view attribute,
+                                               ValueLength ieBase,
+                                               ValueLength n) const;
+template Slice Slice::searchObjectKeyBinary<8>(std::string_view attribute,
+                                               ValueLength ieBase,
+                                               ValueLength n) const;
 
 std::ostream& operator<<(std::ostream& stream, Slice const* slice) {
   stream << "[Slice " << valueTypeName(slice->type()) << " ("
@@ -813,5 +830,5 @@ std::ostream& operator<<(std::ostream& stream, Slice const& slice) {
   return operator<<(stream, &slice);
 }
 
-static_assert(sizeof(arangodb::velocypack::Slice) ==
-              sizeof(void*), "Slice has an unexpected size");
+static_assert(sizeof(arangodb::velocypack::Slice) == sizeof(void*),
+              "Slice has an unexpected size");

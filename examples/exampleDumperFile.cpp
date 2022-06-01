@@ -5,7 +5,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   Builder b;
@@ -34,6 +34,6 @@ int main(int, char* []) {
     std::cout << "could not write outfile 'prettified.json': " << ex.what()
               << std::endl;
   }
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

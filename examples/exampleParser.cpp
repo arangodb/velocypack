@@ -5,7 +5,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   // this is the JSON string we are going to parse
@@ -31,6 +31,6 @@ int main(int, char* []) {
   // now dump the resulting VPack value
   std::cout << "Resulting VPack:" << std::endl;
   std::cout << HexDump(b->slice()) << std::endl;
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

@@ -4,7 +4,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   // create an object with a few members
@@ -43,19 +43,20 @@ int main(int, char* []) {
   // recursively visit all members in the Object
   // PostOrder here means we'll be visiting compound members before
   // we're diving into their subvalues
-  Collection::visitRecursive(s, Collection::PostOrder,
-                             [](Slice const& key, Slice const& value) -> bool {
-    if (!key.isNone()) {
-      // we are visiting an Object member
-      std::cout << "Visiting Object member: " << key.copyString()
-                << ", value: " << value.toJson() << std::endl;
-    } else {
-      // we are visiting an Array member
-      std::cout << "Visiting Array member: " << value.toJson() << std::endl;
-    }
-    // to continue visiting, return true. to abort visiting, return false
-    return true;
-  });
-  
+  Collection::visitRecursive(
+      s, Collection::PostOrder,
+      [](Slice const& key, Slice const& value) -> bool {
+        if (!key.isNone()) {
+          // we are visiting an Object member
+          std::cout << "Visiting Object member: " << key.copyString()
+                    << ", value: " << value.toJson() << std::endl;
+        } else {
+          // we are visiting an Array member
+          std::cout << "Visiting Array member: " << value.toJson() << std::endl;
+        }
+        // to continue visiting, return true. to abort visiting, return false
+        return true;
+      });
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

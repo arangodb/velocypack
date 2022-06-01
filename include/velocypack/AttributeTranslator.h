@@ -39,7 +39,7 @@ class AttributeTranslator {
   AttributeTranslator(AttributeTranslator const&) = delete;
   AttributeTranslator& operator=(AttributeTranslator const&) = delete;
 
-  AttributeTranslator(); 
+  AttributeTranslator();
 
   ~AttributeTranslator();
 
@@ -50,7 +50,7 @@ class AttributeTranslator {
   void seal();
 
   Builder* builder() const { return _builder.get(); }
-  
+
   // translate from string to id
   uint8_t const* translate(std::string_view key) const noexcept {
     auto it = _keyToId.find(key);
@@ -61,9 +61,10 @@ class AttributeTranslator {
 
     return (*it).second;
   }
-  
+
   // translate from string to id
-  [[deprecated]] inline uint8_t const* translate(char const* key, ValueLength length) const noexcept {
+  [[deprecated]] inline uint8_t const* translate(
+      char const* key, ValueLength length) const noexcept {
     return translate(std::string_view(key, length));
   }
 
@@ -88,7 +89,7 @@ class AttributeTranslator {
 class AttributeTranslatorScope {
  private:
   AttributeTranslatorScope(AttributeTranslatorScope const&) = delete;
-  AttributeTranslatorScope& operator= (AttributeTranslatorScope const&) = delete;
+  AttributeTranslatorScope& operator=(AttributeTranslatorScope const&) = delete;
 
  public:
   explicit AttributeTranslatorScope(AttributeTranslator* translator);

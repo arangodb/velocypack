@@ -36,7 +36,7 @@ TEST(BuilderTest, ConstructWithBufferRef) {
   Builder b1;
   uint32_t u = 1;
   b1.openObject();
-  b1.add("test",Value(u));
+  b1.add("test", Value(u));
   b1.close();
   Buffer<uint8_t> buf = *b1.steal();
   Builder b2(buf);
@@ -72,7 +72,8 @@ TEST(BuilderTest, AddObjectIteratorEmpty) {
 
   Builder b;
   ASSERT_TRUE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+                              Exception::BuilderNeedOpenObject);
   ASSERT_TRUE(b.isClosed());
 }
 
@@ -89,7 +90,8 @@ TEST(BuilderTest, AddObjectIteratorKeyAlreadyWritten) {
   b.openObject();
   b.add(Value("foo"));
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderKeyAlreadyWritten);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+                              Exception::BuilderKeyAlreadyWritten);
   ASSERT_FALSE(b.isClosed());
 }
 
@@ -104,7 +106,8 @@ TEST(BuilderTest, AddObjectIteratorNonObject) {
   Builder b;
   b.openArray();
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+                              Exception::BuilderNeedOpenObject);
   ASSERT_FALSE(b.isClosed());
 }
 
@@ -162,13 +165,16 @@ TEST(BuilderTest, AddObjectIteratorSub) {
   b.openObject();
   b.add(ObjectIterator(objSlice));
   ASSERT_FALSE(b.isClosed());
-  b.close(); // close one level
+  b.close();  // close one level
   b.add("3-bark", Value("qux"));
   ASSERT_FALSE(b.isClosed());
   Slice result = b.close().slice();
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\"1-something\":\"tennis\",\"2-values\":{\"1-one\":1,\"2-two\":2,\"3-three\":3},\"3-bark\":\"qux\"}", result.toJson());
+  ASSERT_EQ(
+      "{\"1-something\":\"tennis\",\"2-values\":{\"1-one\":1,\"2-two\":2,\"3-"
+      "three\":3},\"3-bark\":\"qux\"}",
+      result.toJson());
 }
 
 TEST(BuilderTest, AddArrayIteratorEmpty) {
@@ -181,7 +187,8 @@ TEST(BuilderTest, AddArrayIteratorEmpty) {
 
   Builder b;
   ASSERT_TRUE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)), Exception::BuilderNeedOpenArray);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)),
+                              Exception::BuilderNeedOpenArray);
   ASSERT_TRUE(b.isClosed());
 }
 
@@ -196,7 +203,8 @@ TEST(BuilderTest, AddArrayIteratorNonArray) {
   Builder b;
   b.openObject();
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)), Exception::BuilderNeedOpenArray);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ArrayIterator(objSlice)),
+                              Exception::BuilderNeedOpenArray);
   ASSERT_FALSE(b.isClosed());
 }
 
@@ -253,7 +261,7 @@ TEST(BuilderTest, AddArrayIteratorSub) {
   b.openArray();
   b.add(ArrayIterator(objSlice));
   ASSERT_FALSE(b.isClosed());
-  b.close(); // close one level
+  b.close();  // close one level
   b.add(Value("qux"));
   ASSERT_FALSE(b.isClosed());
   Slice result = b.close().slice();
@@ -366,7 +374,7 @@ TEST(BuilderTest, Move) {
   auto shptra = a.buffer();
   ASSERT_EQ(shptrb.get(), shptra.get());
   ASSERT_NE(a.buffer().get(), nullptr);
-  ASSERT_EQ(b.buffer().get(),  nullptr);
+  ASSERT_EQ(b.buffer().get(), nullptr);
 }
 
 TEST(BuilderTest, MoveNonEmpty) {
@@ -492,24 +500,28 @@ TEST(BuilderTest, UsingExistingBuffer) {
   // copy-construct
   Builder b2(b1);
   ASSERT_TRUE(b2.slice().isString());
-  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b2.slice().copyString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog",
+            b2.slice().copyString());
 
   // copy-assign
   Builder b3;
   b3 = b2;
   ASSERT_TRUE(b3.slice().isString());
-  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b3.slice().copyString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog",
+            b3.slice().copyString());
 
   // move-construct
   Builder b4(std::move(b3));
   ASSERT_TRUE(b4.slice().isString());
-  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b4.slice().copyString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog",
+            b4.slice().copyString());
 
   // move-assign
   Builder b5;
   b5 = std::move(b4);
   ASSERT_TRUE(b5.slice().isString());
-  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog", b5.slice().copyString());
+  ASSERT_EQ("the-quick-brown-fox-jumped-over-the-lazy-dog",
+            b5.slice().copyString());
 
   b5.clear();
   b5.add(Value("the-foxx"));
@@ -741,7 +753,7 @@ TEST(BuilderTest, BufferSharedPointerInject) {
   ASSERT_EQ(2, buffer.use_count());
   ASSERT_EQ(2, builderBuffer.use_count());
 
-  b.steal();   // steals the buffer, resulting shared_ptr is forgotten
+  b.steal();  // steals the buffer, resulting shared_ptr is forgotten
   ASSERT_EQ(1, buffer.use_count());
   ASSERT_EQ(ptr, buffer.get());
 }
@@ -1414,9 +1426,9 @@ TEST(BuilderTest, ExternalDisallowed) {
       b.add(Value(const_cast<void const*>(static_cast<void*>(externalStuff)),
                   ValueType::External)),
       Exception::BuilderExternalsDisallowed);
-  
-  ASSERT_VELOCYPACK_EXCEPTION(
-      b.addExternal(externalStuff), Exception::BuilderExternalsDisallowed);
+
+  ASSERT_VELOCYPACK_EXCEPTION(b.addExternal(externalStuff),
+                              Exception::BuilderExternalsDisallowed);
 }
 
 TEST(BuilderTest, External) {
@@ -1583,8 +1595,8 @@ TEST(BuilderTest, ExternalAsObjectKey) {
   {
     Builder b;
     b.openObject();
-    ASSERT_VELOCYPACK_EXCEPTION(
-        b.addExternal(externalStuff), Exception::BuilderKeyMustBeString);
+    ASSERT_VELOCYPACK_EXCEPTION(b.addExternal(externalStuff),
+                                Exception::BuilderKeyMustBeString);
   }
 }
 
@@ -1757,7 +1769,7 @@ TEST(BuilderTest, ShortStringViaValuePair) {
 
   ASSERT_EQ(sizeof(correctResult), len);
   ASSERT_EQ(0, memcmp(result, correctResult, len));
-  
+
   ASSERT_EQ(p, b.slice().copyString());
   ASSERT_EQ(std::string_view(p), b.slice().stringView());
 }
@@ -1824,9 +1836,8 @@ TEST(BuilderTest, CustomValueDisallowed) {
   Options options;
   options.disallowCustom = true;
   Builder b(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(
-      b.add(Slice(reinterpret_cast<uint8_t const*>(p))),
-      Exception::BuilderCustomDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Slice(reinterpret_cast<uint8_t const*>(p))),
+                              Exception::BuilderCustomDisallowed);
 }
 
 TEST(BuilderTest, CustomPairDisallowed) {
@@ -1835,9 +1846,8 @@ TEST(BuilderTest, CustomPairDisallowed) {
   Options options;
   options.disallowCustom = true;
   Builder b(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(
-      b.add(ValuePair(p, strlen(p), ValueType::Custom)),
-      Exception::BuilderCustomDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ValuePair(p, strlen(p), ValueType::Custom)),
+                              Exception::BuilderCustomDisallowed);
 }
 
 TEST(BuilderTest, InvalidTypeViaValuePair) {
@@ -1853,14 +1863,12 @@ TEST(BuilderTest, CustomValueType) {
   Options options;
   options.disallowCustom = true;
   Builder b(&options);
-  ASSERT_VELOCYPACK_EXCEPTION(
-      b.add(Value(ValueType::Custom)),
-      Exception::BuilderCustomDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Custom)),
+                              Exception::BuilderCustomDisallowed);
 
   options.disallowCustom = false;
-  ASSERT_VELOCYPACK_EXCEPTION(
-      b.add(Value(ValueType::Custom)),
-      Exception::BuilderUnexpectedType);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(ValueType::Custom)),
+                              Exception::BuilderUnexpectedType);
 }
 
 TEST(BuilderTest, IllegalValueType) {
@@ -1920,9 +1928,9 @@ TEST(BuilderTest, UTCDateMax) {
 
 TEST(BuilderTest, CustomTypeID) {
   // This is somewhat tautological, nevertheless...
-  static uint8_t const correctResult[]
-      = {0xf5, 0x0b, 0x2b, 0x78, 0x56, 0x34, 0x12,
-         0x45, 0x02, 0x03, 0x05, 0x08, 0x0d};
+  static uint8_t const correctResult[] = {0xf5, 0x0b, 0x2b, 0x78, 0x56,
+                                          0x34, 0x12, 0x45, 0x02, 0x03,
+                                          0x05, 0x08, 0x0d};
 
   Builder b;
   uint8_t* p = b.add(ValuePair(sizeof(correctResult), ValueType::Custom));
@@ -2402,8 +2410,9 @@ TEST(BuilderTest, ToString) {
   b.add("test3", Value(true));
   b.close();
 
-  ASSERT_EQ("{\n  \"test1\" : 123,\n  \"test2\" : \"foobar\",\n  \"test3\" : true\n}",
-            b.toString());
+  ASSERT_EQ(
+      "{\n  \"test1\" : 123,\n  \"test2\" : \"foobar\",\n  \"test3\" : true\n}",
+      b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilder) {
@@ -2462,7 +2471,11 @@ TEST(BuilderTest, ObjectBuilderNested) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : {\n    \"bark\" : 1,\n    \"bonk\" : 2\n  },\n  \"hans\" : {\n    \"bart\" : \"a\",\n    \"zoo\" : \"b\"\n  }\n}", b.toString());
+  ASSERT_EQ(
+      "{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : {\n    "
+      "\"bark\" : 1,\n    \"bonk\" : 2\n  },\n  \"hans\" : {\n    \"bart\" : "
+      "\"a\",\n    \"zoo\" : \"b\"\n  }\n}",
+      b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
@@ -2502,7 +2515,10 @@ TEST(BuilderTest, ObjectBuilderNestedArrayInner) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : [\n    1,\n    2\n  ],\n  \"hans\" : [\n    \"a\",\n    \"b\"\n  ]\n}", b.toString());
+  ASSERT_EQ(
+      "{\n  \"bar\" : \"qux\",\n  \"foo\" : \"aha\",\n  \"foobar\" : [\n    "
+      "1,\n    2\n  ],\n  \"hans\" : [\n    \"a\",\n    \"b\"\n  ]\n}",
+      b.toString());
 }
 
 TEST(BuilderTest, ObjectBuilderClosed) {
@@ -2519,7 +2535,7 @@ TEST(BuilderTest, ObjectBuilderClosed) {
     ASSERT_FALSE(ob->isClosed());
     ob->add("foo", Value("aha"));
     ob->add("bar", Value("qux"));
-    b.close(); // manually close the builder
+    b.close();  // manually close the builder
     ASSERT_TRUE(b.isClosed());
   }
   ASSERT_TRUE(b.isClosed());
@@ -2584,7 +2600,10 @@ TEST(BuilderTest, ArrayBuilderNested) {
   }
   ASSERT_TRUE(b.isClosed());
 
-  ASSERT_EQ("[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n    1,\n    2\n  ]\n]", b.toString());
+  ASSERT_EQ(
+      "[\n  \"foo\",\n  \"bar\",\n  [\n    \"bart\",\n    \"qux\"\n  ],\n  [\n "
+      "   1,\n    2\n  ]\n]",
+      b.toString());
 }
 
 TEST(BuilderTest, ArrayBuilderClosed) {
@@ -2602,7 +2621,7 @@ TEST(BuilderTest, ArrayBuilderClosed) {
     ASSERT_FALSE(ob->isClosed());
     ob->add(Value("foo"));
     ob->add(Value("bar"));
-    b.close(); // manually close the builder
+    b.close();  // manually close the builder
     ASSERT_TRUE(ob->isClosed());
     ASSERT_TRUE(b.isClosed());
   }
@@ -2632,25 +2651,25 @@ TEST(BuilderTest, IsOpenObjectNoObject) {
     b.add(Value(ValueType::Null));
     ASSERT_FALSE(b.isOpenObject());
   }
-  
+
   {
     Builder b;
     b.add(Value(false));
     ASSERT_FALSE(b.isOpenObject());
   }
-  
+
   {
     Builder b;
     b.add(Value(1234));
     ASSERT_FALSE(b.isOpenObject());
   }
-  
+
   {
     Builder b;
     b.add(Value("foobar"));
     ASSERT_FALSE(b.isOpenObject());
   }
-  
+
   {
     Builder b;
     b.openArray();
@@ -2717,7 +2736,7 @@ TEST(BuilderTest, AddKeysSeparately2) {
   b.close();
 
   b.add(Value("baz"));
-  uint8_t buf[] = { 0x31 };
+  uint8_t buf[] = {0x31};
   Slice s(buf);
   b.add(s);
 
@@ -2767,7 +2786,7 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
     ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(12, ValueType::UTCDate)),
                                 Exception::BuilderKeyMustBeString);
   }
-  uint8_t buf[] = { 0x31 };
+  uint8_t buf[] = {0x31};
   {
     Builder b;
     b.openObject();
@@ -2808,8 +2827,7 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
   {
     Builder b;
     b.openObject();
-    ASSERT_VELOCYPACK_EXCEPTION(b.add(s),
-                                Exception::BuilderKeyMustBeString);
+    ASSERT_VELOCYPACK_EXCEPTION(b.add(s), Exception::BuilderKeyMustBeString);
   }
   {
     Builder b;
@@ -2820,8 +2838,7 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
   {
     Builder b;
     b.openObject();
-    ASSERT_VELOCYPACK_EXCEPTION(b.openArray(),
-                                Exception::BuilderNeedOpenArray);
+    ASSERT_VELOCYPACK_EXCEPTION(b.openArray(), Exception::BuilderNeedOpenArray);
   }
   {
     Builder b;
@@ -2856,8 +2873,8 @@ TEST(BuilderTest, HandInBuffer) {
     Builder b(buf);
     ASSERT_EQ(&Options::Defaults, b.options);
     b.openObject();
-    b.add("a",Value(123));
-    b.add("b",Value("abc"));
+    b.add("a", Value(123));
+    b.add("b", Value("abc"));
     b.close();
     Slice s(buf.data());
     ASSERT_TRUE(s.isObject());
@@ -2881,7 +2898,6 @@ TEST(BuilderTest, HandInBuffer) {
   ASSERT_EQ(std::string("abc"), ss.copyString());
 }
 
-
 TEST(BuilderTest, HandInBufferNoOptions) {
   Buffer<uint8_t> buf;
   ASSERT_VELOCYPACK_EXCEPTION(new Builder(buf, nullptr),
@@ -2897,8 +2913,8 @@ TEST(BuilderTest, HandInBufferCustomOptions) {
     ASSERT_EQ(&options, b.options);
 
     b.openObject();
-    b.add("a",Value(123));
-    b.add("b",Value("abc"));
+    b.add("a", Value(123));
+    b.add("b", Value("abc"));
     b.close();
   }
   Slice s(buf.data());
@@ -2927,8 +2943,8 @@ TEST(BuilderTest, HandInSharedBufferCustomOptions) {
     ASSERT_EQ(&options, b.options);
 
     b.openObject();
-    b.add("a",Value(123));
-    b.add("b",Value("abc"));
+    b.add("a", Value(123));
+    b.add("b", Value("abc"));
     b.close();
   }
   Slice s(buf->data());
@@ -2952,7 +2968,8 @@ TEST(BuilderTest, AddKeyToNonObject) {
   Builder b;
   b.openArray();
 
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")),
+                              Exception::BuilderNeedOpenObject);
 }
 
 TEST(BuilderTest, KeyWritten) {
@@ -2960,7 +2977,8 @@ TEST(BuilderTest, KeyWritten) {
   b.openObject();
   b.add(Value("foo"));
 
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")), Exception::BuilderKeyAlreadyWritten);
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(std::string("bar"), Value("foobar")),
+                              Exception::BuilderKeyAlreadyWritten);
 }
 
 TEST(BuilderTest, AddWithTranslator) {
@@ -3506,7 +3524,8 @@ TEST(BuilderTest, TagsDisallowed) {
   Builder b(&options);
   b.openObject();
   b.add("a", Value(0));
-  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 1, Value(0)), Exception::BuilderTagsDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 1, Value(0)),
+                              Exception::BuilderTagsDisallowed);
 }
 
 TEST(BuilderTest, Tags8Byte) {
@@ -3541,7 +3560,8 @@ TEST(BuilderTest, Tags8ByteDisallowed) {
   Builder b(&options);
   b.openObject();
   b.add("a", Value(0));
-  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 99999999, Value(0)), Exception::BuilderTagsDisallowed);
+  ASSERT_VELOCYPACK_EXCEPTION(b.addTagged("b", 99999999, Value(0)),
+                              Exception::BuilderTagsDisallowed);
 }
 
 TEST(BuilderTest, TagsArray) {
@@ -3579,11 +3599,9 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
   };
 
   std::array<Options::PaddingBehavior, 3> behaviors = {
-    Options::PaddingBehavior::Flexible,
-    Options::PaddingBehavior::NoPadding,
-    Options::PaddingBehavior::UsePadding
-  };
-    
+      Options::PaddingBehavior::Flexible, Options::PaddingBehavior::NoPadding,
+      Options::PaddingBehavior::UsePadding};
+
   for (auto const& behavior : behaviors) {
     options.paddingBehavior = behavior;
     {
@@ -3600,7 +3618,7 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
       ASSERT_EQ(0U, data[7]);
       ASSERT_EQ(0U, data[8]);
     }
-    
+
     {
       fill(111);
       uint8_t const* data = b.slice().start();
@@ -3652,7 +3670,8 @@ TEST(BuilderTest, getSharedSlice) {
     ASSERT_EQ(1, sharedSlice.buffer().use_count());
     ASSERT_FALSE(haveSameOwnership(b.buffer(), sharedSlice.buffer()));
     ASSERT_EQ(slice.byteSize(), sharedSlice.byteSize());
-    ASSERT_EQ(0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
+    ASSERT_EQ(
+        0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
   };
 
   auto smallBuilder = Builder{};
@@ -3667,12 +3686,13 @@ TEST(BuilderTest, getSharedSlice) {
   check(smallBuilder, true);
   check(largeBuilder, false);
 }
-  
+
 TEST(BuilderTest, getSharedSliceOpen) {
   SharedSlice ss;
   Builder b;
   b.openObject();
-  ASSERT_VELOCYPACK_EXCEPTION(ss = b.sharedSlice(), Exception::BuilderNotSealed);
+  ASSERT_VELOCYPACK_EXCEPTION(ss = b.sharedSlice(),
+                              Exception::BuilderNotSealed);
 }
 
 TEST(BuilderTest, stealSharedSlice) {
@@ -3685,8 +3705,9 @@ TEST(BuilderTest, stealSharedSlice) {
     ASSERT_EQ(nullptr, b.buffer());
     ASSERT_EQ(0, b.buffer().use_count());
     ASSERT_EQ(1, sharedSlice.buffer().use_count());
-    ASSERT_EQ(slice.byteSize() , sharedSlice.byteSize());
-    ASSERT_EQ(0, memcmp(slice.start() , sharedSlice.start().get(), slice.byteSize()));
+    ASSERT_EQ(slice.byteSize(), sharedSlice.byteSize());
+    ASSERT_EQ(
+        0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
   };
 
   auto smallBuilder = Builder{};

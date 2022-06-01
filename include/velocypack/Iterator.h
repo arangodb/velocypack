@@ -48,11 +48,18 @@ class ArrayIterator {
 
   // optimization for an empty array
   explicit ArrayIterator(Empty) noexcept
-      : _slice(Slice::emptyArraySlice()), _size(0), _position(0), _current(nullptr), _first(nullptr) {}
+      : _slice(Slice::emptyArraySlice()),
+        _size(0),
+        _position(0),
+        _current(nullptr),
+        _first(nullptr) {}
 
   explicit ArrayIterator(Slice slice)
-      : _slice(slice), _size(0), _position(0), _current(nullptr), _first(nullptr) {
-
+      : _slice(slice),
+        _size(0),
+        _position(0),
+        _current(nullptr),
+        _first(nullptr) {
     uint8_t const head = slice.head();
 
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Array)) {
@@ -62,7 +69,7 @@ class ArrayIterator {
     _size = slice.arrayLength();
 
     if (_size > 0) {
-      VELOCYPACK_ASSERT(head != 0x01); // no empty array allowed here
+      VELOCYPACK_ASSERT(head != 0x01);  // no empty array allowed here
       if (head == 0x13) {
         _current = slice.start() + slice.getStartOffsetFromCompact();
       } else {
@@ -120,13 +127,9 @@ class ArrayIterator {
 
   inline bool valid() const noexcept { return (_position < _size); }
 
-  inline Slice value() const {
-    return operator*();
-  }
+  inline Slice value() const { return operator*(); }
 
-  inline void next() {
-    operator++();
-  }
+  inline void next() { operator++(); }
 
   inline ValueLength index() const noexcept { return _position; }
 
@@ -171,9 +174,10 @@ class ArrayIterator {
 
   template<typename T, typename... Ts>
   std::tuple<T, Ts...> unpackTupleInternal(unpack_helper<T, Ts...>) {
-    auto slice = value(); // this does out-of-bounds checking
+    auto slice = value();  // this does out-of-bounds checking
     next();
-    return std::tuple_cat(std::make_tuple(slice.extract<T>()), unpackTupleInternal(unpack_helper<Ts...>{}));
+    return std::tuple_cat(std::make_tuple(slice.extract<T>()),
+                          unpackTupleInternal(unpack_helper<Ts...>{}));
   }
 
   std::tuple<> unpackTupleInternal(unpack_helper<>) const {
@@ -210,8 +214,11 @@ class ObjectIterator {
   // simply jumps from key/value pair to key/value pair without using the
   // index. The default `false` is to use the index if it is there.
   explicit ObjectIterator(Slice slice, bool useSequentialIteration = false)
-      : _slice(slice), _size(0), _position(0), _current(nullptr), _first(nullptr) {
-
+      : _slice(slice),
+        _size(0),
+        _position(0),
+        _current(nullptr),
+        _first(nullptr) {
     uint8_t const head = slice.head();
 
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Object)) {
@@ -221,7 +228,7 @@ class ObjectIterator {
     _size = slice.objectLength();
 
     if (_size > 0) {
-      VELOCYPACK_ASSERT(head != 0x0a); // no empty object allowed here
+      VELOCYPACK_ASSERT(head != 0x0a);  // no empty object allowed here
       if (head == 0x14) {
         _current = slice.start() + slice.getStartOffsetFromCompact();
       } else if (useSequentialIteration) {
@@ -305,9 +312,7 @@ class ObjectIterator {
     return _slice.getNthValue(_position);
   }
 
-  inline void next() {
-    operator++();
-  }
+  inline void next() { operator++(); }
 
   inline ValueLength index() const noexcept { return _position; }
 

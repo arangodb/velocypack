@@ -74,7 +74,7 @@ class Dumper {
   }
 
   void appendInt(int64_t);
-  
+
   void appendUInt(uint64_t);
 
   void appendDouble(double);

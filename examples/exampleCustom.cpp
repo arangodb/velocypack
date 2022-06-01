@@ -8,8 +8,9 @@ using namespace arangodb::velocypack;
 struct MyCustomTypeHandler : public CustomTypeHandler {
   // serialize a custom type into JSON
   static int const myMagicNumber = 42;
-  
-  std::string toString(Slice const& value, Options const*, Slice const&) override final {
+
+  std::string toString(Slice const& value, Options const*,
+                       Slice const&) override final {
     if (value.head() == 0xf0) {
       return std::to_string(myMagicNumber);
     }
@@ -44,7 +45,7 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
   }
 };
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   MyCustomTypeHandler handler;
@@ -99,6 +100,6 @@ int main(int, char* []) {
   // and 'custom3':
   std::cout << "'custom3': byteSize: " << s.get("custom3").byteSize()
             << ", JSON: " << s.get("custom3").toJson(&options) << std::endl;
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

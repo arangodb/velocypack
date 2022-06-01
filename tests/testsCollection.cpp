@@ -31,8 +31,9 @@
 
 #include "tests-common.h"
 
-static auto DoNothingCallback =
-    [](Slice const&, ValueLength) -> bool { return false; };
+static auto DoNothingCallback = [](Slice const&, ValueLength) -> bool {
+  return false;
+};
 static auto FailCallback = [](Slice const&, ValueLength) -> bool {
   EXPECT_TRUE(false);
   return false;
@@ -182,12 +183,12 @@ TEST(CollectionTest, ObjectKeysSetMerge) {
   ASSERT_TRUE(keys.find("bar") != keys.end());
   ASSERT_TRUE(keys.find("baz") != keys.end());
   ASSERT_TRUE(keys.find("foo") != keys.end());
-  
+
   std::string const value2("{\"foobar\":1,\"quux\":3,\"baz\":2,\"bark\":3}");
   Parser parser2(&options);
   parser2.parse(value2);
   Slice s2(parser2.start());
-  
+
   Collection::keys(s2, keys);
   ASSERT_EQ(6UL, keys.size());
   ASSERT_TRUE(keys.find("bar") != keys.end());
@@ -369,22 +370,22 @@ TEST(CollectionTest, ForEachArray) {
   std::size_t seen = 0;
   Collection::forEach(s,
                       [&seen](Slice const& slice, ValueLength index) -> bool {
-    EXPECT_EQ(seen, index);
+                        EXPECT_EQ(seen, index);
 
-    switch (seen) {
-      case 0:
-      case 1:
-      case 2:
-        EXPECT_TRUE(slice.isNumber());
-        break;
-      case 3:
-      case 4:
-        EXPECT_TRUE(slice.isString());
-    }
+                        switch (seen) {
+                          case 0:
+                          case 1:
+                          case 2:
+                            EXPECT_TRUE(slice.isNumber());
+                            break;
+                          case 3:
+                          case 4:
+                            EXPECT_TRUE(slice.isString());
+                        }
 
-    ++seen;
-    return true;
-  });
+                        ++seen;
+                        return true;
+                      });
 
   ASSERT_EQ(5UL, seen);
 }
@@ -737,7 +738,8 @@ TEST(CollectionTest, IndexOfArray) {
   ASSERT_EQ(1U, Collection::indexOf(s, Parser::fromJson("2")->slice()));
   ASSERT_EQ(2U, Collection::indexOf(s, Parser::fromJson("3")->slice()));
   ASSERT_EQ(8U, Collection::indexOf(s, Parser::fromJson("9")->slice()));
-  ASSERT_EQ(9U, Collection::indexOf(s, Parser::fromJson("\"foobar\"")->slice()));
+  ASSERT_EQ(9U,
+            Collection::indexOf(s, Parser::fromJson("\"foobar\"")->slice()));
   ASSERT_EQ(13U, Collection::indexOf(s, Parser::fromJson("13")->slice()));
   ASSERT_EQ(14U, Collection::indexOf(s, Parser::fromJson("129")->slice()));
   ASSERT_EQ(15U,
@@ -929,8 +931,8 @@ TEST(CollectionTest, ConcatEmpty) {
   Builder b = Collection::concat(s1, s2);
   Slice s = b.slice();
 
-  ASSERT_TRUE(s.isArray()); 
-  ASSERT_EQ(0UL, s.length()); 
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(0UL, s.length());
 }
 
 TEST(CollectionTest, ConcatLeftEmpty) {
@@ -948,8 +950,8 @@ TEST(CollectionTest, ConcatLeftEmpty) {
   Builder b = Collection::concat(s1, s2);
   Slice s = b.slice();
 
-  ASSERT_TRUE(s.isArray()); 
-  ASSERT_EQ(3UL, s.length()); 
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(3UL, s.length());
   ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
   ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
   ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
@@ -970,8 +972,8 @@ TEST(CollectionTest, ConcatRightEmpty) {
   Builder b = Collection::concat(s1, s2);
   Slice s = b.slice();
 
-  ASSERT_TRUE(s.isArray()); 
-  ASSERT_EQ(3UL, s.length()); 
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(3UL, s.length());
   ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
   ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
   ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
@@ -992,8 +994,8 @@ TEST(CollectionTest, ConcatArray) {
   Builder b = Collection::concat(s1, s2);
   Slice s = b.slice();
 
-  ASSERT_TRUE(s.isArray()); 
-  ASSERT_EQ(10UL, s.length()); 
+  ASSERT_TRUE(s.isArray());
+  ASSERT_EQ(10UL, s.length());
   ASSERT_EQ(1UL, s.at(0).getNumber<uint64_t>());
   ASSERT_EQ(2UL, s.at(1).getNumber<uint64_t>());
   ASSERT_EQ(3UL, s.at(2).getNumber<uint64_t>());
@@ -1015,23 +1017,23 @@ TEST(CollectionTest, ExtractEmpty) {
 
   Builder b1 = Collection::extract(s, 0, 10);
   Slice s1 = b1.slice();
-  ASSERT_TRUE(s1.isArray()); 
-  ASSERT_EQ(0UL, s1.length()); 
-  
+  ASSERT_TRUE(s1.isArray());
+  ASSERT_EQ(0UL, s1.length());
+
   Builder b2 = Collection::extract(s, 0, 0);
   Slice s2 = b2.slice();
-  ASSERT_TRUE(s2.isArray()); 
-  ASSERT_EQ(0UL, s2.length()); 
-  
+  ASSERT_TRUE(s2.isArray());
+  ASSERT_EQ(0UL, s2.length());
+
   Builder b3 = Collection::extract(s, 2, -1);
   Slice s3 = b3.slice();
-  ASSERT_TRUE(s3.isArray()); 
-  ASSERT_EQ(0UL, s3.length()); 
-  
+  ASSERT_TRUE(s3.isArray());
+  ASSERT_EQ(0UL, s3.length());
+
   Builder b4 = Collection::extract(s, 4, 10);
   Slice s4 = b4.slice();
-  ASSERT_TRUE(s4.isArray()); 
-  ASSERT_EQ(0UL, s4.length()); 
+  ASSERT_TRUE(s4.isArray());
+  ASSERT_EQ(0UL, s4.length());
 }
 
 TEST(CollectionTest, ExtractVarious) {
@@ -1043,43 +1045,43 @@ TEST(CollectionTest, ExtractVarious) {
 
   Builder b1 = Collection::extract(s, 0, 10);
   Slice s1 = b1.slice();
-  ASSERT_TRUE(s1.isArray()); 
-  ASSERT_EQ(6UL, s1.length()); 
+  ASSERT_TRUE(s1.isArray());
+  ASSERT_EQ(6UL, s1.length());
   ASSERT_EQ(1UL, s1.at(0).getNumber<uint64_t>());
   ASSERT_EQ(2UL, s1.at(1).getNumber<uint64_t>());
   ASSERT_EQ(6UL, s1.at(5).getNumber<uint64_t>());
-  
+
   Builder b2 = Collection::extract(s, 1, 1);
   Slice s2 = b2.slice();
-  ASSERT_TRUE(s2.isArray()); 
-  ASSERT_EQ(1UL, s2.length()); 
+  ASSERT_TRUE(s2.isArray());
+  ASSERT_EQ(1UL, s2.length());
   ASSERT_EQ(2UL, s2.at(0).getNumber<uint64_t>());
-  
+
   Builder b3 = Collection::extract(s, 1, -1);
   Slice s3 = b3.slice();
-  ASSERT_TRUE(s3.isArray()); 
-  ASSERT_EQ(4UL, s3.length()); 
+  ASSERT_TRUE(s3.isArray());
+  ASSERT_EQ(4UL, s3.length());
   ASSERT_EQ(2UL, s3.at(0).getNumber<uint64_t>());
   ASSERT_EQ(5UL, s3.at(3).getNumber<uint64_t>());
-  
+
   Builder b4 = Collection::extract(s, 1, 4);
   Slice s4 = b4.slice();
-  ASSERT_TRUE(s4.isArray()); 
-  ASSERT_EQ(4UL, s4.length()); 
+  ASSERT_TRUE(s4.isArray());
+  ASSERT_EQ(4UL, s4.length());
   ASSERT_EQ(2UL, s4.at(0).getNumber<uint64_t>());
   ASSERT_EQ(5UL, s4.at(3).getNumber<uint64_t>());
-  
+
   Builder b5 = Collection::extract(s, 1, 5);
   Slice s5 = b5.slice();
-  ASSERT_TRUE(s5.isArray()); 
-  ASSERT_EQ(5UL, s5.length()); 
+  ASSERT_TRUE(s5.isArray());
+  ASSERT_EQ(5UL, s5.length());
   ASSERT_EQ(2UL, s5.at(0).getNumber<uint64_t>());
   ASSERT_EQ(6UL, s5.at(4).getNumber<uint64_t>());
-  
+
   Builder b6 = Collection::extract(s, 1, -2);
   Slice s6 = b6.slice();
-  ASSERT_TRUE(s6.isArray()); 
-  ASSERT_EQ(3UL, s6.length()); 
+  ASSERT_TRUE(s6.isArray());
+  ASSERT_EQ(3UL, s6.length());
   ASSERT_EQ(2UL, s6.at(0).getNumber<uint64_t>());
   ASSERT_EQ(4UL, s6.at(2).getNumber<uint64_t>());
 }
@@ -1480,12 +1482,15 @@ TEST(CollectionTest, MergeNonObject) {
   b2.add(Value(ValueType::Object));
   b2.close();
 
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b1.slice(), false, false),
-                              Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b1.slice(), b2.slice(), false, false),
-                              Exception::InvalidValueType);
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::merge(b2.slice(), b1.slice(), false, false),
-                              Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::merge(b1.slice(), b1.slice(), false, false),
+      Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::merge(b1.slice(), b2.slice(), false, false),
+      Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Collection::merge(b2.slice(), b1.slice(), false, false),
+      Exception::InvalidValueType);
 }
 
 TEST(CollectionTest, MergeEmptyLeft) {
@@ -1684,9 +1689,10 @@ TEST(CollectionTest, MergeNullMeansRemove) {
 }
 
 TEST(CollectionTest, MergeNullMeansRemoveRecursive) {
-  std::string const l("{\"foo\":1,\"bar\":{\"bart\":null,\"barto\":4},\"baz\":3,\"baz\":{\"foo\":1}}");
-  std::string const r(
-      "{\"bar\":{\"barto\":null,\"barko\":7},\"baz\":null}");
+  std::string const l(
+      "{\"foo\":1,\"bar\":{\"bart\":null,\"barto\":4},\"baz\":3,\"baz\":{"
+      "\"foo\":1}}");
+  std::string const r("{\"bar\":{\"barto\":null,\"barko\":7},\"baz\":null}");
 
   std::shared_ptr<Builder> p1 = Parser::fromJson(l);
   Slice s1(p1->start());
@@ -1699,11 +1705,11 @@ TEST(CollectionTest, MergeNullMeansRemoveRecursive) {
   ASSERT_TRUE(s.hasKey("foo"));
   ASSERT_EQ(1UL, s.get("foo").getUInt());
   ASSERT_TRUE(s.hasKey("bar"));
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "bar", "bart" })));
-  ASSERT_TRUE(s.get(std::vector<std::string>({ "bar", "bart" })).isNull());
-  ASSERT_FALSE(s.hasKey(std::vector<std::string>({ "bar", "barto" })));
-  ASSERT_TRUE(s.hasKey(std::vector<std::string>({ "bar", "barko" })));
-  ASSERT_EQ(7UL, s.get(std::vector<std::string>({ "bar", "barko" })).getUInt());
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"bar", "bart"})));
+  ASSERT_TRUE(s.get(std::vector<std::string>({"bar", "bart"})).isNull());
+  ASSERT_FALSE(s.hasKey(std::vector<std::string>({"bar", "barto"})));
+  ASSERT_TRUE(s.hasKey(std::vector<std::string>({"bar", "barko"})));
+  ASSERT_EQ(7UL, s.get(std::vector<std::string>({"bar", "barko"})).getUInt());
   ASSERT_FALSE(s.hasKey("baz"));
 }
 
@@ -2082,7 +2088,7 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
 }
 
 static bool lt(Slice const a, Slice const b) {
-  if (! a.isInteger() || ! b.isInteger()) {
+  if (!a.isInteger() || !b.isInteger()) {
     return false;
   }
   return a.getInt() < b.getInt();
@@ -2110,8 +2116,9 @@ TEST(CollectionTest, Sort) {
 TEST(CollectionTest, SortNonArray) {
   Builder b;
   b.add(Value("foo"));
-  
-  ASSERT_VELOCYPACK_EXCEPTION(Collection::sort(b.slice(), &lt), Exception::InvalidValueType);
+
+  ASSERT_VELOCYPACK_EXCEPTION(Collection::sort(b.slice(), &lt),
+                              Exception::InvalidValueType);
 }
 
 int main(int argc, char* argv[]) {

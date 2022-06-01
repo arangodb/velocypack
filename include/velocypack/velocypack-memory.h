@@ -41,5 +41,4 @@ extern void velocypack_free(void* ptr);
 #define velocypack_free(ptr) free(ptr)
 
 #endif
-
 }

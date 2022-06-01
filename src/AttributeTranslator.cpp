@@ -31,8 +31,7 @@
 
 using namespace arangodb::velocypack;
 
-AttributeTranslator::AttributeTranslator()
-    : _count(0) {}
+AttributeTranslator::AttributeTranslator() : _count(0) {}
 
 AttributeTranslator::~AttributeTranslator() {}
 
@@ -68,16 +67,15 @@ void AttributeTranslator::seal() {
     it.next();
   }
 }
-  
-AttributeTranslatorScope::AttributeTranslatorScope(AttributeTranslator* translator)
-      : _old(Options::Defaults.attributeTranslator) {
+
+AttributeTranslatorScope::AttributeTranslatorScope(
+    AttributeTranslator* translator)
+    : _old(Options::Defaults.attributeTranslator) {
   Options::Defaults.attributeTranslator = translator;
 }
 
-AttributeTranslatorScope::~AttributeTranslatorScope() {
-  revert();
-}
-  
+AttributeTranslatorScope::~AttributeTranslatorScope() { revert(); }
+
 // prematurely revert the change
 void AttributeTranslatorScope::revert() noexcept {
   Options::Defaults.attributeTranslator = _old;

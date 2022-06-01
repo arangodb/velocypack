@@ -51,13 +51,23 @@ static void usage(char* argv[]) {
   std::cout << "printed to stdout." << std::endl;
 #endif
   std::cout << "Available options are:" << std::endl;
-  std::cout << " --pretty                  pretty-print JSON output" << std::endl;
-  std::cout << " --no-pretty               don't pretty print JSON output" << std::endl;
-  std::cout << " --print-unsupported       convert non-JSON types into something else" << std::endl;
-  std::cout << " --no-print-unsupported    fail when encoutering a non-JSON type" << std::endl;
-  std::cout << " --hex                     try to turn hex-encoded input into binary vpack" << std::endl;
-  std::cout << " --validate                validate input VelocyPack data" << std::endl;
-  std::cout << " --no-validate             don't validate input VelocyPack data" << std::endl;
+  std::cout << " --pretty                  pretty-print JSON output"
+            << std::endl;
+  std::cout << " --no-pretty               don't pretty print JSON output"
+            << std::endl;
+  std::cout
+      << " --print-unsupported       convert non-JSON types into something else"
+      << std::endl;
+  std::cout
+      << " --no-print-unsupported    fail when encoutering a non-JSON type"
+      << std::endl;
+  std::cout << " --hex                     try to turn hex-encoded input into "
+               "binary vpack"
+            << std::endl;
+  std::cout << " --validate                validate input VelocyPack data"
+            << std::endl;
+  std::cout << " --no-validate             don't validate input VelocyPack data"
+            << std::endl;
 }
 
 static std::string convertFromHex(std::string const& value) {
@@ -198,17 +208,19 @@ int main(int argc, char* argv[]) {
   if (hex) {
     s = convertFromHex(s);
   }
-  
+
   Options options;
   options.prettyPrint = pretty;
   options.checkAttributeUniqueness = true;
   options.validateUtf8Strings = true;
-  options.unsupportedTypeBehavior = 
-    (printUnsupported ? Options::ConvertUnsupportedType : Options::FailOnUnsupportedType);
-  
+  options.unsupportedTypeBehavior =
+      (printUnsupported ? Options::ConvertUnsupportedType
+                        : Options::FailOnUnsupportedType);
+
   if (validate) {
     Validator validator(&options);
-    validator.validate(reinterpret_cast<uint8_t const*>(s.data()), s.size(), false);
+    validator.validate(reinterpret_cast<uint8_t const*>(s.data()), s.size(),
+                       false);
   }
 
   Slice const slice(reinterpret_cast<uint8_t const*>(s.data()));
@@ -253,6 +265,6 @@ int main(int argc, char* argv[]) {
     std::cout << "VPack Infile size: " << s.size() << std::endl;
     std::cout << "JSON Outfile size: " << buffer.size() << std::endl;
   }
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

@@ -60,7 +60,7 @@ struct Options {
     // use padding - fill unused head bytes with zero-bytes (ASCII NUL) in
     // order to avoid a later memmove
     UsePadding,
-    // don't pad and do not fill any gaps with zero-bytes (ASCII NUL). 
+    // don't pad and do not fill any gaps with zero-bytes (ASCII NUL).
     // instead, memmove data down so there is no gap between the head bytes
     // and the payload
     NoPadding,
@@ -74,7 +74,7 @@ struct Options {
   // Dumper behavior when a VPack value is serialized to JSON that
   // has no JSON equivalent
   UnsupportedTypeBehavior unsupportedTypeBehavior = FailOnUnsupportedType;
- 
+
   // Builder behavior w.r.t. padding or memmoving data
   PaddingBehavior paddingBehavior = PaddingBehavior::Flexible;
 
@@ -93,7 +93,8 @@ struct Options {
   // pretty-print JSON output when dumping with Dumper
   bool prettyPrint = false;
 
-  // pretty-print JSON output when dumping with Dumper, but don't add any newlines
+  // pretty-print JSON output when dumping with Dumper, but don't add any
+  // newlines
   bool singleLinePrettyPrint = false;
 
   // keep top-level object/array open when building objects with the Parser
@@ -102,7 +103,7 @@ struct Options {
   // clear builder before starting to parse in Parser
   bool clearBuilderBeforeParse = true;
 
-  // validate UTF-8 strings when JSON-parsing with Parser or validating with 
+  // validate UTF-8 strings when JSON-parsing with Parser or validating with
   // Validator
   bool validateUtf8Strings = false;
 
@@ -115,7 +116,7 @@ struct Options {
   // JSON with a Dumper
   bool escapeForwardSlashes = false;
 
-  // escape multi-byte Unicode characters when dumping them to JSON 
+  // escape multi-byte Unicode characters when dumping them to JSON
   // with a Dumper (creates \uxxxx sequences)
   bool escapeUnicode = false;
 
@@ -136,23 +137,23 @@ struct Options {
   // values as a security precaution), validated when object-building via
   // Builder and VelocyPack validation using Validator objects
   bool disallowExternals = false;
-  
+
   // disallow using type Custom (to prevent injection of arbitrary opaque
   // values as a security precaution)
   bool disallowCustom = false;
-  
+
   // disallow tagged values
   bool disallowTags = false;
-  
+
   // disallow BCD values
   bool disallowBCD = false;
 
   // write tags to JSON output
   bool debugTags = false;
 
-  // max recursion level for object/array nesting. checked by Parser and 
+  // max recursion level for object/array nesting. checked by Parser and
   // Validator.
-  uint32_t nestingLimit = std::numeric_limits<uint32_t>::max(); 
+  uint32_t nestingLimit = std::numeric_limits<uint32_t>::max();
 
   // default options with the above settings
   static Options Defaults;

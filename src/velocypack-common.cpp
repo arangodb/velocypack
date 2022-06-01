@@ -32,13 +32,17 @@ using namespace arangodb::velocypack;
 static bool AssemblerFunctionsDisabled = false;
 
 // disable hand-coded SSE4_2 functions for JSON parsing
-// this must be called before the JSON parser is used 
+// this must be called before the JSON parser is used
 void arangodb::velocypack::disableAssemblerFunctions() {
   AssemblerFunctionsDisabled = true;
 }
 
-bool arangodb::velocypack::assemblerFunctionsEnabled() { return !AssemblerFunctionsDisabled; }
-bool arangodb::velocypack::assemblerFunctionsDisabled() { return AssemblerFunctionsDisabled; }
+bool arangodb::velocypack::assemblerFunctionsEnabled() {
+  return !AssemblerFunctionsDisabled;
+}
+bool arangodb::velocypack::assemblerFunctionsDisabled() {
+  return AssemblerFunctionsDisabled;
+}
 
 #ifndef VELOCYPACK_64BIT
 // check if the length is beyond the size of a SIZE_MAX on this platform
@@ -57,7 +61,9 @@ static_assert(sizeof(std::size_t) == sizeof(uint64_t),
 
 int64_t arangodb::velocypack::currentUTCDateValue() {
   return static_cast<int64_t>(
-      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count());
 }
 
 static_assert(sizeof(arangodb::velocypack::ValueLength) >= sizeof(SIZE_MAX),

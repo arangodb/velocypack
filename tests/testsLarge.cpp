@@ -38,10 +38,12 @@ TEST(BuilderTest, FixedArraysSizes) {
                              (64 * kB) / 127,      // 64k <= bytelen < 4G
                              (4 * GB) / 127,       // 64k <= bytelen < 4G
                              (4 * GB) / 127 + 1};  // 4G <= bytelen
-  ValueLength const byteSizes[] = {
-      1 + 1 + 1 * 127,                     1 + 8 + 2 * 127,
-      1 + 8 + ((64 * kB) / 127 - 1) * 127, 1 + 8 + ((64 * kB) / 127) * 127,
-      1 + 8 + ((4 * GB) / 127) * 127,      1 + 8 + ((4 * GB) / 127 + 1) * 127};
+  ValueLength const byteSizes[] = {1 + 1 + 1 * 127,
+                                   1 + 8 + 2 * 127,
+                                   1 + 8 + ((64 * kB) / 127 - 1) * 127,
+                                   1 + 8 + ((64 * kB) / 127) * 127,
+                                   1 + 8 + ((4 * GB) / 127) * 127,
+                                   1 + 8 + ((4 * GB) / 127 + 1) * 127};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
@@ -131,10 +133,12 @@ TEST(BuilderTest, ObjectsSizesSorted) {
                              (64 * kB) / 130 + 1,  // 64k <= bytelen < 4G
                              (4 * GB) / 132 - 1,   // 64k <= bytelen < 4G
                              (4 * GB) / 132};      // 4G <= bytelen
-  ValueLength const byteSizes[] = {
-      1 + 1 + 1 + 1 + 1 * 128,            1 + 8 + 2 * 130,
-      1 + 8 + ((64 * kB) / 130) * 130,    1 + 8 + ((64 * kB) / 130 + 1) * 132,
-      1 + 8 + ((4 * GB) / 132 - 1) * 132, 1 + 8 + ((4 * GB) / 132) * 136 + 8};
+  ValueLength const byteSizes[] = {1 + 1 + 1 + 1 + 1 * 128,
+                                   1 + 8 + 2 * 130,
+                                   1 + 8 + ((64 * kB) / 130) * 130,
+                                   1 + 8 + ((64 * kB) / 130 + 1) * 132,
+                                   1 + 8 + ((4 * GB) / 132 - 1) * 132,
+                                   1 + 8 + ((4 * GB) / 132) * 136 + 8};
   int nr = sizeof(nrs) / sizeof(ValueLength);
 
   std::string x;
@@ -182,7 +186,7 @@ TEST(ParserTest, EmptyAttributeName) {
   Parser parser(builder);
   parser.parse(R"({"":123,"a":"abc"})");
   Slice s = builder.slice();
-  
+
   ASSERT_EQ(2UL, s.length());
 
   Slice ss = s.get("");

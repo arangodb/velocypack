@@ -39,12 +39,10 @@ namespace arangodb {
 namespace velocypack {
 int fpconv_dtoa(double fp, char dest[24]);
 }
-}
-  
+}  // namespace arangodb
+
 Dumper::Dumper(Sink* sink, Options const* options)
-    : options(options), 
-      _sink(sink), 
-      _indentation(0) {
+    : options(options), _sink(sink), _indentation(0) {
   if (VELOCYPACK_UNLIKELY(sink == nullptr)) {
     throw Exception(Exception::InternalError, "Sink cannot be a nullptr");
   }
@@ -52,13 +50,13 @@ Dumper::Dumper(Sink* sink, Options const* options)
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
 }
-  
+
 void Dumper::dump(Slice const& slice) {
   _indentation = 0;
   _sink->reserve(slice.byteSize());
   dumpValue(&slice);
 }
-  
+
 /*static*/ void Dumper::dump(Slice const& slice, Sink* sink,
                              Options const* options) {
   Dumper dumper(sink, options);
@@ -77,12 +75,12 @@ void Dumper::dump(Slice const& slice) {
   dump(slice, &sink, options);
   return buffer;
 }
-  
+
 /*static*/ std::string Dumper::toString(Slice const* slice,
                                         Options const* options) {
   return toString(*slice, options);
 }
-  
+
 void Dumper::appendString(char const* src, ValueLength len) {
   _sink->reserve(2 + len);
   _sink->push_back('"');
@@ -228,7 +226,7 @@ void Dumper::appendDouble(double v) {
 
 void Dumper::dumpUnicodeCharacter(uint16_t value) {
   _sink->append("\\u", 2);
-  
+
   uint16_t p;
   p = (value & 0xf000U) >> 12;
   _sink->push_back((p < 10) ? ('0' + p) : ('A' + p - 10));
@@ -238,7 +236,7 @@ void Dumper::dumpUnicodeCharacter(uint16_t value) {
 
   p = (value & 0x00f0U) >> 4;
   _sink->push_back((p < 10) ? ('0' + p) : ('A' + p - 10));
-  
+
   p = (value & 0x000fU);
   _sink->push_back((p < 10) ? ('0' + p) : ('A' + p - 10));
 }
@@ -334,9 +332,10 @@ void Dumper::dumpString(char const* src, ValueLength len) {
       if (p + 1 >= e) {
         throw Exception(Exception::InvalidUtf8Sequence);
       }
-      
+
       if (options->escapeUnicode) {
-        uint16_t value = ((((uint16_t) *p & 0x1fU) << 6) | ((uint16_t) *(p + 1) & 0x3fU));
+        uint16_t value =
+            ((((uint16_t)*p & 0x1fU) << 6) | ((uint16_t) * (p + 1) & 0x3fU));
         dumpUnicodeCharacter(value);
       } else {
         _sink->append(reinterpret_cast<char const*>(p), 2);
@@ -349,7 +348,9 @@ void Dumper::dumpString(char const* src, ValueLength len) {
       }
 
       if (options->escapeUnicode) {
-        uint16_t value = ((((uint16_t) *p & 0x0fU) << 12) | (((uint16_t) *(p + 1) & 0x3fU) << 6) | ((uint16_t) *(p + 2) & 0x3fU));
+        uint16_t value = ((((uint16_t)*p & 0x0fU) << 12) |
+                          (((uint16_t) * (p + 1) & 0x3fU) << 6) |
+                          ((uint16_t) * (p + 2) & 0x3fU));
         dumpUnicodeCharacter(value);
       } else {
         _sink->append(reinterpret_cast<char const*>(p), 3);
@@ -362,10 +363,13 @@ void Dumper::dumpString(char const* src, ValueLength len) {
       }
 
       if (options->escapeUnicode) {
-        uint32_t value = ((((uint32_t) *p & 0x0fU) << 18) | (((uint32_t) *(p + 1) & 0x3fU) << 12) | (((uint32_t) *(p + 2) & 0x3fU) << 6) | ((uint32_t) *(p + 3) & 0x3fU));
+        uint32_t value = ((((uint32_t)*p & 0x0fU) << 18) |
+                          (((uint32_t) * (p + 1) & 0x3fU) << 12) |
+                          (((uint32_t) * (p + 2) & 0x3fU) << 6) |
+                          ((uint32_t) * (p + 3) & 0x3fU));
         // construct the surrogate pairs
         value -= 0x10000U;
-        uint16_t high = (uint16_t) (((value & 0xffc00U) >> 10) + 0xd800);
+        uint16_t high = (uint16_t)(((value & 0xffc00U) >> 10) + 0xd800);
         dumpUnicodeCharacter(high);
         uint16_t low = (value & 0x3ffU) + 0xdc00U;
         dumpUnicodeCharacter(low);
@@ -497,8 +501,8 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       double const v = slice->getDouble();
 
       if (!std::isnan(v) && !std::isinf(v)) {
-         appendDouble(v);
-         break;
+        appendDouble(v);
+        break;
       }
 
       if (options->unsupportedDoublesAsString) {
@@ -535,9 +539,10 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       _sink->push_back('"');
       break;
     }
-    
+
     case ValueType::External: {
-      Slice const external(reinterpret_cast<uint8_t const*>(slice->getExternal()));
+      Slice const external(
+          reinterpret_cast<uint8_t const*>(slice->getExternal()));
       dumpValue(&external, base);
       break;
     }
@@ -575,7 +580,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       break;
     }
 
-    case ValueType::None: 
+    case ValueType::None:
     case ValueType::Illegal:
     case ValueType::MinKey:
     case ValueType::MaxKey: {
@@ -598,7 +603,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
   }
 }
-  
+
 void Dumper::indent() {
   std::size_t n = _indentation;
   _sink->reserve(2 * n);
@@ -611,8 +616,10 @@ void Dumper::handleUnsupportedType(Slice const* slice) {
   if (options->unsupportedTypeBehavior == Options::NullifyUnsupportedType) {
     _sink->append("null", 4);
     return;
-  } else if (options->unsupportedTypeBehavior == Options::ConvertUnsupportedType) {
-    _sink->append(std::string("\"(non-representable type ") + slice->typeName() + ")\"");
+  } else if (options->unsupportedTypeBehavior ==
+             Options::ConvertUnsupportedType) {
+    _sink->append(std::string("\"(non-representable type ") +
+                  slice->typeName() + ")\"");
     return;
   }
 
