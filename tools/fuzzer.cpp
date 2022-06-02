@@ -44,12 +44,7 @@ struct VPackFormat {};
 
 struct JSONFormat {};
 
-enum FuzzBytes {
-  FIRST_BYTE = 0,
-  RANDOM_BYTE,
-  LAST_BYTE,
-  NUM_OPTIONS_BYTES
-};
+enum FuzzBytes { FIRST_BYTE = 0, RANDOM_BYTE, LAST_BYTE, NUM_OPTIONS_BYTES };
 
 enum FuzzActions {
   REMOVE_BYTE = 0,
@@ -66,7 +61,7 @@ enum RandomBuilderAdditions {
   ADD_NULL,
   ADD_UINT64,
   ADD_INT64,
-  ADD_DOUBLE, // here starts values that are only for vpack
+  ADD_DOUBLE,  // here starts values that are only for vpack
   ADD_UTC_DATE,
   ADD_BINARY,
   ADD_EXTERNAL,
@@ -104,9 +99,9 @@ struct KnownLimitValues {
 struct RandomGenerator {
   RandomGenerator(uint64_t seed) : mt64(seed) {}
 
-  std::mt19937_64 mt64; // this is 64 bits for generating uint64_t in ADD_UINT64 for velocypack
+  std::mt19937_64 mt64;  // this is 64 bits for generating uint64_t in
+                         // ADD_UINT64 for velocypack
 };
-
 
 struct BuilderContext {
   Builder builder;
@@ -129,22 +124,24 @@ Slice nullSlice(Slice::nullSlice());
 static std::mutex mtx;
 
 static void usage(char const* argv[]) {
-  std::cout << "Usage: " << argv[0] << " options"
-            << std::endl;
-  std::cout << "This program creates random VPack or JSON structures and validates them. (Default: VPack)"
+  std::cout << "Usage: " << argv[0] << " options" << std::endl;
+  std::cout << "This program creates random VPack or JSON structures and "
+               "validates them. (Default: VPack)"
             << std::endl;
   std::cout << "Available format options are:" << std::endl;
-  std::cout << " --vpack                create VPack"
+  std::cout << " --vpack                create VPack" << std::endl;
+  std::cout << " --json                 create JSON" << std::endl;
+  std::cout << " --evil                 purposefully fuzz generated VPack, to "
+               "test for crashes"
             << std::endl;
-  std::cout << " --json                 create JSON"
-            << std::endl;
-  std::cout << " --evil                 purposefully fuzz generated VPack, to test for crashes"
-            << std::endl;
-  std::cout << " --iterations <number>  number of iterations (number > 0). Default: 1"
-            << std::endl;
-  std::cout << " --threads <number>     number of threads (number > 0). Default: 1"
-            << std::endl;
-  std::cout << " --seed <number>        number that will be used as seed for random generation (number >= 0). Default: random value"
+  std::cout
+      << " --iterations <number>  number of iterations (number > 0). Default: 1"
+      << std::endl;
+  std::cout
+      << " --threads <number>     number of threads (number > 0). Default: 1"
+      << std::endl;
+  std::cout << " --seed <number>        number that will be used as seed for "
+               "random generation (number >= 0). Default: random value"
             << std::endl;
   std::cout << std::endl;
 }
@@ -153,25 +150,31 @@ static inline bool isOption(char const* arg, char const* expected) {
   return (strcmp(arg, expected) == 0);
 }
 
-template <typename T>
-static T generateRandWithinRange(T min, T max, RandomGenerator& randomGenerator) {
+template<typename T>
+static T generateRandWithinRange(T min, T max,
+                                 RandomGenerator& randomGenerator) {
   return min + (randomGenerator.mt64() % (max + 1 - min));
 }
 
-static size_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte, std::string const& input) {
+static size_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte,
+                         std::string const& input) {
   size_t inputSize = input.size();
   if (!inputSize) {
     return 0;
   }
   using limits = KnownLimitValues;
-  size_t offset = inputSize > (3 * limits::randBytePosOffset) ? limits::randBytePosOffset : 0;
+  size_t offset = inputSize > (3 * limits::randBytePosOffset)
+                      ? limits::randBytePosOffset
+                      : 0;
   size_t bytePos = 0;
   if (fuzzByte == FuzzBytes::FIRST_BYTE) {
     bytePos = generateRandWithinRange<size_t>(0, offset, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::RANDOM_BYTE) {
-    bytePos = generateRandWithinRange<size_t>(0, inputSize - 1, ctx.randomGenerator);
+    bytePos =
+        generateRandWithinRange<size_t>(0, inputSize - 1, ctx.randomGenerator);
   } else if (fuzzByte == FuzzBytes::LAST_BYTE) {
-    bytePos = generateRandWithinRange<size_t>(inputSize - 1 - offset, inputSize - 1, ctx.randomGenerator);
+    bytePos = generateRandWithinRange<size_t>(
+        inputSize - 1 - offset, inputSize - 1, ctx.randomGenerator);
   }
   return bytePos;
 }
@@ -179,8 +182,10 @@ static size_t getBytePos(BuilderContext& ctx, FuzzBytes const& fuzzByte, std::st
 static void fuzzBytes(BuilderContext& ctx) {
   using limits = KnownLimitValues;
   for (uint32_t i = 0; i < limits::numFuzzIterations; ++i) {
-    FuzzActions fuzzAction = static_cast<FuzzActions>(ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
-    FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() % FuzzBytes::NUM_OPTIONS_BYTES);
+    FuzzActions fuzzAction = static_cast<FuzzActions>(
+        ctx.randomGenerator.mt64() % FuzzActions::NUM_OPTIONS_ACTIONS);
+    FuzzBytes fuzzByte = static_cast<FuzzBytes>(ctx.randomGenerator.mt64() %
+                                                FuzzBytes::NUM_OPTIONS_BYTES);
     auto& builderBuffer = ctx.builder.bufferRef();
     std::string vpackBytes = builderBuffer.toString();
     size_t bytePos = getBytePos(ctx, fuzzByte, vpackBytes);
@@ -195,86 +200,100 @@ static void fuzzBytes(BuilderContext& ctx) {
         if (vpackBytes.empty()) {
           continue;
         }
-        vpackBytes[bytePos] = generateRandWithinRange<uint8_t>(0, 255, ctx.randomGenerator);
+        vpackBytes[bytePos] =
+            generateRandWithinRange<uint8_t>(0, 255, ctx.randomGenerator);
         break;
       case INSERT_BYTE:
-        vpackBytes.insert(bytePos, 1, static_cast<std::string::value_type>(generateRandWithinRange<uint8_t>(0, 255,
-                                                                                                            ctx.randomGenerator)));
+        vpackBytes.insert(
+            bytePos, 1,
+            static_cast<std::string::value_type>(
+                generateRandWithinRange<uint8_t>(0, 255, ctx.randomGenerator)));
         break;
       default:
         VELOCYPACK_ASSERT(false);
     }
     builderBuffer.clear();
-    builderBuffer.append(reinterpret_cast<uint8_t const*>(vpackBytes.data()), vpackBytes.size());
+    builderBuffer.append(reinterpret_cast<uint8_t const*>(vpackBytes.data()),
+                         vpackBytes.size());
   }
 }
 
-static void generateRandBinary(RandomGenerator& randomGenerator, std::string& output) {
+static void generateRandBinary(RandomGenerator& randomGenerator,
+                               std::string& output) {
   using limits = KnownLimitValues;
   uint32_t length = randomGenerator.mt64() % limits::maxBinaryRandLength;
   output.reserve(length);
   for (uint32_t i = 0; i < length; ++i) {
-    output.push_back(static_cast<std::string::value_type>(randomGenerator.mt64() % 256));
+    output.push_back(
+        static_cast<std::string::value_type>(randomGenerator.mt64() % 256));
   }
 }
 
-static void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& utf8Str) {
+static void appendRandUtf8Char(RandomGenerator& randomGenerator,
+                               std::string& utf8Str) {
   using limits = KnownLimitValues;
   uint32_t numBytes = generateRandWithinRange(1, 4, randomGenerator);
   switch (numBytes) {
     case 1: {
-      utf8Str.push_back(
-          generateRandWithinRange<uint8_t>(limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound, randomGenerator));
+      utf8Str.push_back(generateRandWithinRange<uint8_t>(
+          limits::utf81ByteFirstLowerBound, limits::utf81ByteFirstUpperBound,
+          randomGenerator));
       break;
     }
     case 2: {
-      utf8Str.push_back(generateRandWithinRange<uint8_t>(limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
-                                                randomGenerator));
-      utf8Str.push_back(
-          generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+      utf8Str.push_back(generateRandWithinRange<uint8_t>(
+          limits::utf82BytesFirstLowerBound, limits::utf82BytesFirstUpperBound,
+          randomGenerator));
+      utf8Str.push_back(generateRandWithinRange<uint8_t>(
+          limits::utf8CommonLowerBound, limits::utf8CommonUpperBound,
+          randomGenerator));
       break;
     }
     case 3: {
-      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(limits::utf83BytesFirstLowerBound,
-                                                       limits::utf83BytesFirstUpperBound,
-                                                       randomGenerator);
+      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(
+          limits::utf83BytesFirstLowerBound, limits::utf83BytesFirstUpperBound,
+          randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xE0) {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf83BytesE0ValidatorLowerBound, limits::utf8CommonUpperBound,
-                                    randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf83BytesE0ValidatorLowerBound,
+            limits::utf8CommonUpperBound, randomGenerator));
       } else if (randFirstByte == 0xED) {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf83BytesEDValidatorUpperBound,
-                                    randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf8CommonLowerBound,
+            limits::utf83BytesEDValidatorUpperBound, randomGenerator));
       } else {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf8CommonLowerBound, limits::utf8CommonUpperBound,
+            randomGenerator));
       }
-      utf8Str.push_back(
-          generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+      utf8Str.push_back(generateRandWithinRange<uint8_t>(
+          limits::utf8CommonLowerBound, limits::utf8CommonUpperBound,
+          randomGenerator));
       break;
     }
     case 4: {
-      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(limits::utf84BytesFirstLowerBound,
-                                                       limits::utf84BytesFirstUpperBound,
-                                                       randomGenerator);
+      uint32_t randFirstByte = generateRandWithinRange<uint8_t>(
+          limits::utf84BytesFirstLowerBound, limits::utf84BytesFirstUpperBound,
+          randomGenerator);
       utf8Str.push_back(randFirstByte);
       if (randFirstByte == 0xF0) {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf84BytesF0ValidatorLowerBound, limits::utf8CommonUpperBound,
-                                    randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf84BytesF0ValidatorLowerBound,
+            limits::utf8CommonUpperBound, randomGenerator));
       } else if (randFirstByte == 0xF4) {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf84BytesF4ValidatorUpperBound,
-                                    randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf8CommonLowerBound,
+            limits::utf84BytesF4ValidatorUpperBound, randomGenerator));
       } else {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf8CommonLowerBound, limits::utf8CommonUpperBound,
+            randomGenerator));
       }
       for (uint32_t i = 0; i < 2; ++i) {
-        utf8Str.push_back(
-            generateRandWithinRange<uint8_t>(limits::utf8CommonLowerBound, limits::utf8CommonUpperBound, randomGenerator));
+        utf8Str.push_back(generateRandWithinRange<uint8_t>(
+            limits::utf8CommonLowerBound, limits::utf8CommonUpperBound,
+            randomGenerator));
       }
       break;
     }
@@ -283,18 +302,22 @@ static void appendRandUtf8Char(RandomGenerator& randomGenerator, std::string& ut
   }
 }
 
-static void generateUtf8String(RandomGenerator& randomGenerator, std::string& utf8Str) {
+static void generateUtf8String(RandomGenerator& randomGenerator,
+                               std::string& utf8Str) {
   using limits = KnownLimitValues;
-  static_assert(limits::maxUtf8RandStringLength > limits::minUtf8RandStringLength);
+  static_assert(limits::maxUtf8RandStringLength >
+                limits::minUtf8RandStringLength);
 
-  uint32_t length = limits::minUtf8RandStringLength +
-                    (randomGenerator.mt64() % (limits::maxUtf8RandStringLength - limits::minUtf8RandStringLength));
+  uint32_t length =
+      limits::minUtf8RandStringLength +
+      (randomGenerator.mt64() %
+       (limits::maxUtf8RandStringLength - limits::minUtf8RandStringLength));
   for (uint32_t i = 0; i < length; ++i) {
     appendRandUtf8Char(randomGenerator, utf8Str);
   }
 }
 
-template <typename Format>
+template<typename Format>
 constexpr RandomBuilderAdditions maxRandomType() {
   if constexpr (std::is_same_v<Format, VPackFormat>) {
     return RandomBuilderAdditions::ADD_MAX_VPACK_VALUE;
@@ -303,7 +326,7 @@ constexpr RandomBuilderAdditions maxRandomType() {
   }
 }
 
-template <typename Format>
+template<typename Format>
 static void generateVelocypack(BuilderContext& ctx) {
   constexpr RandomBuilderAdditions maxValue = maxRandomType<Format>();
 
@@ -313,9 +336,10 @@ static void generateVelocypack(BuilderContext& ctx) {
   RandomGenerator& randomGenerator = ctx.randomGenerator;
 
   while (true) {
-    RandomBuilderAdditions randomBuilderAdds = static_cast<RandomBuilderAdditions>(randomGenerator.mt64() %
-                                                                                   maxValue);
-    if (ctx.recursionDepth > limits::maxDepth && randomBuilderAdds <= ADD_OBJECT) {
+    RandomBuilderAdditions randomBuilderAdds =
+        static_cast<RandomBuilderAdditions>(randomGenerator.mt64() % maxValue);
+    if (ctx.recursionDepth > limits::maxDepth &&
+        randomBuilderAdds <= ADD_OBJECT) {
       continue;
     }
     switch (randomBuilderAdds) {
@@ -344,7 +368,9 @@ static void generateVelocypack(BuilderContext& ctx) {
           while (true) {
             ctx.tempString.clear();
             generateUtf8String(randomGenerator, ctx.tempString);
-            if (ctx.tempObjectKeys[ctx.recursionDepth - 1].emplace(ctx.tempString).second) {
+            if (ctx.tempObjectKeys[ctx.recursionDepth - 1]
+                    .emplace(ctx.tempString)
+                    .second) {
               break;
             }
           }
@@ -399,11 +425,13 @@ static void generateVelocypack(BuilderContext& ctx) {
       case ADD_BINARY: {
         ctx.tempString.clear();
         generateRandBinary(randomGenerator, ctx.tempString);
-        builder.add(ValuePair(ctx.tempString.data(), ctx.tempString.size(), ValueType::Binary));
+        builder.add(ValuePair(ctx.tempString.data(), ctx.tempString.size(),
+                              ValueType::Binary));
         break;
       }
       case ADD_EXTERNAL: {
-        builder.add(Value(static_cast<void const*>(&nullSlice), ValueType::External));
+        builder.add(
+            Value(static_cast<void const*>(&nullSlice), ValueType::External));
         break;
       }
       case ADD_ILLEGAL:
@@ -460,8 +488,10 @@ int main(int argc, char const* argv[]) {
         isFailure = true;
       } else {
         char const* p = argv[i];
-        uint64_t value = 0; //these values are uint64_t only for using the same isParamValid function as the seed
-        if (!isParamValid(p, value) || !value || value > std::numeric_limits<uint32_t>::max()) {
+        uint64_t value = 0;  // these values are uint64_t only for using the
+                             // same isParamValid function as the seed
+        if (!isParamValid(p, value) || !value ||
+            value > std::numeric_limits<uint32_t>::max()) {
           isFailure = true;
         } else {
           numIterations = static_cast<uint32_t>(value);
@@ -504,24 +534,28 @@ int main(int argc, char const* argv[]) {
   }
 
   if (isEvil && isJSON) {
-    std::cerr << "combining --evil and --json is currently not supported" << std::endl;
+    std::cerr << "combining --evil and --json is currently not supported"
+              << std::endl;
     return EXIT_FAILURE;
   }
 
-  std::string_view const progName(isEvil ? "Darkness fuzzer" : "Sunshine fuzzer");
+  std::string_view const progName(isEvil ? "Darkness fuzzer"
+                                         : "Sunshine fuzzer");
 
-  std::cout
-      << progName << " is fuzzing " << (isJSON ? "JSON Parser" : "VPack validator")
-      << " with " << numThreads << " thread(s)..."
-      << " Iterations: " << numIterations
-      << ". Initial seed is " << seed << std::endl;
+  std::cout << progName << " is fuzzing "
+            << (isJSON ? "JSON Parser" : "VPack validator") << " with "
+            << numThreads << " thread(s)..."
+            << " Iterations: " << numIterations << ". Initial seed is " << seed
+            << std::endl;
 
   uint32_t itsPerThread = numIterations / numThreads;
   uint32_t leftoverIts = numIterations % numThreads;
   std::atomic<bool> stopThreads{false};
   std::atomic<uint64_t> totalValidationErrors{0};
 
-  auto threadCallback = [&stopThreads, &totalValidationErrors]<typename Format>(uint32_t iterations, Format, uint64_t seed, bool isEvil) {
+  auto threadCallback = [&stopThreads, &totalValidationErrors]<typename Format>(
+                            uint32_t iterations, Format, uint64_t seed,
+                            bool isEvil) {
     Options options;
     options.validateUtf8Strings = true;
     options.checkAttributeUniqueness = true;
@@ -540,7 +574,7 @@ int main(int argc, char const* argv[]) {
       validationOptions.disallowBCD = true;
       validationOptions.disallowCustom = true;
     }
-      
+
     // parser used for JSON-parsing
     Parser parser(&parseOptions);
     // validator used for VPack validation
@@ -574,28 +608,29 @@ int main(int argc, char const* argv[]) {
           } else {
             validator.validate(builderBuffer.data(), builderBuffer.size());
           }
-        } catch (std::exception const &e) {
+        } catch (std::exception const& e) {
           ++validationErrors;
           if (!isEvil) {
             // we don't expect any exceptions in non-evil mode, so rethrow them.
             throw;
           }
-          // in evil mode, we can't tell if the borked velocypack is valid or not.
-          // so have to catch the exception and silence it.
+          // in evil mode, we can't tell if the borked velocypack is valid or
+          // not. so have to catch the exception and silence it.
         }
       }
-    } catch (std::exception const &e) {
-      // need a mutex to prevent multiple threads from writing to std::cerr at the
-      // same time
+    } catch (std::exception const& e) {
+      // need a mutex to prevent multiple threads from writing to std::cerr at
+      // the same time
       std::lock_guard<std::mutex> lock(mtx);
-      std::cerr 
-          << "Caught unexpected exception during fuzzing: " << e.what() << std::endl
-          << "Slice data:" << std::endl;
+      std::cerr << "Caught unexpected exception during fuzzing: " << e.what()
+                << std::endl
+                << "Slice data:" << std::endl;
       auto& builderBuffer = ctx.builder.bufferRef();
       if constexpr (std::is_same_v<Format, JSONFormat>) {
         std::cerr << Slice(builderBuffer.data()).toJson() << std::endl;
       } else {
-        std::cerr << HexDump(builderBuffer.data(), builderBuffer.size()) << std::endl;
+        std::cerr << HexDump(builderBuffer.data(), builderBuffer.size())
+                  << std::endl;
       }
       stopThreads.store(true);
     }
@@ -606,7 +641,7 @@ int main(int argc, char const* argv[]) {
   std::vector<std::thread> threads;
   threads.reserve(numThreads);
   auto joinThreads = [&threads]() {
-    for (auto &t: threads) {
+    for (auto& t : threads) {
       t.join();
     }
   };
@@ -618,9 +653,11 @@ int main(int argc, char const* argv[]) {
         iterations += leftoverIts;
       }
       if (isJSON) {
-        threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i, isEvil);
+        threads.emplace_back(threadCallback, iterations, JSONFormat{}, seed + i,
+                             isEvil);
       } else {
-        threads.emplace_back(threadCallback, iterations, VPackFormat{}, seed + i, isEvil);
+        threads.emplace_back(threadCallback, iterations, VPackFormat{},
+                             seed + i, isEvil);
       }
     }
     joinThreads();
@@ -629,7 +666,8 @@ int main(int argc, char const* argv[]) {
     joinThreads();
   }
 
-  std::cout << "Caught " << totalValidationErrors.load() << " validation error(s).";
+  std::cout << "Caught " << totalValidationErrors.load()
+            << " validation error(s).";
   if (isEvil) {
     std::cout << " These are potentially legitimate.";
   }

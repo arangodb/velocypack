@@ -26,10 +26,10 @@
 #include "velocypack/Value.h"
 
 using namespace arangodb::velocypack;
-  
+
 // creates a Value with the specified type Array or Object
 Value::Value(ValueType t, bool allowUnindexed)
-      : _valueType(t), _cType(CType::None), _value(allowUnindexed) {
+    : _valueType(t), _cType(CType::None), _value(allowUnindexed) {
   // we use the boolean part to store the allowUnindexed value
   if (allowUnindexed &&
       (_valueType != ValueType::Array && _valueType != ValueType::Object)) {

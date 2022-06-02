@@ -36,7 +36,7 @@
 
 namespace arangodb::velocypack {
 
-template <typename T>
+template<typename T>
 class Buffer {
   static_assert(sizeof(T) == 1, "expecting sizeof(T) to be 1");
 
@@ -68,13 +68,14 @@ class Buffer {
 
   Buffer& operator=(Buffer const& that) {
     if (this != &that) {
-      if (that._size <= _capacity) { 
+      if (that._size <= _capacity) {
         // our own buffer is big enough to hold the data
         initWithNone();
         memcpy(_buffer, that._buffer, checkOverflow(that._size));
       } else {
         // our own buffer is not big enough to hold the data
-        T* buffer = static_cast<T*>(velocypack_malloc(checkOverflow(that._size)));
+        T* buffer =
+            static_cast<T*>(velocypack_malloc(checkOverflow(that._size)));
         ensureValidPointer(buffer);
         buffer[0] = '\x00';
         memcpy(buffer, that._buffer, checkOverflow(that._size));
@@ -131,7 +132,7 @@ class Buffer {
     return *this;
   }
 
-  ~Buffer() { 
+  ~Buffer() {
     if (_buffer != _local) {
       velocypack_free(_buffer);
     }
@@ -144,37 +145,35 @@ class Buffer {
   inline ValueLength size() const noexcept { return _size; }
   inline ValueLength length() const noexcept { return _size; }
   inline ValueLength byteSize() const noexcept { return _size; }
-  
+
   inline ValueLength capacity() const noexcept { return _capacity; }
 
   std::string toString() const {
     return std::string(reinterpret_cast<char const*>(_buffer), _size);
   }
 
-  void reset() noexcept { 
+  void reset() noexcept {
     _size = 0;
     initWithNone();
   }
 
   void resetTo(ValueLength position) {
-    if (position > _capacity) { 
+    if (position > _capacity) {
       throw Exception(Exception::IndexOutOfBounds);
     }
     _size = position;
   }
 
   // move internal buffer position one byte ahead
-  inline void advance() noexcept {
-    advance(1);
-  }
-  
+  inline void advance() noexcept { advance(1); }
+
   // move internal buffer position n bytes ahead
   inline void advance(std::size_t value) noexcept {
     VELOCYPACK_ASSERT(_size <= _capacity);
     VELOCYPACK_ASSERT(_size + value <= _capacity);
     _size += value;
   }
-  
+
   // move internal buffer position n bytes backward
   inline void rollback(std::size_t value) noexcept {
     VELOCYPACK_ASSERT(_size <= _capacity);
@@ -195,7 +194,7 @@ class Buffer {
 
   // Steal external memory; only allowed when the buffer is not local,
   // i.e. !usesLocalMemory()
-   T* steal() noexcept {
+  T* steal() noexcept {
     VELOCYPACK_ASSERT(!usesLocalMemory());
 
     auto buffer = _buffer;
@@ -215,14 +214,14 @@ class Buffer {
   inline T const& operator[](std::size_t position) const noexcept {
     return _buffer[position];
   }
-  
+
   inline T& at(std::size_t position) {
     if (position >= _size) {
       throw Exception(Exception::IndexOutOfBounds);
     }
     return operator[](position);
   }
-  
+
   inline T const& at(std::size_t position) const {
     if (position >= _size) {
       throw Exception(Exception::IndexOutOfBounds);
@@ -234,10 +233,11 @@ class Buffer {
     reserve(1);
     _buffer[_size++] = c;
   }
- 
-  template <typename C>
+
+  template<typename C>
   void append(C const* p, ValueLength len) {
-    static_assert(sizeof(typename std::remove_pointer<C>::type) == 1, "only byte-wise types are supported for appending");
+    static_assert(sizeof(typename std::remove_pointer<C>::type) == 1,
+                  "only byte-wise types are supported for appending");
     reserve(len);
     memcpy(_buffer + _size, p, checkOverflow(len));
     _size += len;
@@ -246,7 +246,7 @@ class Buffer {
   void append(std::string_view value) {
     return append(value.data(), value.size());
   }
-  
+
   void append(Buffer<T> const& value) {
     return append(value.data(), value.size());
   }
@@ -263,10 +263,8 @@ class Buffer {
 
   // If true, uses memory inside the buffer (_local).
   // Otherwise, uses memory on the heap.
-  inline bool usesLocalMemory() const noexcept {
-    return _buffer == _local;
-  }
- 
+  inline bool usesLocalMemory() const noexcept { return _buffer == _local; }
+
  private:
   // initialize Buffer with a None value
   inline void initWithNone() noexcept { _buffer[0] = '\x00'; }
@@ -276,7 +274,7 @@ class Buffer {
       throw std::bad_alloc();
     }
   }
-  
+
   // poison buffer memory, used only for debugging
 #ifdef VELOCYPACK_DEBUG
   inline void poison(T* p, ValueLength length) noexcept {
@@ -317,10 +315,10 @@ class Buffer {
 
     _buffer = p;
     _capacity = newLen;
-    
+
     VELOCYPACK_ASSERT(_size <= _capacity);
   }
-  
+
   T* _buffer;
   ValueLength _capacity;
   ValueLength _size;
@@ -341,4 +339,5 @@ struct BufferNonDeleter {
 
 using VPackCharBuffer = arangodb::velocypack::CharBuffer;
 using VPackBufferUInt8 = arangodb::velocypack::UInt8Buffer;
-template<typename T> using VPackBuffer = arangodb::velocypack::Buffer<T>;
+template<typename T>
+using VPackBuffer = arangodb::velocypack::Buffer<T>;

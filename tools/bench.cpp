@@ -42,12 +42,7 @@
 
 using namespace arangodb::velocypack;
 
-enum ParserType {
-  UNKNOWN,
-  VPACK,
-  RAPIDJSON,
-  SIMDJSON
-};
+enum ParserType { UNKNOWN, VPACK, RAPIDJSON, SIMDJSON };
 
 static void usage(char* argv[]) {
   std::cout << "Usage: " << argv[0]
@@ -104,24 +99,34 @@ static std::string readFile(std::string filename) {
 static ValueType fromSimdJsonType(simdjson::dom::element_type type) {
   using etype = simdjson::dom::element_type;
   switch (type) {
-    case etype::ARRAY:      return ValueType::Array;
-    case etype::OBJECT:     return ValueType::Object;
-    case etype::BOOL:       return ValueType::Bool;
-    case etype::INT64:      return ValueType::Int;
-    case etype::UINT64:     return ValueType::UInt;
-    case etype::STRING:     return ValueType::String;
-    case etype::DOUBLE:     return ValueType::Double;
-    case etype::NULL_VALUE: return ValueType::Null;
+    case etype::ARRAY:
+      return ValueType::Array;
+    case etype::OBJECT:
+      return ValueType::Object;
+    case etype::BOOL:
+      return ValueType::Bool;
+    case etype::INT64:
+      return ValueType::Int;
+    case etype::UINT64:
+      return ValueType::UInt;
+    case etype::STRING:
+      return ValueType::String;
+    case etype::DOUBLE:
+      return ValueType::Double;
+    case etype::NULL_VALUE:
+      return ValueType::Null;
     default:
       assert(false);
   }
 }
 
-static Value drain_simdjson(simdjson::dom::element& doc, Builder* builder, bool opened) {
+static Value drain_simdjson(simdjson::dom::element& doc, Builder* builder,
+                            bool opened) {
   using namespace simdjson;
-  
-  // std::cerr << opened << " parsing: " << doc.type() << " " << doc << std::endl;
-  
+
+  // std::cerr << opened << " parsing: " << doc.type() << " " << doc <<
+  // std::endl;
+
   switch (doc.type()) {
     case dom::element_type::OBJECT: {
       if (!opened) {
@@ -163,9 +168,9 @@ static Value drain_simdjson(simdjson::dom::element& doc, Builder* builder, bool 
       }
       return Value(ValueType::Array);
     }
-    case dom::element_type::INT64: 
+    case dom::element_type::INT64:
       return (Value(doc.get_int64()));
-    case dom::element_type::UINT64: 
+    case dom::element_type::UINT64:
       return (Value(doc.get_uint64()));
     case dom::element_type::DOUBLE:
       return (Value(doc.get_double()));
@@ -179,7 +184,7 @@ static Value drain_simdjson(simdjson::dom::element& doc, Builder* builder, bool 
 }
 
 static ParserType parserTypeFromName(std::string_view name) noexcept {
-  ParserType parserType = ParserType::VPACK; // default
+  ParserType parserType = ParserType::VPACK;  // default
   if (name == "vpack") {
     parserType = ParserType::VPACK;
   } else if (name == "rapidjson") {
@@ -194,15 +199,19 @@ static ParserType parserTypeFromName(std::string_view name) noexcept {
 
 static char const* parserTypeName(ParserType parserType) noexcept {
   switch (parserType) {
-    case ParserType::VPACK:     return "vpack";
-    case ParserType::RAPIDJSON: return "rapidjson";
-    case ParserType::SIMDJSON:  return "simdjson";
-    case ParserType::UNKNOWN:   return "unknown";
+    case ParserType::VPACK:
+      return "vpack";
+    case ParserType::RAPIDJSON:
+      return "rapidjson";
+    case ParserType::SIMDJSON:
+      return "simdjson";
+    case ParserType::UNKNOWN:
+      return "unknown";
   }
 }
 
-static void run(std::string& data, int runTime, size_t copies, ParserType parserType,
-                bool fullOutput) {
+static void run(std::string& data, int runTime, size_t copies,
+                ParserType parserType, bool fullOutput) {
   Options options;
 
   std::vector<std::string> inputs;
@@ -226,10 +235,10 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
   size_t total = 0;
   auto start = std::chrono::high_resolution_clock::now();
   decltype(start) now;
-  
+
   simdjson::dom::parser parser;
   Builder simd_buffer;
-  
+
   try {
     do {
       for (int i = 0; i < 2; i++) {
@@ -246,7 +255,7 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
           }
           case SIMDJSON: {
             simdjson::dom::element doc;
-            
+
             auto error = parser.parse(inputs[count]).get(doc);
             if (error) {
               std::cerr << "simdjson parse failed" << error << std::endl;
@@ -261,7 +270,7 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
             exit(EXIT_FAILURE);
           }
         }
-        
+
         count++;
         if (count >= copies) {
           count = 0;
@@ -276,8 +285,8 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
         std::chrono::duration_cast<std::chrono::duration<double>>(now - start);
 
     if (fullOutput) {
-      std::cout << "Total runtime: " 
-                << std::setprecision(2) << std::fixed << totalTime.count() << " s" << std::endl;
+      std::cout << "Total runtime: " << std::setprecision(2) << std::fixed
+                << totalTime.count() << " s" << std::endl;
       std::cout << "Have parsed " << total << " times with "
                 << parserTypeName(parserType) << " using " << copies
                 << " copies of JSON data, each of size " << inputs[0].size()
@@ -285,15 +294,11 @@ static void run(std::string& data, int runTime, size_t copies, ParserType parser
       std::cout << "Parsed " << inputs[0].size() * total << " bytes in total."
                 << std::endl;
     }
-    std::cout << std::setprecision(2) << std::fixed 
-              << " | "
-              << std::setw(14)
+    std::cout << std::setprecision(2) << std::fixed << " | " << std::setw(14)
               << static_cast<double>(inputs[0].size() * total) /
-                     totalTime.count() << " bytes/s"
-              << " | " 
-              << std::setw(14)
-              << total / totalTime.count() 
-              << " | "
+                     totalTime.count()
+              << " bytes/s"
+              << " | " << std::setw(14) << total / totalTime.count() << " | "
               << std::endl;
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while running bench: " << ex.what()
@@ -323,39 +328,29 @@ static void runDefaultBench(bool all) {
     }
     std::cout << std::endl;
 
-    std::cout << "|" << filename << " | " << "vpack        ";
+    std::cout << "|" << filename << " | "
+              << "vpack        ";
     run(data, runSeconds, 1, ParserType::VPACK, fullOutput);
 
-    std::cout << "|" << filename << " | " << "rapidjson    ";
+    std::cout << "|" << filename << " | "
+              << "rapidjson    ";
     run(data, runSeconds, 1, ParserType::RAPIDJSON, fullOutput);
 
-    std::cout << "|" << filename << " | " << "simdjson     ";
+    std::cout << "|" << filename << " | "
+              << "simdjson     ";
     run(data, runSeconds, 1, ParserType::SIMDJSON, fullOutput);
   };
 
   std::vector<std::string> files = {
-    // default
-    "small.json",
-    "sample.json",
-    "sampleNoWhite.json",
-    "commits.json",
+      // default
+      "small.json", "sample.json", "sampleNoWhite.json", "commits.json",
 
-    // all datasets
-    "api-docs.json",
-    "countries.json",
-    "directory-tree.json",
-    "doubles-small.json",
-    "doubles.json",
-    "file-list.json",
-    "object.json",
-    "pass1.json",
-    "pass2.json",
-    "pass3.json",
-    "random1.json",
-    "random2.json",
-    "random3.json"
-  };
-  
+      // all datasets
+      "api-docs.json", "countries.json", "directory-tree.json",
+      "doubles-small.json", "doubles.json", "file-list.json", "object.json",
+      "pass1.json", "pass2.json", "pass3.json", "random1.json", "random2.json",
+      "random3.json"};
+
   int dataSetSize = all ? files.size() : 4;
   for (int i = 0; i < dataSetSize; i++) {
     runComparison(files[i]);

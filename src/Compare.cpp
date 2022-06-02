@@ -38,12 +38,14 @@ bool BinaryCompare::equals(Slice lhs, Slice rhs) {
   return lhs.binaryEquals(rhs);
 }
 
-size_t BinaryCompare::Hash::operator()(arangodb::velocypack::Slice const& slice) const {
+size_t BinaryCompare::Hash::operator()(
+    arangodb::velocypack::Slice const& slice) const {
   return static_cast<size_t>(slice.hash());
 }
-  
-bool BinaryCompare::Equal::operator()(arangodb::velocypack::Slice const& lhs,
-                                      arangodb::velocypack::Slice const& rhs) const {
+
+bool BinaryCompare::Equal::operator()(
+    arangodb::velocypack::Slice const& lhs,
+    arangodb::velocypack::Slice const& rhs) const {
   return lhs.binaryEquals(rhs);
 }
 
@@ -86,7 +88,7 @@ bool NormalizedCompare::equals(Slice lhs, Slice rhs) {
     // unequal types => not equal
     return false;
   }
-  
+
   switch (lhsType) {
     case ValueType::Illegal:
     case ValueType::None:
@@ -141,19 +143,23 @@ bool NormalizedCompare::equals(Slice lhs, Slice rhs) {
       return true;
     }
     case ValueType::Custom: {
-      throw Exception(Exception::NotImplemented, "equals comparison for Custom type is not implemented");
+      throw Exception(Exception::NotImplemented,
+                      "equals comparison for Custom type is not implemented");
     }
     default: {
-      throw Exception(Exception::InternalError, "invalid value type for equals comparison");
+      throw Exception(Exception::InternalError,
+                      "invalid value type for equals comparison");
     }
   }
 }
 
-size_t NormalizedCompare::Hash::operator()(arangodb::velocypack::Slice const& slice) const {
+size_t NormalizedCompare::Hash::operator()(
+    arangodb::velocypack::Slice const& slice) const {
   return static_cast<size_t>(slice.normalizedHash());
 }
-  
-bool NormalizedCompare::Equal::operator()(arangodb::velocypack::Slice const& lhs,
-                                          arangodb::velocypack::Slice const& rhs) const {
+
+bool NormalizedCompare::Equal::operator()(
+    arangodb::velocypack::Slice const& lhs,
+    arangodb::velocypack::Slice const& rhs) const {
   return NormalizedCompare::equals(lhs, rhs);
 }

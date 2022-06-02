@@ -50,7 +50,7 @@ class Exception : public virtual std::exception {
     NeedCustomTypeHandler = 19,
     NeedAttributeTranslator = 20,
     CannotTranslateKey = 21,
-    KeyNotFound = 22, // not used anymore
+    KeyNotFound = 22,  // not used anymore
     BadTupleSize = 23,
     TooDeepNesting = 24,
 
@@ -81,13 +81,14 @@ class Exception : public virtual std::exception {
  public:
   Exception(ExceptionType type, char const* msg) noexcept;
 
-  explicit Exception(ExceptionType type) noexcept : Exception(type, message(type)) {}
-  
+  explicit Exception(ExceptionType type) noexcept
+      : Exception(type, message(type)) {}
+
   Exception(Exception const& other) = default;
   Exception(Exception&& other) noexcept = default;
   Exception& operator=(Exception const& other) = default;
   Exception& operator=(Exception&& other) noexcept = default;
-  
+
   ~Exception() = default;
 
   char const* what() const noexcept override { return _msg; }

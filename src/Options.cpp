@@ -27,12 +27,13 @@
 #include "velocypack/Options.h"
 
 using namespace arangodb::velocypack;
-  
+
 void CustomTypeHandler::dump(Slice const&, Dumper*, Slice const&) {
   throw Exception(Exception::NotImplemented);
 }
 
-std::string CustomTypeHandler::toString(Slice const&, Options const*, Slice const&) {
+std::string CustomTypeHandler::toString(Slice const&, Options const*,
+                                        Slice const&) {
   throw Exception(Exception::NotImplemented);
 }
 

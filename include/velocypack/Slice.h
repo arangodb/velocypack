@@ -92,8 +92,7 @@ class Slice {
   constexpr Slice() noexcept : Slice(noneSliceData) {}
 
   // creates a Slice from a pointer to a uint8_t array
-  explicit constexpr Slice(uint8_t const* start) noexcept
-      : _start(start) {}
+  explicit constexpr Slice(uint8_t const* start) noexcept : _start(start) {}
 
   // No destructor, does not take part in memory management
 
@@ -101,13 +100,17 @@ class Slice {
   static constexpr Slice noneSlice() noexcept { return Slice(noneSliceData); }
 
   // creates a slice of type Illegal
-  static constexpr Slice illegalSlice() noexcept { return Slice(illegalSliceData); }
+  static constexpr Slice illegalSlice() noexcept {
+    return Slice(illegalSliceData);
+  }
 
   // creates a slice of type Null
   static constexpr Slice nullSlice() noexcept { return Slice(nullSliceData); }
 
   // creates a slice of type Boolean with the relevant value
-  static constexpr Slice booleanSlice(bool value) noexcept { return value ? trueSlice() : falseSlice(); }
+  static constexpr Slice booleanSlice(bool value) noexcept {
+    return value ? trueSlice() : falseSlice();
+  }
 
   // creates a slice of type Boolean with false value
   static constexpr Slice falseSlice() noexcept { return Slice(falseSliceData); }
@@ -119,19 +122,29 @@ class Slice {
   static constexpr Slice zeroSlice() noexcept { return Slice(zeroSliceData); }
 
   // creates a slice of type String, empty
-  static constexpr Slice emptyStringSlice() noexcept { return Slice(emptyStringSliceData); }
+  static constexpr Slice emptyStringSlice() noexcept {
+    return Slice(emptyStringSliceData);
+  }
 
   // creates a slice of type Array, empty
-  static constexpr Slice emptyArraySlice() noexcept { return Slice(emptyArraySliceData); }
+  static constexpr Slice emptyArraySlice() noexcept {
+    return Slice(emptyArraySliceData);
+  }
 
   // creates a slice of type Object, empty
-  static constexpr Slice emptyObjectSlice() noexcept { return Slice(emptyObjectSliceData); }
+  static constexpr Slice emptyObjectSlice() noexcept {
+    return Slice(emptyObjectSliceData);
+  }
 
   // creates a slice of type MinKey
-  static constexpr Slice minKeySlice() noexcept { return Slice(minKeySliceData); }
+  static constexpr Slice minKeySlice() noexcept {
+    return Slice(minKeySliceData);
+  }
 
   // creates a slice of type MaxKey
-  static constexpr Slice maxKeySlice() noexcept { return Slice(maxKeySliceData); }
+  static constexpr Slice maxKeySlice() noexcept {
+    return Slice(maxKeySliceData);
+  }
 
   constexpr Slice const value() const noexcept {
     return isTagged() ? Slice(valueStart()) : *this;
@@ -139,10 +152,12 @@ class Slice {
 
   constexpr uint64_t getFirstTag() const {
     // always need the actual first byte, so use _start directly
-    return !isTagged() ? 0 :
-             (*_start == 0xee ? readIntegerFixed<uint64_t, 1>(_start + 1) :
-               (*_start == 0xef ? readIntegerFixed<uint64_t, 8>(_start + 1) : /* error */ 0)
-             );
+    return !isTagged() ? 0
+                       : (*_start == 0xee
+                              ? readIntegerFixed<uint64_t, 1>(_start + 1)
+                              : (*_start == 0xef
+                                     ? readIntegerFixed<uint64_t, 8>(_start + 1)
+                                     : /* error */ 0));
   }
 
   std::vector<uint64_t> getTags() const {
@@ -210,12 +225,10 @@ class Slice {
 
   // pointer to the head byte, including possible tags
   // other implementations may exclude tags
-  constexpr uint8_t const* start() const noexcept {
-    return _start;
-  }
+  constexpr uint8_t const* start() const noexcept { return _start; }
 
   // pointer to the head byte
-  template <typename T>
+  template<typename T>
   T const* startAs() const {
     return reinterpret_cast<T const*>(start());
   }
@@ -230,23 +243,22 @@ class Slice {
   uint8_t const* end() const { return start() + byteSize(); }
 
   // get the type for the slice
-  constexpr inline ValueType type() const noexcept {
-    return type(head());
-  }
+  constexpr inline ValueType type() const noexcept { return type(head()); }
 
   // get the type name for the slice
   char const* typeName() const { return valueTypeName(type()); }
 
   // Set new memory position
   void set(uint8_t const* s) { _start = s; }
-  
+
   // hashes the binary representation of a value. this value is only suitable
   // to be stored in memory, but should not be persisted, as its implementation
   // may change in the future
   inline uint64_t volatileHash() const {
     std::size_t const size = checkOverflow(byteSize());
     if (size == 1) {
-      uint64_t h = SliceStaticData::PrecalculatedHashesForDefaultSeedWYHash[head()];
+      uint64_t h =
+          SliceStaticData::PrecalculatedHashesForDefaultSeedWYHash[head()];
       VELOCYPACK_ASSERT(h != 0);
       return h;
     }
@@ -270,8 +282,8 @@ class Slice {
     return VELOCYPACK_HASH32(start(), size, seed);
   }
 
-  // hashes the binary representation of a value, not using precalculated hash values
-  // this is mainly here for testing purposes
+  // hashes the binary representation of a value, not using precalculated hash
+  // values this is mainly here for testing purposes
   inline uint64_t hashSlow(uint64_t seed = defaultSeed64) const {
     std::size_t const size = checkOverflow(byteSize());
     return VELOCYPACK_HASH(start(), size, seed);
@@ -290,13 +302,15 @@ class Slice {
   // hashes the binary representation of a String slice. No check
   // is done if the Slice value is actually of type String
   inline uint64_t hashString(uint64_t seed = defaultSeed64) const noexcept {
-    return VELOCYPACK_HASH(start(), static_cast<std::size_t>(stringSliceLength()), seed);
+    return VELOCYPACK_HASH(start(),
+                           static_cast<std::size_t>(stringSliceLength()), seed);
   }
 
   // hashes the binary representation of a String slice. No check
   // is done if the Slice value is actually of type String
   inline uint32_t hashString32(uint32_t seed = defaultSeed32) const noexcept {
-    return VELOCYPACK_HASH32(start(), static_cast<std::size_t>(stringSliceLength()), seed);
+    return VELOCYPACK_HASH32(
+        start(), static_cast<std::size_t>(stringSliceLength()), seed);
   }
 
   // check if slice is of the specified type (including tags)
@@ -309,7 +323,9 @@ class Slice {
   constexpr bool isNone() const noexcept { return isType(ValueType::None); }
 
   // check if slice is an Illegal object
-  constexpr bool isIllegal() const noexcept { return isType(ValueType::Illegal); }
+  constexpr bool isIllegal() const noexcept {
+    return isType(ValueType::Illegal);
+  }
 
   // check if slice is a Null object
   constexpr bool isNull() const noexcept { return isType(ValueType::Null); }
@@ -336,10 +352,14 @@ class Slice {
   constexpr bool isDouble() const noexcept { return isType(ValueType::Double); }
 
   // check if slice is a UTCDate object
-  constexpr bool isUTCDate() const noexcept { return isType(ValueType::UTCDate); }
+  constexpr bool isUTCDate() const noexcept {
+    return isType(ValueType::UTCDate);
+  }
 
   // check if slice is an External object
-  constexpr bool isExternal() const noexcept { return isType(ValueType::External); }
+  constexpr bool isExternal() const noexcept {
+    return isType(ValueType::External);
+  }
 
   // check if slice is a MinKey object
   constexpr bool isMinKey() const noexcept { return isType(ValueType::MinKey); }
@@ -354,7 +374,9 @@ class Slice {
   constexpr bool isUInt() const noexcept { return isType(ValueType::UInt); }
 
   // check if slice is a SmallInt object
-  constexpr bool isSmallInt() const noexcept { return isType(ValueType::SmallInt); }
+  constexpr bool isSmallInt() const noexcept {
+    return isType(ValueType::SmallInt);
+  }
 
   // check if slice is a String object
   constexpr bool isString() const noexcept { return isType(ValueType::String); }
@@ -503,10 +525,12 @@ class Slice {
       }
       return (end - firstSubOffset) / s;
     } else if (offsetSize < 8) {
-      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1, offsetSize);
+      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1,
+                                              offsetSize);
     }
 
-    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
+    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
+                                            offsetSize);
   }
 
   // extract a key from an Object at the specified index
@@ -554,10 +578,12 @@ class Slice {
   // returns a Slice(ValueType::None) if not found
   template<typename ForwardIterator>
   typename std::enable_if<
-      std::is_base_of<std::forward_iterator_tag, typename std::iterator_traits<ForwardIterator>::iterator_category>::value,
-      Slice>::type get(ForwardIterator begin, ForwardIterator end,
-                       bool resolveExternals = false) const {
-
+      std::is_base_of<std::forward_iterator_tag,
+                      typename std::iterator_traits<
+                          ForwardIterator>::iterator_category>::value,
+      Slice>::type
+  get(ForwardIterator begin, ForwardIterator end,
+      bool resolveExternals = false) const {
     if (VELOCYPACK_UNLIKELY(begin == end)) {
       throw Exception(Exception::InvalidAttributePath);
     }
@@ -610,9 +636,7 @@ class Slice {
     return get(std::string_view(attribute, length));
   }
 
-  Slice operator[](std::string_view attribute) const {
-    return get(attribute);
-  }
+  Slice operator[](std::string_view attribute) const { return get(attribute); }
 
   // whether or not an Object has a specific key
   template<typename T>
@@ -630,7 +654,7 @@ class Slice {
   bool hasKey(std::string_view attribute) const {
     return !get(attribute).isNone();
   }
-  
+
   // whether or not an Object has a specific key
   bool hasKey(HashedStringRef attribute) const {
     return hasKey(std::string_view(attribute.data(), attribute.size()));
@@ -662,20 +686,17 @@ class Slice {
   Slice resolveExternals() const {
     uint8_t const* current = start();
     while (*current == 0x1d) {
-      current = reinterpret_cast<uint8_t const*>(Slice(current).extractPointer());
+      current =
+          reinterpret_cast<uint8_t const*>(Slice(current).extractPointer());
     }
     return Slice(current);
   }
 
   // tests whether the Slice is an empty array
-  bool isEmptyArray() const {
-    return isArray() && length() == 0;
-  }
+  bool isEmptyArray() const { return isArray() && length() == 0; }
 
   // tests whether the Slice is an empty object
-  bool isEmptyObject() const {
-    return isObject() && length() == 0;
-  }
+  bool isEmptyObject() const { return isObject() && length() == 0; }
 
   // translates an integer key into a string
   Slice translate() const;
@@ -689,7 +710,7 @@ class Slice {
   // return the value for a SmallInt object
   int64_t getSmallInt() const;
 
-  template <typename T>
+  template<typename T>
   T getNumber() const {
     if (std::is_integral<T>()) {
       if (std::is_signed<T>()) {
@@ -745,7 +766,7 @@ class Slice {
   }
 
   // an alias for getNumber<T>
-  template <typename T>
+  template<typename T>
   T getNumericValue() const {
     return getNumber<T>();
   }
@@ -887,7 +908,8 @@ class Slice {
     VELOCYPACK_ASSERT(h >= 0xc0 && h <= 0xc7);
 
     std::vector<uint8_t> out;
-    ValueLength length = readIntegerNonEmpty<ValueLength>(start() + 1, h - 0xbf);
+    ValueLength length =
+        readIntegerNonEmpty<ValueLength>(start() + 1, h - 0xbf);
     checkOverflow(length);
     out.reserve(static_cast<std::size_t>(length));
     out.insert(out.end(), start() + 1 + h - 0xbf,
@@ -895,15 +917,13 @@ class Slice {
     return out;
   }
 
-  // get the total byte size for the slice, including the head byte, including tags
-  ValueLength byteSize() const {
-    return byteSize(start());
-  }
+  // get the total byte size for the slice, including the head byte, including
+  // tags
+  ValueLength byteSize() const { return byteSize(start()); }
 
-  // get the total byte size for the slice, including the head byte, excluding tags
-  ValueLength valueByteSize() const {
-    return byteSize(valueStart());
-  }
+  // get the total byte size for the slice, including the head byte, excluding
+  // tags
+  ValueLength valueByteSize() const { return byteSize(valueStart()); }
 
   ValueLength findDataOffset(uint8_t head) const noexcept {
     // Must be called for a non-empty array or object at start():
@@ -913,7 +933,8 @@ class Slice {
     if (fsm == 0) {
       // need to calculate the offset by reading the dynamic length
       VELOCYPACK_ASSERT(head == 0x13 || head == 0x14);
-      return 1 + arangodb::velocypack::getVariableValueLength(readVariableValueLength<false>(start + 1));
+      return 1 + arangodb::velocypack::getVariableValueLength(
+                     readVariableValueLength<false>(start + 1));
     }
     if (fsm <= 2 && start[2] != 0) {
       return 2;
@@ -931,28 +952,30 @@ class Slice {
   ValueLength getNthOffset(ValueLength index) const;
 
   Slice makeKey() const;
-  
+
   int compareString(std::string_view value) const;
-  
-  [[deprecated]] int compareString(char const* value, std::size_t length) const {
+
+  [[deprecated]] int compareString(char const* value,
+                                   std::size_t length) const {
     return compareString(std::string_view(value, length));
   }
-  
+
   int compareStringUnchecked(std::string_view value) const noexcept;
 
-  [[deprecated]] int compareStringUnchecked(char const* value, std::size_t length) const noexcept {
+  [[deprecated]] int compareStringUnchecked(char const* value,
+                                            std::size_t length) const noexcept {
     return compareStringUnchecked(std::string_view(value, length));
   }
-  
+
   bool isEqualString(std::string_view attribute) const;
-  
+
   bool isEqualStringUnchecked(std::string_view attribute) const noexcept;
-  
+
   // check if two Slices are equal on the binary level
-  // please note that for several values there are multiple possible representations,
-  // which differ on the binary level but will still resolve to the same logical
-  // values. For example, smallint(1) and int(1) are logically the same, but will
-  // resolve to either 0x31 or 0x28 0x01.
+  // please note that for several values there are multiple possible
+  // representations, which differ on the binary level but will still resolve to
+  // the same logical values. For example, smallint(1) and int(1) are logically
+  // the same, but will resolve to either 0x31 or 0x28 0x01.
   bool binaryEquals(Slice other) const {
     if (start() == other.start()) {
       // same underlying data, so the slices must be identical
@@ -978,16 +1001,17 @@ class Slice {
 
   // these operators are now deleted because they didn't do what people expected
   // these operators checked for _binary_ equality of the velocypack slice with
-  // another. however, for several values there are multiple possible representations,
-  // which differ on the binary level but will still resolve to the same logical
-  // values. For example, smallint(1) and int(1) are logically the same, but will
-  // resolve to either 0x31 or 0x28 0x01.
+  // another. however, for several values there are multiple possible
+  // representations, which differ on the binary level but will still resolve to
+  // the same logical values. For example, smallint(1) and int(1) are logically
+  // the same, but will resolve to either 0x31 or 0x28 0x01.
   bool operator==(Slice const& other) const = delete;
   bool operator!=(Slice const& other) const = delete;
 
   std::string toHex() const;
   std::string toJson(Options const* options = &Options::Defaults) const;
-  std::string& toJson(std::string& out, Options const* options = &Options::Defaults) const;
+  std::string& toJson(std::string& out,
+                      Options const* options = &Options::Defaults) const;
   void toJson(Sink* sink, Options const* options = &Options::Defaults) const;
   std::string toString(Options const* options = &Options::Defaults) const;
   std::string hexType() const;
@@ -1002,7 +1026,8 @@ class Slice {
   // returns 0 for invalid values/types
   int64_t getSmallIntUnchecked() const noexcept;
 
-  uint8_t const* getBCD(int8_t& sign, int32_t& exponent, ValueLength& mantissaLength) const {
+  uint8_t const* getBCD(int8_t& sign, int32_t& exponent,
+                        ValueLength& mantissaLength) const {
     if (VELOCYPACK_UNLIKELY(!isBCD())) {
       throw Exception(Exception::InvalidValueType, "Expecting type BCD");
     }
@@ -1012,8 +1037,10 @@ class Slice {
     uint64_t mlenlen = type - (positive ? 0xc7 : 0xcf);
 
     sign = positive ? 1 : -1;
-    exponent = static_cast<int32_t>(readIntegerFixed<uint32_t, 4>(valueStart() + 1 + mlenlen));
-    mantissaLength = readIntegerNonEmpty<ValueLength>(valueStart() + 1, mlenlen);
+    exponent = static_cast<int32_t>(
+        readIntegerFixed<uint32_t, 4>(valueStart() + 1 + mlenlen));
+    mantissaLength =
+        readIntegerNonEmpty<ValueLength>(valueStart() + 1, mlenlen);
 
     return valueStart() + 1 + mlenlen + 4;
   }
@@ -1042,9 +1069,12 @@ class Slice {
   struct unpack_helper {};
 
   template<typename T, typename... Ts>
-  std::tuple<T, Ts...> unpackTupleInternal(unpack_helper<T, Ts...>, std::size_t offset) const {
+  std::tuple<T, Ts...> unpackTupleInternal(unpack_helper<T, Ts...>,
+                                           std::size_t offset) const {
     auto slice = Slice(this->_start + offset);
-    return std::tuple_cat(std::make_tuple(slice.extract<T>()), unpackTupleInternal(unpack_helper<Ts...>{}, offset + slice.byteSize()));
+    return std::tuple_cat(
+        std::make_tuple(slice.extract<T>()),
+        unpackTupleInternal(unpack_helper<Ts...>{}, offset + slice.byteSize()));
   }
 
   std::tuple<> unpackTupleInternal(unpack_helper<>, std::size_t) const {
@@ -1085,18 +1115,22 @@ class Slice {
       if (VELOCYPACK_UNLIKELY(s == 0)) {
         throw Exception(Exception::InternalError, "Invalid data for Array");
       }
-      ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
+      ValueLength end =
+          readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
       return (end - firstSubOffset) / s;
     } else if (offsetSize < 8) {
-      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1, offsetSize);
+      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1,
+                                              offsetSize);
     }
 
     ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
-    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
+    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
+                                            offsetSize);
   }
 
   // return the number of members for an Object
-  // must only be called for Slices that have been validated to be of type Object
+  // must only be called for Slices that have been validated to be of type
+  // Object
   ValueLength objectLength() const {
     auto const h = head();
     VELOCYPACK_ASSERT(type(h) == ValueType::Object);
@@ -1116,11 +1150,13 @@ class Slice {
     VELOCYPACK_ASSERT(offsetSize > 0);
 
     if (offsetSize < 8) {
-      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1, offsetSize);
+      return readIntegerNonEmpty<ValueLength>(start() + offsetSize + 1,
+                                              offsetSize);
     }
 
     ValueLength end = readIntegerNonEmpty<ValueLength>(start() + 1, offsetSize);
-    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize, offsetSize);
+    return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
+                                            offsetSize);
   }
 
   // get the total byte size for a String slice, including the head byte.
@@ -1131,7 +1167,7 @@ class Slice {
     if (h == 0xbf) {
       // long UTF-8 String
       return static_cast<ValueLength>(
-        1 + 8 + readIntegerFixed<ValueLength, 8>(start() + 1));
+          1 + 8 + readIntegerFixed<ValueLength, 8>(start() + 1));
     }
     return static_cast<ValueLength>(1 + h - 0x40);
   }
@@ -1158,8 +1194,8 @@ class Slice {
   ValueLength getNthOffsetFromCompact(ValueLength index) const;
 
   // get the offset for the first member from a compact Array or Object type
-  // it is only valid to call this method for compact Array or Object values with
-  // at least one member!!
+  // it is only valid to call this method for compact Array or Object values
+  // with at least one member!!
   ValueLength getStartOffsetFromCompact() const {
     VELOCYPACK_ASSERT(head() == 0x13 || head() == 0x14);
 
@@ -1177,7 +1213,8 @@ class Slice {
 
   // perform a binary search for the specified attribute inside an Object
   template<ValueLength offsetSize>
-  Slice searchObjectKeyBinary(std::string_view attribute, ValueLength ieBase, ValueLength n) const;
+  Slice searchObjectKeyBinary(std::string_view attribute, ValueLength ieBase,
+                              ValueLength n) const;
 
   // extracts a pointer from the slice and converts it into a
   // built-in pointer type
@@ -1191,7 +1228,9 @@ class Slice {
   }
 
   constexpr uint8_t tagOffset(uint8_t const* start) const noexcept {
-    return SliceStaticData::TypeMap[*start] == ValueType::Tagged ? (*start == 0xee ? 2 : (*start == 0xef ? 9 : /* error */ 0)) : 0;
+    return SliceStaticData::TypeMap[*start] == ValueType::Tagged
+               ? (*start == 0xee ? 2 : (*start == 0xef ? 9 : /* error */ 0))
+               : 0;
   }
 
   uint8_t tagsOffset(uint8_t const* start) const noexcept {
@@ -1214,7 +1253,8 @@ class Slice {
   // get the total byte size for the slice, including the head byte
   ValueLength byteSize(uint8_t const* start) const {
     // check if the type has a fixed length first
-    ValueLength l = static_cast<ValueLength>(SliceStaticData::FixedTypeLengths[*start]);
+    ValueLength l =
+        static_cast<ValueLength>(SliceStaticData::FixedTypeLengths[*start]);
     if (l != 0) {
       // return fixed length
       return l;
@@ -1225,8 +1265,10 @@ class Slice {
   ValueLength byteSizeDynamic(uint8_t const* start) const;
 };
 
-static_assert(!std::is_polymorphic<Slice>::value, "Slice must not be polymorphic");
-static_assert(!std::has_virtual_destructor<Slice>::value, "Slice must not have virtual dtor");
+static_assert(!std::is_polymorphic<Slice>::value,
+              "Slice must not be polymorphic");
+static_assert(!std::has_virtual_destructor<Slice>::value,
+              "Slice must not have virtual dtor");
 
 template<typename T, typename>
 struct Extractor {
@@ -1235,40 +1277,30 @@ struct Extractor {
   static_assert(always_false<T>::value, "There is no extractor for this type.");
 };
 
-
 template<>
 struct Extractor<Slice> {
-  static Slice extract(Slice slice) {
-    return slice;
-  }
+  static Slice extract(Slice slice) { return slice; }
 };
 
 template<>
 struct Extractor<std::string> {
-  static std::string extract(Slice slice) {
-    return slice.copyString();
-  }
+  static std::string extract(Slice slice) { return slice.copyString(); }
 };
 
 template<>
 struct Extractor<std::string_view> {
-  static std::string_view extract(Slice slice) {
-    return slice.stringView();
-  }
+  static std::string_view extract(Slice slice) { return slice.stringView(); }
 };
 
 template<>
 struct Extractor<bool> {
-  static bool extract(Slice slice) {
-    return slice.getBool();
-  }
+  static bool extract(Slice slice) { return slice.getBool(); }
 };
 
 template<typename T>
-struct Extractor<T, typename std::enable_if<std::is_arithmetic<T>::value>::type> {
-  static T extract(Slice slice) {
-    return slice.template getNumericValue<T>();
-  }
+struct Extractor<T,
+                 typename std::enable_if<std::is_arithmetic<T>::value>::type> {
+  static T extract(Slice slice) { return slice.template getNumericValue<T>(); }
 };
 
 template<typename... Ts>
@@ -1282,7 +1314,7 @@ struct Extractor<std::tuple<Ts...>> {
 
 namespace std {
 // implementation of std::hash for a Slice object
-template <>
+template<>
 struct hash<arangodb::velocypack::Slice> {
   std::size_t operator()(arangodb::velocypack::Slice const& slice) const {
 #ifdef VELOCYPACK_32BIT
@@ -1293,7 +1325,7 @@ struct hash<arangodb::velocypack::Slice> {
   }
 };
 
-}
+}  // namespace std
 
 std::ostream& operator<<(std::ostream&, arangodb::velocypack::Slice const*);
 

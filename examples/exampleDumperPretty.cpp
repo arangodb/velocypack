@@ -4,7 +4,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   Builder b;
@@ -25,6 +25,6 @@ int main(int, char* []) {
 
   // and print it
   std::cout << "Resulting JSON:" << std::endl << buffer << std::endl;
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

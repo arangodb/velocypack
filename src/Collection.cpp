@@ -37,7 +37,7 @@ using namespace arangodb::velocypack;
 
 // indicator for "element not found" in indexOf() method
 ValueLength const Collection::NotFound = UINT64_MAX;
-  
+
 // fully append an array to the builder
 Builder& Collection::appendArray(Builder& builder, Slice const& slice) {
   ArrayIterator it(slice);
@@ -220,8 +220,7 @@ Builder Collection::extract(Slice const& slice, int64_t from, int64_t to) {
     while (it.valid()) {
       if (skip > 0) {
         --skip;
-      }
-      else {
+      } else {
         b.add(it.value());
         if (--limit == 0) {
           break;
@@ -349,8 +348,9 @@ Builder Collection::merge(Slice const& left, Slice const& right,
   return b;
 }
 
-Builder& Collection::merge(Builder& builder, Slice const& left, Slice const& right,
-                           bool mergeValues, bool nullMeansRemove) {
+Builder& Collection::merge(Builder& builder, Slice const& left,
+                           Slice const& right, bool mergeValues,
+                           bool nullMeansRemove) {
   if (!left.isObject() || !right.isObject()) {
     throw Exception(Exception::InvalidValueType, "Expecting type Object");
   }
@@ -384,7 +384,8 @@ Builder& Collection::merge(Builder& builder, Slice const& left, Slice const& rig
         auto& value = (*found).second;
         if (!nullMeansRemove || (!value.isNone() && !value.isNull())) {
           builder.add(Value(key));
-          Collection::merge(builder, current.value, value, true, nullMeansRemove);
+          Collection::merge(builder, current.value, value, true,
+                            nullMeansRemove);
         }
         // clear the value in the map so its not added again
         (*found).second = Slice();
@@ -417,12 +418,12 @@ Builder& Collection::merge(Builder& builder, Slice const& left, Slice const& rig
   return builder;
 }
 
-template <Collection::VisitationOrder order>
+template<Collection::VisitationOrder order>
 static bool doVisit(
     Slice const& slice,
     std::function<bool(Slice const& key, Slice const& value)> const& func);
 
-template <Collection::VisitationOrder order>
+template<Collection::VisitationOrder order>
 static bool visitObject(
     Slice const& value,
     std::function<bool(Slice const& key, Slice const& value)> const& func) {
@@ -455,7 +456,7 @@ static bool visitObject(
   return true;
 }
 
-template <Collection::VisitationOrder order>
+template<Collection::VisitationOrder order>
 static bool visitArray(
     Slice const& value,
     std::function<bool(Slice const& key, Slice const& value)> const& func) {
@@ -488,7 +489,7 @@ static bool visitArray(
   return true;
 }
 
-template <Collection::VisitationOrder order>
+template<Collection::VisitationOrder order>
 static bool doVisit(
     Slice const& slice,
     std::function<bool(Slice const& key, Slice const& value)> const& func) {
@@ -514,8 +515,8 @@ void Collection::visitRecursive(
 }
 
 Builder Collection::sort(
-      Slice const& array,
-      std::function<bool (Slice const&, Slice const&)> lessthan) {
+    Slice const& array,
+    std::function<bool(Slice const&, Slice const&)> lessthan) {
   if (!array.isArray()) {
     throw Exception(Exception::InvalidValueType, "Expecting type Array");
   }
@@ -528,10 +529,9 @@ Builder Collection::sort(
   std::sort(subValues.begin(), subValues.end(), lessthan);
   Builder b;
   b.openArray();
-  for (auto const&s : subValues) {
+  for (auto const& s : subValues) {
     b.add(s);
   }
   b.close();
   return b;
 }
-

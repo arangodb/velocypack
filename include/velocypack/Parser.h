@@ -88,24 +88,20 @@ class Parser {
   Parser& operator=(Parser const&) = delete;
   Parser& operator=(Parser&&) = delete;
   ~Parser() = default;
-  
+
   Parser()
-      : _start(nullptr), 
-        _size(0), 
-        _pos(0), 
-        _nesting(0), 
+      : _start(nullptr),
+        _size(0),
+        _pos(0),
+        _nesting(0),
         options(&Options::Defaults) {
     _builder = std::make_shared<Builder>();
     _builderPtr = _builder.get();
     _builderPtr->options = &Options::Defaults;
   }
 
-  explicit Parser(Options const* options) 
-      : _start(nullptr), 
-        _size(0), 
-        _pos(0), 
-        _nesting(0), 
-        options(options) {
+  explicit Parser(Options const* options)
+      : _start(nullptr), _size(0), _pos(0), _nesting(0), options(options) {
     if (VELOCYPACK_UNLIKELY(options == nullptr)) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
@@ -117,25 +113,20 @@ class Parser {
   explicit Parser(std::shared_ptr<Builder> const& builder,
                   Options const* options = &Options::Defaults)
       : _builder(builder),
-        _builderPtr(_builder.get()), 
-        _start(nullptr), 
-        _size(0), 
-        _pos(0), 
+        _builderPtr(_builder.get()),
+        _start(nullptr),
+        _size(0),
+        _pos(0),
         _nesting(0),
-         options(options) {
+        options(options) {
     if (VELOCYPACK_UNLIKELY(options == nullptr)) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
   }
 
   // This method produces a parser that does not own the builder
-  explicit Parser(Builder& builder,
-                  Options const* options = &Options::Defaults)
-      : _start(nullptr), 
-        _size(0), 
-        _pos(0), 
-        _nesting(0),
-        options(options) {
+  explicit Parser(Builder& builder, Options const* options = &Options::Defaults)
+      : _start(nullptr), _size(0), _pos(0), _nesting(0), options(options) {
     if (VELOCYPACK_UNLIKELY(options == nullptr)) {
       throw Exception(Exception::InternalError, "Options cannot be a nullptr");
     }
@@ -146,13 +137,12 @@ class Parser {
   Builder const& builder() const { return *_builderPtr; }
 
   static std::shared_ptr<Builder> fromJson(
-      std::string const& json,
-      Options const* options = &Options::Defaults) {
+      std::string const& json, Options const* options = &Options::Defaults) {
     Parser parser(options);
     parser.parse(json);
     return parser.steal();
   }
-  
+
   static std::shared_ptr<Builder> fromJson(
       char const* start, std::size_t size,
       Options const* options = &Options::Defaults) {
@@ -178,7 +168,8 @@ class Parser {
     return parse(reinterpret_cast<uint8_t const*>(start), size, multi);
   }
 
-  ValueLength parse(uint8_t const* start, std::size_t size, bool multi = false) {
+  ValueLength parse(uint8_t const* start, std::size_t size,
+                    bool multi = false) {
     _start = start;
     _size = size;
     _pos = 0;
@@ -303,9 +294,9 @@ class Parser {
     return i;
   }
 
-  void increaseNesting(); 
+  void increaseNesting();
 
-  void decreaseNesting() noexcept; 
+  void decreaseNesting() noexcept;
 
   void parseNumber();
 

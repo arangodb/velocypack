@@ -115,7 +115,9 @@ uint64_t fasthash32(void const*, std::size_t, uint32_t);
 #include "velocypack/velocypack-wyhash.h"
 
 // the default secret parameters
-static constexpr uint64_t _wyp[4] = {0xa0761d6478bd642full, 0xe7037ed1a0b428dbull, 0x8ebc6af09c88c6e3ull, 0x589965cc75374cc3ull};
+static constexpr uint64_t _wyp[4] = {
+    0xa0761d6478bd642full, 0xe7037ed1a0b428dbull, 0x8ebc6af09c88c6e3ull,
+    0x589965cc75374cc3ull};
 
 #define VELOCYPACK_HASH_WYHASH(mem, size, seed) wyhash(mem, size, seed, _wyp)
 
@@ -123,8 +125,9 @@ namespace arangodb::velocypack {
 
 template<typename T>
 VELOCYPACK_FORCE_INLINE T hostToLittle(T in) noexcept {
-  static_assert(sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1,
-    "Type size is not supported");
+  static_assert(
+      sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1,
+      "Type size is not supported");
   if constexpr (sizeof(T) == 8) {
 #ifdef __APPLE__
     return OSSwapHostToLittleInt64(in);
@@ -163,8 +166,9 @@ VELOCYPACK_FORCE_INLINE T hostToLittle(T in) noexcept {
 
 template<typename T>
 VELOCYPACK_FORCE_INLINE T littleToHost(T in) noexcept {
-  static_assert(sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1,
-    "Type size is not supported");
+  static_assert(
+      sizeof(T) == 8 || sizeof(T) == 4 || sizeof(T) == 2 || sizeof(T) == 1,
+      "Type size is not supported");
   if constexpr (sizeof(T) == 8) {
 #ifdef __APPLE__
     return OSSwapLittleToHostInt64(in);
@@ -201,7 +205,6 @@ VELOCYPACK_FORCE_INLINE T littleToHost(T in) noexcept {
   return in;
 }
 
-
 // unified size type for VPack, can be used on 32 and 64 bit
 // though no VPack values can exceed the bounds of 32 bit on a 32 bit OS
 typedef uint64_t ValueLength;
@@ -219,7 +222,8 @@ bool assemblerFunctionsDisabled();
 std::size_t checkOverflow(ValueLength);
 #else
 // on a 64 bit platform, the following function is probably a no-op
-static VELOCYPACK_FORCE_INLINE constexpr std::size_t checkOverflow(ValueLength length) noexcept {
+static VELOCYPACK_FORCE_INLINE constexpr std::size_t checkOverflow(
+    ValueLength length) noexcept {
   return static_cast<std::size_t>(length);
 }
 #endif
@@ -235,8 +239,9 @@ static inline ValueLength getVariableValueLength(ValueLength value) noexcept {
 }
 
 // read a variable length integer in unsigned LEB128 format
-template <bool reverse>
-static inline ValueLength readVariableValueLength(uint8_t const* source) noexcept {
+template<bool reverse>
+static inline ValueLength readVariableValueLength(
+    uint8_t const* source) noexcept {
   ValueLength len = 0;
   uint8_t v;
   ValueLength p = 0;
@@ -254,8 +259,9 @@ static inline ValueLength readVariableValueLength(uint8_t const* source) noexcep
 }
 
 // store a variable length integer in unsigned LEB128 format
-template <bool reverse>
-static inline void storeVariableValueLength(uint8_t* dst, ValueLength value) noexcept {
+template<bool reverse>
+static inline void storeVariableValueLength(uint8_t* dst,
+                                            ValueLength value) noexcept {
   VELOCYPACK_ASSERT(value > 0);
 
   if (reverse) {
@@ -295,20 +301,21 @@ static inline int64_t toInt64(uint64_t v) noexcept {
                      : static_cast<int64_t>(v);
 }
 
-
 #ifdef _WIN32
 #pragma warning(push)
-#pragma warning(disable: 4554)
+#pragma warning(disable : 4554)
 #endif
-template <typename T, unsigned Bytes, unsigned Shift = 0>
+template<typename T, unsigned Bytes, unsigned Shift = 0>
 static inline T readIntFixedHelper(uint8_t const* p) noexcept {
   // bailout if nothing to shift or target type is too small for shift
   // to avoid compiler warning
   if constexpr (Bytes == 0 || sizeof(T) * 8 <= Shift) {
-      return 0;
+    return 0;
   } else {
-    return readIntFixedHelper<T, Bytes - 1, Shift + 8>(p + 1) | (static_cast<T>(*p) << Shift);
-    // for some reason MSVC detects possible operator precedence error here ~~^                                                                          ^
+    return readIntFixedHelper<T, Bytes - 1, Shift + 8>(p + 1) |
+           (static_cast<T>(*p) << Shift);
+    // for some reason MSVC detects possible operator precedence error here ~~^
+    // ^
   }
 }
 #ifdef _WIN32
@@ -317,19 +324,23 @@ static inline T readIntFixedHelper(uint8_t const* p) noexcept {
 
 // read an unsigned little endian integer value of the
 // specified length, starting at the specified byte offset
-template <typename T, ValueLength length>
+template<typename T, ValueLength length>
 static inline T readIntegerFixed(uint8_t const* start) noexcept {
   static_assert(std::is_unsigned<T>::value, "result type must be unsigned");
   static_assert(length > 0, "length must be > 0");
   static_assert(length <= sizeof(T), "length must be <= sizeof(T)");
-  static_assert(length <=8);
+  static_assert(length <= 8);
   if constexpr (1 == length) {
-     return *start;
+    return *start;
   }
-  if constexpr(length > 1 && length < 5 ) {      // starting with 5 bytes memcpy shows better results than shifts. But
-    return readIntFixedHelper<T, length>(start); // for big-endian we leave shifts as this saves some cpu cyles on byteswapping
+  if constexpr (length > 1 &&
+                length < 5) {  // starting with 5 bytes memcpy shows better
+                               // results than shifts. But
+    return readIntFixedHelper<T, length>(
+        start);  // for big-endian we leave shifts as this saves some cpu cyles
+                 // on byteswapping
   }
-  if constexpr(length >= 5 && length < 8) {
+  if constexpr (length >= 5 && length < 8) {
     if constexpr (std::endian::native != std::endian::little) {
       return readIntFixedHelper<T, length>(start);
     } else {
@@ -351,8 +362,9 @@ static inline T readIntegerFixed(uint8_t const* start) noexcept {
 
 // read an unsigned little endian integer value of the
 // specified, non-0 length, starting at the specified byte offset
-template <typename T>
-static inline T readIntegerNonEmpty(uint8_t const* start, ValueLength length) noexcept {
+template<typename T>
+static inline T readIntegerNonEmpty(uint8_t const* start,
+                                    ValueLength length) noexcept {
   static_assert(std::is_unsigned<T>::value, "result type must be unsigned");
   VELOCYPACK_ASSERT(length > 0);
   VELOCYPACK_ASSERT(length <= sizeof(T));

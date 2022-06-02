@@ -44,7 +44,8 @@ void HexDump::appendHex(std::string& result, uint8_t value) {
 
 std::string HexDump::toString() const {
   std::string result;
-  result.reserve(4 * (length + separator.size()) + (length / valuesPerLine) + 1); 
+  result.reserve(4 * (length + separator.size()) + (length / valuesPerLine) +
+                 1);
 
   uint8_t const* p = data;
   uint8_t const* e = p + length;
@@ -75,5 +76,5 @@ std::ostream& operator<<(std::ostream& stream, HexDump const& hexdump) {
   return stream;
 }
 
-}
-}
+}  // namespace velocypack
+}  // namespace arangodb

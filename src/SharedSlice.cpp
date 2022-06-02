@@ -37,7 +37,8 @@ void SharedSlice::nullToNone() noexcept {
   }
 }
 
-std::shared_ptr<uint8_t const> SharedSlice::copyBuffer(Buffer<uint8_t> const& buffer) {
+std::shared_ptr<uint8_t const> SharedSlice::copyBuffer(
+    Buffer<uint8_t> const& buffer) {
   // template<class T> shared_ptr<T> make_shared( std::size_t N );
   // with T is U[] is only available since C++20 :(
   auto newBuffer = std::shared_ptr<uint8_t>(new uint8_t[buffer.byteSize()],
@@ -46,15 +47,15 @@ std::shared_ptr<uint8_t const> SharedSlice::copyBuffer(Buffer<uint8_t> const& bu
   return newBuffer;
 }
 
-std::shared_ptr<uint8_t const> SharedSlice::stealBuffer(Buffer<uint8_t>&& buffer) {
+std::shared_ptr<uint8_t const> SharedSlice::stealBuffer(
+    Buffer<uint8_t>&& buffer) {
   // If the buffer doesn't use memory on the heap, we have to copy it.
   if (buffer.usesLocalMemory()) {
     return copyBuffer(buffer);
   }
   // Buffer uses velocypack_malloc/velocypack_free for memory management
-  return std::shared_ptr<uint8_t const>(buffer.steal(), [](auto ptr) {
-    return velocypack_free(ptr);
-  });
+  return std::shared_ptr<uint8_t const>(
+      buffer.steal(), [](auto ptr) { return velocypack_free(ptr); });
 }
 
 Slice SharedSlice::slice() const noexcept { return Slice(_start.get()); }
@@ -288,7 +289,8 @@ std::shared_ptr<char const> SharedSlice::getString(ValueLength& length) const {
   return aliasPtr(slice().getString(length));
 }
 
-std::shared_ptr<char const> SharedSlice::getStringUnchecked(ValueLength& length) const noexcept {
+std::shared_ptr<char const> SharedSlice::getStringUnchecked(
+    ValueLength& length) const noexcept {
   return aliasPtr(slice().getStringUnchecked(length));
 }
 
@@ -298,13 +300,16 @@ ValueLength SharedSlice::getStringLength() const {
 
 std::string SharedSlice::copyString() const { return slice().copyString(); }
 
-[[deprecated("use stringView")]] StringRef SharedSlice::stringRef() const { return slice().stringRef(); }
+[[deprecated("use stringView")]] StringRef SharedSlice::stringRef() const {
+  return slice().stringRef();
+}
 
 std::string_view SharedSlice::stringView() const {
   return slice().stringView();
 }
 
-std::shared_ptr<uint8_t const> SharedSlice::getBinary(ValueLength& length) const {
+std::shared_ptr<uint8_t const> SharedSlice::getBinary(
+    ValueLength& length) const {
   return aliasPtr(slice().getBinary(length));
 }
 
@@ -344,7 +349,8 @@ int SharedSlice::compareStringUnchecked(std::string_view value) const noexcept {
   return slice().compareStringUnchecked(value);
 }
 
-int SharedSlice::compareStringUnchecked(char const* value, std::size_t length) const noexcept {
+int SharedSlice::compareStringUnchecked(char const* value,
+                                        std::size_t length) const noexcept {
   return slice().compareStringUnchecked(std::string_view(value, length));
 }
 
@@ -352,7 +358,8 @@ bool SharedSlice::isEqualString(std::string_view attribute) const {
   return slice().isEqualString(attribute);
 }
 
-bool SharedSlice::isEqualStringUnchecked(std::string_view attribute) const noexcept {
+bool SharedSlice::isEqualStringUnchecked(
+    std::string_view attribute) const noexcept {
   return slice().isEqualStringUnchecked(attribute);
 }
 
@@ -388,8 +395,8 @@ int64_t SharedSlice::getSmallIntUnchecked() const noexcept {
   return slice().getSmallIntUnchecked();
 }
 
-std::shared_ptr<uint8_t const> SharedSlice::getBCD(int8_t& sign, int32_t& exponent,
-                                                   ValueLength& mantissaLength) const {
+std::shared_ptr<uint8_t const> SharedSlice::getBCD(
+    int8_t& sign, int32_t& exponent, ValueLength& mantissaLength) const {
   return aliasPtr(slice().getBCD(sign, exponent, mantissaLength));
 }
 

@@ -38,17 +38,23 @@ struct HexDump {
 
   HexDump(Slice slice, int valuesPerLine = 16,
           std::string const& separator = " ", std::string const& header = "0x")
-      : data(slice.start()), length(slice.byteSize()), 
-        valuesPerLine(valuesPerLine), separator(separator), header(header) {}
+      : data(slice.start()),
+        length(slice.byteSize()),
+        valuesPerLine(valuesPerLine),
+        separator(separator),
+        header(header) {}
 
   HexDump(Slice const* slice, int valuesPerLine = 16,
           std::string const& separator = " ", std::string const& header = "0x")
       : HexDump(*slice, valuesPerLine, separator, header) {}
-  
+
   HexDump(uint8_t const* data, ValueLength length, int valuesPerLine = 16,
           std::string const& separator = " ", std::string const& header = "0x")
-      : data(data), length(length),
-        valuesPerLine(valuesPerLine), separator(separator), header(header) {}
+      : data(data),
+        length(length),
+        valuesPerLine(valuesPerLine),
+        separator(separator),
+        header(header) {}
 
   static std::string toHex(uint8_t value, std::string const& header = "0x");
   static void appendHex(std::string& result, uint8_t value);

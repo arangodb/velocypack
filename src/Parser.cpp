@@ -52,7 +52,8 @@ ValueLength Parser::parseInternal(bool multi) {
     bool haveReported = false;
     if (!_builderPtr->_stack.empty()) {
       ValueLength const tos = _builderPtr->_stack.back().startPos;
-      if (_builderPtr->_start[tos] == 0x0b || _builderPtr->_start[tos] == 0x14) {
+      if (_builderPtr->_start[tos] == 0x0b ||
+          _builderPtr->_start[tos] == 0x14) {
         if (!_builderPtr->_keyWritten) {
           throw Exception(Exception::BuilderKeyMustBeString);
         } else {
@@ -76,7 +77,8 @@ ValueLength Parser::parseInternal(bool multi) {
       ++_pos;
     }
     if (!multi && _pos != _size) {
-      consume();  // to get error reporting right. return value intentionally not checked
+      consume();  // to get error reporting right. return value intentionally
+                  // not checked
       throw Exception(Exception::ParseError, "Expecting EOF");
     }
   } while (multi && _pos < _size);
@@ -117,16 +119,16 @@ int Parser::skipWhiteSpace(char const* err) {
   } while (_pos < _size);
   throw Exception(Exception::ParseError, err);
 }
-  
-void Parser::increaseNesting() { 
+
+void Parser::increaseNesting() {
   if (++_nesting >= options->nestingLimit) {
     throw Exception(Exception::TooDeepNesting);
   }
 }
 
-void Parser::decreaseNesting() noexcept { 
+void Parser::decreaseNesting() noexcept {
   VELOCYPACK_ASSERT(_nesting > 0);
-  --_nesting; 
+  --_nesting;
 }
 
 // parses a number value
@@ -205,7 +207,8 @@ void Parser::parseNumber() {
     // use conventional atof() conversion here, to avoid precision loss
     // when interpreting and multiplying the single digits of the input stream
     // _builderPtr->addDouble(fractionalPart);
-    _builderPtr->addDouble(atof(reinterpret_cast<char const*>(_start) + startPos));
+    _builderPtr->addDouble(
+        atof(reinterpret_cast<char const*>(_start) + startPos));
     return;
   }
   i = getOneOrThrow("Incomplete number");
@@ -231,7 +234,8 @@ void Parser::parseNumber() {
   // use conventional atof() conversion here, to avoid precision loss
   // when interpreting and multiplying the single digits of the input stream
   // _builderPtr->addDouble(fractionalPart);
-  _builderPtr->addDouble(atof(reinterpret_cast<char const*>(_start) + startPos));
+  _builderPtr->addDouble(
+      atof(reinterpret_cast<char const*>(_start) + startPos));
 }
 
 void Parser::parseString() {
@@ -241,7 +245,7 @@ void Parser::parseString() {
   // insert 8 bytes for the length as soon as we reach 127 bytes
   // in the VPack representation.
   ValueLength const base = _builderPtr->_pos;
-  _builderPtr->appendByte(0x40); // correct this later
+  _builderPtr->appendByte(0x40);  // correct this later
 
   bool large = false;          // set to true when we reach 128 bytes
   uint32_t highSurrogate = 0;  // non-zero if high-surrogate was seen
@@ -256,11 +260,11 @@ void Parser::parseString() {
       // registers. Therefore, we have to subtract 15 from remainder
       // to be on the safe side. Further bytes will be processed below.
       if (options->validateUtf8Strings) {
-        count = JSONStringCopyCheckUtf8(_builderPtr->_start + _builderPtr->_pos, _start + _pos,
-                                        remainder - 15);
+        count = JSONStringCopyCheckUtf8(_builderPtr->_start + _builderPtr->_pos,
+                                        _start + _pos, remainder - 15);
       } else {
-        count = JSONStringCopy(_builderPtr->_start + _builderPtr->_pos, _start + _pos,
-                               remainder - 15);
+        count = JSONStringCopy(_builderPtr->_start + _builderPtr->_pos,
+                               _start + _pos, remainder - 15);
       }
       _pos += count;
       _builderPtr->advance(count);
@@ -270,7 +274,8 @@ void Parser::parseString() {
       large = true;
       _builderPtr->reserve(8);
       ValueLength len = _builderPtr->_pos - (base + 1);
-      memmove(_builderPtr->_start + base + 9, _builderPtr->_start + base + 1, checkOverflow(len));
+      memmove(_builderPtr->_start + base + 9, _builderPtr->_start + base + 1,
+              checkOverflow(len));
       _builderPtr->advance(8);
     }
     switch (i) {
@@ -428,7 +433,7 @@ void Parser::parseString() {
 
 void Parser::parseArray() {
   _builderPtr->addArray();
-  
+
   increaseNesting();
 
   int i = skipWhiteSpace("Expecting item or ']'");
@@ -543,7 +548,7 @@ void Parser::parseObject() {
 }
 
 void Parser::parseJson() {
-  skipWhiteSpace("Expecting item"); // return value intentionally not checked
+  skipWhiteSpace("Expecting item");  // return value intentionally not checked
 
   int i = consume();
   if (i < 0) {

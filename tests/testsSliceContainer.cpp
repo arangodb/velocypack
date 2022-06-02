@@ -42,13 +42,13 @@ TEST(SliceContainerTest, FromUInt8) {
   Slice slice = builder->slice();
 
   SliceContainer sb(begin, slice.byteSize());
- 
+
   ASSERT_EQ(sb.byteSize(), slice.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), builder->start(), slice.byteSize()));
   ASSERT_EQ(1UL, sb.byteSize());
   ASSERT_TRUE(sb.slice().isNull());
   ASSERT_NE(sb.data(), begin);
-} 
+}
 
 TEST(SliceContainerTest, FromChar) {
   std::shared_ptr<Builder> builder = BuildValue("null");
@@ -57,68 +57,71 @@ TEST(SliceContainerTest, FromChar) {
   Slice slice = builder->slice();
 
   SliceContainer sb(reinterpret_cast<char const*>(begin), slice.byteSize());
-  
+
   ASSERT_EQ(sb.byteSize(), slice.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), builder->start(), slice.byteSize()));
   ASSERT_EQ(1UL, sb.byteSize());
   ASSERT_TRUE(sb.slice().isNull());
   ASSERT_NE(sb.data(), begin);
-} 
+}
 
 TEST(SliceContainerTest, FromUInt8Longer) {
-  std::shared_ptr<Builder> builder = BuildValue("[\"the eagle has landed\",\"test\",\"qux\"]");
+  std::shared_ptr<Builder> builder =
+      BuildValue("[\"the eagle has landed\",\"test\",\"qux\"]");
 
   uint8_t const* begin = builder->start();
   Slice slice = builder->slice();
 
   SliceContainer sb(begin, slice.byteSize());
-  
+
   ASSERT_EQ(sb.byteSize(), slice.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), builder->start(), slice.byteSize()));
   ASSERT_TRUE(sb.slice().isArray());
   ASSERT_NE(sb.data(), begin);
-} 
+}
 
 TEST(SliceContainerTest, FromSlice) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice);
-  
+
   ASSERT_EQ(sb.byteSize(), slice.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), slice.begin(), slice.byteSize()));
   ASSERT_EQ(29UL, sb.byteSize());
   ASSERT_TRUE(sb.slice().isString());
   ASSERT_EQ("this is a string of 20 bytes", sb.slice().copyString());
   ASSERT_NE(sb.data(), slice.begin());
-} 
+}
 
 TEST(SliceContainerTest, FromSliceLonger) {
   std::string s("[-1");
-  for (std::size_t i = 0; i < 2000; ++i) {   
+  for (std::size_t i = 0; i < 2000; ++i) {
     s.push_back(',');
     s.append(std::to_string(i));
-  } 
+  }
   s.push_back(']');
 
   std::shared_ptr<Builder> builder = BuildValue(s);
 
   Slice slice = builder->slice();
   SliceContainer sb(slice);
-  
+
   ASSERT_EQ(sb.byteSize(), slice.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), builder->start(), slice.byteSize()));
   ASSERT_TRUE(sb.slice().isArray());
   ASSERT_NE(sb.data(), slice.begin());
-} 
+}
 
 TEST(SliceContainerTest, CopyConstruct) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice.begin(), slice.byteSize());
   SliceContainer sb2(sb);
-  
+
   ASSERT_EQ(sb.byteSize(), sb2.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), sb2.data(), sb.byteSize()));
   ASSERT_EQ(29UL, sb.byteSize());
@@ -128,16 +131,17 @@ TEST(SliceContainerTest, CopyConstruct) {
   ASSERT_TRUE(sb2.slice().isString());
   ASSERT_EQ("this is a string of 20 bytes", sb2.slice().copyString());
   ASSERT_NE(sb.data(), sb2.data());
-} 
+}
 
 TEST(SliceContainerTest, CopyAssign) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice.begin(), slice.byteSize());
   SliceContainer sb2(slice.begin(), slice.byteSize());
   sb2 = sb;
-  
+
   ASSERT_EQ(sb.byteSize(), sb2.byteSize());
   ASSERT_EQ(0, memcmp(sb.data(), sb2.data(), sb.byteSize()));
   ASSERT_EQ(29UL, sb.byteSize());
@@ -147,34 +151,36 @@ TEST(SliceContainerTest, CopyAssign) {
   ASSERT_TRUE(sb2.slice().isString());
   ASSERT_EQ("this is a string of 20 bytes", sb2.slice().copyString());
   ASSERT_NE(sb.data(), sb2.data());
-} 
+}
 
 TEST(SliceContainerTest, MoveConstruct) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice.begin(), slice.byteSize());
   SliceContainer sb2(std::move(sb));
- 
-  ASSERT_TRUE(sb.slice().isNone()); // must be empty now 
+
+  ASSERT_TRUE(sb.slice().isNone());  // must be empty now
   ASSERT_EQ(1UL, sb.slice().byteSize());
 
   ASSERT_EQ(29UL, sb2.byteSize());
   ASSERT_TRUE(sb2.slice().isString());
   ASSERT_EQ("this is a string of 20 bytes", sb2.slice().copyString());
-  
+
   ASSERT_NE(sb.slice().begin(), sb2.slice().begin());
-} 
+}
 
 TEST(SliceContainerTest, MoveAssign) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice.begin(), slice.byteSize());
   SliceContainer sb2(slice.begin(), slice.byteSize());
   sb2 = std::move(sb);
- 
-  ASSERT_TRUE(sb.slice().isNone()); // must be empty now 
+
+  ASSERT_TRUE(sb.slice().isNone());  // must be empty now
   ASSERT_EQ(1UL, sb.slice().byteSize());
 
   ASSERT_EQ(29UL, sb2.byteSize());
@@ -182,15 +188,16 @@ TEST(SliceContainerTest, MoveAssign) {
   ASSERT_EQ("this is a string of 20 bytes", sb2.slice().copyString());
 
   ASSERT_NE(sb.slice().begin(), sb2.slice().begin());
-} 
+}
 
 TEST(SliceContainerTest, SizeLengthByteSize) {
-  std::shared_ptr<Builder> builder = BuildValue("\"this is a string of 20 bytes\"");
+  std::shared_ptr<Builder> builder =
+      BuildValue("\"this is a string of 20 bytes\"");
 
   Slice slice = builder->slice();
   SliceContainer sb(slice.begin(), slice.byteSize());
- 
-  ASSERT_TRUE(sb.slice().isString()); 
+
+  ASSERT_TRUE(sb.slice().isString());
   ASSERT_EQ(29UL, sb.size());
   ASSERT_EQ(29UL, sb.length());
   ASSERT_EQ(29UL, sb.byteSize());
@@ -198,12 +205,12 @@ TEST(SliceContainerTest, SizeLengthByteSize) {
 
   Slice empty;
   sb = SliceContainer(empty);
-  
+
   ASSERT_EQ(1UL, sb.size());
   ASSERT_EQ(1UL, sb.length());
   ASSERT_EQ(1UL, sb.byteSize());
   ASSERT_EQ(sb.data(), sb.begin());
-} 
+}
 
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

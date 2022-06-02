@@ -94,7 +94,7 @@ char const* Exception::message(ExceptionType type) noexcept {
       return "Tagged types are not allowed in this configuration";
     case BuilderBCDDisallowed:
       return "BCD types are not allowed in this configuration";
-  
+
     case ValidatorInvalidType:
       return "Invalid type found in binary data";
     case ValidatorInvalidLength:

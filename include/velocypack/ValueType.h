@@ -31,9 +31,9 @@
 namespace arangodb::velocypack {
 
 enum class ValueType : uint8_t {
-  None,    // not yet initialized
-  Illegal, // illegal value
-  Null,    // JSON null
+  None,     // not yet initialized
+  Illegal,  // illegal value
+  Null,     // JSON null
   Bool,
   Array,
   Object,

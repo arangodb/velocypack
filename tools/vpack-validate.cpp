@@ -37,10 +37,12 @@ static void usage(char* argv[]) {
   std::cout << "Usage: " << argv[0] << " [OPTIONS] INFILE" << std::endl;
   std::cout << "This program reads the VPack INFILE into a string and "
             << std::endl;
-  std::cout << "validates it. Will work only for input files up to 2 GB size." 
+  std::cout << "validates it. Will work only for input files up to 2 GB size."
             << std::endl;
   std::cout << "Available options are:" << std::endl;
-  std::cout << " --hex                     try to turn hex-encoded input into binary vpack" << std::endl;
+  std::cout << " --hex                     try to turn hex-encoded input into "
+               "binary vpack"
+            << std::endl;
 }
 
 static std::string convertFromHex(std::string const& value) {
@@ -155,8 +157,10 @@ int main(int argc, char* argv[]) {
 
   try {
     Validator validator(&options);
-    validator.validate(reinterpret_cast<uint8_t const*>(s.data()), s.size(), false);
-    std::cout << "The velocypack in infile '" << infile << "' is valid" << std::endl;
+    validator.validate(reinterpret_cast<uint8_t const*>(s.data()), s.size(),
+                       false);
+    std::cout << "The velocypack in infile '" << infile << "' is valid"
+              << std::endl;
   } catch (Exception const& ex) {
     std::cerr << "An exception occurred while processing infile '" << infile
               << "': " << ex.what() << std::endl;

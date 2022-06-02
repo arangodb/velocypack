@@ -100,7 +100,8 @@ class Builder {
 
   // Indices for starts of subindex
   std::vector<ValueLength> _indexes;
-  // indicates that in the current object the key has been written but the value not yet
+  // indicates that in the current object the key has been written but the value
+  // not yet
   bool _keyWritten;
 
  public:
@@ -125,8 +126,7 @@ class Builder {
 
   // create a Builder that uses an existing Buffer. the Builder will not
   // claim ownership for this Buffer
-  explicit Builder(Buffer<uint8_t>& buffer,
-                   Options const* options);
+  explicit Builder(Buffer<uint8_t>& buffer, Options const* options);
 
   // populate a Builder from a Slice
   explicit Builder(Slice slice, Options const* options = &Options::Defaults);
@@ -141,9 +141,7 @@ class Builder {
   // get a reference to the Builder's Buffer object
   // note: this object may be a nullptr if the buffer was already stolen
   // from the Builder, or if the Builder has no ownership for the Buffer
-  std::shared_ptr<Buffer<uint8_t>> const& buffer() const {
-    return _buffer;
-  }
+  std::shared_ptr<Buffer<uint8_t>> const& buffer() const { return _buffer; }
 
   Buffer<uint8_t>& bufferRef() const {
     if (_bufferPtr == nullptr) {
@@ -196,7 +194,7 @@ class Builder {
     }
 
 #ifndef VELOCYPACK_64BIT
-    (void) checkOverflow(_pos + len);
+    (void)checkOverflow(_pos + len);
 #endif
 
     VELOCYPACK_ASSERT(_bufferPtr != nullptr);
@@ -247,7 +245,7 @@ class Builder {
   // Steal the buffer and return a SharedSlice created from it.
   // Afterwards the Builder is unusable.
   // If the Builder is not responsible for its buffer, a copy is created.
-  [[nodiscard]] SharedSlice sharedSlice()&& {
+  [[nodiscard]] SharedSlice sharedSlice() && {
     if (isEmpty()) {
       return SharedSlice{};
     }
@@ -301,8 +299,8 @@ class Builder {
   inline void openObject(bool unindexed = false) {
     openCompoundValue(unindexed ? 0x14 : 0x0b);
   }
-  
-  template <typename T>
+
+  template<typename T>
   uint8_t* addUnchecked(std::string_view attrName, T const& sub) {
     bool needCleanup = !_stack.empty();
     if (needCleanup) {
@@ -320,8 +318,9 @@ class Builder {
     }
   }
 
-  template <typename T>
-  [[deprecated]] uint8_t* addUnchecked(char const* attrName, std::size_t attrLength, T const& sub) {
+  template<typename T>
+  [[deprecated]] uint8_t* addUnchecked(char const* attrName,
+                                       std::size_t attrLength, T const& sub) {
     bool needCleanup = !_stack.empty();
     if (needCleanup) {
       reportAdd();
@@ -361,7 +360,8 @@ class Builder {
     return addInternal<Slice>(attrName, sub);
   }
 
-  [[deprecated]] inline uint8_t* add(char const* attrName, std::size_t attrLength, Slice const& sub) {
+  [[deprecated]] inline uint8_t* add(char const* attrName,
+                                     std::size_t attrLength, Slice const& sub) {
     return addInternal<Slice>(std::string_view(attrName, attrLength), sub);
   }
 
@@ -370,7 +370,9 @@ class Builder {
     return addInternal<ValuePair>(attrName, sub);
   }
 
-  [[deprecated]] inline uint8_t* add(char const* attrName, std::size_t attrLength, ValuePair const& sub) {
+  [[deprecated]] inline uint8_t* add(char const* attrName,
+                                     std::size_t attrLength,
+                                     ValuePair const& sub) {
     return addInternal<ValuePair>(std::string_view(attrName, attrLength), sub);
   }
 
@@ -379,19 +381,17 @@ class Builder {
     return addInternal<Serializable>(attrName, sub._sable);
   }
 
-  inline uint8_t* add(char const* attrName, std::size_t attrLength, Serialize const& sub) {
-    return addInternal<Serializable>(std::string_view(attrName, attrLength), sub._sable);
+  inline uint8_t* add(char const* attrName, std::size_t attrLength,
+                      Serialize const& sub) {
+    return addInternal<Serializable>(std::string_view(attrName, attrLength),
+                                     sub._sable);
   }
 
   // Add a subvalue into an array from a Value:
-  inline uint8_t* add(Value const& sub) {
-    return addInternal<Value>(sub);
-  }
+  inline uint8_t* add(Value const& sub) { return addInternal<Value>(sub); }
 
   // Add a slice to an array
-  inline uint8_t* add(Slice const& sub) {
-    return addInternal<Slice>(sub);
-  }
+  inline uint8_t* add(Slice const& sub) { return addInternal<Slice>(sub); }
 
   // Add a shared slice to an array
   inline uint8_t* add(SharedSlice const& sub) {
@@ -409,39 +409,55 @@ class Builder {
   }
 
   // Add a subvalue into an object from a Value:
-  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag, Value const& sub) {
+  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag,
+                            Value const& sub) {
     return addInternalTagged<Value>(attrName, tag, sub);
   }
 
-  [[deprecated]] inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Value const& sub) {
-    return addInternalTagged<Value>(std::string_view(attrName, attrLength), tag, sub);
+  [[deprecated]] inline uint8_t* addTagged(char const* attrName,
+                                           std::size_t attrLength, uint64_t tag,
+                                           Value const& sub) {
+    return addInternalTagged<Value>(std::string_view(attrName, attrLength), tag,
+                                    sub);
   }
 
   // Add a subvalue into an object from a Slice:
-  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag, Slice const& sub) {
+  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag,
+                            Slice const& sub) {
     return addInternalTagged<Slice>(attrName, tag, sub);
   }
 
-  [[deprecated]] inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Slice const& sub) {
-    return addInternalTagged<Slice>(std::string_view(attrName, attrLength), tag, sub);
+  [[deprecated]] inline uint8_t* addTagged(char const* attrName,
+                                           std::size_t attrLength, uint64_t tag,
+                                           Slice const& sub) {
+    return addInternalTagged<Slice>(std::string_view(attrName, attrLength), tag,
+                                    sub);
   }
 
   // Add a subvalue into an object from a ValuePair:
-  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag, ValuePair const& sub) {
+  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag,
+                            ValuePair const& sub) {
     return addInternalTagged<ValuePair>(attrName, tag, sub);
   }
 
-  [[deprecated]] inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, ValuePair const& sub) {
-    return addInternalTagged<ValuePair>(std::string_view(attrName, attrLength), tag, sub);
+  [[deprecated]] inline uint8_t* addTagged(char const* attrName,
+                                           std::size_t attrLength, uint64_t tag,
+                                           ValuePair const& sub) {
+    return addInternalTagged<ValuePair>(std::string_view(attrName, attrLength),
+                                        tag, sub);
   }
 
   // Add a subvalue into an object from a Serializable:
-  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag, Serialize const& sub) {
+  inline uint8_t* addTagged(std::string_view attrName, uint64_t tag,
+                            Serialize const& sub) {
     return addInternalTagged<Serializable>(attrName, tag, sub._sable);
   }
 
-  [[deprecated]] inline uint8_t* addTagged(char const* attrName, std::size_t attrLength, uint64_t tag, Serialize const& sub) {
-    return addInternalTagged<Serializable>(std::string_view(attrName, attrLength), tag, sub._sable);
+  [[deprecated]] inline uint8_t* addTagged(char const* attrName,
+                                           std::size_t attrLength, uint64_t tag,
+                                           Serialize const& sub) {
+    return addInternalTagged<Serializable>(
+        std::string_view(attrName, attrLength), tag, sub._sable);
   }
 
   // Add a subvalue into an array from a Value:
@@ -500,16 +516,12 @@ class Builder {
   // Add all subkeys and subvalues into an object from an ObjectIterator
   // and leaves open the object intentionally
   uint8_t* add(ObjectIterator&& sub);
-  uint8_t* add(ObjectIterator& sub) {
-    return add(std::move(sub));
-  }
+  uint8_t* add(ObjectIterator& sub) { return add(std::move(sub)); }
 
   // Add all subvalues into an array from an ArrayIterator
   // and leaves open the array intentionally
   uint8_t* add(ArrayIterator&& sub);
-  uint8_t* add(ArrayIterator& sub) {
-    return add(std::move(sub));
-  }
+  uint8_t* add(ArrayIterator& sub) { return add(std::move(sub)); }
 
   // Seal the innermost array or object:
   Builder& close();
@@ -598,17 +610,11 @@ class Builder {
                       std::vector<ValueLength>::iterator indexStart,
                       std::vector<ValueLength>::iterator indexEnd);
 
-  void addNull() {
-    appendByte(0x18);
-  }
+  void addNull() { appendByte(0x18); }
 
-  void addFalse() {
-    appendByte(0x19);
-  }
+  void addFalse() { appendByte(0x19); }
 
-  void addTrue() {
-    appendByte(0x1a);
-  }
+  void addTrue() { appendByte(0x1a); }
 
   void addDouble(double v) {
     uint64_t dv;
@@ -645,7 +651,8 @@ class Builder {
     }
   }
 
-  void addBCD(int8_t sign, int32_t exponent, char* mantissa, uint64_t mantissaLength) {
+  void addBCD(int8_t sign, int32_t exponent, char* mantissa,
+              uint64_t mantissaLength) {
     if (options->disallowBCD) {
       // BCD values explicitly disallowed
       throw Exception(Exception::BuilderBCDDisallowed);
@@ -679,7 +686,7 @@ class Builder {
         continue;
       }
 
-      appendByte((mantissa[i] << 4) | mantissa[i+1]);
+      appendByte((mantissa[i] << 4) | mantissa[i + 1]);
       i += 2;
     }
   }
@@ -726,7 +733,7 @@ class Builder {
   }
 
   // add without a tag
-  template <typename T>
+  template<typename T>
   uint8_t* addInternal(T const& sub) {
     if (_stack.empty() || std::is_same<T, Serializable>::value) {
       return set(sub);
@@ -745,7 +752,7 @@ class Builder {
   }
 
   // add with a tag
-  template <typename T>
+  template<typename T>
   uint8_t* addInternalTagged(uint64_t tag, T const& sub) {
     if (_stack.empty()) {
       if (tag != 0) {
@@ -769,7 +776,7 @@ class Builder {
     }
   }
 
-  template <typename T>
+  template<typename T>
   uint8_t* addInternal(std::string_view attrName, T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
@@ -812,8 +819,9 @@ class Builder {
     }
   }
 
-  template <typename T>
-  uint8_t* addInternalTagged(std::string_view attrName, uint64_t tag, T const& sub) {
+  template<typename T>
+  uint8_t* addInternalTagged(std::string_view attrName, uint64_t tag,
+                             T const& sub) {
     bool haveReported = false;
     if (!_stack.empty()) {
       ValueLength const to = _stack.back().startPos;
@@ -855,13 +863,13 @@ class Builder {
     }
   }
 
-  template <typename T>
+  template<typename T>
   inline uint8_t* writeValue(T const& sub) {
     _keyWritten = true;
     return set(sub);
   }
 
-  template <typename T>
+  template<typename T>
   inline uint8_t* writeValueTagged(uint64_t tag, T const& sub) {
     _keyWritten = true;
     if (VELOCYPACK_UNLIKELY(tag != 0)) {
@@ -917,7 +925,7 @@ class Builder {
 
   void reportAdd();
 
-  template <uint64_t n>
+  template<uint64_t n>
   void appendLengthUnchecked(ValueLength v) {
     for (uint64_t i = 0; i < n; ++i) {
       appendByteUnchecked(v & 0xff);
@@ -1029,13 +1037,12 @@ struct BuilderContainer {
 struct ObjectBuilder final : public BuilderContainer,
                              private NonHeapAllocatable,
                              NonCopyable {
-  explicit ObjectBuilder(Builder* builder)
-      : BuilderContainer(builder) {
+  explicit ObjectBuilder(Builder* builder) : BuilderContainer(builder) {
     builder->openObject(/*allowUnindexed*/ false);
   }
   // this stunt is only necessary to prevent implicit conversions
   // from char const* to bool for the second call argument
-  template<class T ,
+  template<class T,
            class = typename std::enable_if<std::is_same<bool, T>::value>::type>
   ObjectBuilder(Builder* builder, T allowUnindexed)
       : BuilderContainer(builder) {
@@ -1064,16 +1071,14 @@ struct ObjectBuilder final : public BuilderContainer,
 struct ArrayBuilder final : public BuilderContainer,
                             private NonHeapAllocatable,
                             NonCopyable {
-  explicit ArrayBuilder(Builder* builder)
-      : BuilderContainer(builder) {
+  explicit ArrayBuilder(Builder* builder) : BuilderContainer(builder) {
     builder->openArray(/*allowUnindexed*/ false);
   }
   // this stunt is only necessary to prevent implicit conversions
   // from char const* to bool for the second call argument
-  template<class T ,
+  template<class T,
            class = typename std::enable_if<std::is_same<bool, T>::value>::type>
-  ArrayBuilder(Builder* builder, T allowUnindexed)
-      : BuilderContainer(builder) {
+  ArrayBuilder(Builder* builder, T allowUnindexed) : BuilderContainer(builder) {
     builder->openArray(allowUnindexed);
   }
   ArrayBuilder(Builder* builder, std::string_view attributeName,

@@ -35,7 +35,7 @@ static Builder buildObject(Options const* options) {
   return b;
 }
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
@@ -63,6 +63,6 @@ int main(int, char* []) {
   std::cout << "Building object without translations:" << std::endl;
   Builder b2 = buildObject(&noTranslatorOptions);
   printObject(b2);
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

@@ -31,7 +31,8 @@ void* memrchr(void const* block, int c, std::size_t size) {
 #ifdef __linux__
   return const_cast<void*>(::memrchr(block, c, size));
 #else
-  /// naive memrchr overlay for Windows or other platforms, which don't implement it
+  /// naive memrchr overlay for Windows or other platforms, which don't
+  /// implement it
   if (size) {
     unsigned char const* p = static_cast<unsigned char const*>(block);
 
@@ -45,5 +46,5 @@ void* memrchr(void const* block, int c, std::size_t size) {
 #endif
 }
 
-} // namespace velocypack
-} // namespace arangodb
+}  // namespace velocypack
+}  // namespace arangodb

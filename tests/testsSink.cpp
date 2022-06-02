@@ -34,10 +34,10 @@ TEST(SinkTest, CharBufferSink) {
   CharBufferSink s(&out);
 
   ASSERT_TRUE(out.empty());
-  
+
   s.push_back('x');
   ASSERT_EQ(1, out.size());
-  
+
   out.clear();
   s.append(std::string("foobarbaz"));
   ASSERT_EQ(9, out.size());
@@ -45,7 +45,7 @@ TEST(SinkTest, CharBufferSink) {
   out.clear();
   s.append("foobarbaz");
   ASSERT_EQ(9, out.size());
-  
+
   out.clear();
   s.append("foobarbaz", 9);
   ASSERT_EQ(9, out.size());
@@ -56,11 +56,11 @@ TEST(SinkTest, StringSink) {
   StringSink s(&out);
 
   ASSERT_TRUE(out.empty());
-  
+
   s.push_back('x');
   ASSERT_EQ(1, out.size());
   ASSERT_EQ("x", out);
-  
+
   out.clear();
   s.append(std::string("foobarbaz"));
   ASSERT_EQ(9, out.size());
@@ -70,7 +70,7 @@ TEST(SinkTest, StringSink) {
   s.append("foobarbaz");
   ASSERT_EQ(9, out.size());
   ASSERT_EQ("foobarbaz", out);
-  
+
   out.clear();
   s.append("foobarbaz", 9);
   ASSERT_EQ(9, out.size());
@@ -82,13 +82,13 @@ TEST(SinkTest, StringLengthSink) {
 
   s.push_back('x');
   ASSERT_EQ(1, s.length);
-  
+
   s.append(std::string("foobarbaz"));
   ASSERT_EQ(10, s.length);
 
   s.append("foobarbaz");
   ASSERT_EQ(19, s.length);
-  
+
   s.append("foobarbaz", 9);
   ASSERT_EQ(28, s.length);
 }
@@ -99,13 +99,13 @@ TEST(SinkTest, StringStreamSink) {
 
   s.push_back('x');
   ASSERT_EQ("x", out.str());
-  
+
   s.append(std::string("foobarbaz"));
   ASSERT_EQ("xfoobarbaz", out.str());
 
   s.append("foobarbaz");
   ASSERT_EQ("xfoobarbazfoobarbaz", out.str());
-  
+
   s.append("foobarbaz", 9);
   ASSERT_EQ("xfoobarbazfoobarbazfoobarbaz", out.str());
 }

@@ -32,7 +32,8 @@ namespace arangodb::velocypack {
 
 /**
  * @brief SharedSlice is similar to a Slice and has the same methods available.
- * The difference is that SharedSlice owns the memory it points to (via a shared_ptr).
+ * The difference is that SharedSlice owns the memory it points to (via a
+ * shared_ptr).
  *
  * It will *always* point to a valid Slice. Even after default construction, or
  * after a move, or when constructing it with a nullptr, it will point to a
@@ -78,7 +79,9 @@ class SharedSlice {
   ~SharedSlice() = default;
 
   // Accessor of the SharedSlice's buffer
-  [[nodiscard]] std::shared_ptr<uint8_t const> const& buffer() const noexcept { return _start; }
+  [[nodiscard]] std::shared_ptr<uint8_t const> const& buffer() const noexcept {
+    return _start;
+  }
 
   // Access the buffer as a Slice
   [[nodiscard]] Slice slice() const noexcept;
@@ -103,7 +106,7 @@ class SharedSlice {
 
   [[nodiscard]] std::shared_ptr<uint8_t const> start() const noexcept;
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] std::shared_ptr<T const> startAs() const {
     return aliasPtr(slice().startAs<T>());
   }
@@ -122,7 +125,7 @@ class SharedSlice {
   // void set(uint8_t const* s);
   // If necessary, it should probably be implemented as
   // void set(std::shared_ptr<uint8_t const>) instead.
-  
+
   // hashes the binary representation of a value. this value is only suitable
   // to be stored in memory, but should not be persisted, as its implementation
   // may change in the future
@@ -138,9 +141,11 @@ class SharedSlice {
 
   [[nodiscard]] uint32_t normalizedHash32(uint32_t seed = defaultSeed32) const;
 
-  [[nodiscard]] uint64_t hashString(uint64_t seed = defaultSeed64) const noexcept;
+  [[nodiscard]] uint64_t hashString(
+      uint64_t seed = defaultSeed64) const noexcept;
 
-  [[nodiscard]] uint32_t hashString32(uint32_t seed = defaultSeed32) const noexcept;
+  [[nodiscard]] uint32_t hashString32(
+      uint32_t seed = defaultSeed32) const noexcept;
 
   [[nodiscard]] bool isType(ValueType t) const;
 
@@ -192,7 +197,7 @@ class SharedSlice {
 
   [[nodiscard]] bool isNumber() const noexcept;
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] bool isNumber() const noexcept {
     return slice().isNumber<T>();
   }
@@ -211,26 +216,30 @@ class SharedSlice {
 
   [[nodiscard]] ValueLength length() const;
 
-  [[nodiscard]] SharedSlice keyAt(ValueLength index, bool translate = true) const;
+  [[nodiscard]] SharedSlice keyAt(ValueLength index,
+                                  bool translate = true) const;
 
   [[nodiscard]] SharedSlice valueAt(ValueLength index) const;
 
   [[nodiscard]] SharedSlice getNthValue(ValueLength index) const;
 
-  template <typename T>
-  [[nodiscard]] SharedSlice get(std::vector<T> const& attributes, bool resolveExternals = false) const {
+  template<typename T>
+  [[nodiscard]] SharedSlice get(std::vector<T> const& attributes,
+                                bool resolveExternals = false) const {
     return alias(slice().get(attributes, resolveExternals));
   }
 
   [[nodiscard]] SharedSlice get(std::string_view attribute) const;
 
-  [[deprecated]] [[nodiscard]] SharedSlice get(char const* attribute, std::size_t length) const;
+  [[deprecated]] [[nodiscard]] SharedSlice get(char const* attribute,
+                                               std::size_t length) const;
 
   [[nodiscard]] SharedSlice operator[](std::string_view attribute) const;
 
   [[nodiscard]] bool hasKey(std::string_view attribute) const;
 
-  [[deprecated]] [[nodiscard]] bool hasKey(char const* attribute, std::size_t length) const;
+  [[deprecated]] [[nodiscard]] bool hasKey(char const* attribute,
+                                           std::size_t length) const;
 
   [[nodiscard]] bool hasKey(std::vector<std::string> const& attributes) const;
 
@@ -252,21 +261,23 @@ class SharedSlice {
 
   [[nodiscard]] int64_t getSmallInt() const;
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] T getNumber() const {
     return slice().getNumber<T>();
   }
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] T getNumericValue() const {
     return slice().getNumericValue<T>();
   }
 
   [[nodiscard]] int64_t getUTCDate() const;
 
-  [[nodiscard]] std::shared_ptr<char const> getString(ValueLength& length) const;
+  [[nodiscard]] std::shared_ptr<char const> getString(
+      ValueLength& length) const;
 
-  [[nodiscard]] std::shared_ptr<char const> getStringUnchecked(ValueLength& length) const noexcept;
+  [[nodiscard]] std::shared_ptr<char const> getStringUnchecked(
+      ValueLength& length) const noexcept;
 
   [[nodiscard]] ValueLength getStringLength() const;
 
@@ -275,7 +286,8 @@ class SharedSlice {
   [[nodiscard]] StringRef stringRef() const;
   [[nodiscard]] std::string_view stringView() const;
 
-  [[nodiscard]] std::shared_ptr<uint8_t const> getBinary(ValueLength& length) const;
+  [[nodiscard]] std::shared_ptr<uint8_t const> getBinary(
+      ValueLength& length) const;
 
   [[nodiscard]] ValueLength getBinaryLength() const;
 
@@ -293,15 +305,19 @@ class SharedSlice {
 
   [[nodiscard]] int compareString(std::string_view value) const;
 
-  [[deprecated]] [[nodiscard]] int compareString(char const* value, std::size_t length) const;
+  [[deprecated]] [[nodiscard]] int compareString(char const* value,
+                                                 std::size_t length) const;
 
-  [[nodiscard]] int compareStringUnchecked(std::string_view value) const noexcept;
+  [[nodiscard]] int compareStringUnchecked(
+      std::string_view value) const noexcept;
 
-  [[deprecated]] [[nodiscard]] int compareStringUnchecked(char const* value, std::size_t length) const noexcept;
+  [[deprecated]] [[nodiscard]] int compareStringUnchecked(
+      char const* value, std::size_t length) const noexcept;
 
   [[nodiscard]] bool isEqualString(std::string_view attribute) const;
 
-  [[nodiscard]] bool isEqualStringUnchecked(std::string_view attribute) const noexcept;
+  [[nodiscard]] bool isEqualStringUnchecked(
+      std::string_view attribute) const noexcept;
 
   [[nodiscard]] bool binaryEquals(Slice other) const;
   [[nodiscard]] bool binaryEquals(SharedSlice const& other) const;
@@ -310,8 +326,10 @@ class SharedSlice {
   bool operator!=(SharedSlice const& other) const = delete;
 
   [[nodiscard]] std::string toHex() const;
-  [[nodiscard]] std::string toJson(Options const* options = &Options::Defaults) const;
-  [[nodiscard]] std::string toString(Options const* options = &Options::Defaults) const;
+  [[nodiscard]] std::string toJson(
+      Options const* options = &Options::Defaults) const;
+  [[nodiscard]] std::string toString(
+      Options const* options = &Options::Defaults) const;
   [[nodiscard]] std::string hexType() const;
 
   [[nodiscard]] int64_t getIntUnchecked() const noexcept;
@@ -320,13 +338,13 @@ class SharedSlice {
 
   [[nodiscard]] int64_t getSmallIntUnchecked() const noexcept;
 
-  [[nodiscard]] std::shared_ptr<uint8_t const> getBCD(int8_t& sign, int32_t& exponent,
-                                        ValueLength& mantissaLength) const;
+  [[nodiscard]] std::shared_ptr<uint8_t const> getBCD(
+      int8_t& sign, int32_t& exponent, ValueLength& mantissaLength) const;
 
  private:
   [[nodiscard]] SharedSlice alias(Slice slice) const noexcept;
 
-  template <typename T>
+  template<typename T>
   [[nodiscard]] std::shared_ptr<T> aliasPtr(T* t) const noexcept {
     return std::shared_ptr<T>(_start, t);
   }

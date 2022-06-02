@@ -4,7 +4,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   // create an object with a few members
@@ -58,6 +58,6 @@ int main(int, char* []) {
     std::cout << "'baz'.'bart' attribute has value: '"
               << s["baz"]["bart"].copyString() << "'" << std::endl;
   }
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

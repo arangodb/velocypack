@@ -37,9 +37,7 @@ class SliceContainer {
  public:
   SliceContainer() = delete;
 
-  SliceContainer(uint8_t const* data, ValueLength length) 
-    : _data(nullptr) {
-
+  SliceContainer(uint8_t const* data, ValueLength length) : _data(nullptr) {
     VELOCYPACK_ASSERT(data != nullptr);
     VELOCYPACK_ASSERT(length > 0);
 
@@ -47,17 +45,13 @@ class SliceContainer {
     memcpy(_data, data, checkOverflow(length));
   }
 
-  SliceContainer(char const* data, ValueLength length) 
-    : SliceContainer(reinterpret_cast<uint8_t const*>(data), length) {
-  }
+  SliceContainer(char const* data, ValueLength length)
+      : SliceContainer(reinterpret_cast<uint8_t const*>(data), length) {}
 
   SliceContainer(Slice const& slice)
-    : SliceContainer(slice.begin(), slice.byteSize()) {
-  }
+      : SliceContainer(slice.begin(), slice.byteSize()) {}
 
-  SliceContainer(Slice const* slice)
-    : SliceContainer(*slice) {
-  }
+  SliceContainer(Slice const* slice) : SliceContainer(*slice) {}
 
   // copy a slim buffer
   SliceContainer(SliceContainer const& that) : _data(nullptr) {
@@ -97,7 +91,7 @@ class SliceContainer {
     if (this != &that) {
       VELOCYPACK_ASSERT(that._data != nullptr);
 
-      delete[] _data; // delete our own data first
+      delete[] _data;  // delete our own data first
       _data = that._data;
       that._data = nullptr;
     }
@@ -105,9 +99,7 @@ class SliceContainer {
     return *this;
   }
 
-  ~SliceContainer() {
-    delete[] _data;
-  }
+  ~SliceContainer() { delete[] _data; }
 
  public:
   inline Slice slice() const {
@@ -115,22 +107,22 @@ class SliceContainer {
       return Slice();
     }
     return Slice(_data);
-  } 
-  
+  }
+
   inline uint8_t const* begin() const { return _data; }
   inline uint8_t const* data() const { return _data; }
 
   inline ValueLength size() const { return slice().byteSize(); }
   inline ValueLength length() const { return slice().byteSize(); }
   inline ValueLength byteSize() const { return slice().byteSize(); }
-  
+
  private:
   uint8_t* _data;
-  
 };
 
 // class should not be different to a raw pointer size-wise
-static_assert(sizeof(SliceContainer) == sizeof(void*), "invalid size for SliceContainer");
+static_assert(sizeof(SliceContainer) == sizeof(void*),
+              "invalid size for SliceContainer");
 
 }  // namespace arangodb::velocypack
 

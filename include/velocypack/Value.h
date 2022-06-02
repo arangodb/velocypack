@@ -63,7 +63,8 @@ class Value {
     constexpr explicit ValueUnion(std::string const* s) noexcept : s(s) {}
     constexpr explicit ValueUnion(char const* c) noexcept : c(c) {}
     constexpr explicit ValueUnion(void const* e) noexcept : e(e) {}
-    constexpr explicit ValueUnion(std::string_view const* sv) noexcept : sv(sv) {}
+    constexpr explicit ValueUnion(std::string_view const* sv) noexcept
+        : sv(sv) {}
 
     bool b;                      // 1: bool
     double d;                    // 2: double
@@ -87,17 +88,21 @@ class Value {
   constexpr explicit Value(double d, ValueType t = ValueType::Double) noexcept
       : _valueType(t), _cType(CType::Double), _value(d) {}
 
-  constexpr explicit Value(void const* e, ValueType t = ValueType::External) noexcept
+  constexpr explicit Value(void const* e,
+                           ValueType t = ValueType::External) noexcept
       : _valueType(t), _cType(CType::VoidPtr), _value(e) {}
 
-  constexpr explicit Value(char const* c, ValueType t = ValueType::String) noexcept
+  constexpr explicit Value(char const* c,
+                           ValueType t = ValueType::String) noexcept
       : _valueType(t), _cType(CType::CharPtr), _value(c) {}
 
   constexpr explicit Value(int32_t i, ValueType t = ValueType::Int) noexcept
       : _valueType(t), _cType(CType::Int64), _value(static_cast<int64_t>(i)) {}
 
   constexpr explicit Value(uint32_t u, ValueType t = ValueType::UInt) noexcept
-      : _valueType(t), _cType(CType::UInt64), _value(static_cast<uint64_t>(u)) {}
+      : _valueType(t),
+        _cType(CType::UInt64),
+        _value(static_cast<uint64_t>(u)) {}
 
   constexpr explicit Value(int64_t i, ValueType t = ValueType::Int) noexcept
       : _valueType(t), _cType(CType::Int64), _value(i) {}
@@ -115,14 +120,19 @@ class Value {
 
   // however, defining the method on Linux and with MSVC will lead
   // to ambiguous overloads, so this is restricted to __APPLE__ only
-  constexpr explicit Value(unsigned long i, ValueType t = ValueType::UInt) noexcept
-      : _valueType(t), _cType(CType::UInt64), _value(static_cast<uint64_t>(i)) {}
+  constexpr explicit Value(unsigned long i,
+                           ValueType t = ValueType::UInt) noexcept
+      : _valueType(t),
+        _cType(CType::UInt64),
+        _value(static_cast<uint64_t>(i)) {}
 #endif
 
-  constexpr explicit Value(std::string const& s, ValueType t = ValueType::String) noexcept
+  constexpr explicit Value(std::string const& s,
+                           ValueType t = ValueType::String) noexcept
       : _valueType(t), _cType(CType::String), _value(&s) {}
 
-  constexpr explicit Value(std::string_view const& sv, ValueType t = ValueType::String) noexcept
+  constexpr explicit Value(std::string_view const& sv,
+                           ValueType t = ValueType::String) noexcept
       : _valueType(t), _cType(CType::StringView), _value(&sv) {}
 
   constexpr ValueType valueType() const noexcept { return _valueType; }
@@ -133,7 +143,9 @@ class Value {
   // it is only allowed to call this for Array/Object types!
   bool unindexed() const;
 
-  constexpr bool isString() const noexcept { return _valueType == ValueType::String; }
+  constexpr bool isString() const noexcept {
+    return _valueType == ValueType::String;
+  }
 
   constexpr bool getBool() const noexcept {
     VELOCYPACK_ASSERT(_cType == CType::Bool);
@@ -190,10 +202,12 @@ class ValuePair {
             ValueType type = ValueType::Binary) noexcept
       : ValuePair(reinterpret_cast<uint8_t const*>(start), size, type) {}
 
-  constexpr explicit ValuePair(uint64_t size, ValueType type = ValueType::Binary) noexcept
+  constexpr explicit ValuePair(uint64_t size,
+                               ValueType type = ValueType::Binary) noexcept
       : _start(nullptr), _size(size), _type(type) {}
 
-  explicit ValuePair(std::string_view value, ValueType type = ValueType::Binary) noexcept
+  explicit ValuePair(std::string_view value,
+                     ValueType type = ValueType::Binary) noexcept
       : ValuePair(value.data(), value.size(), type) {}
 
   uint8_t const* getStart() const noexcept { return _start; }

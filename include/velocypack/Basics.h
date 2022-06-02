@@ -35,11 +35,11 @@ class NonCopyable {
  public:
   NonCopyable() = default;
   ~NonCopyable() = default;
- private:
-  NonCopyable (NonCopyable const&) = delete;
-  NonCopyable& operator= (NonCopyable const&) = delete;
-};
 
+ private:
+  NonCopyable(NonCopyable const&) = delete;
+  NonCopyable& operator=(NonCopyable const&) = delete;
+};
 
 #ifdef _WIN32
 // turn off warnings about unimplemented exception specifications
@@ -49,10 +49,10 @@ class NonCopyable {
 
 // prevent heap allocation
 struct NonHeapAllocatable {
-  void* operator new(std::size_t) = delete; 
-  void operator delete(void*) noexcept = delete; 
-  void* operator new[](std::size_t) = delete; 
-  void operator delete[](void*) noexcept = delete;  
+  void* operator new(std::size_t) = delete;
+  void operator delete(void*) noexcept = delete;
+  void* operator new[](std::size_t) = delete;
+  void operator delete[](void*) noexcept = delete;
 };
 
 #ifdef _WIN32

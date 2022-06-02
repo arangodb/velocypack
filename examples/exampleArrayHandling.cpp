@@ -4,7 +4,7 @@
 
 using namespace arangodb::velocypack;
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   // create an array with 10 number members
@@ -47,6 +47,6 @@ int main(int, char* []) {
               << std::endl;
     return (index != 2);  // stop after the 3rd element (indexes are 0-based)
   });
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

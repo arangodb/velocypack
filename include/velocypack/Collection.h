@@ -105,7 +105,7 @@ class Collection {
   static std::vector<std::string> keys(Slice const* slice) {
     return keys(*slice);
   }
-  
+
   template<typename T>
   static void keys(Slice const& slice, T& result) {
     ObjectIterator it(slice);
@@ -117,12 +117,12 @@ class Collection {
       it.next();
     }
   }
-  
-  template<typename T>  
+
+  template<typename T>
   static void keys(Slice const* slice, T& result) {
     return keys(*slice, result);
   }
-  
+
   static void keys(Slice const& slice, std::vector<std::string>& result) {
     // pre-allocate result vector
     ObjectIterator it(slice);
@@ -147,20 +147,22 @@ class Collection {
       it.next();
     }
   }
-  
-  template<typename T>  
+
+  template<typename T>
   static void unorderedKeys(Slice const* slice, T& result) {
     return unorderedKeys(*slice, result);
   }
 
-  static Builder extract(Slice const& slice, int64_t from, int64_t to = INT64_MAX);
-  static Builder extract(Slice const* slice, int64_t from, int64_t to = INT64_MAX) {
+  static Builder extract(Slice const& slice, int64_t from,
+                         int64_t to = INT64_MAX);
+  static Builder extract(Slice const* slice, int64_t from,
+                         int64_t to = INT64_MAX) {
     return extract(*slice, from, to);
   }
 
   static Builder concat(Slice const& slice1, Slice const& slice2);
-  static Builder concat(Slice const* slice1, Slice const* slice2) { 
-    return concat(*slice1, *slice2); 
+  static Builder concat(Slice const* slice1, Slice const* slice2) {
+    return concat(*slice1, *slice2);
   }
 
   static Builder values(Slice const& slice);
@@ -196,13 +198,15 @@ class Collection {
     return remove(*slice, keys);
   }
 
-  static Builder merge(Slice const& left, Slice const& right, bool mergeValues, bool nullMeansRemove = false);
+  static Builder merge(Slice const& left, Slice const& right, bool mergeValues,
+                       bool nullMeansRemove = false);
 
-  static Builder merge(Slice const* left, Slice const* right,
-                       bool mergeValues, bool nullMeansRemove = false) {
+  static Builder merge(Slice const* left, Slice const* right, bool mergeValues,
+                       bool nullMeansRemove = false) {
     return merge(*left, *right, mergeValues, nullMeansRemove);
   }
-  static Builder& merge(Builder& builder, Slice const& left, Slice const& right, bool mergeValues, bool nullMeansRemove = false);
+  static Builder& merge(Builder& builder, Slice const& left, Slice const& right,
+                        bool mergeValues, bool nullMeansRemove = false);
 
   static void visitRecursive(
       Slice const& slice, VisitationOrder order,
@@ -214,9 +218,8 @@ class Collection {
     visitRecursive(*slice, order, func);
   }
 
-  static Builder sort(
-      Slice const& array,
-      std::function<bool (Slice const&, Slice const&)> lessthan);
+  static Builder sort(Slice const& array,
+                      std::function<bool(Slice const&, Slice const&)> lessthan);
 };
 
 struct IsEqualPredicate {

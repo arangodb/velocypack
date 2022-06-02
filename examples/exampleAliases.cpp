@@ -7,7 +7,7 @@
 #include "velocypack/velocypack-aliases.h"
 #include "velocypack/velocypack-exception-macros.h"
 
-int main(int, char* []) {
+int main(int, char*[]) {
   VELOCYPACK_GLOBAL_EXCEPTION_TRY
 
   // create an array with 10 number members
@@ -33,6 +33,6 @@ int main(int, char* []) {
   for (auto const& it : VPackArrayIterator(s)) {
     std::cout << it << ", number value: " << it.getUInt() << std::endl;
   }
-  
+
   VELOCYPACK_GLOBAL_EXCEPTION_CATCH
 }

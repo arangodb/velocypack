@@ -46,7 +46,7 @@ struct Sink {
   virtual void reserve(ValueLength len) = 0;
 };
 
-template <typename T>
+template<typename T>
 struct ByteBufferSinkImpl final : public Sink {
   explicit ByteBufferSinkImpl(Buffer<T>* buffer) : buffer(buffer) {}
 
@@ -69,7 +69,7 @@ struct ByteBufferSinkImpl final : public Sink {
 
 typedef ByteBufferSinkImpl<char> CharBufferSink;
 
-template <typename T>
+template<typename T>
 struct StringSinkImpl final : public Sink {
   explicit StringSinkImpl(T* buffer) : buffer(buffer) {}
 
@@ -105,16 +105,14 @@ struct StringLengthSink final : public Sink {
 
   void append(char const* p) override final { length += strlen(p); }
 
-  void append(char const*, ValueLength len) override final {
-    length += len;
-  }
+  void append(char const*, ValueLength len) override final { length += len; }
 
   void reserve(ValueLength) override final {}
 
   ValueLength length;
 };
 
-template <typename T>
+template<typename T>
 struct StreamSinkImpl final : public Sink {
   explicit StreamSinkImpl(T* stream) : stream(stream) {}
 

@@ -45,7 +45,7 @@ struct Serialize {
   Serializable const& _sable;
 };
 
-} // namespace arangodb::velocypack
+}  // namespace arangodb::velocypack
 
 using VPackSerializable = arangodb::velocypack::Serializable;
 using VPackSerialize = arangodb::velocypack::Serialize;

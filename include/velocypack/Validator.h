@@ -39,16 +39,16 @@ class Validator {
   explicit Validator(Options const* options = &Options::Defaults);
   ~Validator() = default;
 
-  // validates a VelocyPack Slice value starting at ptr, with length bytes length
-  // throws if the data is invalid
+  // validates a VelocyPack Slice value starting at ptr, with length bytes
+  // length throws if the data is invalid
   bool validate(char const* ptr, std::size_t length, bool isSubPart = false) {
     return validate(reinterpret_cast<uint8_t const*>(ptr), length, isSubPart);
   }
 
-  // validates a VelocyPack Slice value starting at ptr, with length bytes length
-  // throws if the data is invalid
+  // validates a VelocyPack Slice value starting at ptr, with length bytes
+  // length throws if the data is invalid
   bool validate(uint8_t const* ptr, std::size_t length, bool isSubPart = false);
-  
+
  private:
   void validatePart(uint8_t const* ptr, std::size_t length, bool isSubPart);
 
@@ -60,8 +60,10 @@ class Validator {
   void validateObject(uint8_t const* ptr, std::size_t length);
   void validateCompactObject(uint8_t const* ptr, std::size_t length);
   void validateIndexedObject(uint8_t const* ptr, std::size_t length);
-  void validateBufferLength(std::size_t expected, std::size_t actual, bool isSubPart);
-  void validateSliceLength(uint8_t const* ptr, std::size_t length, bool isSubPart);
+  void validateBufferLength(std::size_t expected, std::size_t actual,
+                            bool isSubPart);
+  void validateSliceLength(uint8_t const* ptr, std::size_t length,
+                           bool isSubPart);
   ValueLength readByteSize(uint8_t const*& ptr, uint8_t const* end);
 
  public:

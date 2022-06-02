@@ -35,8 +35,8 @@ namespace velocypack {
 extern void enableNativeStringFunctions();
 extern void enableBuiltinStringFunctions();
 
-}
-}
+}  // namespace velocypack
+}  // namespace arangodb
 
 TEST(ParserTest, CreateWithoutOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(new Parser(nullptr), Exception::InternalError);
@@ -1559,15 +1559,15 @@ TEST(ParserTest, ArrayNestingCloseToLimitReusingParser) {
   Parser parser(&options);
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
- 
+
   // reuse parser object
   len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
-  
+
   // intentionally broken array
   std::string const valueBroken("[1, [2, [3, [4, [5");
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
-  
+
   // parse again with same parser object
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
 
@@ -2298,7 +2298,7 @@ TEST(ParserTest, DuplicateAttributesSortedObjects) {
     // now push a duplicate
     value.append(",\"test0\":false");
     value.push_back('}');
-  
+
     Parser parser(&options);
     ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
                                 Exception::DuplicateAttributeName);
@@ -2323,7 +2323,7 @@ TEST(ParserTest, NoDuplicateAttributesSortedObjects) {
       value.append("\":true");
     }
     value.push_back('}');
-  
+
     Parser parser(&options);
     ASSERT_TRUE(parser.parse(value) > 0);
   }
@@ -2349,7 +2349,7 @@ TEST(ParserTest, DuplicateAttributesUnsortedObjects) {
     // now push a duplicate
     value.append(",\"test0\":false");
     value.push_back('}');
-  
+
     Parser parser(&options);
     ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value),
                                 Exception::DuplicateAttributeName);
@@ -2374,7 +2374,7 @@ TEST(ParserTest, NoDuplicateAttributesUnsortedObjects) {
       value.append("\":true");
     }
     value.push_back('}');
-  
+
     Parser parser(&options);
     ASSERT_TRUE(parser.parse(value) > 0);
   }
@@ -2421,15 +2421,15 @@ TEST(ParserTest, ObjectNestingCloseToLimitReusingParser) {
   Parser parser(&options);
   ValueLength len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
- 
+
   // reuse parser object
   len = parser.parse(value);
   ASSERT_EQ(1ULL, len);
-  
+
   // intentionally broken object
   std::string const valueBroken("{ \"a\": { \"b\": { \"c\": { \"d\": {");
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
-  
+
   // parse again with same parser object
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(valueBroken), Exception::ParseError);
 
@@ -2442,7 +2442,8 @@ TEST(ParserTest, ObjectNestingBeyondLimit2) {
   Options options;
   options.nestingLimit = 5;
 
-  std::string const value("{ \"a\": { \"b\": { \"c\": { \"d\": { \"e\": { } } } } } }");
+  std::string const value(
+      "{ \"a\": { \"b\": { \"c\": { \"d\": { \"e\": { } } } } } }");
 
   Parser parser(&options);
   ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::TooDeepNesting);
@@ -2478,7 +2479,8 @@ TEST(ParserTest, FromJsonUInt8) {
   char const* value = "{\"foo\":1,\"bar\":2,\"baz\":3}";
 
   Options options;
-  std::shared_ptr<Builder> b = Parser::fromJson(reinterpret_cast<uint8_t const*>(value), strlen(value), &options);
+  std::shared_ptr<Builder> b = Parser::fromJson(
+      reinterpret_cast<uint8_t const*>(value), strlen(value), &options);
 
   Slice s(b->start());
   ASSERT_TRUE(s.hasKey("foo"));

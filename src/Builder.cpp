@@ -36,16 +36,17 @@
 using namespace arangodb::velocypack;
 
 namespace {
-  
+
 // checks whether a memmove operation is allowed to get rid of the padding
-bool isAllowedToMemmove(Options const* options, uint8_t const* start, 
-                        std::vector<ValueLength>::iterator indexStart, 
+bool isAllowedToMemmove(Options const* options, uint8_t const* start,
+                        std::vector<ValueLength>::iterator indexStart,
                         std::vector<ValueLength>::iterator indexEnd,
                         ValueLength offsetSize) {
   VELOCYPACK_ASSERT(offsetSize == 1 || offsetSize == 2);
 
-  if (options->paddingBehavior == Options::PaddingBehavior::NoPadding || 
-      (offsetSize == 1 && options->paddingBehavior == Options::PaddingBehavior::Flexible)) {
+  if (options->paddingBehavior == Options::PaddingBehavior::NoPadding ||
+      (offsetSize == 1 &&
+       options->paddingBehavior == Options::PaddingBehavior::Flexible)) {
     std::size_t const distance = std::distance(indexStart, indexEnd);
     std::size_t const n = (std::min)(std::size_t(8 - 2 * offsetSize), distance);
     for (std::size_t i = 0; i < n; i++) {
@@ -79,7 +80,7 @@ uint8_t determineArrayType(bool needIndexTable, ValueLength offsetSize) {
 }
 
 constexpr ValueLength linearAttributeUniquenessCutoff = 4;
-  
+
 // struct used when sorting index tables for objects:
 struct SortEntry {
   uint8_t const* nameStart;
@@ -92,17 +93,16 @@ struct SortEntry {
 // reallocations
 constexpr size_t minSortEntriesAllocation = 32;
 
-
 #ifndef VELOCYPACK_NO_THREADLOCALS
 
 // thread-local, reusable buffer used for sorting medium to big index entries
 thread_local std::unique_ptr<std::vector<SortEntry>> sortEntries;
 
 // thread-local, reusable set to track usage of duplicate keys
-thread_local std::unique_ptr<std::unordered_set<std::string_view>> duplicateKeys;
+thread_local std::unique_ptr<std::unordered_set<std::string_view>>
+    duplicateKeys;
 
 #endif
-
 
 // Find the actual bytes of the attribute name of the VPack value
 // at position base, also determine the length len of the attribute.
@@ -178,25 +178,24 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
   return true;
 }
 
-} // namespace
+}  // namespace
 
-// create an empty Builder, using default Options 
+// create an empty Builder, using default Options
 Builder::Builder()
-      : _buffer(std::make_shared<Buffer<uint8_t>>()),
-        _bufferPtr(_buffer.get()),
-        _start(_bufferPtr->data()),
-        _pos(0),
-        _arena(),
-        _stack(_arena),
-        _keyWritten(false),
-        options(&Options::Defaults) {
+    : _buffer(std::make_shared<Buffer<uint8_t>>()),
+      _bufferPtr(_buffer.get()),
+      _start(_bufferPtr->data()),
+      _pos(0),
+      _arena(),
+      _stack(_arena),
+      _keyWritten(false),
+      options(&Options::Defaults) {
   // do a full initial allocation in the arena, so we can maximize its usage
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
-  
-// create an empty Builder, using Options 
-Builder::Builder(Options const* opts)
-      : Builder() {
+
+// create an empty Builder, using Options
+Builder::Builder(Options const* opts) : Builder() {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
@@ -205,72 +204,71 @@ Builder::Builder(Options const* opts)
 
 // create an empty Builder, using an existing buffer and default Options
 Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer)
-      : _buffer(std::move(buffer)), 
-        _bufferPtr(_buffer.get()), 
-        _start(nullptr),
-        _pos(0), 
-        _arena(),
-        _stack(_arena),
-        _keyWritten(false), 
-        options(&Options::Defaults) {
+    : _buffer(std::move(buffer)),
+      _bufferPtr(_buffer.get()),
+      _start(nullptr),
+      _pos(0),
+      _arena(),
+      _stack(_arena),
+      _keyWritten(false),
+      options(&Options::Defaults) {
   if (VELOCYPACK_UNLIKELY(_bufferPtr == nullptr)) {
     throw Exception(Exception::InternalError, "Buffer cannot be a nullptr");
   }
   _start = _bufferPtr->data();
   _pos = _bufferPtr->size();
-  
+
   // do a full initial allocation in the arena, so we can maximize its usage
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
-  
+
 // create an empty Builder, using an existing buffer
 Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer, Options const* opts)
-      : Builder(std::move(buffer)) {
+    : Builder(std::move(buffer)) {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
   options = opts;
 }
 
-// create a Builder that uses an existing Buffer and options. 
+// create a Builder that uses an existing Buffer and options.
 // the Builder will not claim ownership for its Buffer
 Builder::Builder(Buffer<uint8_t>& buffer) noexcept
-      : _bufferPtr(&buffer), 
-        _start(_bufferPtr->data()),
-        _pos(buffer.size()), 
-        _arena(),
-        _stack(_arena),
-        _keyWritten(false), 
-        options(&Options::Defaults) {
+    : _bufferPtr(&buffer),
+      _start(_bufferPtr->data()),
+      _pos(buffer.size()),
+      _arena(),
+      _stack(_arena),
+      _keyWritten(false),
+      options(&Options::Defaults) {
   // do a full initial allocation in the arena, so we can maximize its usage
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
-  
+
 // create a Builder that uses an existing Buffer. the Builder will not
 // claim ownership for its Buffer
 Builder::Builder(Buffer<uint8_t>& buffer, Options const* opts)
-      : Builder(buffer) {
+    : Builder(buffer) {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
   options = opts;
 }
-  
+
 // populate a Builder from a Slice
-Builder::Builder(Slice slice, Options const* options)
-      : Builder(options) {
+Builder::Builder(Slice slice, Options const* options) : Builder(options) {
   add(slice);
 }
 
 Builder::Builder(Builder const& that)
-      : _bufferPtr(nullptr),
-        _start(nullptr),
-        _pos(that._pos),
-        _arena(),
-        _stack(_arena),
-        _indexes(that._indexes),
-        _keyWritten(that._keyWritten),
-        options(that.options) {
+    : _bufferPtr(nullptr),
+      _start(nullptr),
+      _pos(that._pos),
+      _arena(),
+      _stack(_arena),
+      _indexes(that._indexes),
+      _keyWritten(that._keyWritten),
+      options(that.options) {
   VELOCYPACK_ASSERT(options != nullptr);
 
   _stack = that._stack;
@@ -281,11 +279,11 @@ Builder::Builder(Builder const& that)
     _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
     _bufferPtr = _buffer.get();
   }
-        
+
   if (_bufferPtr != nullptr) {
     _start = _bufferPtr->data();
   }
-  
+
   // do a full initial allocation in the arena, so we can maximize its usage
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
@@ -324,11 +322,10 @@ Builder::Builder(Builder&& that) noexcept
       _indexes(std::move(that._indexes)),
       _keyWritten(that._keyWritten),
       options(that.options) {
-      
   // do a full initial allocation in the arena, so we can maximize its usage
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
   _stack = std::move(that._stack);
-  
+
   if (_buffer != nullptr) {
     _bufferPtr = _buffer.get();
   } else {
@@ -385,33 +382,34 @@ std::string Builder::toJson() const {
   Dumper::dump(slice(), &sink);
   return buffer;
 }
-  
-void Builder::sortObjectIndexShort(uint8_t* objBase,
-                                   std::vector<ValueLength>::iterator indexStart,
-                                   std::vector<ValueLength>::iterator indexEnd) const {
-  std::sort(indexStart, indexEnd, [objBase](ValueLength const& a, ValueLength const& b) {
-    uint8_t const* aa = objBase + a;
-    uint8_t const* bb = objBase + b;
-    if (*aa >= 0x40 && *aa <= 0xbe && *bb >= 0x40 && *bb <= 0xbe) {
-      // The fast path, short strings:
-      uint8_t m = (std::min)(*aa - 0x40, *bb - 0x40);
-      int c = std::memcmp(aa + 1, bb + 1, checkOverflow(m));
-      return (c < 0 || (c == 0 && *aa < *bb));
-    } else {
-      uint64_t lena;
-      uint64_t lenb;
-      aa = findAttrName(aa, lena);
-      bb = findAttrName(bb, lenb);
-      uint64_t m = (std::min)(lena, lenb);
-      int c = std::memcmp(aa, bb, checkOverflow(m));
-      return (c < 0 || (c == 0 && lena < lenb));
-    }
-  });
+
+void Builder::sortObjectIndexShort(
+    uint8_t* objBase, std::vector<ValueLength>::iterator indexStart,
+    std::vector<ValueLength>::iterator indexEnd) const {
+  std::sort(indexStart, indexEnd,
+            [objBase](ValueLength const& a, ValueLength const& b) {
+              uint8_t const* aa = objBase + a;
+              uint8_t const* bb = objBase + b;
+              if (*aa >= 0x40 && *aa <= 0xbe && *bb >= 0x40 && *bb <= 0xbe) {
+                // The fast path, short strings:
+                uint8_t m = (std::min)(*aa - 0x40, *bb - 0x40);
+                int c = std::memcmp(aa + 1, bb + 1, checkOverflow(m));
+                return (c < 0 || (c == 0 && *aa < *bb));
+              } else {
+                uint64_t lena;
+                uint64_t lenb;
+                aa = findAttrName(aa, lena);
+                bb = findAttrName(bb, lenb);
+                uint64_t m = (std::min)(lena, lenb);
+                int c = std::memcmp(aa, bb, checkOverflow(m));
+                return (c < 0 || (c == 0 && lena < lenb));
+              }
+            });
 }
 
-void Builder::sortObjectIndexLong(uint8_t* objBase,
-                                  std::vector<ValueLength>::iterator indexStart,
-                                  std::vector<ValueLength>::iterator indexEnd) const {
+void Builder::sortObjectIndexLong(
+    uint8_t* objBase, std::vector<ValueLength>::iterator indexStart,
+    std::vector<ValueLength>::iterator indexEnd) const {
 #ifndef VELOCYPACK_NO_THREADLOCALS
   std::unique_ptr<std::vector<SortEntry>>& tmp = ::sortEntries;
 
@@ -436,20 +434,21 @@ void Builder::sortObjectIndexLong(uint8_t* objBase,
     tmp->push_back(e);
   }
   VELOCYPACK_ASSERT(tmp->size() == n);
-  std::sort(tmp->begin(), tmp->end(), [](SortEntry const& a,
-                                         SortEntry const& b)
+  std::sort(tmp->begin(), tmp->end(),
+            [](SortEntry const& a, SortEntry const& b)
 #ifdef VELOCYPACK_64BIT
-    noexcept
+                noexcept
 #endif
-  {
-    // return true iff a < b:
-    uint64_t sizea = a.nameSize;
-    uint64_t sizeb = b.nameSize;
-    std::size_t const compareLength = checkOverflow((std::min)(sizea, sizeb));
-    int res = std::memcmp(a.nameStart, b.nameStart, compareLength);
+            {
+              // return true iff a < b:
+              uint64_t sizea = a.nameSize;
+              uint64_t sizeb = b.nameSize;
+              std::size_t const compareLength =
+                  checkOverflow((std::min)(sizea, sizeb));
+              int res = std::memcmp(a.nameStart, b.nameStart, compareLength);
 
-    return (res < 0 || (res == 0 && sizea < sizeb));
-  });
+              return (res < 0 || (res == 0 && sizea < sizeb));
+            });
 
   // copy back the sorted offsets
   for (std::size_t i = 0; i < n; i++) {
@@ -461,19 +460,19 @@ Builder& Builder::closeEmptyArrayOrObject(ValueLength pos, bool isArray) {
   // empty Array or Object
   _start[pos] = (isArray ? 0x01 : 0x0a);
   VELOCYPACK_ASSERT(_pos == pos + 9);
-  rollback(8); // no bytelength and number subvalues needed
+  rollback(8);  // no bytelength and number subvalues needed
   closeLevel();
   return *this;
 }
 
-bool Builder::closeCompactArrayOrObject(ValueLength pos, bool isArray,
-                                        std::vector<ValueLength>::iterator indexStart,
-                                        std::vector<ValueLength>::iterator indexEnd) {
+bool Builder::closeCompactArrayOrObject(
+    ValueLength pos, bool isArray,
+    std::vector<ValueLength>::iterator indexStart,
+    std::vector<ValueLength>::iterator indexEnd) {
   std::size_t const n = std::distance(indexStart, indexEnd);
 
   // use compact notation
-  ValueLength nLen =
-      getVariableValueLength(static_cast<ValueLength>(n));
+  ValueLength nLen = getVariableValueLength(static_cast<ValueLength>(n));
   VELOCYPACK_ASSERT(nLen > 0);
   ValueLength byteSize = _pos - (pos + 8) + nLen;
   VELOCYPACK_ASSERT(byteSize > 0);
@@ -513,16 +512,18 @@ bool Builder::closeCompactArrayOrObject(ValueLength pos, bool isArray,
 
 #ifdef VELOCYPACK_DEBUG
     VELOCYPACK_ASSERT(_start[pos] == (isArray ? 0x13 : 0x14));
-    VELOCYPACK_ASSERT(byteSize == readVariableValueLength<false>(_start + pos + 1));
+    VELOCYPACK_ASSERT(byteSize ==
+                      readVariableValueLength<false>(_start + pos + 1));
     VELOCYPACK_ASSERT(isArray || _start[pos + 1 + bLen] != 0x00);
-    VELOCYPACK_ASSERT(n == readVariableValueLength<true>(_start + pos + byteSize - 1));
+    VELOCYPACK_ASSERT(
+        n == readVariableValueLength<true>(_start + pos + byteSize - 1));
 #endif
     return true;
   }
   return false;
 }
 
-Builder& Builder::closeArray(ValueLength pos, 
+Builder& Builder::closeArray(ValueLength pos,
                              std::vector<ValueLength>::iterator indexStart,
                              std::vector<ValueLength>::iterator indexEnd) {
   std::size_t const n = std::distance(indexStart, indexEnd);
@@ -535,7 +536,8 @@ Builder& Builder::closeArray(ValueLength pos,
     // just one array entry
     needIndexTable = false;
     needNrSubs = false;
-  } else if ((_pos - pos) - indexStart[0] == n * (indexStart[1] - indexStart[0])) {
+  } else if ((_pos - pos) - indexStart[0] ==
+             n * (indexStart[1] - indexStart[0])) {
     // In this case it could be that all entries have the same length
     // and we do not need an offset table at all:
     bool buildIndexTable = false;
@@ -551,7 +553,7 @@ Builder& Builder::closeArray(ValueLength pos,
         }
       }
     }
-        
+
     if (!buildIndexTable) {
       needIndexTable = false;
       needNrSubs = false;
@@ -564,25 +566,26 @@ Builder& Builder::closeArray(ValueLength pos,
   unsigned int offsetSize;
   // can be 1, 2, 4 or 8 for the byte width of the offsets,
   // the byte length and the number of subvalues:
-  bool allowMemmove = ::isAllowedToMemmove(options, _start + pos, indexStart, indexEnd, 1);
-  if (_pos - pos + 
-      (needIndexTable ? n : 0) - 
-      (allowMemmove ? (needNrSubs ? 6 : 7) : 0) <= 0xff) {
+  bool allowMemmove =
+      ::isAllowedToMemmove(options, _start + pos, indexStart, indexEnd, 1);
+  if (_pos - pos + (needIndexTable ? n : 0) -
+          (allowMemmove ? (needNrSubs ? 6 : 7) : 0) <=
+      0xff) {
     // We have so far used _pos - pos bytes, including the reserved 8
     // bytes for byte length and number of subvalues. In the 1-byte number
     // case we would win back 6 bytes but would need one byte per subvalue
     // for the index table
     offsetSize = 1;
   } else {
-    allowMemmove = ::isAllowedToMemmove(options, _start + pos, indexStart, indexEnd, 2);
-    if (_pos - pos + 
-        (needIndexTable ? 2 * n : 0) - 
-        (allowMemmove ? (needNrSubs ? 4 : 6) : 0) <= 0xffff) {
+    allowMemmove =
+        ::isAllowedToMemmove(options, _start + pos, indexStart, indexEnd, 2);
+    if (_pos - pos + (needIndexTable ? 2 * n : 0) -
+            (allowMemmove ? (needNrSubs ? 4 : 6) : 0) <=
+        0xffff) {
       offsetSize = 2;
     } else {
       allowMemmove = false;
-      if (_pos - pos + 
-          (needIndexTable ? 4 * n : 0) <= 0xffffffffu) {
+      if (_pos - pos + (needIndexTable ? 4 * n : 0) <= 0xffffffffu) {
         offsetSize = 4;
       } else {
         offsetSize = 8;
@@ -590,26 +593,26 @@ Builder& Builder::closeArray(ValueLength pos,
     }
   }
 
-  VELOCYPACK_ASSERT(offsetSize == 1 || offsetSize == 2 || offsetSize == 4 || offsetSize == 8); 
+  VELOCYPACK_ASSERT(offsetSize == 1 || offsetSize == 2 || offsetSize == 4 ||
+                    offsetSize == 8);
   VELOCYPACK_ASSERT(!allowMemmove || offsetSize == 1 || offsetSize == 2);
 
-  if (offsetSize < 8 &&
-      !needIndexTable && 
+  if (offsetSize < 8 && !needIndexTable &&
       options->paddingBehavior == Options::PaddingBehavior::UsePadding) {
-    // if we are allowed to use padding, we will pad to 8 bytes anyway. as we are not
-    // using an index table, we can also use type 0x05 for all Arrays without making
-    // things worse space-wise
+    // if we are allowed to use padding, we will pad to 8 bytes anyway. as we
+    // are not using an index table, we can also use type 0x05 for all Arrays
+    // without making things worse space-wise
     offsetSize = 8;
     allowMemmove = false;
   }
 
   // fix head byte
   _start[pos] = ::determineArrayType(needIndexTable, offsetSize);
-  
+
   // Maybe we need to move down data:
   if (allowMemmove) {
-    // check if one of the first entries in the array is ValueType::None 
-    // (0x00). in this case, we could not distinguish between a None (0x00) 
+    // check if one of the first entries in the array is ValueType::None
+    // (0x00). in this case, we could not distinguish between a None (0x00)
     // and the optional padding. so we must prevent the memmove here
     ValueLength targetPos = 1 + 2 * offsetSize;
     if (!needIndexTable) {
@@ -682,7 +685,8 @@ Builder& Builder::close() {
                     head == 0x14);
 
   bool const isArray = (head == 0x06 || head == 0x13);
-  std::vector<ValueLength>::iterator indexStart = _indexes.begin() + indexStartPos; 
+  std::vector<ValueLength>::iterator indexStart =
+      _indexes.begin() + indexStartPos;
   std::vector<ValueLength>::iterator indexEnd = _indexes.end();
   ValueLength const n = std::distance(indexStart, indexEnd);
 
@@ -700,10 +704,8 @@ Builder& Builder::close() {
       (head == 0x0b && (options->buildUnindexedObjects || n == 1))) {
     if (closeCompactArrayOrObject(pos, isArray, indexStart, indexEnd)) {
       // And, if desired, check attribute uniqueness:
-      if ((head == 0x0b || head == 0x14) &&
-          options->checkAttributeUniqueness && 
-          n > 1 &&
-          !checkAttributeUniqueness(Slice(_start + pos))) {
+      if ((head == 0x0b || head == 0x14) && options->checkAttributeUniqueness &&
+          n > 1 && !checkAttributeUniqueness(Slice(_start + pos))) {
         // duplicate attribute name!
         throw Exception(Exception::DuplicateAttributeName);
       }
@@ -735,15 +737,17 @@ Builder& Builder::close() {
     // One could move down things in the offsetSize == 2 case as well,
     // since we only need 4 bytes in the beginning. However, saving these
     // 4 bytes has been sacrificed on the Altar of Performance.
-  } else if (_pos - pos + 2 * n + effectivePaddingForTwoByteMembers() <= 0xffff) {
+  } else if (_pos - pos + 2 * n + effectivePaddingForTwoByteMembers() <=
+             0xffff) {
     offsetSize = 2;
   } else if (_pos - pos + 4 * n <= 0xffffffffu) {
     offsetSize = 4;
   }
-    
+
   if (offsetSize < 4 &&
       (options->paddingBehavior == Options::PaddingBehavior::NoPadding ||
-       (offsetSize == 1 && options->paddingBehavior == Options::PaddingBehavior::Flexible))) {
+       (offsetSize == 1 &&
+        options->paddingBehavior == Options::PaddingBehavior::Flexible))) {
     // Maybe we need to move down data:
     ValueLength targetPos = 1 + 2 * offsetSize;
     if (_pos > (pos + 9)) {
@@ -801,7 +805,7 @@ Builder& Builder::close() {
       x >>= 8;
     }
   }
- 
+
 #ifdef VELOCYPACK_DEBUG
   // make sure byte size and number of items are actually written correctly
   if (offsetSize == 1) {
@@ -836,8 +840,7 @@ Builder& Builder::close() {
 #endif
 
   // And, if desired, check attribute uniqueness:
-  if (options->checkAttributeUniqueness && 
-      n > 1 &&
+  if (options->checkAttributeUniqueness && n > 1 &&
       !checkAttributeUniqueness(Slice(_start + pos))) {
     // duplicate attribute name!
     throw Exception(Exception::DuplicateAttributeName);
@@ -846,7 +849,7 @@ Builder& Builder::close() {
   // Now the array or object is complete, we pop a ValueLength
   // off the _stack:
   closeLevel();
-      
+
   return *this;
 }
 
@@ -866,7 +869,8 @@ Slice Builder::getKey(std::string_view key) const {
   if (VELOCYPACK_UNLIKELY(_start[pos] != 0x0b && _start[pos] != 0x14)) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
-  std::vector<ValueLength>::const_iterator indexStart = _indexes.begin() + indexStartPos;
+  std::vector<ValueLength>::const_iterator indexStart =
+      _indexes.begin() + indexStartPos;
   std::vector<ValueLength>::const_iterator indexEnd = _indexes.end();
   while (indexStart != indexEnd) {
     Slice s(_start + pos + *indexStart);
@@ -1077,7 +1081,8 @@ uint8_t* Builder::set(Value const& item) {
       break;
     }
     case ValueType::Binary: {
-      if (VELOCYPACK_UNLIKELY(ctype != Value::CType::String && ctype != Value::CType::CharPtr &&
+      if (VELOCYPACK_UNLIKELY(ctype != Value::CType::String &&
+                              ctype != Value::CType::CharPtr &&
                               ctype != Value::CType::StringView)) {
         throw Exception(Exception::BuilderUnexpectedValue,
                         "Must provide std::string, std::string_view or char "
@@ -1239,10 +1244,9 @@ void Builder::reportAdd() {
   _indexes.push_back(_pos - _stack.back().startPos);
 }
 
-
 void Builder::closeLevel() noexcept {
   VELOCYPACK_ASSERT(!_stack.empty());
-  ValueLength const indexStartPos = _stack.back().indexStartPos; 
+  ValueLength const indexStartPos = _stack.back().indexStartPos;
   _stack.pop_back();
   _indexes.erase(_indexes.begin() + indexStartPos, _indexes.end());
 }
@@ -1251,7 +1255,7 @@ bool Builder::checkAttributeUniqueness(Slice obj) const {
   VELOCYPACK_ASSERT(options->checkAttributeUniqueness == true);
   VELOCYPACK_ASSERT(obj.isObject());
   VELOCYPACK_ASSERT(obj.length() >= 2);
-  
+
   if (obj.isSorted()) {
     // object attributes are sorted
     return checkAttributeUniquenessSorted(obj);
@@ -1267,14 +1271,14 @@ bool Builder::checkAttributeUniquenessSorted(Slice obj) const {
   Slice previous = it.key(true);
   ValueLength len;
   char const* p = previous.getString(len);
-  
-  // advance to next key already  
+
+  // advance to next key already
   it.next();
 
   do {
     Slice const current = it.key(true);
     VELOCYPACK_ASSERT(current.isString());
-    
+
     ValueLength len2;
     char const* q = current.getStringUnchecked(len2);
 
@@ -1300,7 +1304,7 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
   // will use an std::unordered_set for O(1) lookups but with heap
   // allocations
   ObjectIterator it(obj, true);
-    
+
   if (it.size() <= ::linearAttributeUniquenessCutoff) {
     return ::checkAttributeUniquenessUnsortedBrute(it);
   }
@@ -1350,12 +1354,14 @@ uint8_t* Builder::add(ArrayIterator&& sub) {
 
 ValueLength Builder::effectivePaddingForOneByteMembers() const noexcept {
   // 8 bytes - object length (1 byte) - number of items (1 byte) = 6 bytes
-  return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 6 : 0);
+  return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 6
+                                                                           : 0);
 }
 
 ValueLength Builder::effectivePaddingForTwoByteMembers() const noexcept {
   // 8 bytes - object length (2 bytes) - number of items (2 bytes) = 4 bytes
-  return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 4 : 0);
+  return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 4
+                                                                           : 0);
 }
-  
+
 static_assert(sizeof(double) == 8, "double is not 8 bytes");
