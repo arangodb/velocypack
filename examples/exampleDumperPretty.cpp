@@ -11,14 +11,13 @@ int main(int, char*[]) {
   // build an object with attribute names "b", "a", "l", "name"
   b(Value(ValueType::Object))("b", Value(12))("a", Value(true))(
       "l", Value(ValueType::Array))(Value(1))(Value(2))(Value(3))()(
-      "name", Value("𐍈"))();
+      "name", Value("Gustav"))();
 
   // a Slice is a lightweight accessor for a VPack value
   Slice s(b.start());
 
   Options dumperOptions;
   dumperOptions.prettyPrint = true;
-  dumperOptions.escapeUnicode = true;
   // now dump the Slice into an std::string
   std::string buffer;
   StringSink sink(&buffer);
