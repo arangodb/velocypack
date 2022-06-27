@@ -902,7 +902,8 @@ uint8_t* Builder::set(Value const& item) {
   auto const oldPos = _pos;
   auto ctype = item.cType();
 
-  checkKeyIsString(item.valueType() == ValueType::String);
+  checkKeyHasValidType(item.valueType() == ValueType::String ||
+                       item.valueType() == ValueType::UInt);
 
   // This method builds a single further VPack item at the current
   // append position. If this is an array or object, then an index
@@ -1159,7 +1160,7 @@ uint8_t* Builder::set(Value const& item) {
 }
 
 uint8_t* Builder::set(Slice const& item) {
-  checkKeyIsString(item);
+  checkKeyHasValidType(item);
 
   if (VELOCYPACK_UNLIKELY(options->disallowCustom && item.isCustom())) {
     // Custom values explicitly disallowed as a security precaution
@@ -1181,7 +1182,8 @@ uint8_t* Builder::set(ValuePair const& pair) {
 
   auto const oldPos = _pos;
 
-  checkKeyIsString(pair.valueType() == ValueType::String);
+  checkKeyHasValidType(pair.valueType() == ValueType::String ||
+                       pair.valueType() == ValueType::UInt);
 
   if (pair.valueType() == ValueType::String) {
     uint64_t size = pair.getSize();

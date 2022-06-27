@@ -2749,6 +2749,28 @@ TEST(BuilderTest, AddKeysSeparately2) {
   ASSERT_EQ(R"({"bar":{},"baz":1,"bumm":[13],"foo":[]})", b.toJson());
 }
 
+TEST(BuilderTest, AddKeysSeparatelySmallIntKey) {
+  uint8_t buf[] = {0x31};
+  Slice s(buf);
+
+  Builder b;
+  b.openObject();
+  // add integer key
+  ASSERT_NE(nullptr, b.add(s));
+  b.close();
+}
+
+TEST(BuilderTest, AddKeysSeparatelyUIntKey) {
+  uint8_t buf[] = {0x28, 0x01};
+  Slice s(buf);
+
+  Builder b;
+  b.openObject();
+  // add integer key
+  ASSERT_NE(nullptr, b.add(s));
+  b.close();
+}
+
 TEST(BuilderTest, AddKeysSeparatelyFail) {
   {
     Builder b;
@@ -2786,8 +2808,8 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
     ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(12, ValueType::UTCDate)),
                                 Exception::BuilderKeyMustBeString);
   }
-  uint8_t buf[] = {0x31};
   {
+    uint8_t buf[] = {0x31};
     Builder b;
     b.openObject();
     ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(&buf, ValueType::External)),
@@ -2822,12 +2844,6 @@ TEST(BuilderTest, AddKeysSeparatelyFail) {
     b.openObject();
     ASSERT_VELOCYPACK_EXCEPTION(b.add(Value(113)),
                                 Exception::BuilderKeyMustBeString);
-  }
-  Slice s(buf);
-  {
-    Builder b;
-    b.openObject();
-    ASSERT_VELOCYPACK_EXCEPTION(b.add(s), Exception::BuilderKeyMustBeString);
   }
   {
     Builder b;
