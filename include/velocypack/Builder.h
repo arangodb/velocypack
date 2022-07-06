@@ -301,6 +301,24 @@ class Builder {
   }
 
   template<typename T>
+  uint8_t* addUnchecked(Slice key, T const& sub) {
+    bool needCleanup = !_stack.empty();
+    if (needCleanup) {
+      reportAdd();
+    }
+    try {
+      set(key);
+      return writeValue(sub);
+    } catch (...) {
+      // clean up in case of an exception
+      if (needCleanup) {
+        cleanupAdd();
+      }
+      throw;
+    }
+  }
+
+  template<typename T>
   uint8_t* addUnchecked(std::string_view attrName, T const& sub) {
     bool needCleanup = !_stack.empty();
     if (needCleanup) {
@@ -496,7 +514,7 @@ class Builder {
       }
     }
     try {
-      checkKeyIsString(Slice(sub));
+      checkKeyHasValidType(Slice(sub));
       auto oldPos = _pos;
       reserve(1 + sizeof(void*));
       // store pointer. this doesn't need to be portable
@@ -700,11 +718,11 @@ class Builder {
 
   void appendTag(uint64_t tag);
 
-  inline void checkKeyIsString(bool isString) {
+  inline void checkKeyHasValidType(bool isValid) {
     if (!_stack.empty()) {
       ValueLength const pos = _stack.back().startPos;
       if (_start[pos] == 0x0b || _start[pos] == 0x14) {
-        if (VELOCYPACK_UNLIKELY(!_keyWritten && !isString)) {
+        if (VELOCYPACK_UNLIKELY(!_keyWritten && !isValid)) {
           throw Exception(Exception::BuilderKeyMustBeString);
         }
         _keyWritten = !_keyWritten;
@@ -712,11 +730,12 @@ class Builder {
     }
   }
 
-  inline void checkKeyIsString(Slice item) {
+  inline void checkKeyHasValidType(Slice item) {
     if (!_stack.empty()) {
       ValueLength pos = _stack.back().startPos;
       if (_start[pos] == 0x0b || _start[pos] == 0x14) {
-        if (VELOCYPACK_UNLIKELY(!_keyWritten && !item.isString())) {
+        if (VELOCYPACK_UNLIKELY(!_keyWritten && !item.isString() &&
+                                !item.isSmallInt() && !item.isUInt())) {
           throw Exception(Exception::BuilderKeyMustBeString);
         }
         _keyWritten = !_keyWritten;
