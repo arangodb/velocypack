@@ -80,7 +80,7 @@ inline bool ValidateUtf8StringC(uint8_t const* src, std::size_t limit) {
 
 }  // namespace
 
-#if ASM_OPTIMIZATIONS == 1
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
 #if defined(__SSE4_2__)
 #include <cpuid.h>
 #include <x86intrin.h>

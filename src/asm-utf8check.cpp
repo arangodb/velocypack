@@ -22,7 +22,7 @@
 
 #include "asm-utf8check.h"
 
-#if ASM_OPTIMIZATIONS == 1
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
 #include <cstring>
 #ifdef __aarch64__
 #include <sse2neon.h>
@@ -480,4 +480,4 @@ bool validate_utf8_fast_avx(uint8_t const* src, std::size_t len) {
 }  // namespace velocypack
 }  // namespace arangodb
 
-#endif  // ASM_OPTIMIZATIONS == 1
+#endif  // VELOCYPACK_ASM_OPTIMIZATIONS == 1

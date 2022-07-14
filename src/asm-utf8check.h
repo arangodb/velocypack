@@ -28,12 +28,12 @@
 
 namespace arangodb::velocypack {
 
-#if ASM_OPTIMIZATIONS == 1
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
 bool validate_utf8_fast_sse42(uint8_t const* src, std::size_t len);
 #ifdef __AVX2__
 bool validate_utf8_fast_avx_asciipath(char const* src, std::size_t len);
 bool validate_utf8_fast_avx(uint8_t const* src, std::size_t len);
 #endif  // __AVX2__
-#endif  // ASM_OPTIMIZATIONS
+#endif  // VELOCYPACK_ASM_OPTIMIZATIONS
 
 }  // namespace arangodb::velocypack
