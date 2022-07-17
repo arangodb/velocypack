@@ -32,6 +32,7 @@
 #include <iosfwd>
 #include <iterator>
 #include <limits>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -609,7 +610,7 @@ class Slice {
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
   template<typename T>
-  Slice get(std::vector<T> const& attributes,
+  Slice get(std::span<T const> attributes,
             bool resolveExternals = false) const {
     // forward to the iterator-based lookup
     return this->get(attributes.begin(), attributes.end(), resolveExternals);
@@ -618,7 +619,7 @@ class Slice {
   // look for the specified attribute path inside an Object
   // returns a Slice(ValueType::None) if not found
   template<typename T>
-  Slice get(std::initializer_list<T> const& attributes,
+  Slice get(std::initializer_list<T> attributes,
             bool resolveExternals = false) const {
     // forward to the iterator-based lookup
     return this->get(attributes.begin(), attributes.end(), resolveExternals);
@@ -640,13 +641,13 @@ class Slice {
 
   // whether or not an Object has a specific key
   template<typename T>
-  bool hasKey(std::vector<T> const& attributes) const {
+  bool hasKey(std::span<T const> attributes) const {
     return !this->get(attributes.begin(), attributes.end()).isNone();
   }
 
   // whether or not an Object has a specific key
   template<typename T>
-  bool hasKey(std::initializer_list<T> const& attributes) const {
+  bool hasKey(std::initializer_list<T> attributes) const {
     return !this->get(attributes.begin(), attributes.end()).isNone();
   }
 
