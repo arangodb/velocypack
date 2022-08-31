@@ -801,15 +801,14 @@ class Slice {
 
   char const* getStringUnchecked(ValueLength& length) const noexcept {
     uint8_t const h = head();
-    if (h >= 0x40 && h <= 0xbe) {
-      // short UTF-8 String
-      length = h - 0x40;
-      return reinterpret_cast<char const*>(start() + 1);
+    if (h == 0xbf) {
+      // long UTF-8 String
+      length = readIntegerFixed<ValueLength, 8>(start() + 1);
+      return reinterpret_cast<char const*>(start() + 1 + 8);
     }
-
-    // long UTF-8 String
-    length = readIntegerFixed<ValueLength, 8>(start() + 1);
-    return reinterpret_cast<char const*>(start() + 1 + 8);
+    // short UTF-8 String
+    length = h - 0x40;
+    return reinterpret_cast<char const*>(start() + 1);
   }
 
   // return the length of the String slice
