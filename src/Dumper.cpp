@@ -308,21 +308,25 @@ void Dumper::dumpString(char const* src, ValueLength len) {
       char esc = EscapeTable[c];
 
       if (esc) {
-        if (c != '/' || options->escapeForwardSlashes) {
-          // escape forward slashes only when requested
-          _sink->push_back('\\');
-        }
-        _sink->push_back(static_cast<char>(esc));
+        if (options->escapeControl) {
+          if (c != '/' || options->escapeForwardSlashes) {
+            // escape forward slashes only when requested
+            _sink->push_back('\\');
+          }
+          _sink->push_back(static_cast<char>(esc));
 
-        if (esc == 'u') {
-          uint16_t i1 = (((uint16_t)c) & 0xf0U) >> 4;
-          uint16_t i2 = (((uint16_t)c) & 0x0fU);
+          if (esc == 'u') {
+            uint16_t i1 = (((uint16_t)c) & 0xf0U) >> 4;
+            uint16_t i2 = (((uint16_t)c) & 0x0fU);
 
-          _sink->append("00", 2);
-          _sink->push_back(
-              static_cast<char>((i1 < 10) ? ('0' + i1) : ('A' + i1 - 10)));
-          _sink->push_back(
-              static_cast<char>((i2 < 10) ? ('0' + i2) : ('A' + i2 - 10)));
+            _sink->append("00", 2);
+            _sink->push_back(
+                static_cast<char>((i1 < 10) ? ('0' + i1) : ('A' + i1 - 10)));
+            _sink->push_back(
+                static_cast<char>((i2 < 10) ? ('0' + i2) : ('A' + i2 - 10)));
+          }
+        } else {
+          _sink->push_back(' ');
         }
       } else {
         _sink->push_back(static_cast<char>(c));
