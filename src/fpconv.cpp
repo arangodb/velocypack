@@ -24,6 +24,7 @@
  * [1] http://florian.loitsch.com/publications/dtoa-pldi2010.pdf
  */
 
+#include <bit>
 #include <cstring>
 
 #include "velocypack/velocypack-common.h"
@@ -67,12 +68,7 @@ static uint64_t tens[] = {10000000000000000000U,
                           1U};
 
 static inline uint64_t get_dbits(double d) {
-  union {
-    double dbl;
-    uint64_t i;
-  } dbl_bits = {d};
-
-  return dbl_bits.i;
+  return std::bit_cast<uint64_t>(d);
 }
 
 static Fp build_fp(double d) {
