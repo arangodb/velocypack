@@ -476,6 +476,26 @@ TEST(StringDumperTest, StringControlChars) {
             Dumper::toString(slice));
 }
 
+TEST(StringDumperTest, SuppressControlChars) {
+  Builder b;
+  b.add(Value("Before\nAfter\r\t\v\x01\x02"));
+
+  Options options;
+  options.escapeControl = false;
+  ASSERT_EQ(std::string("\"Before After     \""),
+            Dumper::toString(b.slice(), &options));
+}
+
+TEST(StringDumperTest, EscapeControlChars) {
+  Builder b;
+  b.add(Value("Before\nAfter\r\t\v\x01\x02"));
+
+  Options options;
+  options.escapeControl = true;
+  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\u0001\\u0002\""),
+            Dumper::toString(b.slice(), &options));
+}
+
 TEST(StringDumperTest, StringUTF8) {
   Builder b;
   b.add(Value("mötör"));
