@@ -478,11 +478,11 @@ TEST(StringDumperTest, StringControlChars) {
 
 TEST(StringDumperTest, SuppressControlChars) {
   Builder b;
-  b.add(Value("Before\nAfter\r\t\v\x01\x02"));
+  b.add(Value("Before\nAfter\r\t\v\x01\x02/"));
 
   Options options;
   options.escapeControl = false;
-  ASSERT_EQ(std::string("\"Before After     \""),
+  ASSERT_EQ(std::string("\"Before After     /\""),
             Dumper::toString(b.slice(), &options));
 }
 

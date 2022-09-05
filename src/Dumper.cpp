@@ -314,7 +314,6 @@ void Dumper::dumpString(char const* src, ValueLength len) {
             _sink->push_back('\\');
           }
           _sink->push_back(static_cast<char>(esc));
-
           if (esc == 'u') {
             uint16_t i1 = (((uint16_t)c) & 0xf0U) >> 4;
             uint16_t i2 = (((uint16_t)c) & 0x0fU);
@@ -326,7 +325,11 @@ void Dumper::dumpString(char const* src, ValueLength len) {
                 static_cast<char>((i2 < 10) ? ('0' + i2) : ('A' + i2 - 10)));
           }
         } else {
-          _sink->push_back(' ');
+          if (esc == '"' || esc == '/' || esc == '\\') {
+            _sink->push_back(static_cast<char>(esc));
+          } else {
+            _sink->push_back(' ');
+          }
         }
       } else {
         _sink->push_back(static_cast<char>(c));
