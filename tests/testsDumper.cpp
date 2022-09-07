@@ -478,21 +478,20 @@ TEST(StringDumperTest, StringControlChars) {
 
 TEST(StringDumperTest, SuppressControlChars) {
   Builder b;
-  b.add(Value("Before\nAfter\r\t\v\x01\x02/"));
+  b.add(Value("Before\nAfter\r\t\v\f\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\b\n\\\""));
 
   Options options;
   options.escapeControl = false;
-  ASSERT_EQ(std::string("\"Before After     /\""),
+  ASSERT_EQ(std::string("\"Before After      /\u00B0\uf0f9\u9095\uf0f9\u90b6  \\\"\""),
             Dumper::toString(b.slice(), &options));
 }
 
 TEST(StringDumperTest, EscapeControlChars) {
   Builder b;
-  b.add(Value("Before\nAfter\r\t\v\x01\x02"));
-
+  b.add(Value("Before\nAfter\r\t\v\f\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\b\n\\\""));
   Options options;
   options.escapeControl = true;
-  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\u0001\\u0002\""),
+  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\u000C\\u0001\\u0002/\u00B0\uf0f9\u9095\uf0f9\u90b6\\u0008\\n\\\\\\\"\""),
             Dumper::toString(b.slice(), &options));
 }
 

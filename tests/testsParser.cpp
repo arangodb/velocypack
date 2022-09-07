@@ -1159,14 +1159,16 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   Slice s(builder->start());
   std::string correct = "der\thund\nging\rin\fden\\wald\"und\b\nden'fux";
   checkBuild(s, ValueType::String, 1 + correct.size());
+
   char const* p = s.getString(len);
   ASSERT_EQ(correct.size(), len);
   ASSERT_EQ(0, strncmp(correct.c_str(), p, len));
+
   std::string out = s.copyString();
   ASSERT_EQ(correct, out);
 
   std::string const valueOut(
-      "\"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"");
+      "\"der\\thund\\nging\\rin\\u000Cden\\\\wald\\\"und\\u0008\\nden'fux\"");
   checkDump(s, valueOut);
 }
 

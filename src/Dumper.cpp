@@ -27,7 +27,6 @@
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Dumper.h"
 #include "velocypack/Exception.h"
-#include "velocypack/HexDump.h"
 #include "velocypack/Iterator.h"
 #include "velocypack/Sink.h"
 #include "velocypack/ValueType.h"
@@ -266,7 +265,7 @@ void Dumper::dumpString(char const* src, ValueLength len) {
   static char const EscapeTable[256] = {
       // 0    1    2    3    4    5    6    7    8    9    A    B    C    D    E
       // F
-      'u',  'u', 'u', 'u', 'u', 'u', 'u', 'u', 'b', 't', 'n', 'u', 'f', 'r',
+      'u',  'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 't', 'n', 'u', 'u', 'r',
       'u',
       'u',  // 00
       'u',  'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u', 'u',

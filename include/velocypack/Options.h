@@ -116,7 +116,8 @@ struct Options {
   // JSON with a Dumper
   bool escapeForwardSlashes = false;
 
-  // with a Dumper (creates \uxxxx sequences or displays '\n', '\r' or \'t')
+  // with a Dumper (creates \uxxxx sequences or displays '\n', '\r' or \'t',
+  // when set to false, replaces the control characters with whitespaces)
   bool escapeControl = true;
 
   // escape multi-byte Unicode characters when dumping them to JSON
