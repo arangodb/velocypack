@@ -492,11 +492,11 @@ TEST(StringDumperTest, SuppressControlChars) {
 TEST(StringDumperTest, EscapeControlChars) {
   Builder b;
   b.add(Value(
-      "Before\nAfter\r\t\v\f\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\b\n\\\""));
+      "Before\nAfter\r\t\v\f\b\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\v\n\\\""));
   Options options;
   options.escapeControl = true;
-  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\u000C\\u0001\\u0002/"
-                        "\u00B0\uf0f9\u9095\uf0f9\u90b6\\u0008\\n\\\\\\\"\""),
+  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\f\\b\\u0001\\u0002/"
+                        "\u00B0\uf0f9\u9095\uf0f9\u90b6\\u000B\\n\\\\\\\"\""),
             Dumper::toString(b.slice(), &options));
 }
 

@@ -1149,7 +1149,7 @@ TEST(ParserTest, StringLiteralUtf8Chars) {
 
 TEST(ParserTest, StringLiteralWithSpecials) {
   std::string const value(
-      "  \"der\\thund\\nging\\rin\\fden\\\\wald\\\"und\\b\\nden'fux\"  ");
+      "  \"der\\thund\\nging\\rin\\\v\fden\\\\wald\\\"und\\b\\nden'fux\"  ");
 
   Parser parser;
   ValueLength len = parser.parse(value);
@@ -1157,7 +1157,7 @@ TEST(ParserTest, StringLiteralWithSpecials) {
 
   std::shared_ptr<Builder> builder = parser.steal();
   Slice s(builder->start());
-  std::string correct = "der\thund\nging\rin\fden\\wald\"und\b\nden'fux";
+  std::string correct = "der\thund\nging\rin\v\fden\\wald\"und\b\nden'fux";
   checkBuild(s, ValueType::String, 1 + correct.size());
 
   char const* p = s.getString(len);
@@ -1168,7 +1168,7 @@ TEST(ParserTest, StringLiteralWithSpecials) {
   ASSERT_EQ(correct, out);
 
   std::string const valueOut(
-      "\"der\\thund\\nging\\rin\\u000Cden\\\\wald\\\"und\\u0008\\nden'fux\"");
+      "\"der\\thund\\nging\\rin\\u000B\\fden\\\\wald\\\"und\\b\\nden'fux\"");
   checkDump(s, valueOut);
 }
 
