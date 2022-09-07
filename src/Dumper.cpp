@@ -325,6 +325,7 @@ void Dumper::dumpString(char const* src, ValueLength len) {
           }
         } else {
           if (esc == '"' || esc == '/' || esc == '\\') {
+            _sink->push_back('\\');
             _sink->push_back(static_cast<char>(esc));
           } else {
             _sink->push_back(' ');
