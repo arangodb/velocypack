@@ -476,6 +476,30 @@ TEST(StringDumperTest, StringControlChars) {
             Dumper::toString(slice));
 }
 
+TEST(StringDumperTest, SuppressControlChars) {
+  Builder b;
+  b.add(Value(
+      "Before\nAfter\r\t\v\f\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\b\n\\\""));
+
+  Options options;
+  options.escapeControl = false;
+  ASSERT_EQ(
+      std::string(
+          "\"Before After      \\/\u00B0\uf0f9\u9095\uf0f9\u90b6  \\\\\\\"\""),
+      Dumper::toString(b.slice(), &options));
+}
+
+TEST(StringDumperTest, EscapeControlChars) {
+  Builder b;
+  b.add(Value(
+      "Before\nAfter\r\t\v\f\b\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\v\n\\\""));
+  Options options;
+  options.escapeControl = true;
+  ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\f\\b\\u0001\\u0002/"
+                        "\u00B0\uf0f9\u9095\uf0f9\u90b6\\u000B\\n\\\\\\\"\""),
+            Dumper::toString(b.slice(), &options));
+}
+
 TEST(StringDumperTest, StringUTF8) {
   Builder b;
   b.add(Value("mötör"));

@@ -113,8 +113,12 @@ struct Options {
   bool checkAttributeUniqueness = false;
 
   // escape forward slashes when serializing VPack values into
-  // JSON with a Dumper
+  // JSON with a Dumper (requires escapeControl = true)
   bool escapeForwardSlashes = false;
+
+  // with a Dumper (creates \uxxxx sequences or displays '\n', '\r' or \'t',
+  // when set to false, replaces the control characters with whitespaces)
+  bool escapeControl = true;
 
   // escape multi-byte Unicode characters when dumping them to JSON
   // with a Dumper (creates \uxxxx sequences)
