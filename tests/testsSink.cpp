@@ -132,7 +132,7 @@ TEST(SinkTest, SizeConstrainedStringSinkLarger) {
   ASSERT_TRUE(out.empty());
   ASSERT_FALSE(s.overflowed);
 
-  for (size_t i = 0; i < 4096; ++i) {
+  for (std::size_t i = 0; i < 4096; ++i) {
     s.push_back('x');
     if (i >= 2048) {
       ASSERT_EQ(2048, out.size());
@@ -160,6 +160,53 @@ TEST(SinkTest, SizeConstrainedStringSinkLongStringAppend) {
   ASSERT_EQ(2092, out.size());
   ASSERT_EQ(std::string("meow") + append.substr(0, 2088), out);
   ASSERT_TRUE(s.overflowed);
+}
+  
+TEST(SinkTest, SizeConstrainedStringSinkReserve) {
+  {
+    std::string out;
+    SizeConstrainedStringSink s(&out, 0);
+    
+    std::size_t oldCapacity = out.capacity();
+    // should do nothing
+    s.reserve(10);
+    ASSERT_EQ(oldCapacity, out.capacity());
+    
+    s.reserve(128);
+    ASSERT_EQ(oldCapacity, out.capacity());
+    
+    s.reserve(4096);
+    ASSERT_EQ(oldCapacity, out.capacity());
+  }
+  
+  {
+    std::string out;
+    SizeConstrainedStringSink s(&out, 4096);
+    
+    // should do something. however, we don't know
+    // the exact capacity, as it depends on the internals
+    // of std::string
+    s.reserve(128);
+    ASSERT_GE(out.capacity(), 128);
+    
+    std::size_t oldCapacity = out.capacity();
+    // should not do anything
+    s.reserve(128);
+    ASSERT_EQ(oldCapacity, out.capacity());
+    
+    s.reserve(256);
+    ASSERT_GE(out.capacity(), 256);
+    
+    s.reserve(4096);
+    ASSERT_GE(out.capacity(), 4096);
+
+    oldCapacity = out.capacity();
+    for (std::size_t i = 0; i < 10; ++i) {
+      s.reserve(128);
+      // capacity should not have changed
+      ASSERT_EQ(oldCapacity, out.capacity());
+    }
+  }
 }
 
 TEST(SinkTest, StringLengthSink) {

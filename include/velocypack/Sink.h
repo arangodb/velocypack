@@ -133,15 +133,19 @@ struct SizeConstrainedStringSinkImpl final : public Sink {
   }
 
   void reserve(ValueLength len) override final {
-    ValueLength length = len + buffer->size();
-    if (length <= buffer->capacity()) {
+    ValueLength total = checkOverflow(buffer->size() + checkOverflow(len));
+    if (total <= buffer->capacity()) {
       return;
+    }
+    ValueLength left = maxLength - buffer->size();
+    if (len > left) {
+      len = left;
     }
     buffer->reserve(checkOverflow(len));
   }
 
   T* buffer;
-  size_t const maxLength;
+  std::size_t const maxLength;
   bool overflowed;
 };
 
