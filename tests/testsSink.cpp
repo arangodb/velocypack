@@ -77,8 +77,95 @@ TEST(SinkTest, StringSink) {
   ASSERT_EQ("foobarbaz", out);
 }
 
+TEST(SinkTest, SizeConstrainedStringSinkAlwaysEmpty) {
+  std::string out;
+  SizeConstrainedStringSink s(&out, 0);
+
+  ASSERT_TRUE(out.empty());
+  ASSERT_FALSE(s.overflowed);
+
+  s.push_back('x');
+  ASSERT_TRUE(out.empty());
+  ASSERT_TRUE(s.overflowed);
+
+  s.append("foobarbaz");
+  ASSERT_TRUE(out.empty());
+  ASSERT_TRUE(s.overflowed);
+  
+  s.append("123", 3);
+  ASSERT_TRUE(out.empty());
+  ASSERT_TRUE(s.overflowed);
+}
+
+TEST(SinkTest, SizeConstrainedStringSinkSmall) {
+  std::string out;
+  SizeConstrainedStringSink s(&out, 15);
+
+  ASSERT_TRUE(out.empty());
+  ASSERT_FALSE(s.overflowed);
+
+  s.push_back('x');
+  ASSERT_EQ("x", out);
+  ASSERT_FALSE(s.overflowed);
+
+  s.append("foobarbaz");
+  ASSERT_EQ("xfoobarbaz", out);
+  ASSERT_FALSE(s.overflowed);
+  
+  s.append("123", 3);
+  ASSERT_EQ("xfoobarbaz123", out);
+  ASSERT_FALSE(s.overflowed);
+  
+  s.push_back('y');
+  ASSERT_EQ("xfoobarbaz123y", out);
+  ASSERT_FALSE(s.overflowed);
+  
+  s.append("123", 3);
+  ASSERT_EQ("xfoobarbaz123y1", out);
+  ASSERT_TRUE(s.overflowed);
+}
+
+TEST(SinkTest, SizeConstrainedStringSinkLarger) {
+  std::string out;
+  SizeConstrainedStringSink s(&out, 2048);
+
+  ASSERT_TRUE(out.empty());
+  ASSERT_FALSE(s.overflowed);
+
+  for (size_t i = 0; i < 4096; ++i) {
+    s.push_back('x');
+    if (i >= 2048) {
+      ASSERT_EQ(2048, out.size());
+      ASSERT_TRUE(s.overflowed);
+    } else {
+      ASSERT_EQ(i + 1, out.size());
+      ASSERT_FALSE(s.overflowed);
+    }
+  }
+}
+
+TEST(SinkTest, SizeConstrainedStringSinkLongStringAppend) {
+  std::string out;
+  SizeConstrainedStringSink s(&out, 2092);
+
+  ASSERT_TRUE(out.empty());
+  ASSERT_FALSE(s.overflowed);
+
+  s.append("meow");
+  ASSERT_EQ(4, out.size());
+  ASSERT_FALSE(s.overflowed);
+
+  std::string append(16384, 'x');
+  s.append(append);
+  ASSERT_EQ(2092, out.size());
+  ASSERT_EQ(std::string("meow") + append.substr(0, 2088), out);
+  ASSERT_TRUE(s.overflowed);
+}
+
 TEST(SinkTest, StringLengthSink) {
   StringLengthSink s;
+
+  ASSERT_EQ(0, s.length);
 
   s.push_back('x');
   ASSERT_EQ(1, s.length);

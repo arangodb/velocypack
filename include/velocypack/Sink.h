@@ -88,7 +88,7 @@ struct StringSinkImpl final : public Sink {
     if (length <= buffer->capacity()) {
       return;
     }
-    buffer->reserve(checkOverflow(length));
+    buffer->reserve(checkOverflow(len));
   }
 
   T* buffer;
@@ -96,6 +96,58 @@ struct StringSinkImpl final : public Sink {
 
 typedef StringSinkImpl<std::string> StringSink;
 
+// a sink with an upper bound for the generated output value
+template<typename T>
+struct SizeConstrainedStringSinkImpl final : public Sink {
+  explicit SizeConstrainedStringSinkImpl(T* buffer, ValueLength maxLength) 
+      : buffer(buffer), maxLength(maxLength), overflowed(false) {}
+
+  void push_back(char c) override final { 
+    if (buffer->size() < maxLength) {
+      buffer->push_back(c); 
+    } else {
+      overflowed = true;
+    }
+  }
+
+  void append(std::string const& p) override final {
+    append(p.data(), p.size());
+  }
+
+  void append(char const* p) override final { append(p, strlen(p)); }
+
+  void append(char const* p, ValueLength len) override final {
+    if (buffer->size() < maxLength) {
+      ValueLength total = checkOverflow(buffer->size() + checkOverflow(len));
+      if (total <= maxLength) {
+        buffer->append(p, len);
+        return;
+      }
+      ValueLength left = maxLength - buffer->size();
+      if (len > left) {
+        len = left;
+      }
+      buffer->append(p, len);
+    }
+    overflowed = true;
+  }
+
+  void reserve(ValueLength len) override final {
+    ValueLength length = len + buffer->size();
+    if (length <= buffer->capacity()) {
+      return;
+    }
+    buffer->reserve(checkOverflow(len));
+  }
+
+  T* buffer;
+  size_t const maxLength;
+  bool overflowed;
+};
+
+typedef SizeConstrainedStringSinkImpl<std::string> SizeConstrainedStringSink;
+
+// only tracks the length of the generated output
 struct StringLengthSink final : public Sink {
   StringLengthSink() : length(0) {}
 
