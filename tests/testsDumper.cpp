@@ -1812,7 +1812,7 @@ TEST(DumperLengthTest, Null) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("null"), sink.length);
+  ASSERT_EQ(strlen("null"), sink.length());
 }
 
 TEST(DumperLengthTest, True) {
@@ -1829,7 +1829,7 @@ TEST(DumperLengthTest, True) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("true"), sink.length);
+  ASSERT_EQ(strlen("true"), sink.length());
 }
 
 TEST(DumperLengthTest, False) {
@@ -1846,7 +1846,7 @@ TEST(DumperLengthTest, False) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("false"), sink.length);
+  ASSERT_EQ(strlen("false"), sink.length());
 }
 
 TEST(DumperLengthTest, String) {
@@ -1863,7 +1863,7 @@ TEST(DumperLengthTest, String) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("\"abcdefgjfjhhgh\""), sink.length);
+  ASSERT_EQ(strlen("\"abcdefgjfjhhgh\""), sink.length());
   ;
 }
 
@@ -1881,7 +1881,7 @@ TEST(DumperLengthTest, EmptyObject) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("{}"), sink.length);
+  ASSERT_EQ(strlen("{}"), sink.length());
 }
 
 TEST(DumperLengthTest, SimpleObject) {
@@ -1898,7 +1898,7 @@ TEST(DumperLengthTest, SimpleObject) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("{\"foo\":\"bar\"}"), sink.length);
+  ASSERT_EQ(strlen("{\"foo\":\"bar\"}"), sink.length());
 }
 
 TEST(DumperLengthTest, SimpleArray) {
@@ -1915,7 +1915,7 @@ TEST(DumperLengthTest, SimpleArray) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("[1,2,3,4,5,6,7,\"abcdef\"]"), sink.length);
+  ASSERT_EQ(strlen("[1,2,3,4,5,6,7,\"abcdef\"]"), sink.length());
 }
 
 TEST(DumperLengthTest, EscapeUnicodeOn) {
@@ -1933,7 +1933,7 @@ TEST(DumperLengthTest, EscapeUnicodeOn) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("\"m\\uxxxxt\\uxxxxr\""), sink.length);
+  ASSERT_EQ(strlen("\"m\\uxxxxt\\uxxxxr\""), sink.length());
 }
 
 TEST(DumperLengthTest, EscapeUnicodeOff) {
@@ -1951,7 +1951,7 @@ TEST(DumperLengthTest, EscapeUnicodeOff) {
   StringLengthSink sink;
   Dumper dumper(&sink, &options);
   dumper.dump(s);
-  ASSERT_EQ(strlen("\"mötör\""), sink.length);
+  ASSERT_EQ(strlen("\"mötör\""), sink.length());
 }
 
 int main(int argc, char* argv[]) {
