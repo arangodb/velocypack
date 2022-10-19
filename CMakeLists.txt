@@ -34,7 +34,6 @@ if (IPO_ENABLED)
   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
 endif()
 
-option(BuildVelocyPackExamples "Build examples" ON)
 option(Maintainer "Build maintainer tools" OFF)
 option(BuildSseOpt "Build with SSE optimization instructions" ON)
 
