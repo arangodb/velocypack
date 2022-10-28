@@ -24,7 +24,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Options.h"
@@ -47,56 +49,51 @@ class Dumper {
 
   Sink* sink() const { return _sink; }
 
-  void dump(Slice const& slice);
+  void dump(Slice slice);
 
-  void dump(Slice const* slice) { dump(*slice); }
+  [[deprecated]] void dump(Slice const* slice) { dump(*slice); }
 
-  static void dump(Slice const& slice, Sink* sink,
+  static void dump(Slice slice, Sink* sink,
                    Options const* options = &Options::Defaults);
 
   static void dump(Slice const* slice, Sink* sink,
                    Options const* options = &Options::Defaults);
 
-  static std::string toString(Slice const& slice,
+  static std::string toString(Slice slice,
                               Options const* options = &Options::Defaults);
 
-  static std::string toString(Slice const* slice,
-                              Options const* options = &Options::Defaults);
+  [[deprecated]] static std::string toString(Slice const* slice,
+                                             Options const* options = &Options::Defaults);
 
-  void append(Slice const& slice) { dumpValue(&slice); }
+  void append(Slice slice) { dumpValue(slice); }
 
-  void append(Slice const* slice) { dumpValue(slice); }
+  [[deprecated]] void append(Slice const* slice) { dumpValue(*slice); }
 
   void appendString(char const* src, ValueLength len);
 
-  void appendString(std::string const& str) {
+  void appendString(std::string_view str) {
     appendString(str.data(), str.size());
   }
 
-  void appendInt(int64_t);
+  void appendInt(int64_t v);
 
-  void appendUInt(uint64_t);
+  void appendUInt(uint64_t v);
 
-  void appendDouble(double);
+  void appendDouble(double v);
 
  private:
   void dumpUnicodeCharacter(uint16_t value);
 
-  void dumpInteger(Slice const*);
+  void dumpInteger(Slice slice);
 
-  void dumpString(char const*, ValueLength);
+  void dumpString(char const* src, ValueLength len);
 
-  inline void dumpValue(Slice const& slice, Slice const* base = nullptr) {
-    dumpValue(&slice, base);
-  }
-
-  void dumpValue(Slice const*, Slice const* = nullptr);
+  void dumpValue(Slice slice, Slice const* base = nullptr);
 
   void indent();
 
-  void handleUnsupportedType(Slice const* slice);
+  void handleUnsupportedType(Slice slice);
 
- private:
   Sink* _sink;
 
   int _indentation;

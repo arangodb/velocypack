@@ -29,7 +29,7 @@
 
 using namespace arangodb::velocypack;
 
-std::string HexDump::toHex(uint8_t value, std::string const& header) {
+std::string HexDump::toHex(uint8_t value, std::string_view header) {
   std::string result(header);
   appendHex(result, value);
   return result;
@@ -61,20 +61,18 @@ std::string HexDump::toString() const {
     }
 
     result.append(header);
-    HexDump::appendHex(result, *p++);
+    appendHex(result, *p++);
     ++current;
   }
 
   return result;
 }
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 std::ostream& operator<<(std::ostream& stream, HexDump const& hexdump) {
   stream << hexdump.toString();
   return stream;
 }
 
-}  // namespace velocypack
-}  // namespace arangodb
+}  // namespace arangodb::velocypack

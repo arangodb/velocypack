@@ -32,11 +32,9 @@
 
 using namespace arangodb::velocypack;
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 extern void* memrchr(void const* block, int c, std::size_t size);
-}
-}  // namespace arangodb
+}  // namespace arangodb::velocypack
 
 HashedStringRef::HashedStringRef(Slice slice) {
   VELOCYPACK_ASSERT(slice.isString());
@@ -164,13 +162,11 @@ static_assert(sizeof(HashedStringRef) == 16,
               "unexpected size of HashedStringRef");
 #endif
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 std::ostream& operator<<(std::ostream& stream, HashedStringRef const& ref) {
   stream.write(ref.data(), ref.length());
   return stream;
 }
 
-}  // namespace velocypack
-}  // namespace arangodb
+}  // namespace arangodb::velocypack

@@ -121,7 +121,7 @@ Slice Slice::translateUnchecked() const {
 }
 
 std::string Slice::toHex() const {
-  HexDump dump(this);
+  HexDump dump(*this);
   return dump.toString();
 }
 
@@ -144,7 +144,7 @@ std::string& Slice::toJson(std::string& out, Options const* options) const {
 
 void Slice::toJson(Sink* sink, Options const* options) const {
   Dumper dumper(sink, options);
-  dumper.dump(this);
+  dumper.dump(*this);
 }
 
 std::string Slice::toString(Options const* options) const {

@@ -24,8 +24,7 @@
 
 #include <cstring>
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 void* memrchr(void const* block, int c, std::size_t size) {
 #ifdef __linux__
@@ -46,5 +45,4 @@ void* memrchr(void const* block, int c, std::size_t size) {
 #endif
 }
 
-}  // namespace velocypack
-}  // namespace arangodb
+}  // namespace arangodb::velocypack

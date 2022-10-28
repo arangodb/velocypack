@@ -34,11 +34,9 @@
 using namespace arangodb::velocypack;
 
 // forward for fpconv function declared elsewhere
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 int fpconv_dtoa(double fp, char dest[24]);
-}
-}  // namespace arangodb
+}  // namespace arangodb::velocypack
 
 Dumper::Dumper(Sink* sink, Options const* options)
     : options(options), _sink(sink), _indentation(0) {
@@ -50,13 +48,13 @@ Dumper::Dumper(Sink* sink, Options const* options)
   }
 }
 
-void Dumper::dump(Slice const& slice) {
+void Dumper::dump(Slice slice) {
   _indentation = 0;
   _sink->reserve(slice.byteSize());
-  dumpValue(&slice);
+  dumpValue(slice);
 }
 
-/*static*/ void Dumper::dump(Slice const& slice, Sink* sink,
+/*static*/ void Dumper::dump(Slice slice, Sink* sink,
                              Options const* options) {
   Dumper dumper(sink, options);
   dumper.dump(slice);
@@ -67,7 +65,7 @@ void Dumper::dump(Slice const& slice) {
   dump(*slice, sink, options);
 }
 
-/*static*/ std::string Dumper::toString(Slice const& slice,
+/*static*/ std::string Dumper::toString(Slice slice,
                                         Options const* options) {
   std::string buffer;
   StringSink sink(&buffer);
@@ -240,19 +238,19 @@ void Dumper::dumpUnicodeCharacter(uint16_t value) {
   _sink->push_back((p < 10) ? ('0' + p) : ('A' + p - 10));
 }
 
-void Dumper::dumpInteger(Slice const* slice) {
-  VELOCYPACK_ASSERT(slice->isInteger());
+void Dumper::dumpInteger(Slice slice) {
+  VELOCYPACK_ASSERT(slice.isInteger());
 
-  if (slice->isType(ValueType::UInt)) {
-    uint64_t v = slice->getUIntUnchecked();
+  if (slice.isType(ValueType::UInt)) {
+    uint64_t v = slice.getUIntUnchecked();
 
     appendUInt(v);
-  } else if (slice->isType(ValueType::Int)) {
-    int64_t v = slice->getIntUnchecked();
+  } else if (slice.isType(ValueType::Int)) {
+    int64_t v = slice.getIntUnchecked();
 
     appendInt(v);
-  } else if (slice->isType(ValueType::SmallInt)) {
-    int64_t v = slice->getSmallIntUnchecked();
+  } else if (slice.isType(ValueType::SmallInt)) {
+    int64_t v = slice.getSmallIntUnchecked();
     if (v < 0) {
       _sink->push_back('-');
       v = -v;
@@ -390,25 +388,20 @@ void Dumper::dumpString(char const* src, ValueLength len) {
   }
 }
 
-void Dumper::dumpValue(Slice const* slice, Slice const* base) {
-  if (base == nullptr) {
-    base = slice;
-    VELOCYPACK_ASSERT(base != nullptr);
-  }
-
-  if (options->debugTags && slice->isTagged()) {
-    _sink->append(std::to_string(slice->getFirstTag()));
+void Dumper::dumpValue(Slice slice, Slice const* base) {
+  if (options->debugTags && slice.isTagged()) {
+    appendUInt(slice.getFirstTag());
     _sink->push_back(':');
   }
 
-  switch (slice->type()) {
+  switch (slice.type()) {
     case ValueType::Null: {
       _sink->append("null", 4);
       break;
     }
 
     case ValueType::Bool: {
-      if (slice->getBool()) {
+      if (slice.getBool()) {
         _sink->append("true", 4);
       } else {
         _sink->append("false", 5);
@@ -417,14 +410,14 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Array: {
-      ArrayIterator it(*slice);
+      ArrayIterator it(slice);
       _sink->push_back('[');
       if (options->prettyPrint) {
         _sink->push_back('\n');
         ++_indentation;
         while (it.valid()) {
           indent();
-          dumpValue(it.value(), slice);
+          dumpValue(it.value(), &slice);
           if (!it.isLast()) {
             _sink->push_back(',');
           }
@@ -439,7 +432,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
             _sink->push_back(',');
             _sink->push_back(' ');
           }
-          dumpValue(it.value(), slice);
+          dumpValue(it.value(), &slice);
           it.next();
         }
       } else {
@@ -447,7 +440,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
           if (!it.isFirst()) {
             _sink->push_back(',');
           }
-          dumpValue(it.value(), slice);
+          dumpValue(it.value(), &slice);
           it.next();
         }
       }
@@ -456,7 +449,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Object: {
-      ObjectIterator it(*slice, !options->dumpAttributesInIndexOrder);
+      ObjectIterator it(slice, !options->dumpAttributesInIndexOrder);
       _sink->push_back('{');
       if (options->prettyPrint) {
         _sink->push_back('\n');
@@ -464,9 +457,9 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
         while (it.valid()) {
           auto current = (*it);
           indent();
-          dumpValue(current.key, slice);
+          dumpValue(current.key, &slice);
           _sink->append(" : ", 3);
-          dumpValue(current.value, slice);
+          dumpValue(current.value, &slice);
           if (!it.isLast()) {
             _sink->push_back(',');
           }
@@ -482,10 +475,10 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
             _sink->push_back(' ');
           }
           auto current = (*it);
-          dumpValue(current.key, slice);
+          dumpValue(current.key, &slice);
           _sink->push_back(':');
           _sink->push_back(' ');
-          dumpValue(current.value, slice);
+          dumpValue(current.value, &slice);
           it.next();
         }
       } else {
@@ -494,9 +487,9 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
             _sink->push_back(',');
           }
           auto current = (*it);
-          dumpValue(current.key, slice);
+          dumpValue(current.key, &slice);
           _sink->push_back(':');
-          dumpValue(current.value, slice);
+          dumpValue(current.value, &slice);
           it.next();
         }
       }
@@ -505,7 +498,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::Double: {
-      double const v = slice->getDouble();
+      double const v = slice.getDouble();
 
       if (!std::isnan(v) && !std::isinf(v)) {
         appendDouble(v);
@@ -539,7 +532,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
     case ValueType::String: {
       ValueLength len;
-      char const* p = slice->getString(len);
+      char const* p = slice.getString(len);
       _sink->reserve(2 + len);
       _sink->push_back('"');
       dumpString(p, len);
@@ -548,14 +541,18 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     }
 
     case ValueType::External: {
-      Slice const external(
-          reinterpret_cast<uint8_t const*>(slice->getExternal()));
-      dumpValue(&external, base);
+      if (base == nullptr) {
+        base = &slice;
+      }
+
+      Slice external(
+          reinterpret_cast<uint8_t const*>(slice.getExternal()));
+      dumpValue(external, base);
       break;
     }
 
     case ValueType::Tagged: {
-      dump(slice->value());
+      dump(slice.value());
       break;
     }
 
@@ -563,7 +560,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
       if (options->binaryAsHex) {
         _sink->push_back('"');
         ValueLength len;
-        uint8_t const* bin = slice->getBinary(len);
+        uint8_t const* bin = slice.getBinary(len);
         for (ValueLength i = 0; i < len; ++i) {
           uint8_t value = bin[i];
           uint8_t x = value / 16;
@@ -580,7 +577,7 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
 
     case ValueType::UTCDate: {
       if (options->datesAsIntegers) {
-        appendInt(slice->getUTCDate());
+        appendInt(slice.getUTCDate());
       } else {
         handleUnsupportedType(slice);
       }
@@ -603,9 +600,11 @@ void Dumper::dumpValue(Slice const* slice, Slice const* base) {
     case ValueType::Custom: {
       if (options->customTypeHandler == nullptr) {
         throw Exception(Exception::NeedCustomTypeHandler);
-      } else {
-        options->customTypeHandler->dump(*slice, this, *base);
       }
+      if (base == nullptr) {
+        base = &slice;
+      }
+      options->customTypeHandler->dump(slice, this, *base);
       break;
     }
   }
@@ -619,14 +618,14 @@ void Dumper::indent() {
   }
 }
 
-void Dumper::handleUnsupportedType(Slice const* slice) {
+void Dumper::handleUnsupportedType(Slice slice) {
   if (options->unsupportedTypeBehavior == Options::NullifyUnsupportedType) {
     _sink->append("null", 4);
     return;
   } else if (options->unsupportedTypeBehavior ==
              Options::ConvertUnsupportedType) {
     _sink->append(std::string("\"(non-representable type ") +
-                  slice->typeName() + ")\"");
+                  slice.typeName() + ")\"");
     return;
   }
 

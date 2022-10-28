@@ -38,12 +38,10 @@
 #define absv(n) ((n) < 0 ? -(n) : (n))
 #define minv(a, b) ((a) < (b) ? (a) : (b))
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 // forward for fpconv function
 int fpconv_dtoa(double fp, char dest[24]);
-}  // namespace velocypack
-}  // namespace arangodb
+}  // namespace arangodb::velocypack
 
 static uint64_t tens[] = {10000000000000000000U,
                           1000000000000000000U,
