@@ -462,7 +462,9 @@ class Slice {
       throw Exception(Exception::InvalidValueType, "Expecting type Double");
     }
     auto v = readIntegerFixed<uint64_t, 8>(start() + 1);
-    return std::bit_cast<double>(v);
+    double r;
+    std::memcpy(&r, &v, sizeof(double));
+    return r;
   }
 
   // extract the array value at the specified index
