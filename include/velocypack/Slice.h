@@ -25,7 +25,6 @@
 #pragma once
 
 #include <algorithm>
-#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <functional>
