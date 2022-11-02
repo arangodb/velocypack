@@ -460,12 +460,10 @@ class Slice {
     if (!isDouble()) {
       throw Exception(Exception::InvalidValueType, "Expecting type Double");
     }
-    union {
-      uint64_t dv;
-      double d;
-    } v;
-    v.dv = readIntegerFixed<uint64_t, 8>(start() + 1);
-    return v.d;
+    auto v = readIntegerFixed<uint64_t, 8>(start() + 1);
+    double r;
+    std::memcpy(&r, &v, sizeof(double));
+    return r;
   }
 
   // extract the array value at the specified index
