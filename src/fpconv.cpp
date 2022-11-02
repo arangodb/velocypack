@@ -68,7 +68,9 @@ static uint64_t tens[] = {10000000000000000000U,
                           1U};
 
 static inline uint64_t get_dbits(double d) {
-  return std::bit_cast<uint64_t>(d);
+  uint64_t r;
+  std::memcpy(&r, &d, sizeof(double));
+  return r;
 }
 
 static Fp build_fp(double d) {
