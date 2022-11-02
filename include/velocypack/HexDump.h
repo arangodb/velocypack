@@ -24,7 +24,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <iosfwd>
+#include <string>
+#include <string_view>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Slice.h"
@@ -44,8 +47,8 @@ struct HexDump {
         separator(separator),
         header(header) {}
 
-  HexDump(Slice const* slice, int valuesPerLine = 16,
-          std::string const& separator = " ", std::string const& header = "0x")
+  [[deprecated]] HexDump(Slice const* slice, int valuesPerLine = 16,
+                         std::string const& separator = " ", std::string const& header = "0x")
       : HexDump(*slice, valuesPerLine, separator, header) {}
 
   HexDump(uint8_t const* data, ValueLength length, int valuesPerLine = 16,
@@ -56,7 +59,7 @@ struct HexDump {
         separator(separator),
         header(header) {}
 
-  static std::string toHex(uint8_t value, std::string const& header = "0x");
+  static std::string toHex(uint8_t value, std::string_view header = "0x");
   static void appendHex(std::string& result, uint8_t value);
   std::string toString() const;
 

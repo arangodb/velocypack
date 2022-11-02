@@ -47,8 +47,7 @@
  *
  */
 
-namespace arangodb {
-namespace velocypack {
+namespace arangodb::velocypack {
 
 // all byte values must be no larger than 0xF4
 static inline void checkSmallerThan0xF4(__m128i current_bytes,
@@ -477,7 +476,6 @@ bool validate_utf8_fast_avx(uint8_t const* src, std::size_t len) {
 
 #endif  // __AVX2__
 
-}  // namespace velocypack
-}  // namespace arangodb
+}  // namespace arangodb::velocypack
 
 #endif  // VELOCYPACK_ASM_OPTIMIZATIONS == 1

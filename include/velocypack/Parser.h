@@ -24,8 +24,11 @@
 
 #pragma once
 
-#include <string>
 #include <cmath>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Builder.h"
@@ -137,7 +140,7 @@ class Parser {
   Builder const& builder() const { return *_builderPtr; }
 
   static std::shared_ptr<Builder> fromJson(
-      std::string const& json, Options const* options = &Options::Defaults) {
+      std::string_view json, Options const* options = &Options::Defaults) {
     Parser parser(options);
     parser.parse(json);
     return parser.steal();
@@ -146,9 +149,7 @@ class Parser {
   static std::shared_ptr<Builder> fromJson(
       char const* start, std::size_t size,
       Options const* options = &Options::Defaults) {
-    Parser parser(options);
-    parser.parse(start, size);
-    return parser.steal();
+    return fromJson({ start, size }, options);
   }
 
   static std::shared_ptr<Builder> fromJson(
@@ -159,7 +160,7 @@ class Parser {
     return parser.steal();
   }
 
-  ValueLength parse(std::string const& json, bool multi = false) {
+  ValueLength parse(std::string_view json, bool multi = false) {
     return parse(reinterpret_cast<uint8_t const*>(json.data()), json.size(),
                  multi);
   }
