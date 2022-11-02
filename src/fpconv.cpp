@@ -69,7 +69,7 @@ static uint64_t tens[] = {10000000000000000000U,
 
 static inline uint64_t get_dbits(double d) {
   uint64_t r;
-  std::memcpy(&r, &d, sizeof(double));
+  std::memcpy(&r, &d, sizeof(uint64_t));
   return r;
 }
 
