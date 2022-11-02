@@ -24,7 +24,6 @@
  * [1] http://florian.loitsch.com/publications/dtoa-pldi2010.pdf
  */
 
-#include <bit>
 #include <cstring>
 
 #include "velocypack/velocypack-common.h"
