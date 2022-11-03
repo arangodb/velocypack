@@ -26,6 +26,7 @@
 
 #include <ostream>
 #include <string>
+#include <string_view>
 
 #include "tests-common.h"
 
@@ -40,6 +41,10 @@ TEST(SinkTest, CharBufferSink) {
 
   out.clear();
   s.append(std::string("foobarbaz"));
+  ASSERT_EQ(9, out.size());
+  
+  out.clear();
+  s.append(std::string_view("foobarbaz"));
   ASSERT_EQ(9, out.size());
 
   out.clear();
@@ -65,6 +70,11 @@ TEST(SinkTest, StringSink) {
   s.append(std::string("foobarbaz"));
   ASSERT_EQ(9, out.size());
   ASSERT_EQ("foobarbaz", out);
+  
+  out.clear();
+  s.append(std::string_view("foobarbaz"));
+  ASSERT_EQ(9, out.size());
+  ASSERT_EQ("foobarbaz", out);
 
   out.clear();
   s.append("foobarbaz");
@@ -81,59 +91,91 @@ TEST(SinkTest, SizeConstrainedStringSinkAlwaysEmpty) {
   std::string out;
   SizeConstrainedStringSink s(&out, 0);
 
+  ASSERT_EQ(0, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_FALSE(s.overflowed());
 
   s.push_back('x');
+  ASSERT_EQ(0, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(1, s.unconstrainedLength());
 
   s.append("foobarbaz");
+  ASSERT_EQ(0, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(10, s.unconstrainedLength());
+  
+  s.append(std::string_view("foobarbaz"));
+  ASSERT_EQ(0, s.maxLength());
+  ASSERT_TRUE(out.empty());
+  ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(19, s.unconstrainedLength());
   
   s.append("123", 3);
+  ASSERT_EQ(0, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(22, s.unconstrainedLength());
 }
 
 TEST(SinkTest, SizeConstrainedStringSinkSmall) {
   std::string out;
   SizeConstrainedStringSink s(&out, 15);
 
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_FALSE(s.overflowed());
 
   s.push_back('x');
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_EQ("x", out);
   ASSERT_FALSE(s.overflowed());
+  ASSERT_EQ(1, s.unconstrainedLength());
 
   s.append("foobarbaz");
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_EQ("xfoobarbaz", out);
   ASSERT_FALSE(s.overflowed());
+  ASSERT_EQ(10, s.unconstrainedLength());
   
   s.append("123", 3);
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_EQ("xfoobarbaz123", out);
   ASSERT_FALSE(s.overflowed());
+  ASSERT_EQ(13, s.unconstrainedLength());
   
   s.push_back('y');
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_EQ("xfoobarbaz123y", out);
   ASSERT_FALSE(s.overflowed());
+  ASSERT_EQ(14, s.unconstrainedLength());
   
   s.append("123", 3);
+  ASSERT_EQ(15, s.maxLength());
   ASSERT_EQ("xfoobarbaz123y1", out);
   ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(17, s.unconstrainedLength());
+  
+  s.append(std::string_view("fuchs"));
+  ASSERT_EQ(15, s.maxLength());
+  ASSERT_EQ("xfoobarbaz123y1", out);
+  ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(22, s.unconstrainedLength());
 }
 
 TEST(SinkTest, SizeConstrainedStringSinkLarger) {
   std::string out;
   SizeConstrainedStringSink s(&out, 2048);
 
+  ASSERT_EQ(2048, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_FALSE(s.overflowed());
 
   for (std::size_t i = 0; i < 4096; ++i) {
     s.push_back('x');
+    ASSERT_EQ(2048, s.maxLength());
     if (i >= 2048) {
       ASSERT_EQ(2048, out.size());
       ASSERT_TRUE(s.overflowed());
@@ -141,6 +183,7 @@ TEST(SinkTest, SizeConstrainedStringSinkLarger) {
       ASSERT_EQ(i + 1, out.size());
       ASSERT_FALSE(s.overflowed());
     }
+    ASSERT_EQ(i + 1, s.unconstrainedLength());
   }
 }
 
@@ -148,18 +191,23 @@ TEST(SinkTest, SizeConstrainedStringSinkLongStringAppend) {
   std::string out;
   SizeConstrainedStringSink s(&out, 2092);
 
+  ASSERT_EQ(2092, s.maxLength());
   ASSERT_TRUE(out.empty());
   ASSERT_FALSE(s.overflowed());
 
   s.append("meow");
+  ASSERT_EQ(2092, s.maxLength());
   ASSERT_EQ(4, out.size());
   ASSERT_FALSE(s.overflowed());
+  ASSERT_EQ(4, s.unconstrainedLength());
 
   std::string append(16384, 'x');
   s.append(append);
+  ASSERT_EQ(2092, s.maxLength());
   ASSERT_EQ(2092, out.size());
   ASSERT_EQ(std::string("meow") + append.substr(0, 2088), out);
   ASSERT_TRUE(s.overflowed());
+  ASSERT_EQ(16388, s.unconstrainedLength());
 }
   
 TEST(SinkTest, SizeConstrainedStringSinkReserve) {
@@ -225,6 +273,9 @@ TEST(SinkTest, StringLengthSink) {
 
   s.append("foobarbaz", 9);
   ASSERT_EQ(28, s.length());
+  
+  s.append(std::string_view("foobarbaz"));
+  ASSERT_EQ(37, s.length());
 }
 
 TEST(SinkTest, StringStreamSink) {
@@ -242,6 +293,9 @@ TEST(SinkTest, StringStreamSink) {
 
   s.append("foobarbaz", 9);
   ASSERT_EQ("xfoobarbazfoobarbazfoobarbaz", out.str());
+  
+  s.append(std::string_view("boofar"));
+  ASSERT_EQ("xfoobarbazfoobarbazfoobarbazboofar", out.str());
 }
 
 int main(int argc, char* argv[]) {

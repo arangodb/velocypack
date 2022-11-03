@@ -25,6 +25,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <fstream>
 #include <sstream>
 
@@ -40,23 +41,22 @@ struct Sink {
 
   virtual ~Sink() = default;
   virtual void push_back(char c) = 0;
-  virtual void append(std::string const& p) = 0;
-  virtual void append(char const* p) = 0;
   virtual void append(char const* p, ValueLength len) = 0;
   virtual void reserve(ValueLength len) = 0;
+
+  // default implementations, can be overridden
+  virtual void append(std::string const& p) { append(p.data(), p.size()); }
+  virtual void append(std::string_view p) { append(p.data(), p.size()); }
+  [[deprecated]] virtual void append(char const* p) { append(p, std::strlen(p)); }
 };
 
 template<typename T>
 struct ByteBufferSinkImpl final : public Sink {
+  using Sink::append;
+
   explicit ByteBufferSinkImpl(Buffer<T>* buffer) : _buffer(buffer) {}
 
   void push_back(char c) override final { _buffer->push_back(c); }
-
-  void append(std::string const& p) override final {
-    _buffer->append(p.c_str(), p.size());
-  }
-
-  void append(char const* p) override final { _buffer->append(p, strlen(p)); }
 
   void append(char const* p, ValueLength len) override final {
     _buffer->append(p, len);
@@ -72,13 +72,11 @@ typedef ByteBufferSinkImpl<char> CharBufferSink;
 
 template<typename T>
 struct StringSinkImpl final : public Sink {
+  using Sink::append;
+
   explicit StringSinkImpl(T* buffer) : _buffer(buffer) {}
 
   void push_back(char c) override final { _buffer->push_back(c); }
-
-  void append(std::string const& p) override final { _buffer->append(p); }
-
-  void append(char const* p) override final { _buffer->append(p, strlen(p)); }
 
   void append(char const* p, ValueLength len) override final {
     _buffer->append(p, checkOverflow(len));
@@ -101,28 +99,28 @@ typedef StringSinkImpl<std::string> StringSink;
 // a sink with an upper bound for the generated output value
 template<typename T>
 struct SizeConstrainedStringSinkImpl final : public Sink {
+  using Sink::append;
+
   explicit SizeConstrainedStringSinkImpl(T* buffer, ValueLength maxLength) 
-      : _buffer(buffer), _maxLength(maxLength), _overflowed(false) {}
+      : _maxLength(maxLength), _buffer(buffer), _length(0), _overflowed(false) {}
 
   void push_back(char c) override final { 
+    ++_length;
     if (_buffer->size() < _maxLength) {
-      _buffer->push_back(c); 
+      _buffer->push_back(c);
+      VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
     } else {
       _overflowed = true;
     }
   }
 
-  void append(std::string const& p) override final {
-    append(p.data(), p.size());
-  }
-
-  void append(char const* p) override final { append(p, strlen(p)); }
-
   void append(char const* p, ValueLength len) override final {
+    _length += len;
     if (_buffer->size() < _maxLength) {
       ValueLength total = checkOverflow(_buffer->size() + checkOverflow(len));
       if (total <= _maxLength) {
         _buffer->append(p, len);
+        VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
         return;
       }
       ValueLength left = _maxLength - _buffer->size();
@@ -130,6 +128,7 @@ struct SizeConstrainedStringSinkImpl final : public Sink {
         len = left;
       }
       _buffer->append(p, len);
+      VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
     }
     _overflowed = true;
   }
@@ -139,18 +138,24 @@ struct SizeConstrainedStringSinkImpl final : public Sink {
     if (total <= _buffer->capacity()) {
       return;
     }
+    VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
     ValueLength left = _maxLength - _buffer->size();
     if (len > left) {
       len = left;
     }
-    _buffer->reserve(checkOverflow(len));
+    if (len > 0) {
+      _buffer->reserve(checkOverflow(len));
+    }
   }
 
+  ValueLength maxLength() const noexcept { return _maxLength; }
+  ValueLength unconstrainedLength() const noexcept { return _length; }
   bool overflowed() const noexcept { return _overflowed; }
 
  private:
-  T* _buffer;
   std::size_t const _maxLength;
+  T* _buffer;
+  ValueLength _length;
   bool _overflowed;
 };
 
@@ -158,13 +163,11 @@ typedef SizeConstrainedStringSinkImpl<std::string> SizeConstrainedStringSink;
 
 // only tracks the length of the generated output
 struct StringLengthSink final : public Sink {
+  using Sink::append;
+
   StringLengthSink() : _length(0) {}
 
   void push_back(char) override final { ++_length; }
-
-  void append(std::string const& p) override final { _length += p.size(); }
-
-  void append(char const* p) override final { _length += strlen(p); }
 
   void append(char const*, ValueLength len) override final { _length += len; }
 
@@ -178,15 +181,13 @@ struct StringLengthSink final : public Sink {
 
 template<typename T>
 struct StreamSinkImpl final : public Sink {
+  using Sink::append;
+
   explicit StreamSinkImpl(T* stream) : _stream(stream) {}
 
   void push_back(char c) override final { *_stream << c; }
 
   void append(std::string const& p) override final { *_stream << p; }
-
-  void append(char const* p) override final {
-    _stream->write(p, static_cast<std::streamsize>(strlen(p)));
-  }
 
   void append(char const* p, ValueLength len) override final {
     _stream->write(p, static_cast<std::streamsize>(len));
