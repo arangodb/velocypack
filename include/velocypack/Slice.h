@@ -406,8 +406,8 @@ class Slice {
   template<typename T>
   bool isNumber() const noexcept {
     try {
-      if constexpr (std::is_integral<T>()) {
-        if constexpr (std::is_signed<T>()) {
+      if constexpr (std::is_integral_v<T>) {
+        if constexpr (std::is_signed_v<T>) {
           // signed integral type
           if (isDouble()) {
             auto v = getDouble();
@@ -721,8 +721,8 @@ class Slice {
 
   template<typename T>
   T getNumber() const {
-    if constexpr (std::is_integral<T>()) {
-      if constexpr (std::is_signed<T>()) {
+    if constexpr (std::is_integral_v<T>) {
+      if constexpr (std::is_signed_v<T>) {
         // signed integral type
         if (isDouble()) {
           auto v = getDouble();
