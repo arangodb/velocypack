@@ -406,13 +406,19 @@ class Slice {
   template<typename T>
   bool isNumber() const noexcept {
     try {
-      if (std::is_integral<T>()) {
-        if (std::is_signed<T>()) {
+      if constexpr (std::is_integral_v<T>) {
+        if constexpr (std::is_signed_v<T>) {
           // signed integral type
           if (isDouble()) {
             auto v = getDouble();
-            return (v >= static_cast<double>((std::numeric_limits<T>::min)()) &&
-                    v <= static_cast<double>((std::numeric_limits<T>::max)()));
+            // 9223372036854774784.0 then 9223372036854775808.0
+            // (2^63 not represented in int64_t)
+            constexpr auto kMax =
+                sizeof(T) > 4
+                    ? 9223372036854774784.0
+                    : static_cast<double>((std::numeric_limits<T>::max)());
+            return static_cast<double>((std::numeric_limits<T>::min)()) <= v &&
+                   v <= kMax;
           }
 
           int64_t v = getInt();
@@ -422,18 +428,23 @@ class Slice {
           // unsigned integral type
           if (isDouble()) {
             auto v = getDouble();
-            return (v >= 0.0 && v <= static_cast<double>(UINT64_MAX) &&
-                    v <= static_cast<double>((std::numeric_limits<T>::max)()));
+            // 18446744073709549568.0 then 18446744073709551616.0
+            // (2^64 not represented in uint64_t)
+            constexpr auto kMax =
+                sizeof(T) > 4
+                    ? 18446744073709549568.0
+                    : static_cast<double>((std::numeric_limits<T>::max)());
+            return 0.0 <= v && v <= kMax;
           }
 
           // may throw if value is < 0
           uint64_t v = getUInt();
           return (v <= static_cast<uint64_t>((std::numeric_limits<T>::max)()));
         }
+      } else {
+        // floating point type
+        return isNumber();
       }
-
-      // floating point type
-      return isNumber();
     } catch (...) {
       // something went wrong
       return false;
@@ -710,13 +721,19 @@ class Slice {
 
   template<typename T>
   T getNumber() const {
-    if (std::is_integral<T>()) {
-      if (std::is_signed<T>()) {
+    if constexpr (std::is_integral_v<T>) {
+      if constexpr (std::is_signed_v<T>) {
         // signed integral type
         if (isDouble()) {
           auto v = getDouble();
+          // 9223372036854774784.0 then 9223372036854775808.0
+          // (2^63 not represented in int64_t)
+          constexpr auto kMax =
+              sizeof(T) > 4
+                  ? 9223372036854774784.0
+                  : static_cast<double>((std::numeric_limits<T>::max)());
           if (v < static_cast<double>((std::numeric_limits<T>::min)()) ||
-              v > static_cast<double>((std::numeric_limits<T>::max)())) {
+              kMax < v) {
             throw Exception(Exception::NumberOutOfRange);
           }
           return static_cast<T>(v);
@@ -732,8 +749,13 @@ class Slice {
         // unsigned integral type
         if (isDouble()) {
           auto v = getDouble();
-          if (v < 0.0 || v > static_cast<double>(UINT64_MAX) ||
-              v > static_cast<double>((std::numeric_limits<T>::max)())) {
+          // 18446744073709549568.0 then 18446744073709551616.0
+          // (2^64 not represented in uint64_t)
+          constexpr auto kMax =
+              sizeof(T) > 4
+                  ? 18446744073709549568.0
+                  : static_cast<double>((std::numeric_limits<T>::max)());
+          if (v < 0.0 || kMax < v) {
             throw Exception(Exception::NumberOutOfRange);
           }
           return static_cast<T>(v);
@@ -746,21 +768,21 @@ class Slice {
         }
         return static_cast<T>(v);
       }
-    }
+    } else {
+      // floating point type
 
-    // floating point type
+      if (isDouble()) {
+        return static_cast<T>(getDouble());
+      }
+      if (isInt() || isSmallInt()) {
+        return static_cast<T>(getIntUnchecked());
+      }
+      if (isUInt()) {
+        return static_cast<T>(getUIntUnchecked());
+      }
 
-    if (isDouble()) {
-      return static_cast<T>(getDouble());
+      throw Exception(Exception::InvalidValueType, "Expecting numeric type");
     }
-    if (isInt() || isSmallInt()) {
-      return static_cast<T>(getIntUnchecked());
-    }
-    if (isUInt()) {
-      return static_cast<T>(getUIntUnchecked());
-    }
-
-    throw Exception(Exception::InvalidValueType, "Expecting numeric type");
   }
 
   // an alias for getNumber<T>
