@@ -100,6 +100,11 @@ TEST(BuilderTest, AddToObjectEmtpyStringView) {
   obj.openObject();
   obj.add(std::string_view{}, std::string_view{});
   obj.close();
+
+  ASSERT_EQ(1U, obj.slice().length());
+  ObjectIterator it(obj.slice());
+  ASSERT_TRUE(it.valid());
+  ASSERT_EQ("", it.key().stringView());
 }
 
 TEST(BuilderTest, AddObjectIteratorNonObject) {
