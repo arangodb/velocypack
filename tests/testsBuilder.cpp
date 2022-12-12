@@ -105,6 +105,7 @@ TEST(BuilderTest, AddToObjectEmtpyStringView) {
   ObjectIterator it(obj.slice());
   ASSERT_TRUE(it.valid());
   ASSERT_EQ("", it.key().stringView());
+  ASSERT_EQ("", it.value().stringView());
 }
 
 TEST(BuilderTest, AddObjectIteratorNonObject) {
