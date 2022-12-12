@@ -95,6 +95,19 @@ TEST(BuilderTest, AddObjectIteratorKeyAlreadyWritten) {
   ASSERT_FALSE(b.isClosed());
 }
 
+TEST(BuilderTest, AddToObjectEmtpyStringView) {
+  Builder obj;
+  obj.openObject();
+  obj.add(std::string_view{}, std::string_view{});
+  obj.close();
+
+  ASSERT_EQ(1U, obj.slice().length());
+  ObjectIterator it(obj.slice());
+  ASSERT_TRUE(it.valid());
+  ASSERT_EQ("", it.key().stringView());
+  ASSERT_EQ("", it.value().stringView());
+}
+
 TEST(BuilderTest, AddObjectIteratorNonObject) {
   Builder obj;
   obj.openObject();
