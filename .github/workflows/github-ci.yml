@@ -84,7 +84,7 @@ jobs:
           sudo add-apt-repository "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-$version main"
         fi
         sudo apt-get update
-        sudo apt-get install clang-$version
+        sudo apt-get install clang-$version lld
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}

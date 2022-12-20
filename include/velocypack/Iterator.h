@@ -70,8 +70,7 @@ class ArrayIterator {
     return *this;
   }
 
-  [[nodiscard("You made unnecessary expensive copy.")]] ArrayIterator
-  operator++(int) noexcept {
+  [[nodiscard]] ArrayIterator operator++(int) noexcept {
     ArrayIterator prev{*this};
     next();
     return prev;
@@ -233,8 +232,7 @@ class ObjectIterator {
     return *this;
   }
 
-  [[nodiscard("You made unnecessary expensive copy.")]] ObjectIterator
-  operator++(int) noexcept {
+  [[nodiscard]] ObjectIterator operator++(int) noexcept {
     ObjectIterator prev{*this};
     next();
     return prev;
@@ -255,10 +253,7 @@ class ObjectIterator {
     return {key.makeKey(), Slice(key.begin() + key.byteSize())};
   }
 
-  [[nodiscard("You made unnecessary expensive copy.")]] ObjectIterator begin()
-      const noexcept {
-    return {*this};
-  }
+  [[nodiscard]] ObjectIterator begin() const noexcept { return {*this}; }
 
 #if (defined(_MSC_VER) ||                                     \
      (defined(__clang_version__) && __clang_major__ >= 12) || \
