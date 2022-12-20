@@ -271,6 +271,9 @@ class ObjectIterator {
     it._position = it._size;
     return it;
   }
+  [[nodiscard]] bool operator!=(ObjectIterator const& other) const noexcept {
+    return !operator==(other);
+  }
 #endif
 
   [[nodiscard]] bool valid() const noexcept { return _position != _size; }
