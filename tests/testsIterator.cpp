@@ -84,12 +84,13 @@ TEST(IteratorTest, IterateArrayEmpty) {
   ASSERT_EQ(0U, it.size());
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = (*it), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateArrayEmptySpecial) {
@@ -97,12 +98,13 @@ TEST(IteratorTest, IterateArrayEmptySpecial) {
   ASSERT_EQ(0U, it.size());
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION((*it), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = (*it), Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateArray) {
@@ -171,7 +173,8 @@ TEST(IteratorTest, IterateArray) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateArrayForward) {
@@ -230,7 +233,8 @@ TEST(IteratorTest, IterateArrayForward) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateCompactArrayForward) {
@@ -292,7 +296,8 @@ TEST(IteratorTest, IterateCompactArrayForward) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateSubArray) {
@@ -332,7 +337,8 @@ TEST(IteratorTest, IterateSubArray) {
 
   it2.next();
   ASSERT_FALSE(it2.valid());
-  ASSERT_VELOCYPACK_EXCEPTION(it2.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it2.value(),
+                              Exception::IndexOutOfBounds);
 
   it.next();
 
@@ -357,11 +363,13 @@ TEST(IteratorTest, IterateSubArray) {
 
   it3.next();
   ASSERT_FALSE(it3.valid());
-  ASSERT_VELOCYPACK_EXCEPTION(it3.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it3.value(),
+                              Exception::IndexOutOfBounds);
 
   it.next();
   ASSERT_FALSE(it.valid());
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateArrayUnsorted) {
@@ -430,7 +438,8 @@ TEST(IteratorTest, IterateArrayUnsorted) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateNonObject1) {
@@ -488,8 +497,10 @@ TEST(IteratorTest, IterateObjectEmpty) {
   ObjectIterator it(s);
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.key(),
+                              Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 
   it.next();
   ASSERT_FALSE(it.valid());
@@ -578,8 +589,10 @@ TEST(IteratorTest, IterateObject) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.key(),
+                              Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateObjectUnsorted) {
@@ -710,8 +723,10 @@ TEST(IteratorTest, IterateObjectCompact) {
   it.next();
   ASSERT_FALSE(it.valid());
 
-  ASSERT_VELOCYPACK_EXCEPTION(it.key(), Exception::IndexOutOfBounds);
-  ASSERT_VELOCYPACK_EXCEPTION(it.value(), Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.key(),
+                              Exception::IndexOutOfBounds);
+  ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.value(),
+                              Exception::IndexOutOfBounds);
 }
 
 TEST(IteratorTest, IterateObjectKeys) {
@@ -1171,7 +1186,7 @@ TEST(IteratorTest, ArrayIteratorToStream) {
   {
     std::ostringstream result;
     result << it;
-    ASSERT_EQ("[ArrayIterator 6 / 5]", result.str());
+    ASSERT_EQ("[ArrayIterator 5 / 5]", result.str());
   }
 }
 
@@ -1211,7 +1226,7 @@ TEST(IteratorTest, ObjectIteratorToStream) {
   {
     std::ostringstream result;
     result << it;
-    ASSERT_EQ("[ObjectIterator 4 / 3]", result.str());
+    ASSERT_EQ("[ObjectIterator 3 / 3]", result.str());
   }
 }
 
