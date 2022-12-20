@@ -185,8 +185,8 @@ class ArrayIterator {
       return nullptr;
     }
     auto const head = _slice.head();
-    VELOCYPACK_ASSERT(head != 0x0a);  // no empty object allowed here
-    if (head == 0x14) {
+    VELOCYPACK_ASSERT(head != 0x01);  // no empty array allowed here
+    if (head == 0x13) {
       return _slice.start() + _slice.getStartOffsetFromCompact();
     }
     return _slice.begin() + _slice.findDataOffset(head);
