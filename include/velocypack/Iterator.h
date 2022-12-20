@@ -82,17 +82,25 @@ class ArrayIterator {
   [[nodiscard]] bool operator==(ArrayIterator const& other) const noexcept {
     return _position == other._position;
   }
-  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
-    return !valid();
-  }
 
   [[nodiscard]] Slice operator*() const { return value(); }
 
-  [[nodiscard]] ArrayIterator begin() const noexcept {
-    return {*this};
-  }
+  [[nodiscard]] ArrayIterator begin() const noexcept { return {*this}; }
 
+#if (defined(_MSC_VER) ||                                     \
+     (defined(__clang_version__) && __clang_major__ >= 12) || \
+     (!defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10))
   [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
+    return !valid();
+  }
+#else
+  [[nodiscard]] ArrayIterator end() const noexcept {
+    ArrayIterator it{*this};
+    it._position = it._size;
+    return it;
+  }
+#endif
 
   [[nodiscard]] bool valid() const noexcept { return _position != _size; }
 
@@ -239,9 +247,6 @@ class ObjectIterator {
   [[nodiscard]] bool operator==(ObjectIterator const& other) const noexcept {
     return _position == other._position;
   }
-  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
-    return !valid();
-  }
 
   [[nodiscard]] ObjectPair operator*() const {
     if (_current != nullptr) {
@@ -259,7 +264,20 @@ class ObjectIterator {
     return {*this};
   }
 
+#if (defined(_MSC_VER) ||                                     \
+     (defined(__clang_version__) && __clang_major__ >= 12) || \
+     (!defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10))
+  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
+    return !valid();
+  }
   [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+#else
+  [[nodiscard]] ObjectIterator end() const noexcept {
+    ObjectIterator it{*this};
+    it._position = it._size;
+    return it;
+  }
+#endif
 
   [[nodiscard]] bool valid() const noexcept { return _position != _size; }
 
