@@ -85,7 +85,7 @@ jobs:
           sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main"
         fi
         sudo apt-get update
-        sudo apt-get install clang-$version lld libc++-${clang_version}-dev libc++abi-${clang_version}-dev  
+        sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
