@@ -65,13 +65,11 @@ class ArrayIterator {
     _current = first();
   }
 
-  // prefix ++
   ArrayIterator& operator++() noexcept {
     next();
     return *this;
   }
 
-  // postfix ++
   [[nodiscard("You made unnecessary expensive copy.")]] ArrayIterator
   operator++(int) noexcept {
     ArrayIterator prev{*this};
@@ -230,13 +228,11 @@ class ObjectIterator {
     _current = first(useSequentialIteration);
   }
 
-  // prefix ++
   ObjectIterator& operator++() noexcept {
     next();
     return *this;
   }
 
-  // postfix ++
   [[nodiscard("You made unnecessary expensive copy.")]] ObjectIterator
   operator++(int) noexcept {
     ObjectIterator prev{*this};
