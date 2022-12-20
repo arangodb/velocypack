@@ -25,6 +25,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iterator>
 #include <iosfwd>
 #include <tuple>
 
@@ -49,123 +50,118 @@ class ArrayIterator {
 
   // optimization for an empty array
   explicit ArrayIterator(Empty) noexcept
-      : _slice(Slice::emptyArraySlice()),
-        _size(0),
-        _position(0),
-        _current(nullptr),
-        _first(nullptr) {}
+      : _slice{Slice::emptyArraySlice()},
+        _current{nullptr},
+        _size{0},
+        _position{0} {}
 
   explicit ArrayIterator(Slice slice)
-      : _slice(slice),
-        _size(0),
-        _position(0),
-        _current(nullptr),
-        _first(nullptr) {
-    uint8_t const head = slice.head();
-
+      : _slice{slice}, _current{nullptr}, _size{0}, _position{0} {
+    auto const head = slice.head();
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Array)) {
-      throw Exception(Exception::InvalidValueType, "Expecting Array slice");
+      throw Exception{Exception::InvalidValueType, "Expecting Array slice"};
     }
-
     _size = slice.arrayLength();
-
-    if (_size > 0) {
-      VELOCYPACK_ASSERT(head != 0x01);  // no empty array allowed here
-      if (head == 0x13) {
-        _current = slice.start() + slice.getStartOffsetFromCompact();
-      } else {
-        _current = slice.begin() + slice.findDataOffset(head);
-      }
-      _first = _current;
-    }
+    _current = first();
   }
 
-  // prefix ++
-  ArrayIterator& operator++() {
-    ++_position;
-    if (_position < _size && _current != nullptr) {
-      _current += Slice(_current).byteSize();
-    } else {
-      _current = nullptr;
-    }
+  ArrayIterator& operator++() noexcept {
+    next();
     return *this;
   }
 
-  // postfix ++
-  ArrayIterator operator++(int) {
-    ArrayIterator result(*this);
-    ++(*this);
-    return result;
+  [[nodiscard]] ArrayIterator operator++(int) noexcept {
+    ArrayIterator prev{*this};
+    next();
+    return prev;
   }
 
-  bool operator==(ArrayIterator const& other) const noexcept {
+  [[nodiscard]] bool operator==(ArrayIterator const& other) const noexcept {
     return _position == other._position;
   }
-  bool operator!=(ArrayIterator const& other) const noexcept {
-    return !operator==(other);
-  }
 
-  Slice operator*() const {
-    if (_current != nullptr) {
-      return Slice(_current);
-    }
-    // intentionally no out-of-bounds checking here, as it will
-    // be performed by Slice::getNthOffset()
-    return Slice(_slice.begin() + _slice.getNthOffset(_position));
-  }
+  [[nodiscard]] Slice operator*() const { return value(); }
 
-  ArrayIterator begin() const {
-    auto it = ArrayIterator(*this);
-    it._position = 0;
-    return it;
-  }
+  [[nodiscard]] ArrayIterator begin() const noexcept { return {*this}; }
 
-  ArrayIterator end() const {
-    auto it = ArrayIterator(*this);
+#if (defined(_MSC_VER) ||                                     \
+     (defined(__clang_version__) && __clang_major__ >= 12) || \
+     (!defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10))
+  [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
+    return !valid();
+  }
+#else
+  [[nodiscard]] ArrayIterator end() const noexcept {
+    ArrayIterator it{*this};
     it._position = it._size;
     return it;
   }
+  [[nodiscard]] bool operator!=(ArrayIterator const& other) const noexcept {
+    return !operator==(other);
+  }
+#endif
 
-  inline bool valid() const noexcept { return (_position < _size); }
+  [[nodiscard]] bool valid() const noexcept { return _position != _size; }
 
-  inline Slice value() const { return operator*(); }
+  [[nodiscard]] Slice value() const {
+    if (VELOCYPACK_UNLIKELY(!valid())) {
+      throw Exception{Exception::IndexOutOfBounds};
+    }
+    VELOCYPACK_ASSERT(_current != nullptr);
+    return Slice{_current};
+  }
 
-  inline void next() { operator++(); }
+  void next() noexcept {
+    if (VELOCYPACK_UNLIKELY(!valid())) {
+      return;
+    }
+    ++_position;
+    VELOCYPACK_ASSERT(_current != nullptr);
+    _current += Slice(_current).byteSize();
+  }
 
-  inline ValueLength index() const noexcept { return _position; }
+  [[nodiscard]] ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const noexcept { return _size; }
+  [[nodiscard]] ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const noexcept { return (_position == 0); }
+  [[deprecated(
+      "Dangerous API, you don't really know valid or not. "
+      "You can use index() and size().")]] bool
+  isFirst() const noexcept {
+    return _position == 0;
+  }
 
-  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
+  [[deprecated(
+      "Dangerous API, you don't really know valid or not. "
+      "You can use index() and size().")]] bool
+  isLast() const noexcept {
+    return _position + 1 >= _size;
+  }
 
-  inline void forward(ValueLength count) {
-    if (_position + count >= _size) {
-      // beyond end of data
-      _current = nullptr;
+  void forward(ValueLength count) noexcept {
+    _position += count;
+    if (VELOCYPACK_UNLIKELY(_position >= _size)) {
       _position = _size;
-    } else {
-      auto h = _slice.head();
-      if (h == 0x13) {
-        while (count-- > 0) {
-          _current += Slice(_current).byteSize();
-          ++_position;
-        }
-      } else {
-        _position += count;
-        _current = _slice.at(_position).start();
+      return;
+    }
+    auto const head = _slice.head();
+    if (head == 0x13) {
+      while (count-- != 0) {
+        _current += Slice(_current).byteSize();
       }
+    } else {
+      _current = _slice.at(_position).start();
     }
   }
 
-  inline void reset() {
+  void reset() noexcept {
     _position = 0;
-    _current = _first;
+    _current = first();
   }
 
   template<typename... Ts>
-  std::tuple<Ts...> unpackPrefixAsTuple() {
+  [[nodiscard]] std::tuple<Ts...> unpackPrefixAsTuple() {
     return unpackTupleInternal(unpack_helper<Ts...>{});
   }
 
@@ -174,27 +170,37 @@ class ArrayIterator {
   struct unpack_helper {};
 
   template<typename T, typename... Ts>
-  std::tuple<T, Ts...> unpackTupleInternal(unpack_helper<T, Ts...>) {
+  [[nodiscard]] std::tuple<T, Ts...> unpackTupleInternal(
+      unpack_helper<T, Ts...>) {
     auto slice = value();  // this does out-of-bounds checking
     next();
     return std::tuple_cat(std::make_tuple(slice.extract<T>()),
                           unpackTupleInternal(unpack_helper<Ts...>{}));
   }
 
-  std::tuple<> unpackTupleInternal(unpack_helper<>) const {
+  [[nodiscard]] static std::tuple<> unpackTupleInternal(unpack_helper<>) {
     return std::make_tuple<>();
   }
 
+  [[nodiscard]] uint8_t const* first() const noexcept {
+    if (VELOCYPACK_UNLIKELY(_size == 0)) {
+      return nullptr;
+    }
+    auto const head = _slice.head();
+    VELOCYPACK_ASSERT(head != 0x01);  // no empty array allowed here
+    if (head == 0x13) {
+      return _slice.start() + _slice.getStartOffsetFromCompact();
+    }
+    return _slice.begin() + _slice.findDataOffset(head);
+  }
+
   Slice _slice;
+  uint8_t const* _current;
   ValueLength _size;
   ValueLength _position;
-  uint8_t const* _current;
-  uint8_t const* _first;
 };
 
 struct ObjectIteratorPair {
-  ObjectIteratorPair(Slice key, Slice value) noexcept
-      : key(key), value(value) {}
   Slice const key;
   Slice const value;
 };
@@ -215,96 +221,77 @@ class ObjectIterator {
   // simply jumps from key/value pair to key/value pair without using the
   // index. The default `false` is to use the index if it is there.
   explicit ObjectIterator(Slice slice, bool useSequentialIteration = false)
-      : _slice(slice),
-        _size(0),
-        _position(0),
-        _current(nullptr),
-        _first(nullptr) {
-    uint8_t const head = slice.head();
-
+      : _slice{slice}, _current{nullptr}, _size{0}, _position{0} {
+    auto const head = slice.head();
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Object)) {
-      throw Exception(Exception::InvalidValueType, "Expecting Object slice");
+      throw Exception{Exception::InvalidValueType, "Expecting Object slice"};
     }
-
     _size = slice.objectLength();
-
-    if (_size > 0) {
-      VELOCYPACK_ASSERT(head != 0x0a);  // no empty object allowed here
-      if (head == 0x14) {
-        _current = slice.start() + slice.getStartOffsetFromCompact();
-      } else if (useSequentialIteration) {
-        _current = slice.begin() + slice.findDataOffset(head);
-      }
-      _first = _current;
-    }
+    _current = first(useSequentialIteration);
   }
 
-  // prefix ++
-  ObjectIterator& operator++() {
-    ++_position;
-    if (_position < _size && _current != nullptr) {
-      // skip over key
-      _current += Slice(_current).byteSize();
-      // skip over value
-      _current += Slice(_current).byteSize();
-    } else {
-      _current = nullptr;
-    }
+  ObjectIterator& operator++() noexcept {
+    next();
     return *this;
   }
 
-  // postfix ++
-  ObjectIterator operator++(int) {
-    ObjectIterator result(*this);
-    ++(*this);
-    return result;
+  [[nodiscard]] ObjectIterator operator++(int) noexcept {
+    ObjectIterator prev{*this};
+    next();
+    return prev;
   }
 
-  bool operator==(ObjectIterator const& other) const {
+  [[nodiscard]] bool operator==(ObjectIterator const& other) const noexcept {
     return _position == other._position;
   }
 
-  bool operator!=(ObjectIterator const& other) const {
-    return !operator==(other);
-  }
-
-  ObjectPair operator*() const {
+  [[nodiscard]] ObjectPair operator*() const {
     if (_current != nullptr) {
-      Slice key(_current);
-      return ObjectPair(key.makeKey(), Slice(_current + key.byteSize()));
+      Slice key{_current};
+      return {key.makeKey(), Slice(_current + key.byteSize())};
     }
-    Slice key(_slice.getNthKeyUntranslated(_position));
-    return ObjectPair(key.makeKey(), Slice(key.begin() + key.byteSize()));
+    // intentionally no out-of-bounds checking here,
+    // as it will be performed by Slice::getNthOffset()
+    Slice key{_slice.getNthKeyUntranslated(_position)};
+    return {key.makeKey(), Slice(key.begin() + key.byteSize())};
   }
 
-  ObjectIterator begin() const {
-    auto it = ObjectIterator(*this);
-    it._position = 0;
-    return it;
-  }
+  [[nodiscard]] ObjectIterator begin() const noexcept { return {*this}; }
 
-  ObjectIterator end() const {
-    auto it = ObjectIterator(*this);
+#if (defined(_MSC_VER) ||                                     \
+     (defined(__clang_version__) && __clang_major__ >= 12) || \
+     (!defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10))
+  [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
+    return !valid();
+  }
+  [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+#else
+  [[nodiscard]] ObjectIterator end() const noexcept {
+    ObjectIterator it{*this};
     it._position = it._size;
     return it;
   }
+  [[nodiscard]] bool operator!=(ObjectIterator const& other) const noexcept {
+    return !operator==(other);
+  }
+#endif
 
-  inline bool valid() const noexcept { return (_position < _size); }
+  [[nodiscard]] bool valid() const noexcept { return _position != _size; }
 
-  inline Slice key(bool translate = true) const {
-    if (VELOCYPACK_UNLIKELY(_position >= _size)) {
-      throw Exception(Exception::IndexOutOfBounds);
+  [[nodiscard]] Slice key(bool translate = true) const {
+    if (VELOCYPACK_UNLIKELY(!valid())) {
+      throw Exception{Exception::IndexOutOfBounds};
     }
     if (_current != nullptr) {
-      Slice s(_current);
+      Slice s{_current};
       return translate ? s.makeKey() : s;
     }
     return _slice.getNthKey(_position, translate);
   }
 
-  inline Slice value() const {
-    if (VELOCYPACK_UNLIKELY(_position >= _size)) {
-      throw Exception(Exception::IndexOutOfBounds);
+  [[nodiscard]] Slice value() const {
+    if (VELOCYPACK_UNLIKELY(!valid())) {
+      throw Exception{Exception::IndexOutOfBounds};
     }
     if (_current != nullptr) {
       Slice key(_current);
@@ -313,27 +300,61 @@ class ObjectIterator {
     return _slice.getNthValue(_position);
   }
 
-  inline void next() { operator++(); }
+  void next() noexcept {
+    if (VELOCYPACK_UNLIKELY(!valid())) {
+      return;
+    }
+    ++_position;
+    if (_current != nullptr) {
+      // skip over key
+      _current += Slice(_current).byteSize();
+      // skip over value
+      _current += Slice(_current).byteSize();
+    }
+  }
 
-  inline ValueLength index() const noexcept { return _position; }
+  [[nodiscard]] ValueLength index() const noexcept { return _position; }
 
-  inline ValueLength size() const noexcept { return _size; }
+  [[nodiscard]] ValueLength size() const noexcept { return _size; }
 
-  inline bool isFirst() const noexcept { return (_position == 0); }
+  [[deprecated(
+      "Dangerous API, you don't really know valid or not. "
+      "You can use index() and size().")]] [[nodiscard]] bool
+  isFirst() const noexcept {
+    return _position == 0;
+  }
 
-  inline bool isLast() const noexcept { return (_position + 1 >= _size); }
+  [[deprecated(
+      "Dangerous API, you don't really know valid or not. "
+      "You can use index() and size().")]] [[nodiscard]] bool
+  isLast() const noexcept {
+    return _position + 1 >= _size;
+  }
 
-  inline void reset() {
+  void reset() noexcept {
     _position = 0;
-    _current = _first;
+    _current = first(_current != nullptr);
   }
 
  private:
+  [[nodiscard]] uint8_t const* first(bool useSequentialIteration) noexcept {
+    if (VELOCYPACK_UNLIKELY(_size == 0)) {
+      return nullptr;
+    }
+    auto const head = _slice.head();
+    VELOCYPACK_ASSERT(head != 0x0a);  // no empty object allowed here
+    if (head == 0x14) {
+      return _slice.start() + _slice.getStartOffsetFromCompact();
+    } else if (useSequentialIteration) {
+      return _slice.begin() + _slice.findDataOffset(head);
+    }
+    return nullptr;
+  }
+
   Slice _slice;
+  uint8_t const* _current;
   ValueLength _size;
   ValueLength _position;
-  uint8_t const* _current;
-  uint8_t const* _first;
 };
 
 }  // namespace arangodb::velocypack

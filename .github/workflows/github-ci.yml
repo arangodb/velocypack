@@ -23,6 +23,8 @@ jobs:
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '11',
              build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '12',
+             build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Debug, hash_type: xxhash,
              flags: '-O0 -fno-inline --coverage', coverage: true}
@@ -37,6 +39,10 @@ jobs:
           - {os: ubuntu-latest, compiler: clang, version: '11',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: clang, version: '12',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: clang, version: '13',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: clang, version: '14',
              build_type: Release, hash_type: xxhash }
 
           # Windows builds
@@ -57,7 +63,7 @@ jobs:
 
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup environment
       run: |
         echo "SANITIZER=${{ matrix.sanitizer }}" >> ${GITHUB_ENV}
@@ -71,13 +77,17 @@ jobs:
     - name: Install clang
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
       run: |
-        export CODENAME=`lsb_release -c | sed 's/Codename:\t//'`
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${{ matrix.version }} main"
         sudo apt-get update
-        sudo apt-get install clang-${{ matrix.version }}
-        echo "CC=clang-${{ matrix.version }}" >> ${GITHUB_ENV}
-        echo "CXX=clang++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        sudo apt-get install libunwind-dev
+        sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        version=${{ matrix.version }}
+        if [[ $version -ge 13 ]]; then
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main"
+        fi
+        sudo apt-get update
+        sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
+        echo "CC=clang-$version" >> ${GITHUB_ENV}
+        echo "CXX=clang++-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
     - name: Initialize MSVC ${{ matrix.version }}
       if: startsWith(matrix.os, 'windows-')
