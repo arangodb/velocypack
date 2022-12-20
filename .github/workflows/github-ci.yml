@@ -34,7 +34,7 @@ jobs:
              ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=address-use-after-scope -fno-omit-frame-pointer'}
 
           # Clang builds
-          - {os: ubuntu-latest, compiler: clang, version: '10',
+          - {os: ubuntu-20.04, compiler: clang, version: '10',
              build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: clang, version: '11',
              build_type: Release, hash_type: fasthash }
