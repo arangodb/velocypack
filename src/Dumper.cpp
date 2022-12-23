@@ -418,7 +418,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         while (it.valid()) {
           indent();
           dumpValue(it.value(), &slice);
-          if (!it.isLast()) {
+          if (it.index() + 1 != it.size()) {
             _sink->push_back(',');
           }
           _sink->push_back('\n');
@@ -428,7 +428,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         indent();
       } else if (options->singleLinePrettyPrint) {
         while (it.valid()) {
-          if (!it.isFirst()) {
+          if (it.index() != 0) {
             _sink->push_back(',');
             _sink->push_back(' ');
           }
@@ -437,7 +437,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         }
       } else {
         while (it.valid()) {
-          if (!it.isFirst()) {
+          if (it.index() != 0) {
             _sink->push_back(',');
           }
           dumpValue(it.value(), &slice);
@@ -460,7 +460,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
           dumpValue(current.key, &slice);
           _sink->append(" : ", 3);
           dumpValue(current.value, &slice);
-          if (!it.isLast()) {
+          if (it.index() + 1 != it.size()) {
             _sink->push_back(',');
           }
           _sink->push_back('\n');
@@ -470,7 +470,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         indent();
       } else if (options->singleLinePrettyPrint) {
         while (it.valid()) {
-          if (!it.isFirst()) {
+          if (it.index() != 0) {
             _sink->push_back(',');
             _sink->push_back(' ');
           }
@@ -483,7 +483,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         }
       } else {
         while (it.valid()) {
-          if (!it.isFirst()) {
+          if (it.index() != 0) {
             _sink->push_back(',');
           }
           auto current = (*it);
