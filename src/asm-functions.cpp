@@ -251,8 +251,11 @@ bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = nullptr;
 
 void enableNativeStringFunctions() noexcept {
   enableBuiltinStringFunctions();
+  if (assemblerFunctionsDisabled()) {
+    return;
+  }
 #ifdef __SSE4_2__
-  if (assemblerFunctionsEnabled() && hasSSE42()) {
+  if (hasSSE42()) {
     JSONStringCopy = JSONStringCopySSE42;
     JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8SSE42;
     JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
@@ -261,7 +264,7 @@ void enableNativeStringFunctions() noexcept {
   ValidateUtf8String = ValidateUtf8StringSSE42;
 #endif
 #ifdef __AVX2__
-  if (assemblerFunctionsEnabled() && hasAVX2()) {
+  if (hasAVX2()) {
     ValidateUtf8String = ValidateUtf8StringAVX;
   }
 #endif
