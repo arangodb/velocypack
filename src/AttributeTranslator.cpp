@@ -54,10 +54,10 @@ void AttributeTranslator::seal() {
 
   Slice s(_builder->slice());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ true);
 
   while (it.valid()) {
-    Slice const key(it.key(false));
+    Slice key(it.key(false));
     VELOCYPACK_ASSERT(key.isString());
 
     // insert into string and char lookup maps

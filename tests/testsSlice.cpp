@@ -2936,7 +2936,7 @@ TEST(SliceTest, GetNumericValueWrongSource) {
 }
 
 TEST(SliceTest, Translate) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -2990,7 +2990,7 @@ TEST(SliceTest, Translate) {
 }
 
 TEST(SliceTest, TranslateSingleMember) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->seal();
@@ -3020,7 +3020,7 @@ TEST(SliceTest, TranslateSingleMember) {
 }
 
 TEST(SliceTest, Translations) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -3078,7 +3078,7 @@ TEST(SliceTest, Translations) {
 }
 
 TEST(SliceTest, TranslationsSingleMemberObject) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->seal();
@@ -3104,7 +3104,7 @@ TEST(SliceTest, TranslationsSingleMemberObject) {
 }
 
 TEST(SliceTest, TranslationsSubObjects) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -3163,7 +3163,7 @@ TEST(SliceTest, TranslationsSubObjects) {
 }
 
 TEST(SliceTest, TranslatedObjectWithoutTranslator) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -3202,7 +3202,7 @@ TEST(SliceTest, TranslatedObjectWithoutTranslator) {
 }
 
 TEST(SliceTest, TranslatedWithCompactNotation) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -3238,7 +3238,7 @@ TEST(SliceTest, TranslatedWithCompactNotation) {
 }
 
 TEST(SliceTest, TranslatedInvalidKey) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->seal();
@@ -3372,7 +3372,7 @@ TEST(SliceTest, Reassign) {
 }
 
 TEST(SliceTest, TranslateInObjectIterator) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("_key", 1);
   translator->seal();
@@ -3385,7 +3385,7 @@ TEST(SliceTest, TranslateInObjectIterator) {
   b.close();
 
   Slice s = b.slice();
-  for (auto p : ObjectIterator(s)) {
+  for (auto p : ObjectIterator(s, /*useSequentialIteration*/ true)) {
     Slice k = p.key;
     ASSERT_TRUE(k.isString());
   }

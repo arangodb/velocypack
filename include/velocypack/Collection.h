@@ -24,9 +24,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -42,7 +44,8 @@ class Collection {
   enum VisitationOrder { PreOrder = 1, PostOrder = 2 };
 
   // indicator for "element not found" in indexOf() method
-  static ValueLength const NotFound;
+  static constexpr ValueLength NotFound = UINT64_MAX;
+
 
   typedef std::function<bool(Slice const&, ValueLength)> Predicate;
 
@@ -50,70 +53,69 @@ class Collection {
   Collection(Collection const&) = delete;
   Collection& operator=(Collection const&) = delete;
 
-  static Builder& appendArray(Builder& builder, Slice const& left);
+  static Builder& appendArray(Builder& builder, Slice left);
 
-  static void forEach(Slice const& slice, Predicate const& predicate);
+  static void forEach(Slice slice, Predicate const& predicate);
 
   static void forEach(Slice const* slice, Predicate const& predicate) {
     return forEach(*slice, predicate);
   }
 
-  static Builder filter(Slice const& slice, Predicate const& predicate);
+  static Builder filter(Slice slice, Predicate const& predicate);
 
   static Builder filter(Slice const* slice, Predicate const& predicate) {
     return filter(*slice, predicate);
   }
 
-  static Slice find(Slice const& slice, Predicate const& predicate);
+  static Slice find(Slice slice, Predicate const& predicate);
 
   static Slice find(Slice const* slice, Predicate const& predicate) {
     return find(*slice, predicate);
   }
 
-  static bool contains(Slice const& slice, Predicate const& predicate);
+  static bool contains(Slice slice, Predicate const& predicate);
 
   static bool contains(Slice const* slice, Predicate const& predicate) {
     return contains(*slice, predicate);
   }
 
-  static bool contains(Slice const& slice, Slice const& other);
+  static bool contains(Slice slice, Slice other);
 
-  static bool contains(Slice const* slice, Slice const& other) {
+  static bool contains(Slice const* slice, Slice other) {
     return contains(*slice, other);
   }
 
-  static ValueLength indexOf(Slice const& slice, Slice const& other);
+  static ValueLength indexOf(Slice slice, Slice other);
 
-  static ValueLength indexOf(Slice const* slice, Slice const& other) {
+  static ValueLength indexOf(Slice const* slice, Slice other) {
     return indexOf(*slice, other);
   }
 
-  static bool all(Slice const& slice, Predicate const& predicate);
+  static bool all(Slice slice, Predicate const& predicate);
 
   static bool all(Slice const* slice, Predicate const& predicate) {
     return all(*slice, predicate);
   }
 
-  static bool any(Slice const& slice, Predicate const& predicate);
+  static bool any(Slice slice, Predicate const& predicate);
 
   static bool any(Slice const* slice, Predicate const& predicate) {
     return any(*slice, predicate);
   }
 
-  static std::vector<std::string> keys(Slice const& slice);
+  static std::vector<std::string> keys(Slice slice);
 
   static std::vector<std::string> keys(Slice const* slice) {
     return keys(*slice);
   }
 
   template<typename T>
-  static void keys(Slice const& slice, T& result) {
-    ObjectIterator it(slice);
+  static void keys(Slice slice, T& result) {
+    ObjectIterator it(slice, /*useSequentialIteration*/ true);
 
     while (it.valid()) {
-      ValueLength l;
-      char const* p = it.key(true).getString(l);
-      result.emplace(p, l);
+      std::string_view sv = it.key(true).stringView();
+      result.emplace(sv.data(), sv.size());
       it.next();
     }
   }
@@ -123,27 +125,25 @@ class Collection {
     return keys(*slice, result);
   }
 
-  static void keys(Slice const& slice, std::vector<std::string>& result) {
+  static void keys(Slice slice, std::vector<std::string>& result) {
     // pre-allocate result vector
-    ObjectIterator it(slice);
+    ObjectIterator it(slice, /*useSequentialIteration*/ false);
     result.reserve(checkOverflow(it.size()));
 
     while (it.valid()) {
-      ValueLength l;
-      char const* p = it.key(true).getString(l);
-      result.emplace_back(p, l);
+      std::string_view sv = it.key(true).stringView();
+      result.emplace_back(sv.data(), sv.size());
       it.next();
     }
   }
 
   template<typename T>
-  static void unorderedKeys(Slice const& slice, T& result) {
-    ObjectIterator it(slice, true);
+  static void unorderedKeys(Slice slice, T& result) {
+    ObjectIterator it(slice, /*useSequentialIteration*/ true);
 
     while (it.valid()) {
-      ValueLength l;
-      char const* p = it.key(true).getString(l);
-      result.emplace(p, l);
+      std::string_view sv = it.key(true).stringView();
+      result.emplace(sv.data(), sv.size());
       it.next();
     }
   }
@@ -153,23 +153,23 @@ class Collection {
     return unorderedKeys(*slice, result);
   }
 
-  static Builder extract(Slice const& slice, int64_t from,
+  static Builder extract(Slice slice, int64_t from,
                          int64_t to = INT64_MAX);
   static Builder extract(Slice const* slice, int64_t from,
                          int64_t to = INT64_MAX) {
     return extract(*slice, from, to);
   }
 
-  static Builder concat(Slice const& slice1, Slice const& slice2);
+  static Builder concat(Slice slice1, Slice slice2);
   static Builder concat(Slice const* slice1, Slice const* slice2) {
     return concat(*slice1, *slice2);
   }
 
-  static Builder values(Slice const& slice);
+  static Builder values(Slice slice);
   static Builder values(Slice const* slice) { return values(*slice); }
 
-  static Builder keep(Slice const& slice, std::vector<std::string> const& keys);
-  static Builder keep(Slice const& slice,
+  static Builder keep(Slice slice, std::vector<std::string> const& keys);
+  static Builder keep(Slice slice,
                       std::unordered_set<std::string> const& keys);
 
   static Builder keep(Slice const* slice,
@@ -182,10 +182,10 @@ class Collection {
     return keep(*slice, keys);
   }
 
-  static Builder remove(Slice const& slice,
+  static Builder remove(Slice slice,
                         std::vector<std::string> const& keys);
 
-  static Builder remove(Slice const& slice,
+  static Builder remove(Slice slice,
                         std::unordered_set<std::string> const& keys);
 
   static Builder remove(Slice const* slice,
@@ -198,33 +198,33 @@ class Collection {
     return remove(*slice, keys);
   }
 
-  static Builder merge(Slice const& left, Slice const& right, bool mergeValues,
+  static Builder merge(Slice left, Slice right, bool mergeValues,
                        bool nullMeansRemove = false);
 
   static Builder merge(Slice const* left, Slice const* right, bool mergeValues,
                        bool nullMeansRemove = false) {
     return merge(*left, *right, mergeValues, nullMeansRemove);
   }
-  static Builder& merge(Builder& builder, Slice const& left, Slice const& right,
+  static Builder& merge(Builder& builder, Slice left, Slice right,
                         bool mergeValues, bool nullMeansRemove = false);
 
   static void visitRecursive(
-      Slice const& slice, VisitationOrder order,
-      std::function<bool(Slice const&, Slice const&)> const& func);
+      Slice slice, VisitationOrder order,
+      std::function<bool(Slice, Slice)> const& func);
 
   static void visitRecursive(
       Slice const* slice, VisitationOrder order,
-      std::function<bool(Slice const&, Slice const&)> const& func) {
+      std::function<bool(Slice, Slice)> const& func) {
     visitRecursive(*slice, order, func);
   }
 
-  static Builder sort(Slice const& array,
-                      std::function<bool(Slice const&, Slice const&)> lessthan);
+  static Builder sort(Slice array,
+                      std::function<bool(Slice, Slice)> lessthan);
 };
 
 struct IsEqualPredicate {
-  IsEqualPredicate(Slice const& value) : value(value) {}
-  bool operator()(Slice const& current, ValueLength) {
+  IsEqualPredicate(Slice value) : value(value) {}
+  bool operator()(Slice current, ValueLength) {
     return value.binaryEquals(current);
   }
   // compare value

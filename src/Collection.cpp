@@ -35,11 +35,8 @@
 
 using namespace arangodb::velocypack;
 
-// indicator for "element not found" in indexOf() method
-ValueLength const Collection::NotFound = UINT64_MAX;
-
 // fully append an array to the builder
-Builder& Collection::appendArray(Builder& builder, Slice const& slice) {
+Builder& Collection::appendArray(Builder& builder, Slice slice) {
   ArrayIterator it(slice);
 
   while (it.valid()) {
@@ -60,7 +57,7 @@ static inline std::unordered_set<std::string> makeSet(
   return s;
 }
 
-void Collection::forEach(Slice const& slice, Predicate const& predicate) {
+void Collection::forEach(Slice slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -74,7 +71,7 @@ void Collection::forEach(Slice const& slice, Predicate const& predicate) {
   }
 }
 
-Builder Collection::filter(Slice const& slice, Predicate const& predicate) {
+Builder Collection::filter(Slice slice, Predicate const& predicate) {
   // construct a new Array
   Builder b;
   b.add(Value(ValueType::Array));
@@ -94,7 +91,7 @@ Builder Collection::filter(Slice const& slice, Predicate const& predicate) {
   return b;
 }
 
-Slice Collection::find(Slice const& slice, Predicate const& predicate) {
+Slice Collection::find(Slice slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -110,7 +107,7 @@ Slice Collection::find(Slice const& slice, Predicate const& predicate) {
   return Slice();
 }
 
-bool Collection::contains(Slice const& slice, Predicate const& predicate) {
+bool Collection::contains(Slice slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -126,7 +123,7 @@ bool Collection::contains(Slice const& slice, Predicate const& predicate) {
   return false;
 }
 
-bool Collection::contains(Slice const& slice, Slice const& other) {
+bool Collection::contains(Slice slice, Slice other) {
   ArrayIterator it(slice);
 
   while (it.valid()) {
@@ -139,7 +136,7 @@ bool Collection::contains(Slice const& slice, Slice const& other) {
   return false;
 }
 
-ValueLength Collection::indexOf(Slice const& slice, Slice const& other) {
+ValueLength Collection::indexOf(Slice slice, Slice other) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -154,7 +151,7 @@ ValueLength Collection::indexOf(Slice const& slice, Slice const& other) {
   return Collection::NotFound;
 }
 
-bool Collection::all(Slice const& slice, Predicate const& predicate) {
+bool Collection::all(Slice slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -170,7 +167,7 @@ bool Collection::all(Slice const& slice, Predicate const& predicate) {
   return true;
 }
 
-bool Collection::any(Slice const& slice, Predicate const& predicate) {
+bool Collection::any(Slice slice, Predicate const& predicate) {
   ArrayIterator it(slice);
   ValueLength index = 0;
 
@@ -186,7 +183,7 @@ bool Collection::any(Slice const& slice, Predicate const& predicate) {
   return false;
 }
 
-std::vector<std::string> Collection::keys(Slice const& slice) {
+std::vector<std::string> Collection::keys(Slice slice) {
   std::vector<std::string> result;
 
   keys(slice, result);
@@ -194,7 +191,7 @@ std::vector<std::string> Collection::keys(Slice const& slice) {
   return result;
 }
 
-Builder Collection::concat(Slice const& slice1, Slice const& slice2) {
+Builder Collection::concat(Slice slice1, Slice slice2) {
   Builder b;
   b.openArray();
   appendArray(b, slice1);
@@ -204,7 +201,7 @@ Builder Collection::concat(Slice const& slice1, Slice const& slice2) {
   return b;
 }
 
-Builder Collection::extract(Slice const& slice, int64_t from, int64_t to) {
+Builder Collection::extract(Slice slice, int64_t from, int64_t to) {
   Builder b;
   b.openArray();
 
@@ -234,11 +231,11 @@ Builder Collection::extract(Slice const& slice, int64_t from, int64_t to) {
   return b;
 }
 
-Builder Collection::values(Slice const& slice) {
+Builder Collection::values(Slice slice) {
   Builder b;
   b.add(Value(ValueType::Array));
 
-  ObjectIterator it(slice);
+  ObjectIterator it(slice, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     b.add(it.value());
@@ -249,7 +246,7 @@ Builder Collection::values(Slice const& slice) {
   return b;
 }
 
-Builder Collection::keep(Slice const& slice,
+Builder Collection::keep(Slice slice,
                          std::vector<std::string> const& keys) {
   // check if there are so many keys that we want to use the hash-based version
   // cut-off values are arbitrary...
@@ -260,7 +257,7 @@ Builder Collection::keep(Slice const& slice,
   Builder b;
   b.add(Value(ValueType::Object));
 
-  ObjectIterator it(slice);
+  ObjectIterator it(slice, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     auto key = it.key(true).copyString();
@@ -274,12 +271,12 @@ Builder Collection::keep(Slice const& slice,
   return b;
 }
 
-Builder Collection::keep(Slice const& slice,
+Builder Collection::keep(Slice slice,
                          std::unordered_set<std::string> const& keys) {
   Builder b;
   b.add(Value(ValueType::Object));
 
-  ObjectIterator it(slice);
+  ObjectIterator it(slice, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     auto key = it.key(true).copyString();
@@ -293,7 +290,7 @@ Builder Collection::keep(Slice const& slice,
   return b;
 }
 
-Builder Collection::remove(Slice const& slice,
+Builder Collection::remove(Slice slice,
                            std::vector<std::string> const& keys) {
   // check if there are so many keys that we want to use the hash-based version
   // cut-off values are arbitrary...
@@ -304,7 +301,7 @@ Builder Collection::remove(Slice const& slice,
   Builder b;
   b.add(Value(ValueType::Object));
 
-  ObjectIterator it(slice);
+  ObjectIterator it(slice, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     auto key = it.key(true).copyString();
@@ -318,12 +315,12 @@ Builder Collection::remove(Slice const& slice,
   return b;
 }
 
-Builder Collection::remove(Slice const& slice,
+Builder Collection::remove(Slice slice,
                            std::unordered_set<std::string> const& keys) {
   Builder b;
   b.add(Value(ValueType::Object));
 
-  ObjectIterator it(slice);
+  ObjectIterator it(slice, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     auto key = it.key(true).copyString();
@@ -337,7 +334,7 @@ Builder Collection::remove(Slice const& slice,
   return b;
 }
 
-Builder Collection::merge(Slice const& left, Slice const& right,
+Builder Collection::merge(Slice left, Slice right,
                           bool mergeValues, bool nullMeansRemove) {
   if (!left.isObject() || !right.isObject()) {
     throw Exception(Exception::InvalidValueType, "Expecting type Object");
@@ -348,8 +345,8 @@ Builder Collection::merge(Slice const& left, Slice const& right,
   return b;
 }
 
-Builder& Collection::merge(Builder& builder, Slice const& left,
-                           Slice const& right, bool mergeValues,
+Builder& Collection::merge(Builder& builder, Slice left,
+                           Slice right, bool mergeValues,
                            bool nullMeansRemove) {
   if (!left.isObject() || !right.isObject()) {
     throw Exception(Exception::InvalidValueType, "Expecting type Object");
@@ -359,7 +356,7 @@ Builder& Collection::merge(Builder& builder, Slice const& left,
 
   std::unordered_map<std::string_view, Slice> rightValues;
   {
-    ObjectIterator it(right);
+    ObjectIterator it(right, /*useSequentialIteration*/ true);
     while (it.valid()) {
       auto current = (*it);
       rightValues.emplace(current.key.stringView(), current.value);
@@ -368,7 +365,7 @@ Builder& Collection::merge(Builder& builder, Slice const& left,
   }
 
   {
-    ObjectIterator it(left);
+    ObjectIterator it(left, /*useSequentialIteration*/ false);
 
     while (it.valid()) {
       auto current = (*it);
@@ -420,14 +417,14 @@ Builder& Collection::merge(Builder& builder, Slice const& left,
 
 template<Collection::VisitationOrder order>
 static bool doVisit(
-    Slice const& slice,
-    std::function<bool(Slice const& key, Slice const& value)> const& func);
+    Slice slice,
+    std::function<bool(Slice key, Slice value)> const& func);
 
 template<Collection::VisitationOrder order>
 static bool visitObject(
-    Slice const& value,
-    std::function<bool(Slice const& key, Slice const& value)> const& func) {
-  ObjectIterator it(value);
+    Slice value,
+    std::function<bool(Slice key, Slice value)> const& func) {
+  ObjectIterator it(value, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     auto current = (*it);
@@ -458,8 +455,8 @@ static bool visitObject(
 
 template<Collection::VisitationOrder order>
 static bool visitArray(
-    Slice const& value,
-    std::function<bool(Slice const& key, Slice const& value)> const& func) {
+    Slice value,
+    std::function<bool(Slice key, Slice value)> const& func) {
   ArrayIterator it(value);
 
   while (it.valid()) {
@@ -491,8 +488,8 @@ static bool visitArray(
 
 template<Collection::VisitationOrder order>
 static bool doVisit(
-    Slice const& slice,
-    std::function<bool(Slice const& key, Slice const& value)> const& func) {
+    Slice slice,
+    std::function<bool(Slice key, Slice value)> const& func) {
   if (slice.isObject()) {
     return visitObject<order>(slice, func);
   }
@@ -505,8 +502,8 @@ static bool doVisit(
 }
 
 void Collection::visitRecursive(
-    Slice const& slice, Collection::VisitationOrder order,
-    std::function<bool(Slice const&, Slice const&)> const& func) {
+    Slice slice, Collection::VisitationOrder order,
+    std::function<bool(Slice, Slice)> const& func) {
   if (order == Collection::PreOrder) {
     doVisit<Collection::PreOrder>(slice, func);
   } else {
@@ -515,8 +512,8 @@ void Collection::visitRecursive(
 }
 
 Builder Collection::sort(
-    Slice const& array,
-    std::function<bool(Slice const&, Slice const&)> lessthan) {
+    Slice array,
+    std::function<bool(Slice, Slice)> lessthan) {
   if (!array.isArray()) {
     throw Exception(Exception::InvalidValueType, "Expecting type Array");
   }
