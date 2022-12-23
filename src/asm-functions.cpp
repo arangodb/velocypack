@@ -31,8 +31,15 @@
 #include "velocypack/Utf8Helper.h"
 #include "velocypack/velocypack-common.h"
 
-using namespace arangodb::velocypack;
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
+#if defined(__SSE4_2__)
+#include <cpuid.h>
+#include <x86intrin.h>
+#elif defined(__aarch64__)
+#include <sse2neon.h>
+#endif
 
+namespace arangodb::velocypack {
 namespace {
 
 inline std::size_t JSONStringCopyC(uint8_t* dst, uint8_t const* src,
@@ -78,20 +85,8 @@ inline bool ValidateUtf8StringC(uint8_t const* src, std::size_t limit) {
   return Utf8Helper::isValidUtf8(src, static_cast<ValueLength>(limit));
 }
 
-}  // namespace
-
-#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
-#if defined(__SSE4_2__)
-#include <cpuid.h>
-#include <x86intrin.h>
-#elif defined(__aarch64__)
-#include <sse2neon.h>
-#endif
-
-namespace {
-
-#if defined(__SSE4_2__)
-bool hasSSE42() {
+#ifdef __SSE4_2__
+bool hasSSE42() noexcept {
   unsigned int eax, ebx, ecx, edx;
   if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
     if ((ecx & 0x100000) != 0) {
@@ -100,21 +95,7 @@ bool hasSSE42() {
   }
   return false;
 }
-#endif
 
-#ifdef __AVX2__
-bool hasAVX2() {
-  unsigned int eax, ebx, ecx, edx;
-  if (__get_cpuid(7, &eax, &ebx, &ecx, &edx)) {
-    if ((ebx & bit_AVX2) != 0) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif
-
-#if defined(__SSE4_2__)
 std::size_t JSONStringCopySSE42(uint8_t* dst, uint8_t const* src,
                                 std::size_t limit) {
   alignas(16) static char const ranges[17] =
@@ -154,22 +135,7 @@ std::size_t JSONStringCopySSE42(uint8_t* dst, uint8_t const* src,
   count += x;
   return count;
 }
-#endif
 
-std::size_t doInitCopy(uint8_t* dst, uint8_t const* src, std::size_t limit) {
-#if defined(__SSE4_2__)
-  if (assemblerFunctionsEnabled() && ::hasSSE42()) {
-    JSONStringCopy = ::JSONStringCopySSE42;
-  } else {
-    JSONStringCopy = ::JSONStringCopyC;
-  }
-#else
-  JSONStringCopy = ::JSONStringCopyC;
-#endif
-  return (*JSONStringCopy)(dst, src, limit);
-}
-
-#if defined(__SSE4_2__)
 std::size_t JSONStringCopyCheckUtf8SSE42(uint8_t* dst, uint8_t const* src,
                                          std::size_t limit) {
   alignas(16) static unsigned char const ranges[17] =
@@ -208,23 +174,7 @@ std::size_t JSONStringCopyCheckUtf8SSE42(uint8_t* dst, uint8_t const* src,
   count += x;
   return count;
 }
-#endif
 
-std::size_t doInitCopyCheckUtf8(uint8_t* dst, uint8_t const* src,
-                                std::size_t limit) {
-#if defined(__SSE4_2__)
-  if (assemblerFunctionsEnabled() && ::hasSSE42()) {
-    JSONStringCopyCheckUtf8 = ::JSONStringCopyCheckUtf8SSE42;
-  } else {
-    JSONStringCopyCheckUtf8 = ::JSONStringCopyCheckUtf8C;
-  }
-#else
-  JSONStringCopyCheckUtf8 = ::JSONStringCopyCheckUtf8C;
-#endif
-  return (*JSONStringCopyCheckUtf8)(dst, src, limit);
-}
-
-#if defined(__SSE4_2__)
 std::size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, std::size_t limit) {
   alignas(16) static char const white[17] = " \t\n\r            ";
   __m128i const w = _mm_load_si128(reinterpret_cast<__m128i const*>(white));
@@ -256,29 +206,6 @@ std::size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, std::size_t limit) {
   count += x;
   return count;
 }
-#endif
-
-std::size_t doInitSkip(uint8_t const* src, std::size_t limit) {
-#if defined(__SSE4_2__)
-  if (assemblerFunctionsEnabled() && ::hasSSE42()) {
-    JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceSSE42;
-  } else {
-    JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceC;
-  }
-#else
-  JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceC;
-#endif
-  return (*JSONSkipWhiteSpace)(src, limit);
-}
-
-#ifdef __AVX2__
-bool ValidateUtf8StringAVX(uint8_t const* src, std::size_t len) {
-  if (len >= 32) {
-    return validate_utf8_fast_avx(src, len);
-  }
-  return Utf8Helper::isValidUtf8(src, len);
-}
-#endif
 
 bool ValidateUtf8StringSSE42(uint8_t const* src, std::size_t len) {
   if (len >= 16) {
@@ -287,79 +214,67 @@ bool ValidateUtf8StringSSE42(uint8_t const* src, std::size_t len) {
   return Utf8Helper::isValidUtf8(src, len);
 }
 
-bool doInitValidateUtf8String(uint8_t const* src, std::size_t limit) {
-#ifdef __AVX2__
-  if (assemblerFunctionsEnabled() && ::hasAVX2()) {
-    ValidateUtf8String = ValidateUtf8StringAVX;
-    return ValidateUtf8StringAVX(src, limit);
-  }
 #endif
-#if defined(__SSE4_2__)
-  if (assemblerFunctionsEnabled() && ::hasSSE42()) {
-    ValidateUtf8String = ValidateUtf8StringSSE42;
-  } else {
-    ValidateUtf8String = ::ValidateUtf8StringC;
+#ifdef __AVX2__
+
+bool hasAVX2() noexcept {
+  unsigned int eax, ebx, ecx, edx;
+  if (__get_cpuid(7, &eax, &ebx, &ecx, &edx)) {
+    if ((ebx & bit_AVX2) != 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ValidateUtf8StringAVX(uint8_t const* src, std::size_t len) {
+  if (len >= 32) {
+    return validate_utf8_fast_avx(src, len);
+  }
+  return Utf8Helper::isValidUtf8(src, len);
+}
+
+#endif
+
+}  // namespace
+
+#endif
+
+std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, std::size_t) = nullptr;
+
+std::size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*,
+                                       std::size_t) = nullptr;
+
+std::size_t (*JSONSkipWhiteSpace)(uint8_t const*, std::size_t) = nullptr;
+
+bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = nullptr;
+
+void enableNativeStringFunctions() noexcept {
+  enableBuiltinStringFunctions();
+#ifdef __SSE4_2__
+  if (assemblerFunctionsEnabled() && hasSSE42()) {
+    JSONStringCopy = JSONStringCopySSE42;
+    JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8SSE42;
+    JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
   }
 #elif defined(__aarch64__)
   ValidateUtf8String = ValidateUtf8StringSSE42;
-#else
-  ValidateUtf8String = ::ValidateUtf8StringC;
 #endif
-  return (*ValidateUtf8String)(src, limit);
-}
-}  // namespace
-
-#else
-
-namespace {
-
-std::size_t doInitCopy(uint8_t* dst, uint8_t const* src, std::size_t limit) {
-  JSONStringCopy = ::JSONStringCopyC;
-  return ::JSONStringCopyC(dst, src, limit);
-}
-
-std::size_t doInitCopyCheckUtf8(uint8_t* dst, uint8_t const* src,
-                                std::size_t limit) {
-  JSONStringCopyCheckUtf8 = ::JSONStringCopyCheckUtf8C;
-  return ::JSONStringCopyCheckUtf8C(dst, src, limit);
-}
-
-std::size_t doInitSkip(uint8_t const* src, std::size_t limit) {
-  JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceC;
-  return JSONSkipWhiteSpace(src, limit);
-}
-
-bool doInitValidateUtf8String(uint8_t const* src, std::size_t limit) {
-  ValidateUtf8String = ::ValidateUtf8StringC;
-  return ValidateUtf8StringC(src, limit);
-}
-
-}  // namespace
-
+#ifdef __AVX2__
+  if (assemblerFunctionsEnabled() && hasAVX2()) {
+    ValidateUtf8String = ValidateUtf8StringAVX;
+  }
 #endif
-
-std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*,
-                              std::size_t) = ::doInitCopy;
-
-std::size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*,
-                                       std::size_t) = ::doInitCopyCheckUtf8;
-
-std::size_t (*JSONSkipWhiteSpace)(uint8_t const*, std::size_t) = ::doInitSkip;
-
-bool (*ValidateUtf8String)(uint8_t const*,
-                           std::size_t) = ::doInitValidateUtf8String;
-
-void arangodb::velocypack::enableNativeStringFunctions() {
-  JSONStringCopy = ::doInitCopy;
-  JSONStringCopyCheckUtf8 = ::doInitCopyCheckUtf8;
-  JSONSkipWhiteSpace = ::doInitSkip;
 }
 
-void arangodb::velocypack::enableBuiltinStringFunctions() {
-  JSONStringCopy = ::JSONStringCopyC;
-  JSONStringCopyCheckUtf8 = ::JSONStringCopyCheckUtf8C;
-  JSONSkipWhiteSpace = ::JSONSkipWhiteSpaceC;
+void enableBuiltinStringFunctions() noexcept {
+  JSONStringCopy = JSONStringCopyC;
+  JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8C;
+  JSONSkipWhiteSpace = JSONSkipWhiteSpaceC;
+  ValidateUtf8String = ValidateUtf8StringC;
 }
+
+}  // namespace arangodb::velocypack
 
 #if defined(COMPILE_VELOCYPACK_ASM_UNITTESTS)
 
@@ -368,6 +283,8 @@ int testPositions[] = {
     14,  15,  16,  23,  31,  32,  67,   103,  178,  210,  234,  247,  254, 255,
     -1,  -2,  -3,  -4,  -5,  -6,  -7,   -8,   -9,   -10,  -11,  -12,  -13, -14,
     -15, -16, -23, -31, -32, -67, -103, -178, -210, -234, -247, -254, -255};
+
+using namespace arangodb::velocypack;
 
 void TestStringCopyCorrectness(uint8_t* src, uint8_t* dst, std::size_t size) {
   std::size_t copied;
