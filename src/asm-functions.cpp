@@ -250,9 +250,6 @@ bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = nullptr;
 
 void enableNativeStringFunctions() noexcept {
   enableBuiltinStringFunctions();
-  if (assemblerFunctionsDisabled()) {
-    return;
-  }
 #ifdef __SSE4_2__
   if (hasSSE42()) {
     JSONStringCopy = JSONStringCopySSE42;
