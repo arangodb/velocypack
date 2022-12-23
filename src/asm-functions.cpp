@@ -38,6 +38,7 @@
 #elif defined(__aarch64__)
 #include <sse2neon.h>
 #endif
+#endif
 
 namespace arangodb::velocypack {
 namespace {
@@ -237,8 +238,6 @@ bool ValidateUtf8StringAVX(uint8_t const* src, std::size_t len) {
 #endif
 
 }  // namespace
-
-#endif
 
 std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, std::size_t) = nullptr;
 
