@@ -220,7 +220,7 @@ class ObjectIterator {
   // The useSequentialIteration flag indicates whether or not the iteration
   // simply jumps from key/value pair to key/value pair without using the
   // index. The default `false` is to use the index if it is there.
-  explicit ObjectIterator(Slice slice, bool useSequentialIteration = false)
+  explicit ObjectIterator(Slice slice, bool useSequentialIteration)
       : _slice{slice}, _current{nullptr}, _size{0}, _position{0} {
     auto const head = slice.head();
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Object)) {
@@ -337,7 +337,7 @@ class ObjectIterator {
   }
 
  private:
-  [[nodiscard]] uint8_t const* first(bool useSequentialIteration) noexcept {
+  [[nodiscard]] uint8_t const* first(bool useSequentialIteration) const noexcept {
     if (VELOCYPACK_UNLIKELY(_size == 0)) {
       return nullptr;
     }
@@ -346,7 +346,7 @@ class ObjectIterator {
     if (head == 0x14) {
       return _slice.start() + _slice.getStartOffsetFromCompact();
     } else if (useSequentialIteration) {
-      return _slice.begin() + _slice.findDataOffset(head);
+      return _slice.start() + _slice.findDataOffset(head);
     }
     return nullptr;
   }

@@ -72,7 +72,7 @@ TEST(BuilderTest, AddObjectIteratorEmpty) {
 
   Builder b;
   ASSERT_TRUE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
                               Exception::BuilderNeedOpenObject);
   ASSERT_TRUE(b.isClosed());
 }
@@ -90,7 +90,7 @@ TEST(BuilderTest, AddObjectIteratorKeyAlreadyWritten) {
   b.openObject();
   b.add(Value("foo"));
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
                               Exception::BuilderKeyAlreadyWritten);
   ASSERT_FALSE(b.isClosed());
 }
@@ -102,7 +102,7 @@ TEST(BuilderTest, AddToObjectEmtpyStringView) {
   obj.close();
 
   ASSERT_EQ(1U, obj.slice().length());
-  ObjectIterator it(obj.slice());
+  ObjectIterator it(obj.slice(), /*useSequentialIteration*/ false);
   ASSERT_TRUE(it.valid());
   ASSERT_EQ("", it.key().stringView());
   ASSERT_EQ("", it.value().stringView());
@@ -119,7 +119,7 @@ TEST(BuilderTest, AddObjectIteratorNonObject) {
   Builder b;
   b.openArray();
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice)),
+  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
                               Exception::BuilderNeedOpenObject);
   ASSERT_FALSE(b.isClosed());
 }
@@ -135,7 +135,7 @@ TEST(BuilderTest, AddObjectIteratorTop) {
   Builder b;
   b.openObject();
   ASSERT_FALSE(b.isClosed());
-  b.add(ObjectIterator(objSlice));
+  b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false));
   ASSERT_FALSE(b.isClosed());
   Slice result = b.close().slice();
   ASSERT_TRUE(b.isClosed());
@@ -154,7 +154,7 @@ TEST(BuilderTest, AddObjectIteratorReference) {
   Builder b;
   b.openObject();
   ASSERT_FALSE(b.isClosed());
-  auto it = ObjectIterator(objSlice);
+  auto it = ObjectIterator(objSlice, /*useSequentialIteration*/ false);
   b.add(it);
   ASSERT_FALSE(b.isClosed());
   Slice result = b.close().slice();
@@ -176,7 +176,7 @@ TEST(BuilderTest, AddObjectIteratorSub) {
   b.add("1-something", Value("tennis"));
   b.add(Value("2-values"));
   b.openObject();
-  b.add(ObjectIterator(objSlice));
+  b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false));
   ASSERT_FALSE(b.isClosed());
   b.close();  // close one level
   b.add("3-bark", Value("qux"));
@@ -2290,7 +2290,7 @@ TEST(BuilderTest, CloneDestroyOriginal) {
 }
 
 TEST(BuilderTest, AttributeTranslations) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -2346,7 +2346,7 @@ TEST(BuilderTest, AttributeTranslations) {
 }
 
 TEST(BuilderTest, AttributeTranslationsSorted) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -2399,7 +2399,7 @@ TEST(BuilderTest, AttributeTranslationsSorted) {
 }
 
 TEST(BuilderTest, AttributeTranslationsRollbackSet) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->seal();
@@ -3011,7 +3011,7 @@ TEST(BuilderTest, KeyWritten) {
 }
 
 TEST(BuilderTest, AddWithTranslator) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);

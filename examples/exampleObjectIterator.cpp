@@ -31,8 +31,8 @@ int main(int, char*[]) {
 
   // now iterate over the object members
   std::cout << "Iterating Object members:" << std::endl;
-  for (auto const& it : ObjectIterator(s)) {
-    std::cout << "key: " << it.key.copyString() << ", value: " << it.value
+  for (auto const& it : ObjectIterator(s, /*useSequentialIteration*/ true)) {
+    std::cout << "key: " << it.key.stringView() << ", value: " << it.value
               << std::endl;
   }
 

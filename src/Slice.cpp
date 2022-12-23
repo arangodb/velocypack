@@ -482,7 +482,7 @@ bool Slice::isEqualStringUnchecked(std::string_view attribute) const noexcept {
 }
 
 Slice Slice::getFromCompactObject(std::string_view attribute) const {
-  ObjectIterator it(*this);
+  ObjectIterator it(*this, /*useSequentialIteration*/ false);
   while (it.valid()) {
     Slice key = it.key(false);
     if (key.makeKey().isEqualString(attribute)) {

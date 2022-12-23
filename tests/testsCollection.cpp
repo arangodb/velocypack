@@ -31,10 +31,10 @@
 
 #include "tests-common.h"
 
-static auto DoNothingCallback = [](Slice const&, ValueLength) -> bool {
+static auto DoNothingCallback = [](Slice, ValueLength) -> bool {
   return false;
 };
-static auto FailCallback = [](Slice const&, ValueLength) -> bool {
+static auto FailCallback = [](Slice, ValueLength) -> bool {
   EXPECT_TRUE(false);
   return false;
 };
@@ -369,7 +369,7 @@ TEST(CollectionTest, ForEachArray) {
 
   std::size_t seen = 0;
   Collection::forEach(s,
-                      [&seen](Slice const& slice, ValueLength index) -> bool {
+                      [&seen](Slice slice, ValueLength index) -> bool {
                         EXPECT_EQ(seen, index);
 
                         switch (seen) {
@@ -397,7 +397,7 @@ TEST(CollectionTest, ForEachArrayAbort) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  Collection::forEach(s, [&seen](Slice const&, ValueLength index) -> bool {
+  Collection::forEach(s, [&seen](Slice, ValueLength index) -> bool {
     EXPECT_EQ(seen, index);
 
     if (seen == 3) {
@@ -418,7 +418,7 @@ TEST(CollectionTest, IterateArrayValues) {
   Slice s(parser.start());
 
   std::size_t state = 0;
-  Collection::forEach(s, [&state](Slice const& value, ValueLength) -> bool {
+  Collection::forEach(s, [&state](Slice value, ValueLength) -> bool {
     switch (state++) {
       case 0:
         EXPECT_TRUE(value.isNumber());
@@ -516,7 +516,7 @@ TEST(CollectionTest, FilterArray) {
 
   std::size_t seen = 0;
   Builder b = Collection::filter(
-      s, [&seen](Slice const& slice, ValueLength index) -> bool {
+      s, [&seen](Slice slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
         EXPECT_TRUE(slice.isNumber());
 
@@ -602,7 +602,7 @@ TEST(CollectionTest, FindArrayFirst) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  Slice found = Collection::find(s, [&seen](Slice const&, ValueLength) {
+  Slice found = Collection::find(s, [&seen](Slice, ValueLength) {
     ++seen;
     return true;
   });
@@ -618,7 +618,7 @@ TEST(CollectionTest, FindArrayLast) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  Slice found = Collection::find(s, [&seen](Slice const&, ValueLength index) {
+  Slice found = Collection::find(s, [&seen](Slice, ValueLength index) {
     ++seen;
     if (index == 2) {
       return true;
@@ -665,7 +665,7 @@ TEST(CollectionTest, ContainsArrayFirst) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength) {
+  ASSERT_TRUE(Collection::contains(s, [&seen](Slice, ValueLength) {
     ++seen;
     return true;
   }));
@@ -679,7 +679,7 @@ TEST(CollectionTest, ContainsArrayLast) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  ASSERT_TRUE(Collection::contains(s, [&seen](Slice const&, ValueLength index) {
+  ASSERT_TRUE(Collection::contains(s, [&seen](Slice, ValueLength index) {
     ++seen;
     if (index == 2) {
       return true;
@@ -804,7 +804,7 @@ TEST(CollectionTest, AllArrayFirstFalse) {
 
   std::size_t seen = 0;
   ASSERT_FALSE(
-      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+      Collection::all(s, [&seen](Slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
 
         ++seen;
@@ -822,7 +822,7 @@ TEST(CollectionTest, AllArrayLastFalse) {
 
   std::size_t seen = 0;
   ASSERT_FALSE(
-      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+      Collection::all(s, [&seen](Slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
 
         ++seen;
@@ -843,7 +843,7 @@ TEST(CollectionTest, AllArrayTrue) {
 
   std::size_t seen = 0;
   ASSERT_TRUE(
-      Collection::all(s, [&seen](Slice const&, ValueLength index) -> bool {
+      Collection::all(s, [&seen](Slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
 
         ++seen;
@@ -889,7 +889,7 @@ TEST(CollectionTest, AnyArrayLastTrue) {
 
   std::size_t seen = 0;
   ASSERT_TRUE(
-      Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
+      Collection::any(s, [&seen](Slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
 
         ++seen;
@@ -910,7 +910,7 @@ TEST(CollectionTest, AnyArrayFirstTrue) {
 
   std::size_t seen = 0;
   ASSERT_TRUE(
-      Collection::any(s, [&seen](Slice const&, ValueLength index) -> bool {
+      Collection::any(s, [&seen](Slice, ValueLength index) -> bool {
         EXPECT_EQ(seen, index);
 
         ++seen;
@@ -1723,22 +1723,22 @@ TEST(CollectionTest, VisitRecursiveNonCompound) {
   ASSERT_VELOCYPACK_EXCEPTION(
       Collection::visitRecursive(
           s.at(0), Collection::PreOrder,
-          [](Slice const&, Slice const&) -> bool { return true; }),
+          [](Slice, Slice) -> bool { return true; }),
       Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(
       Collection::visitRecursive(
           s.at(1), Collection::PreOrder,
-          [](Slice const&, Slice const&) -> bool { return true; }),
+          [](Slice, Slice) -> bool { return true; }),
       Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(
       Collection::visitRecursive(
           s.at(2), Collection::PreOrder,
-          [](Slice const&, Slice const&) -> bool { return true; }),
+          [](Slice, Slice) -> bool { return true; }),
       Exception::InvalidValueType);
   ASSERT_VELOCYPACK_EXCEPTION(
       Collection::visitRecursive(
           s.at(3), Collection::PreOrder,
-          [](Slice const&, Slice const&) -> bool { return true; }),
+          [](Slice, Slice) -> bool { return true; }),
       Exception::InvalidValueType);
 }
 
@@ -1752,7 +1752,7 @@ TEST(CollectionTest, VisitRecursiveArrayPreOrderAbort) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PreOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_TRUE(key.isNone());
         switch (seen) {
           case 0:
@@ -1781,7 +1781,7 @@ TEST(CollectionTest, VisitRecursiveArrayPostOrderAbort) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PostOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_TRUE(key.isNone());
         switch (seen) {
           case 0:
@@ -1814,7 +1814,7 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrderAbort) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PreOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
@@ -1845,7 +1845,7 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrderAbort) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PostOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
@@ -1877,7 +1877,7 @@ TEST(CollectionTest, VisitRecursiveArrayPreOrder) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PreOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_TRUE(key.isNone());
         switch (seen) {
           case 0:
@@ -1931,7 +1931,7 @@ TEST(CollectionTest, VisitRecursiveArrayPostOrder) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PostOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_TRUE(key.isNone());
         switch (seen) {
           case 0:
@@ -1987,7 +1987,7 @@ TEST(CollectionTest, VisitRecursiveObjectPreOrder) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PreOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:
@@ -2043,7 +2043,7 @@ TEST(CollectionTest, VisitRecursiveObjectPostOrder) {
   int seen = 0;
   Collection::visitRecursive(
       s, Collection::PostOrder,
-      [&seen](Slice const& key, Slice const& value) -> bool {
+      [&seen](Slice key, Slice value) -> bool {
         EXPECT_FALSE(key.isNone());
         switch (seen) {
           case 0:

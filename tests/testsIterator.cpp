@@ -448,7 +448,7 @@ TEST(IteratorTest, IterateNonObject1) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s, /*useSequentialIteration*/ true), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject2) {
@@ -457,7 +457,7 @@ TEST(IteratorTest, IterateNonObject2) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s, /*useSequentialIteration*/ true), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject3) {
@@ -466,7 +466,7 @@ TEST(IteratorTest, IterateNonObject3) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s, /*useSequentialIteration*/ true), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject4) {
@@ -475,7 +475,7 @@ TEST(IteratorTest, IterateNonObject4) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s, /*useSequentialIteration*/ true), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateNonObject5) {
@@ -484,7 +484,7 @@ TEST(IteratorTest, IterateNonObject5) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s), Exception::InvalidValueType);
+  ASSERT_VELOCYPACK_EXCEPTION(ObjectIterator(s, /*useSequentialIteration*/ true), Exception::InvalidValueType);
 }
 
 TEST(IteratorTest, IterateObjectEmpty) {
@@ -494,7 +494,7 @@ TEST(IteratorTest, IterateObjectEmpty) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ true);
   ASSERT_FALSE(it.valid());
 
   ASSERT_VELOCYPACK_EXCEPTION(std::ignore = it.key(),
@@ -515,7 +515,7 @@ TEST(IteratorTest, IterateObject) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   ASSERT_TRUE(it.valid());
   Slice key = it.key();
@@ -649,7 +649,7 @@ TEST(IteratorTest, IterateObjectCompact) {
 
   ASSERT_EQ(0x14, s.head());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   ASSERT_TRUE(it.valid());
   Slice key = it.key();
@@ -739,7 +739,7 @@ TEST(IteratorTest, IterateObjectKeys) {
   Slice s(parser.start());
 
   std::size_t state = 0;
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     Slice key(it.key());
@@ -792,7 +792,7 @@ TEST(IteratorTest, IterateObjectKeysCompact) {
   ASSERT_EQ(0x14, s.head());
 
   std::size_t state = 0;
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     Slice key(it.key());
@@ -840,7 +840,7 @@ TEST(IteratorTest, IterateObjectValues) {
   Slice s(parser.start());
 
   std::vector<std::string> seenKeys;
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     seenKeys.emplace_back(it.key().copyString());
@@ -870,7 +870,7 @@ TEST(IteratorTest, IterateObjectValuesCompact) {
   ASSERT_EQ(0x14, s.head());
 
   std::vector<std::string> seenKeys;
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   while (it.valid()) {
     seenKeys.emplace_back(it.key().copyString());
@@ -924,7 +924,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConst) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  for (auto const it : ArrayIterator(s)) {
+  for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
     ++seen;
@@ -940,7 +940,7 @@ TEST(IteratorTest, ArrayIteratorRangeBasedForConstRef) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  for (auto const& it : ArrayIterator(s)) {
+  for (auto it : ArrayIterator(s)) {
     ASSERT_TRUE(it.isNumber());
     ASSERT_EQ(seen + 1, it.getUInt());
     ++seen;
@@ -976,12 +976,10 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForEmpty) {
   parser.parse(value);
   Slice s(parser.start());
 
-  std::size_t seen = 0;
-  for (auto it : ObjectIterator(s)) {
+  for (auto it : ObjectIterator(s, /*useSequentialIteration*/ true)) {
     ASSERT_TRUE(false);
     ASSERT_FALSE(it.value.isNumber());  // only in here to please the compiler
   }
-  ASSERT_EQ(0UL, seen);
 }
 
 TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
@@ -992,7 +990,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedFor) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  for (auto it : ObjectIterator(s)) {
+  for (auto it : ObjectIterator(s, /*useSequentialIteration*/ false)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
@@ -1016,7 +1014,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConst) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  for (auto const it : ObjectIterator(s)) {
+  for (auto it : ObjectIterator(s, /*useSequentialIteration*/ false)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
@@ -1040,7 +1038,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForConstRef) {
   Slice s(parser.start());
 
   std::size_t seen = 0;
-  for (auto const& it : ObjectIterator(s)) {
+  for (auto it : ObjectIterator(s, /*useSequentialIteration*/ false)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
@@ -1069,7 +1067,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
   ASSERT_EQ(0x14, s.head());
 
   std::size_t seen = 0;
-  for (auto it : ObjectIterator(s)) {
+  for (auto it : ObjectIterator(s, /*useSequentialIteration*/ false)) {
     ASSERT_TRUE(it.key.isString());
     if (seen == 0) {
       ASSERT_EQ("1foo", it.key.copyString());
@@ -1086,7 +1084,7 @@ TEST(IteratorTest, ObjectIteratorRangeBasedForCompact) {
 }
 
 TEST(IteratorTest, ObjectIteratorTranslations) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -1107,7 +1105,7 @@ TEST(IteratorTest, ObjectIteratorTranslations) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
   ASSERT_EQ(6UL, it.size());
 
   while (it.valid()) {
@@ -1196,7 +1194,7 @@ TEST(IteratorTest, ObjectIteratorToStream) {
   parser.parse(value);
   Slice s(parser.start());
 
-  ObjectIterator it(s);
+  ObjectIterator it(s, /*useSequentialIteration*/ false);
 
   {
     std::ostringstream result;

@@ -17,8 +17,8 @@ static void printObject(Builder const& b) {
   // now iterate over the object members
   // the attribute name translator works transparently
   std::cout << "Iterating Object members:" << std::endl;
-  for (auto const& it : ObjectIterator(s)) {
-    std::cout << "key: " << it.key.copyString()
+  for (auto const& it : ObjectIterator(s, /*useSequentialIteration*/ true)) {
+    std::cout << "key: " << it.key.stringView()
               << ", value: " << it.value.toJson() << std::endl;
   }
 }

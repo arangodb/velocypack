@@ -1699,7 +1699,7 @@ TEST(StringDumperTest, BCDNeg) {
 }
 
 TEST(StringDumperTest, AttributeTranslationsNotSet) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
   // intentionally don't add any translations
   translator->seal();
 
@@ -1721,7 +1721,7 @@ TEST(StringDumperTest, AttributeTranslationsNotSet) {
 }
 
 TEST(StringDumperTest, AttributeTranslations) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
@@ -1756,7 +1756,7 @@ TEST(StringDumperTest, AttributeTranslations) {
 }
 
 TEST(StringDumperTest, AttributeTranslationsInSubObjects) {
-  std::unique_ptr<AttributeTranslator> translator(new AttributeTranslator);
+  auto translator = std::make_unique<AttributeTranslator>();
 
   translator->add("foo", 1);
   translator->add("bar", 2);
