@@ -237,6 +237,12 @@ bool ValidateUtf8StringAVX(uint8_t const* src, std::size_t len) {
 
 #endif
 
+struct EnableNative {
+  EnableNative() noexcept { enableNativeStringFunctions(); }
+};
+
+[[maybe_unused]] EnableNative const init;
+
 }  // namespace
 
 std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, std::size_t) = nullptr;
@@ -255,6 +261,7 @@ void enableNativeStringFunctions() noexcept {
     JSONStringCopy = JSONStringCopySSE42;
     JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8SSE42;
     JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
+    ValidateUtf8String = ValidateUtf8StringSSE42;
   }
 #elif defined(__aarch64__)
   ValidateUtf8String = ValidateUtf8StringSSE42;
