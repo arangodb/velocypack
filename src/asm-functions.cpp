@@ -245,14 +245,16 @@ struct EnableNative {
 
 }  // namespace
 
-std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, std::size_t) = nullptr;
+std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*,
+                              std::size_t) = JSONStringCopyC;
 
 std::size_t (*JSONStringCopyCheckUtf8)(uint8_t*, uint8_t const*,
-                                       std::size_t) = nullptr;
+                                       std::size_t) = JSONStringCopyCheckUtf8C;
 
-std::size_t (*JSONSkipWhiteSpace)(uint8_t const*, std::size_t) = nullptr;
+std::size_t (*JSONSkipWhiteSpace)(uint8_t const*,
+                                  std::size_t) = JSONSkipWhiteSpaceC;
 
-bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = nullptr;
+bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = ValidateUtf8StringC;
 
 void enableNativeStringFunctions() noexcept {
   enableBuiltinStringFunctions();
