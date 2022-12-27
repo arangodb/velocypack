@@ -87,7 +87,7 @@ class ArrayIterator {
 #if (defined(_MSC_VER) ||                                     \
      (defined(__clang_version__) && __clang_major__ >= 12) || \
      (!defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 10))
-  [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+  [[nodiscard]] static constexpr std::default_sentinel_t end() { return {}; }
   [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
     return !valid();
   }
@@ -264,7 +264,7 @@ class ObjectIterator {
   [[nodiscard]] bool operator==(std::default_sentinel_t) const noexcept {
     return !valid();
   }
-  [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
+  [[nodiscard]] static constexpr std::default_sentinel_t end() { return {}; }
 #else
   [[nodiscard]] ObjectIterator end() const noexcept {
     ObjectIterator it{*this};
