@@ -44,25 +44,26 @@ struct Sink {
   virtual void append(char const* p) = 0;
   virtual void append(char const* p, ValueLength len) = 0;
   virtual void reserve(ValueLength len) = 0;
+
+  // default implementations, can be overridden
+  virtual void append(std::string const& p) { append(p.data(), p.size()); }
+  virtual void append(std::string_view p) { append(p.data(), p.size()); }
+  [[deprecated]] virtual void append(char const* p) {
+    append(p, std::strlen(p));
+  }
 };
 
 template<typename T>
 struct ByteBufferSinkImpl final : public Sink {
-  explicit ByteBufferSinkImpl(Buffer<T>* buffer) : buffer(buffer) {}
+  using Sink::append;
 
-  void push_back(char c) override final { buffer->push_back(c); }
+  explicit ByteBufferSinkImpl(Buffer<T>* buffer) : _buffer(buffer) {}
 
-  void append(std::string const& p) override final {
-    buffer->append(p.c_str(), p.size());
-  }
+  void push_back(char c) final { _buffer->push_back(c); }
 
-  void append(char const* p) override final { buffer->append(p, strlen(p)); }
+  void append(char const* p, ValueLength len) final { _buffer->append(p, len); }
 
-  void append(char const* p, ValueLength len) override final {
-    buffer->append(p, len);
-  }
-
-  void reserve(ValueLength len) override final { buffer->reserve(len); }
+  void reserve(ValueLength len) final { _buffer->reserve(len); }
 
   Buffer<T>* buffer;
 };
@@ -78,14 +79,20 @@ struct StringSinkImpl final : public Sink {
   void append(std::string const& p) override final { buffer->append(p); }
 
   void append(char const* p) override final { buffer->append(p, strlen(p)); }
+  void push_back(char c) final { _buffer->push_back(c); }
 
   void append(char const* p, ValueLength len) override final {
     buffer->append(p, checkOverflow(len));
+  void append(char const* p, ValueLength len) final {
+    _buffer->append(p, checkOverflow(len));
   }
 
   void reserve(ValueLength len) override final {
     ValueLength length = len + buffer->size();
     if (length <= buffer->capacity()) {
+  void reserve(ValueLength len) final {
+    ValueLength length = len + _buffer->size();
+    if (length <= _buffer->capacity()) {
       return;
     }
     buffer->reserve(checkOverflow(length));
@@ -102,6 +109,75 @@ struct StringSinkImpl final : public Sink {
 
 typedef StringSinkImpl<std::string> StringSink;
 
+// a sink with an upper bound for the generated output value
+template<typename T>
+struct SizeConstrainedStringSinkImpl final : public Sink {
+  using Sink::append;
+
+  explicit SizeConstrainedStringSinkImpl(T* buffer, ValueLength maxLength)
+      : _maxLength(maxLength),
+        _buffer(buffer),
+        _length(0),
+        _overflowed(false) {}
+
+  void push_back(char c) final {
+    ++_length;
+    if (_buffer->size() < _maxLength) {
+      _buffer->push_back(c);
+      VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
+    } else {
+      _overflowed = true;
+    }
+  }
+
+  void append(char const* p, ValueLength len) final {
+    _length += len;
+    if (_buffer->size() < _maxLength) {
+      ValueLength total = checkOverflow(_buffer->size() + checkOverflow(len));
+      if (total <= _maxLength) {
+        _buffer->append(p, len);
+        VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
+        return;
+      }
+      ValueLength left = _maxLength - _buffer->size();
+      if (len > left) {
+        len = left;
+      }
+      _buffer->append(p, len);
+      VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
+    }
+    _overflowed = true;
+  }
+
+  void reserve(ValueLength len) final {
+    ValueLength total = checkOverflow(_buffer->size() + checkOverflow(len));
+    if (total <= _buffer->capacity()) {
+      return;
+    }
+    VELOCYPACK_ASSERT(_buffer->size() <= _maxLength);
+    ValueLength left = _maxLength - _buffer->size();
+    if (len > left) {
+      len = left;
+    }
+    if (len > 0) {
+      _buffer->reserve(checkOverflow(len));
+    }
+  }
+
+  ValueLength maxLength() const noexcept { return _maxLength; }
+  ValueLength unconstrainedLength() const noexcept { return _length; }
+  bool overflowed() const noexcept { return _overflowed; }
+
+ private:
+  std::size_t const _maxLength;
+  T* _buffer;
+  ValueLength _length;
+  bool _overflowed;
+};
+
+typedef SizeConstrainedStringSinkImpl<std::string> SizeConstrainedStringSink;
+
+// only tracks the length of the generated output
 struct StringLengthSink final : public Sink {
   StringLengthSink() : length(0) {}
 
@@ -109,11 +185,11 @@ struct StringLengthSink final : public Sink {
 
   void append(std::string const& p) override final { length += p.size(); }
 
-  void append(char const* p) override final { length += strlen(p); }
+  void push_back(char) final { ++_length; }
 
-  void append(char const*, ValueLength len) override final { length += len; }
+  void append(char const*, ValueLength len) final { _length += len; }
 
-  void reserve(ValueLength) override final {}
+  void reserve(ValueLength) final {}
 
   ValueLength length;
 };
@@ -124,17 +200,15 @@ struct StreamSinkImpl final : public Sink {
 
   void push_back(char c) override final { *stream << c; }
 
-  void append(std::string const& p) override final { *stream << p; }
+  void push_back(char c) final { *_stream << c; }
 
-  void append(char const* p) override final {
-    stream->write(p, static_cast<std::streamsize>(strlen(p)));
+  void append(std::string const& p) final { *_stream << p; }
+
+  void append(char const* p, ValueLength len) final {
+    _stream->write(p, static_cast<std::streamsize>(len));
   }
 
-  void append(char const* p, ValueLength len) override final {
-    stream->write(p, static_cast<std::streamsize>(len));
-  }
-
-  void reserve(ValueLength) override final {}
+  void reserve(ValueLength) final {}
 
   T* stream;
 };
@@ -147,6 +221,8 @@ typedef StreamSinkImpl<std::ofstream> OutputFileStreamSink;
 using VPackSink = arangodb::velocypack::Sink;
 using VPackCharBufferSink = arangodb::velocypack::CharBufferSink;
 using VPackStringSink = arangodb::velocypack::StringSink;
+using VPackSizeConstrainedStringSink =
+    arangodb::velocypack::SizeConstrainedStringSink;
 using VPackStringLengthSink = arangodb::velocypack::StringLengthSink;
 using VPackStringStreamSink = arangodb::velocypack::StringStreamSink;
 using VPackOutputFileStreamSink = arangodb::velocypack::OutputFileStreamSink;
