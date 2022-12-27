@@ -208,6 +208,9 @@ std::size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, std::size_t limit) {
   return count;
 }
 
+#endif
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
+
 bool ValidateUtf8StringSSE42(uint8_t const* src, std::size_t len) {
   if (len >= 16) {
     return validate_utf8_fast_sse42(src, len);
