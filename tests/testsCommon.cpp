@@ -138,12 +138,6 @@ TEST(CommonTest, CurrentUTCValue) {
 }
 #endif
 
-TEST(CommonTest, AsmFunctions) {
-  disableAssemblerFunctions();
-  ASSERT_TRUE(assemblerFunctionsDisabled());
-  ASSERT_FALSE(assemblerFunctionsEnabled());
-}
-
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 

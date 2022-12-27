@@ -9,8 +9,7 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
   // serialize a custom type into JSON
   static int const myMagicNumber = 42;
 
-  std::string toString(Slice const& value, Options const*,
-                       Slice const&) override final {
+  std::string toString(Slice const& value, Options const*, Slice const&) final {
     if (value.head() == 0xf0) {
       return std::to_string(myMagicNumber);
     }
@@ -24,7 +23,7 @@ struct MyCustomTypeHandler : public CustomTypeHandler {
     throw "unknown type!";
   }
 
-  void dump(Slice const& value, Dumper* dumper, Slice const&) override final {
+  void dump(Slice const& value, Dumper* dumper, Slice const&) final {
     Sink* sink = dumper->sink();
 
     if (value.head() == 0xf0) {
