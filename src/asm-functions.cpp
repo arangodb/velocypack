@@ -86,7 +86,7 @@ inline bool ValidateUtf8StringC(uint8_t const* src, std::size_t limit) {
   return Utf8Helper::isValidUtf8(src, static_cast<ValueLength>(limit));
 }
 
-#ifdef __SSE4_2__
+#if defined(__SSE4_2__) && VELOCYPACK_ASM_OPTIMIZATIONS == 1
 bool hasSSE42() noexcept {
   unsigned int eax, ebx, ecx, edx;
   if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
@@ -208,6 +208,9 @@ std::size_t JSONSkipWhiteSpaceSSE42(uint8_t const* ptr, std::size_t limit) {
   return count;
 }
 
+#endif
+#if VELOCYPACK_ASM_OPTIMIZATIONS == 1
+
 bool ValidateUtf8StringSSE42(uint8_t const* src, std::size_t len) {
   if (len >= 16) {
     return validate_utf8_fast_sse42(src, len);
@@ -216,7 +219,7 @@ bool ValidateUtf8StringSSE42(uint8_t const* src, std::size_t len) {
 }
 
 #endif
-#ifdef __AVX2__
+#if defined(__AVX2__) && VELOCYPACK_ASM_OPTIMIZATIONS == 1
 
 bool hasAVX2() noexcept {
   unsigned int eax, ebx, ecx, edx;
@@ -258,17 +261,17 @@ bool (*ValidateUtf8String)(uint8_t const*, std::size_t) = ValidateUtf8StringC;
 
 void enableNativeStringFunctions() noexcept {
   enableBuiltinStringFunctions();
-#ifdef __SSE4_2__
+#if defined(__SSE4_2__) && VELOCYPACK_ASM_OPTIMIZATIONS == 1
   if (hasSSE42()) {
     JSONStringCopy = JSONStringCopySSE42;
     JSONStringCopyCheckUtf8 = JSONStringCopyCheckUtf8SSE42;
     JSONSkipWhiteSpace = JSONSkipWhiteSpaceSSE42;
     ValidateUtf8String = ValidateUtf8StringSSE42;
   }
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && VELOCYPACK_ASM_OPTIMIZATIONS == 1
   ValidateUtf8String = ValidateUtf8StringSSE42;
 #endif
-#ifdef __AVX2__
+#if defined(__AVX2__) && VELOCYPACK_ASM_OPTIMIZATIONS == 1
   if (hasAVX2()) {
     ValidateUtf8String = ValidateUtf8StringAVX;
   }
