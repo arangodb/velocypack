@@ -220,7 +220,7 @@ class ObjectIterator {
   // The useSequentialIteration flag indicates whether or not the iteration
   // simply jumps from key/value pair to key/value pair without using the
   // index. The default `false` is to use the index if it is there.
-  explicit ObjectIterator(Slice slice, bool useSequentialIteration)
+  explicit ObjectIterator(Slice slice, bool useSequentialIteration = false)
       : _slice{slice}, _current{nullptr}, _size{0}, _position{0} {
     auto const head = slice.head();
     if (VELOCYPACK_UNLIKELY(slice.type(head) != ValueType::Object)) {
