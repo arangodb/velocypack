@@ -72,6 +72,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++-${{ matrix.version }}
         echo "CXX=g++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        echo "CC=gcc-${{ matrix.version }}" >> ${GITHUB_ENV}
     - name: Install clang
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
       run: |
@@ -86,6 +87,7 @@ jobs:
         sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
+        echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
     - name: Initialize MSVC ${{ matrix.version }}
       if: startsWith(matrix.os, 'windows-')
