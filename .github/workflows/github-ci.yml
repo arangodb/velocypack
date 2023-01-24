@@ -17,8 +17,6 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-latest, compiler: gcc, version:  '9',
-             build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '11',
