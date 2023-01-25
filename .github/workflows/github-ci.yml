@@ -17,8 +17,6 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-latest, compiler: gcc, version:  '9',
-             build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '11',
@@ -74,6 +72,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++-${{ matrix.version }}
         echo "CXX=g++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        echo "CC=gcc-${{ matrix.version }}" >> ${GITHUB_ENV}
     - name: Install clang
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
       run: |
@@ -88,6 +87,7 @@ jobs:
         sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
+        echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
     - name: Initialize MSVC ${{ matrix.version }}
       if: startsWith(matrix.os, 'windows-')
@@ -97,7 +97,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHashType=${{ matrix.hash_type }} -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=${{env.CXX_STANDARD}} -DCMAKE_CXX_FLAGS="${{ matrix.flags }}" -DCMAKE_LINKER_FLAGS="${{ matrix.ld_flags }}"
+      run: cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHashType=${{ matrix.hash_type }} -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=${{env.CXX_STANDARD}} -DCMAKE_CXX_FLAGS="${{ matrix.flags }}" -DCMAKE_C_FLAGS="${{ matrix.flags }}" -DCMAKE_LINKER_FLAGS="${{ matrix.ld_flags }}"
 
     - name: Build
       # Build your program with the given configuration
@@ -111,7 +111,7 @@ jobs:
       if: matrix.coverage == true
       run: |
         sudo apt-get install lcov
-        scripts/collect-coverage.sh
+        CXX=g++-${{ matrix.version }} scripts/collect-coverage.sh
 
     - name: Coveralls Upload
       if: matrix.coverage == true

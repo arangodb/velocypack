@@ -94,11 +94,18 @@
 #include "velocypack/velocypack-memory.h"
 
 #ifdef VELOCYPACK_XXHASH
-// forward for XXH functions declared elsewhere
-#include "velocypack/velocypack-xxhash.h"
 
-#define VELOCYPACK_HASH(mem, size, seed) XXH64(mem, size, seed)
-#define VELOCYPACK_HASH32(mem, size, seed) XXH32(mem, size, seed)
+#if defined (__cplusplus)
+extern "C" {
+#endif
+uint64_t VELOCYPACK_XXH64(void const*, size_t, uint64_t);
+uint32_t VELOCYPACK_XXH32(void const*, size_t, uint32_t);
+#if defined (__cplusplus)
+}
+#endif
+
+#define VELOCYPACK_HASH(mem, size, seed) VELOCYPACK_XXH64(mem, size, seed)
+#define VELOCYPACK_HASH32(mem, size, seed) VELOCYPACK_XXH32(mem, size, seed)
 #endif
 
 #ifdef VELOCYPACK_FASTHASH

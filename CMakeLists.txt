@@ -37,11 +37,11 @@ endif()
 option(Maintainer "Build maintainer tools" OFF)
 option(BuildSseOpt "Build with SSE optimization instructions" ON)
 
-set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash, wyhash)" )
+set(HashType "xxhash" CACHE STRING "Hash type (fasthash, xxhash)" )
 
 # Set Build Type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
 message(STATUS "VelocyPack build mode: ${CMAKE_BUILD_TYPE}")
@@ -68,64 +68,64 @@ else()
   add_definitions("-DVELOCYPACK_ASM_OPTIMIZATIONS=1")
 endif()
 
-set(VELOCY_SOURCE
-    src/velocypack-common.cpp
-    src/AttributeTranslator.cpp
-    src/Builder.cpp
-    src/Collection.cpp
-    src/Compare.cpp
-    src/Dumper.cpp
-    src/Exception.cpp
-    src/HashedStringRef.cpp
-    src/HexDump.cpp
-    src/Iterator.cpp
-    src/Options.cpp
-    src/Parser.cpp
-    src/Serializable.cpp
-    src/SharedSlice.cpp
-    src/Slice.cpp
-    src/Utf8Helper.cpp
-    src/Validator.cpp
-    src/Value.cpp
-    src/ValueType.cpp
-    src/Version.cpp
-    src/asm-functions.cpp
-    src/asm-utf8check.cpp
-    src/fpconv.cpp
-    src/string-functions.cpp
+add_library(velocypack STATIC
+  src/velocypack-common.cpp
+  src/AttributeTranslator.cpp
+  src/Builder.cpp
+  src/Collection.cpp
+  src/Compare.cpp
+  src/Dumper.cpp
+  src/Exception.cpp
+  src/HashedStringRef.cpp
+  src/HexDump.cpp
+  src/Iterator.cpp
+  src/Options.cpp
+  src/Parser.cpp
+  src/Serializable.cpp
+  src/SharedSlice.cpp
+  src/Slice.cpp
+  src/Utf8Helper.cpp
+  src/Validator.cpp
+  src/Value.cpp
+  src/ValueType.cpp
+  src/Version.cpp
+  src/asm-functions.cpp
+  src/asm-utf8check.cpp
+  src/fpconv.cpp
+  src/string-functions.cpp
 )
 
 #Use xxhash, fasthash?
 if(HashType STREQUAL "xxhash")
-    list(APPEND VELOCY_SOURCE src/xxhash.cpp)
-    add_definitions("-DVELOCYPACK_XXHASH=1")
+  target_sources(velocypack PRIVATE src/xxhash.c)
+  target_compile_definitions(velocypack PRIVATE "-DXXH_NAMESPACE=VELOCYPACK_")
+  add_definitions("-DVELOCYPACK_XXHASH=1")
 elseif(HashType STREQUAL "fasthash")
-    list(APPEND VELOCY_SOURCE src/fasthash.cpp)
-    add_definitions("-DVELOCYPACK_FASTHASH=1")
+  target_sources(velocypack PRIVATE src/fasthash.cpp)
+  add_definitions("-DVELOCYPACK_FASTHASH=1")
 else()
-    message(FATAL_ERROR "VelocyPack invalid HashType value. supported values: xxhash, fasthash")
+  message(FATAL_ERROR "VelocyPack invalid HashType value. supported values: xxhash, fasthash")
 endif()
 message(STATUS "VelocyPack Building with hash type: ${HashType}")
 
-add_library(velocypack STATIC ${VELOCY_SOURCE})
 target_include_directories(
-    velocypack
-    PRIVATE ${PROJECT_SOURCE_DIR}/src
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
- )
+  velocypack
+  PRIVATE ${PROJECT_SOURCE_DIR}/src
+  PUBLIC ${PROJECT_SOURCE_DIR}/include
+)
  
- if(IS_ARM)
-   target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
- endif()
+if(IS_ARM)
+  target_include_directories(velocypack PRIVATE ${PROJECT_SOURCE_DIR}/external/sse2neon)
+endif()
 
 if(Maintainer)
-    add_executable(buildVersion scripts/build-version.cpp)
-    add_custom_target(buildVersionNumber
-        COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
-        ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
-        DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
-        VERBATIM
-    )
+  add_executable(buildVersion scripts/build-version.cpp)
+  add_custom_target(buildVersionNumber
+    COMMAND ${PROJECT_BINARY_DIR}/scripts/buildVersion
+    ${PROJECT_SOURCE_DIR}/include/velocypack/velocypack-version-number.h
+    DEPENDS ${PROJECT_BINARY_DIR}/scripts/buildVersion
+    VERBATIM
+  )
 endif()
 
 add_subdirectory(tools)
@@ -134,7 +134,7 @@ add_subdirectory(tests)
 
 install(TARGETS velocypack DESTINATION lib)
 install(
-    DIRECTORY   "include/velocypack"
-    DESTINATION include
+  DIRECTORY   "include/velocypack"
+  DESTINATION include
 )
 include(CPack)
