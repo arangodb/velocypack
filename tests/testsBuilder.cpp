@@ -1759,6 +1759,26 @@ TEST(BuilderTest, String2Parts) {
   ASSERT_EQ(combined, c);
 }
 
+TEST(BuilderTest, String2PartsFromChars) {
+  char const* value1("der fuxx ging in den wald und aß pilze");
+  char const* value2("der hans, der hans, der kanns");
+  std::string const combined = std::string(value1) + std::string(value2);
+  Builder b;
+  b.add(ValueString2Parts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
 TEST(BuilderTest, String2PartsEmpty) {
   std::string_view const value1;
   std::string_view const value2;

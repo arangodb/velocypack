@@ -1247,18 +1247,13 @@ uint8_t* Builder::set(ValueString2Parts const& parts) {
     appendByteUnchecked(static_cast<uint8_t>(0x40 + size));
   }
   if (size != 0) {
+    VELOCYPACK_ASSERT(size == parts.getFirst().size() + parts.getSecond().size());
     // first part
-    std::string_view const* sv = parts.getFirst();
-    VELOCYPACK_ASSERT(sv != nullptr);
-    std::memcpy(_start + _pos, sv->data(), checkOverflow(sv->size()));
-    advance(sv->size());
+    std::memcpy(_start + _pos, parts.getFirst().data(), checkOverflow(parts.getFirst().size()));
+    advance(parts.getFirst().size());
     // second part
-    sv = parts.getSecond();
-    VELOCYPACK_ASSERT(sv != nullptr);
-    std::memcpy(_start + _pos, sv->data(), checkOverflow(sv->size()));
-    advance(sv->size());
-    
-    VELOCYPACK_ASSERT(size == parts.getFirst()->size() + parts.getSecond()->size());
+    std::memcpy(_start + _pos, parts.getSecond().data(), checkOverflow(parts.getSecond().size()));
+    advance(parts.getSecond().size());
   }
   return _start + oldPos;
 }
