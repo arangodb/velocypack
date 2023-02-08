@@ -227,8 +227,8 @@ class ValueString2Parts {
   std::string_view sv2;
 
  public:
-  constexpr explicit ValueString2Parts(std::string_view const& s1,
-                                       std::string_view const& s2) noexcept
+  constexpr ValueString2Parts(std::string_view s1,
+                              std::string_view s2) noexcept
       : sv1(s1), sv2(s2) {}
 
   constexpr size_t getSize() const noexcept {
