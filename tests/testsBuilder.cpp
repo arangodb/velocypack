@@ -1739,6 +1739,89 @@ TEST(BuilderTest, StringView) {
   ASSERT_EQ(value, c);
 }
 
+TEST(BuilderTest, String2Parts) {
+  std::string_view const value1("der fuxx ging in den wald und aß pilze");
+  std::string_view const value2("der hans, der hans, der kanns");
+  std::string const combined = std::string(value1) + std::string(value2);
+  Builder b;
+  b.add(ValueString2Parts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
+TEST(BuilderTest, String2PartsEmpty) {
+  std::string_view const value1;
+  std::string_view const value2;
+  Builder b;
+  b.add(ValueString2Parts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(0, strncmp(s, "", 0));
+  ASSERT_EQ(0, len);
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(0, c.size());
+}
+
+TEST(BuilderTest, String2PartsLong) {
+  std::string_view const value1("der fuxx ging in den wald und aß pilze und findets ziemlich gut. ist halt ein fuxx, das ist so");
+  std::string_view const value2("der hans, der hans, der kanns, und der hund, der steht im wald und sieht den fuxx und findets auch sehr gut");
+  std::string const combined = std::string(value1) + std::string(value2);
+  // long string offset
+  ASSERT_GT(combined.size(), 128);
+  Builder b;
+  b.add(ValueString2Parts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
+TEST(BuilderTest, String2PartsInObject) {
+  std::string_view const value1("der fuxx ging in den wald und aß pilze");
+  std::string_view const value2("der hans, der hans, der kanns");
+  std::string const combined1 = std::string(value1) + std::string(value2);
+  std::string const combined2 = std::string(value2) + std::string(value1);
+  Builder b;
+  b.openObject();
+  b.add("foo", ValueString2Parts(value2, value1));
+  b.add("bar", ValueString2Parts(value1, value2));
+  b.close();
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isObject());
+
+  std::string_view c = slice.get("foo").stringView();
+  ASSERT_EQ(combined2.size(), c.size());
+  ASSERT_EQ(combined2, c);
+  
+  c = slice.get("bar").stringView();
+  ASSERT_EQ(combined1.size(), c.size());
+  ASSERT_EQ(combined1, c);
+}
+
 TEST(BuilderTest, BinaryViaValuePair) {
   uint8_t binaryStuff[] = {0x02, 0x03, 0x05, 0x08, 0x0d};
 
@@ -3744,7 +3827,7 @@ TEST(BuilderTest, syntacticSugar) {
 
   b(Value(ValueType::Object))("b", Value(12))("a", Value(true))(
       "l", Value(ValueType::Array))(Value(1))(Value(2))(Value(3))()(
-      "name", Value("Gustav"))();
+      "name", Value("Gustav"))("type", ValueString2Parts("the", "machine"))();
 
   ASSERT_FALSE(b.isOpenObject());
   ASSERT_TRUE(b.slice().get("b").isInteger());
@@ -3754,7 +3837,8 @@ TEST(BuilderTest, syntacticSugar) {
   ASSERT_TRUE(b.slice().get("l").isArray());
   ASSERT_EQ(3, b.slice().get("l").length());
   ASSERT_TRUE(b.slice().get("name").isString());
-  ASSERT_EQ("Gustav", b.slice().get("name").copyString());
+  ASSERT_EQ("Gustav", b.slice().get("name").stringView());
+  ASSERT_EQ("themachine", b.slice().get("type").stringView());
 }
 
 int main(int argc, char* argv[]) {
