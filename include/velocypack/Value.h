@@ -223,23 +223,23 @@ class ValueString2Parts {
   friend class Builder;
 
  private:
-  std::string_view const* sv1;
-  std::string_view const* sv2;
+  std::string_view sv1;
+  std::string_view sv2;
 
  public:
   constexpr explicit ValueString2Parts(std::string_view const& s1,
                                        std::string_view const& s2) noexcept
-      : sv1(&s1), sv2(&s2) {}
+      : sv1(s1), sv2(s2) {}
 
   constexpr size_t getSize() const noexcept {
-    return sv1->size() + sv2->size();
+    return sv1.size() + sv2.size();
   }
   
-  constexpr std::string_view const* getFirst() const noexcept {
+  constexpr std::string_view const& getFirst() const noexcept {
     return sv1;
   }
   
-  constexpr std::string_view const* getSecond() const noexcept {
+  constexpr std::string_view const& getSecond() const noexcept {
     return sv2;
   }
 };
