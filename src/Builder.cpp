@@ -1242,6 +1242,40 @@ uint8_t* Builder::set(ValuePair const& pair) {
                   "ValueType::Custom are valid for ValuePair argument");
 }
 
+uint8_t* Builder::set(ValueString2Parts const& parts) {
+  // This method builds a single VPack String item composed of the 2 parts.
+  auto const oldPos = _pos;
+  
+  checkKeyHasValidType(true);
+
+  uint64_t size = parts.getSize();
+  if (size > 126) {
+    // long string
+    reserve(1 + 8 + size);
+    appendByteUnchecked(0xbf);
+    appendLengthUnchecked<8>(size);
+  } else {
+    // short string
+    reserve(1 + size);
+    appendByteUnchecked(static_cast<uint8_t>(0x40 + size));
+  }
+  if (size != 0) {
+    // first part
+    std::string_view const* sv = parts.getFirst();
+    VELOCYPACK_ASSERT(sv != nullptr);
+    std::memcpy(_start + _pos, sv->data(), checkOverflow(sv->size()));
+    advance(sv->size());
+    // second part
+    sv = parts.getSecond();
+    VELOCYPACK_ASSERT(sv != nullptr);
+    std::memcpy(_start + _pos, sv->data(), checkOverflow(sv->size()));
+    advance(sv->size());
+    
+    VELOCYPACK_ASSERT(size == parts.getFirst()->size() + parts.getSecond()->size());
+  }
+  return _start + oldPos;
+}
+
 void Builder::cleanupAdd() noexcept {
   VELOCYPACK_ASSERT(!_stack.empty());
   VELOCYPACK_ASSERT(!_indexes.empty());
