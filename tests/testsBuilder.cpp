@@ -72,8 +72,9 @@ TEST(BuilderTest, AddObjectIteratorEmpty) {
 
   Builder b;
   ASSERT_TRUE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
-                              Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
+      Exception::BuilderNeedOpenObject);
   ASSERT_TRUE(b.isClosed());
 }
 
@@ -90,8 +91,9 @@ TEST(BuilderTest, AddObjectIteratorKeyAlreadyWritten) {
   b.openObject();
   b.add(Value("foo"));
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
-                              Exception::BuilderKeyAlreadyWritten);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
+      Exception::BuilderKeyAlreadyWritten);
   ASSERT_FALSE(b.isClosed());
 }
 
@@ -119,8 +121,9 @@ TEST(BuilderTest, AddObjectIteratorNonObject) {
   Builder b;
   b.openArray();
   ASSERT_FALSE(b.isClosed());
-  ASSERT_VELOCYPACK_EXCEPTION(b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
-                              Exception::BuilderNeedOpenObject);
+  ASSERT_VELOCYPACK_EXCEPTION(
+      b.add(ObjectIterator(objSlice, /*useSequentialIteration*/ false)),
+      Exception::BuilderNeedOpenObject);
   ASSERT_FALSE(b.isClosed());
 }
 
@@ -1750,6 +1753,135 @@ TEST(BuilderTest, StringView) {
   std::string_view c = slice.stringView();
   ASSERT_EQ(value.size(), c.size());
   ASSERT_EQ(value, c);
+}
+
+class StringFromTwoParts final : public arangodb::velocypack::IStringFromParts {
+ public:
+  StringFromTwoParts(std::string_view part0, std::string_view part1) noexcept
+      : _part0{part0}, _part1{part1} {}
+
+  size_t size() const final { return 2; }
+
+  size_t length() const final { return _part0.length() + _part1.length(); }
+
+  std::string_view operator()(size_t index) const final {
+    assert(index < size());
+    if (index == 0) {
+      return _part0;
+    }
+    return _part1;
+  }
+
+ private:
+  std::string_view _part0;
+  std::string_view _part1;
+};
+
+TEST(BuilderTest, String2Parts) {
+  std::string_view const value1("der fuxx ging in den wald und aß pilze");
+  std::string_view const value2("der hans, der hans, der kanns");
+  std::string const combined = std::string(value1) + std::string(value2);
+  Builder b;
+  b.add(StringFromTwoParts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
+TEST(BuilderTest, String2PartsFromChars) {
+  char const* value1("der fuxx ging in den wald und aß pilze");
+  char const* value2("der hans, der hans, der kanns");
+  std::string const combined = std::string(value1) + std::string(value2);
+  Builder b;
+  b.add(StringFromTwoParts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
+TEST(BuilderTest, String2PartsEmpty) {
+  std::string_view const value1;
+  std::string_view const value2;
+  Builder b;
+  b.add(StringFromTwoParts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(0, strncmp(s, "", 0));
+  ASSERT_EQ(0, len);
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(0, c.size());
+}
+
+TEST(BuilderTest, String2PartsLong) {
+  std::string_view const value1(
+      "der fuxx ging in den wald und aß pilze und findets ziemlich gut. ist "
+      "halt ein fuxx, das ist so");
+  std::string_view const value2(
+      "der hans, der hans, der kanns, und der hund, der steht im wald und "
+      "sieht den fuxx und findets auch sehr gut");
+  std::string const combined = std::string(value1) + std::string(value2);
+  // long string offset
+  ASSERT_GT(combined.size(), 128);
+  Builder b;
+  b.add(StringFromTwoParts(value1, value2));
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isString());
+
+  ValueLength len;
+  char const* s = slice.getString(len);
+  ASSERT_EQ(combined.size(), len);
+  ASSERT_EQ(0, strncmp(s, combined.data(), combined.size()));
+
+  std::string_view c = slice.stringView();
+  ASSERT_EQ(combined.size(), c.size());
+  ASSERT_EQ(combined, c);
+}
+
+TEST(BuilderTest, String2PartsInObject) {
+  std::string_view const value1("der fuxx ging in den wald und aß pilze");
+  std::string_view const value2("der hans, der hans, der kanns");
+  std::string const combined1 = std::string(value1) + std::string(value2);
+  std::string const combined2 = std::string(value2) + std::string(value1);
+  Builder b;
+  b.openObject();
+  b.add("foo", StringFromTwoParts(value2, value1));
+  b.add("bar", StringFromTwoParts(value1, value2));
+  b.close();
+
+  Slice slice = Slice(b.start());
+  ASSERT_TRUE(slice.isObject());
+
+  std::string_view c = slice.get("foo").stringView();
+  ASSERT_EQ(combined2.size(), c.size());
+  ASSERT_EQ(combined2, c);
+
+  c = slice.get("bar").stringView();
+  ASSERT_EQ(combined1.size(), c.size());
+  ASSERT_EQ(combined1, c);
 }
 
 TEST(BuilderTest, BinaryViaValuePair) {
@@ -3757,7 +3889,7 @@ TEST(BuilderTest, syntacticSugar) {
 
   b(Value(ValueType::Object))("b", Value(12))("a", Value(true))(
       "l", Value(ValueType::Array))(Value(1))(Value(2))(Value(3))()(
-      "name", Value("Gustav"))();
+      "name", Value("Gustav"))("type", StringFromTwoParts("the", "machine"))();
 
   ASSERT_FALSE(b.isOpenObject());
   ASSERT_TRUE(b.slice().get("b").isInteger());
@@ -3767,7 +3899,8 @@ TEST(BuilderTest, syntacticSugar) {
   ASSERT_TRUE(b.slice().get("l").isArray());
   ASSERT_EQ(3, b.slice().get("l").length());
   ASSERT_TRUE(b.slice().get("name").isString());
-  ASSERT_EQ("Gustav", b.slice().get("name").copyString());
+  ASSERT_EQ("Gustav", b.slice().get("name").stringView());
+  ASSERT_EQ("themachine", b.slice().get("type").stringView());
 }
 
 int main(int argc, char* argv[]) {

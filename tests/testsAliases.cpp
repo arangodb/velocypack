@@ -51,6 +51,7 @@ using VPackStringSink = arangodb::velocypack::StringSink;
 using VPackStringStreamSink = arangodb::velocypack::StringStreamSink;
 using VPackValue = arangodb::velocypack::Value;
 using VPackValueLength = arangodb::velocypack::ValueLength;
+using VPackValuePair = arangodb::velocypack::ValuePair;
 using VPackValueType = arangodb::velocypack::ValueType;
 using VPackVersion = arangodb::velocypack::Version;
 
