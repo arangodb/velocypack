@@ -1261,8 +1261,10 @@ uint8_t* Builder::set(IStringFromParts const& parts) {
   }
   for (std::size_t index = 0, size = parts.size(); index != size; ++index) {
     auto part = parts(index);
-    std::memcpy(_start + _pos, part.data(), checkOverflow(part.size()));
-    advance(part.size());
+    if (part.size() != 0) {
+      std::memcpy(_start + _pos, part.data(), checkOverflow(part.size()));
+      advance(part.size());
+    }
   }
   return _start + oldPos;
 }
