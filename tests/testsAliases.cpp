@@ -37,6 +37,7 @@ using VPackDumper = arangodb::velocypack::Dumper;
 using VPackException = arangodb::velocypack::Exception;
 using VPackHashedStringRef = arangodb::velocypack::HashedStringRef;
 using VPackHexDump = arangodb::velocypack::HexDump;
+using VPackIStringParts = arangodb::velocypack::IStringFromParts;
 using VPackObjectIterator = arangodb::velocypack::ObjectIterator;
 using VPackOptions = arangodb::velocypack::Options;
 using VPackOutputFileStreamSink = arangodb::velocypack::OutputFileStreamSink;

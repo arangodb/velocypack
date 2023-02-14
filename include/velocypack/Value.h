@@ -221,6 +221,8 @@ class ValuePair {
 
 // TODO(MBkkt) Make it concept to avoid size() + 2 virtual calls
 struct IStringFromParts {
+  virtual ~IStringFromParts() = default;
+
   virtual std::size_t size() const = 0;
 
   virtual std::size_t length() const = 0;
@@ -232,3 +234,4 @@ struct IStringFromParts {
 
 using VPackValue = arangodb::velocypack::Value;
 using VPackValuePair = arangodb::velocypack::ValuePair;
+using VPackIStringParts = arangodb::velocypack::IStringFromParts;
