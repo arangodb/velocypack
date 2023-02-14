@@ -219,33 +219,16 @@ class ValuePair {
   bool isString() const noexcept { return _type == ValueType::String; }
 };
 
-class ValueString2Parts {
-  friend class Builder;
+// TODO(MBkkt) Make it concept to avoid size() + 2 virtual calls
+struct IStringFromParts {
+  std::size_t size() const = 0;
 
- private:
-  std::string_view sv1;
-  std::string_view sv2;
+  std::size_t length() const = 0;
 
- public:
-  constexpr ValueString2Parts(std::string_view s1,
-                              std::string_view s2) noexcept
-      : sv1(s1), sv2(s2) {}
-
-  constexpr size_t getSize() const noexcept {
-    return sv1.size() + sv2.size();
-  }
-  
-  constexpr std::string_view const& getFirst() const noexcept {
-    return sv1;
-  }
-  
-  constexpr std::string_view const& getSecond() const noexcept {
-    return sv2;
-  }
+  std::string_view operator()(std::size_t index) const = 0;
 };
 
 }  // namespace arangodb::velocypack
 
 using VPackValue = arangodb::velocypack::Value;
 using VPackValuePair = arangodb::velocypack::ValuePair;
-using VPackValueString2Parts = arangodb::velocypack::ValueString2Parts;
