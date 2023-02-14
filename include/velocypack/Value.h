@@ -221,11 +221,11 @@ class ValuePair {
 
 // TODO(MBkkt) Make it concept to avoid size() + 2 virtual calls
 struct IStringFromParts {
-  std::size_t size() const = 0;
+  virtual std::size_t size() const = 0;
 
-  std::size_t length() const = 0;
+  virtual std::size_t length() const = 0;
 
-  std::string_view operator()(std::size_t index) const = 0;
+  virtual std::string_view operator()(std::size_t index) const = 0;
 };
 
 }  // namespace arangodb::velocypack
