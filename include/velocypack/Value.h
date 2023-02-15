@@ -40,20 +40,20 @@ class Value {
 
  public:
   enum class CType {
-    None = 0,
-    Bool = 1,
-    Double = 2,
-    Int64 = 3,
-    UInt64 = 4,
-    String = 5,
-    CharPtr = 6,
-    VoidPtr = 7,
-    StringView = 8
+    None,
+    Bool,
+    Double,
+    Int64,
+    UInt64,
+    String,
+    CharPtr,
+    VoidPtr,
+    StringView,
   };
 
  private:
   ValueType const _valueType;
-  CType const _cType;  // denotes variant used, 0: none
+  CType const _cType;
 
   union ValueUnion {
     constexpr explicit ValueUnion(bool b) noexcept : b(b) {}
@@ -66,14 +66,14 @@ class Value {
     constexpr explicit ValueUnion(std::string_view const* sv) noexcept
         : sv(sv) {}
 
-    bool b;                      // 1: bool
-    double d;                    // 2: double
-    int64_t i;                   // 3: int64_t
-    uint64_t u;                  // 4: uint64_t
-    std::string const* s;        // 5: std::string
-    char const* c;               // 6: char const*
-    void const* e;               // 7: external
-    std::string_view const* sv;  // 8: std::string_view
+    bool b;
+    double d;
+    int64_t i;
+    uint64_t u;
+    std::string const* s;
+    char const* c;
+    void const* e;
+    std::string_view const* sv;
   } const _value;
 
  public:
@@ -217,6 +217,15 @@ class ValuePair {
   ValueType valueType() const noexcept { return _type; }
 
   bool isString() const noexcept { return _type == ValueType::String; }
+};
+
+// TODO(MBkkt) Make it concept to avoid size() + 2 virtual calls
+struct IStringFromParts {
+  virtual std::size_t size() const = 0;
+
+  virtual std::size_t length() const = 0;
+
+  virtual std::string_view operator()(std::size_t index) const = 0;
 };
 
 }  // namespace arangodb::velocypack

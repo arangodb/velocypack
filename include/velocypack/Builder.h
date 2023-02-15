@@ -394,6 +394,11 @@ class Builder {
     return addInternal<ValuePair>(std::string_view(attrName, attrLength), sub);
   }
 
+  // Add a subvalue into an object from a IStringFromParts:
+  inline uint8_t* add(std::string_view attrName, IStringFromParts const& sub) {
+    return addInternal<IStringFromParts>(attrName, sub);
+  }
+
   // Add a subvalue into an object from a Serializable:
   inline uint8_t* add(std::string_view attrName, Serialize const& sub) {
     return addInternal<Serializable>(attrName, sub._sable);
@@ -419,6 +424,11 @@ class Builder {
   // Add a subvalue into an array from a ValuePair:
   inline uint8_t* add(ValuePair const& sub) {
     return addInternal<ValuePair>(sub);
+  }
+
+  // Add a subvalue into an array from a ValueString2Parts:
+  inline uint8_t* add(IStringFromParts const& sub) {
+    return addInternal<IStringFromParts>(sub);
   }
 
   // Add a subvalue into an array from a Serializable:
@@ -563,6 +573,12 @@ class Builder {
   }
 
   // Syntactic sugar for add:
+  Builder& operator()(std::string_view attrName, IStringFromParts const& sub) {
+    add(attrName, sub);
+    return *this;
+  }
+
+  // Syntactic sugar for add:
   Builder& operator()(std::string_view attrName, Slice sub) {
     add(attrName, sub);
     return *this;
@@ -576,6 +592,12 @@ class Builder {
 
   // Syntactic sugar for add:
   Builder& operator()(ValuePair const& sub) {
+    add(sub);
+    return *this;
+  }
+
+  // Syntactic sugar for add:
+  Builder& operator()(IStringFromParts const& sub) {
     add(sub);
     return *this;
   }
@@ -930,6 +952,8 @@ class Builder {
   uint8_t* set(Value const& item);
 
   uint8_t* set(ValuePair const& pair);
+
+  uint8_t* set(IStringFromParts const& parts);
 
   uint8_t* set(Slice const& item);
 
