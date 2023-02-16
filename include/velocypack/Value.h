@@ -223,9 +223,9 @@ class ValuePair {
 struct IStringFromParts {
   virtual ~IStringFromParts() = default;
 
-  virtual std::size_t size() const = 0;
+  virtual std::size_t numberOfParts() const = 0;
 
-  virtual std::size_t length() const = 0;
+  virtual std::size_t totalLength() const = 0;
 
   virtual std::string_view operator()(std::size_t index) const = 0;
 };
