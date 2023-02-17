@@ -1760,12 +1760,12 @@ class StringFromTwoParts final : public arangodb::velocypack::IStringFromParts {
   StringFromTwoParts(std::string_view part0, std::string_view part1) noexcept
       : _part0{part0}, _part1{part1} {}
 
-  size_t size() const final { return 2; }
+  size_t numberOfParts() const final { return 2; }
 
-  size_t length() const final { return _part0.length() + _part1.length(); }
+  size_t totalLength() const final { return _part0.length() + _part1.length(); }
 
   std::string_view operator()(size_t index) const final {
-    assert(index < size());
+    assert(index < numberOfParts());
     if (index == 0) {
       return _part0;
     }
