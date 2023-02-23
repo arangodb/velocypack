@@ -1248,7 +1248,7 @@ uint8_t* Builder::set(IStringFromParts const& parts) {
 
   checkKeyHasValidType(true);
 
-  uint64_t length = parts.length();
+  uint64_t length = parts.totalLength();
   if (length > 126) {
     // long string
     reserve(1 + 8 + length);
@@ -1259,8 +1259,8 @@ uint8_t* Builder::set(IStringFromParts const& parts) {
     reserve(1 + length);
     appendByteUnchecked(static_cast<uint8_t>(0x40 + length));
   }
-  for (std::size_t index = 0, size = parts.size(); index != size; ++index) {
-    auto part = parts(index);
+  for (std::size_t idx = 0, size = parts.numberOfParts(); idx != size; ++idx) {
+    auto part = parts(idx);
     if (part.size() != 0) {
       std::memcpy(_start + _pos, part.data(), checkOverflow(part.size()));
       advance(part.size());
