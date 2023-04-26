@@ -278,8 +278,7 @@ void Parser::parseString() {
               checkOverflow(len));
       _builderPtr->advance(8);
     }
-    // Did we find a high surrogate in this turn?
-    bool highSurrogateFound = false;
+    
     switch (i) {
       case '"':
         ValueLength len;
@@ -372,11 +371,12 @@ void Parser::parseString() {
               if (highSurrogate == 0) {
                 // High surrogate:
                 highSurrogate = v;
-                highSurrogateFound = true;
                 _builderPtr->reserve(3);
                 _builderPtr->appendByteUnchecked(0xe0 + (v >> 12));
                 _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
                 _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
+
+                continue;
               } else {
                 throw Exception(Exception::InvalidUtf8Sequence,
                                 "Unexpected \\uXXXX escape sequence (multiple adjacent high surrogates)");
@@ -437,7 +437,7 @@ void Parser::parseString() {
         break;
     }
 
-    if (VELOCYPACK_UNLIKELY(highSurrogate != 0 && !highSurrogateFound)) {
+    if (VELOCYPACK_UNLIKELY(highSurrogate != 0)) {
       throw Exception(Exception::InvalidUtf8Sequence,
                       "Unexpected \\uXXXX escape sequence (high surrogate without low surrogate)");
     }
