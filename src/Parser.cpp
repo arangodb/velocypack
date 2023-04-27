@@ -294,7 +294,7 @@ void Parser::parseString() {
             len >>= 8;
           }
         }
-        if (VELOCYPACK_UNLIKELY(highSurrogate != 0)) {
+        if (VELOCYPACK_UNLIKELY(options->validateUtf8Strings && highSurrogate != 0)) {
           throw Exception(Exception::InvalidUtf8Sequence,
                               "Unexpected end of string after high surrogate");
         }
@@ -362,7 +362,7 @@ void Parser::parseString() {
                 _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
                 _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
                 highSurrogate = 0;
-              } else {
+              } else if (options->validateUtf8Strings) {
                 // Low surrogate without a high surrogate first
                 throw Exception(Exception::InvalidUtf8Sequence,
                                 "Unexpected \\uXXXX escape sequence (low surrogate without high surrogate)");
@@ -377,7 +377,7 @@ void Parser::parseString() {
                 _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
 
                 continue;
-              } else {
+              } else if (options->validateUtf8Strings) {
                 throw Exception(Exception::InvalidUtf8Sequence,
                                 "Unexpected \\uXXXX escape sequence (multiple adjacent high surrogates)");
               }
@@ -437,7 +437,7 @@ void Parser::parseString() {
         break;
     }
 
-    if (VELOCYPACK_UNLIKELY(highSurrogate != 0)) {
+    if (VELOCYPACK_UNLIKELY(options->validateUtf8Strings && highSurrogate != 0)) {
       throw Exception(Exception::InvalidUtf8Sequence,
                       "Unexpected \\uXXXX escape sequence (high surrogate without low surrogate)");
     }

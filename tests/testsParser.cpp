@@ -27,6 +27,7 @@
 #include <array>
 #include <ostream>
 #include <string>
+#include <utility>
 
 #include "tests-common.h"
 
@@ -1154,7 +1155,6 @@ TEST(ParserTest, StringLiteralWithSpecials) {
 
   Parser parser;
   ValueLength len = parser.parse(value);
-  std::cout << "GOOD 1 \n";
 
   ASSERT_EQ(1ULL, len);
 
@@ -1207,9 +1207,34 @@ TEST(ParserTest, StringLiteralWithInvalidSurrogatePairs) {
     "\"\\ud801\\ud801\"", // 2 high surrogates
   };
 
-  Parser parser;
+  Options options;
+  options.validateUtf8Strings = true;
+
+  Parser parser(&options);
   for (auto const& value : values) {
     ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  }
+}
+
+TEST(ParserTest, StringLiteralWithInvalidSurrogatePairsDisabled) {
+  std::array<std::pair<std::string_view, std::size_t>, 6> values = {
+    std::make_pair("\"\\udc89\"", std::size_t(0)), // low surrogate, not preceeded by high surrogate
+    std::make_pair("\"\\udc89\\udc89\"", std::size_t(0)), // 2 low surrogates
+    std::make_pair("\"\\ud801\"", std::size_t(3)), // high surrogate, not followed by low surrogate
+    std::make_pair("\"\\ud801a\"", std::size_t(4)), // high surrogate, not followed by low surrogate
+    std::make_pair("\"\\ud801ab\"", std::size_t(5)), // high surrogate, not followed by low surrogate
+    std::make_pair("\"\\ud801\\ud801\"", std::size_t(3)), // 2 high surrogates
+  };
+  
+  Options options;
+  options.validateUtf8Strings = false;
+
+  for (auto const& [value, length] : values) {
+    Parser parser(&options);
+    parser.parse(value);
+    auto builder = parser.steal();
+    ASSERT_TRUE(builder->slice().isString());
+    ASSERT_EQ(length, builder->slice().stringView().size());
   }
 }
 
