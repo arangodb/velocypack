@@ -24,6 +24,7 @@
 /// @author Copyright 2015, ArangoDB GmbH, Cologne, Germany
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <array>
 #include <ostream>
 #include <string>
 
@@ -1194,6 +1195,22 @@ TEST(ParserTest, StringLiteralWithSurrogatePairs) {
   std::string const valueOut(
       "\"\xf0\x90\x80\x80\xf4\x8f\xbf\xbf\xf4\x82\x8d\x85\"");
   checkDump(s, valueOut);
+}
+
+TEST(ParserTest, StringLiteralWithInvalidSurrogatePairs) {
+  constexpr std::array<std::string_view, 6> values = {
+    "\"\\udc89\"", // low surrogate, not preceeded by high surrogate
+    "\"\\udc89\\udc89\"", // 2 low surrogates
+    "\"\\ud801\"", // high surrogate, not followed by low surrogate
+    "\"\\ud801a\"", // high surrogate, not followed by low surrogate
+    "\"\\ud801ab\"", // high surrogate, not followed by low surrogate
+    "\"\\ud801\\ud801\"", // 2 high surrogates
+  };
+
+  Parser parser;
+  for (auto const& value : values) {
+    ASSERT_VELOCYPACK_EXCEPTION(parser.parse(value), Exception::InvalidUtf8Sequence);
+  }
 }
 
 TEST(ParserTest, EmptyArray) {

@@ -278,6 +278,7 @@ void Parser::parseString() {
               checkOverflow(len));
       _builderPtr->advance(8);
     }
+    
     switch (i) {
       case '"':
         ValueLength len;
@@ -293,6 +294,10 @@ void Parser::parseString() {
             len >>= 8;
           }
         }
+        if (VELOCYPACK_UNLIKELY(highSurrogate != 0)) {
+          throw Exception(Exception::InvalidUtf8Sequence,
+                              "Unexpected end of string after high surrogate");
+        }
         return;
       case '\\':
         // Handle cases or throw error
@@ -305,27 +310,21 @@ void Parser::parseString() {
           case '/':
           case '\\':
             _builderPtr->appendByte(static_cast<uint8_t>(i));
-            highSurrogate = 0;
             break;
           case 'b':
             _builderPtr->appendByte('\b');
-            highSurrogate = 0;
             break;
           case 'f':
             _builderPtr->appendByte('\f');
-            highSurrogate = 0;
             break;
           case 'n':
             _builderPtr->appendByte('\n');
-            highSurrogate = 0;
             break;
           case 'r':
             _builderPtr->appendByte('\r');
-            highSurrogate = 0;
             break;
           case 't':
             _builderPtr->appendByte('\t');
-            highSurrogate = 0;
             break;
           case 'u': {
             uint32_t v = 0;
@@ -343,34 +342,46 @@ void Parser::parseString() {
                 v = (v << 4) + i - 'A' + 10;
               } else {
                 throw Exception(Exception::ParseError,
-                                "Illegal \\uXXXX escape sequence");
+                                "Illegal \\uXXXX escape sequence character");
               }
             }
             if (v < 0x80) {
               _builderPtr->appendByte(static_cast<uint8_t>(v));
-              highSurrogate = 0;
             } else if (v < 0x800) {
               _builderPtr->reserve(2);
               _builderPtr->appendByteUnchecked(0xc0 + (v >> 6));
               _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
-              highSurrogate = 0;
-            } else if (v >= 0xdc00 && v < 0xe000 && highSurrogate != 0) {
-              // Low surrogate, put the two together:
-              v = 0x10000 + ((highSurrogate - 0xd800) << 10) + v - 0xdc00;
-              _builderPtr->rollback(3);
-              _builderPtr->reserve(4);
-              _builderPtr->appendByteUnchecked(0xf0 + (v >> 18));
-              _builderPtr->appendByteUnchecked(0x80 + ((v >> 12) & 0x3f));
-              _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
-              _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
-              highSurrogate = 0;
-            } else {
-              if (v >= 0xd800 && v < 0xdc00) {
+            } else if (v >= 0xdc00 && v < 0xe000) {
+              if (highSurrogate != 0) {
+                // Low surrogate, put the two together:
+                v = 0x10000 + ((highSurrogate - 0xd800) << 10) + v - 0xdc00;
+                _builderPtr->rollback(3);
+                _builderPtr->reserve(4);
+                _builderPtr->appendByteUnchecked(0xf0 + (v >> 18));
+                _builderPtr->appendByteUnchecked(0x80 + ((v >> 12) & 0x3f));
+                _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
+                _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
+                highSurrogate = 0;
+              } else {
+                // Low surrogate without a high surrogate first
+                throw Exception(Exception::InvalidUtf8Sequence,
+                                "Unexpected \\uXXXX escape sequence (low surrogate without high surrogate)");
+              }
+            } else if (v >= 0xd800 && v < 0xdc00) {
+              if (highSurrogate == 0) {
                 // High surrogate:
                 highSurrogate = v;
+                _builderPtr->reserve(3);
+                _builderPtr->appendByteUnchecked(0xe0 + (v >> 12));
+                _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
+                _builderPtr->appendByteUnchecked(0x80 + (v & 0x3f));
+
+                continue;
               } else {
-                highSurrogate = 0;
+                throw Exception(Exception::InvalidUtf8Sequence,
+                                "Unexpected \\uXXXX escape sequence (multiple adjacent high surrogates)");
               }
+            } else {
               _builderPtr->reserve(3);
               _builderPtr->appendByteUnchecked(0xe0 + (v >> 12));
               _builderPtr->appendByteUnchecked(0x80 + ((v >> 6) & 0x3f));
@@ -389,11 +400,9 @@ void Parser::parseString() {
             // control character
             throw Exception(Exception::UnexpectedControlCharacter);
           }
-          highSurrogate = 0;
           _builderPtr->appendByte(static_cast<uint8_t>(i));
         } else {
           if (!options->validateUtf8Strings) {
-            highSurrogate = 0;
             _builderPtr->appendByte(static_cast<uint8_t>(i));
           } else {
             // multi-byte UTF-8 sequence!
@@ -423,10 +432,14 @@ void Parser::parseString() {
               }
               _builderPtr->appendByteUnchecked(static_cast<uint8_t>(i));
             }
-            highSurrogate = 0;
           }
         }
         break;
+    }
+
+    if (VELOCYPACK_UNLIKELY(highSurrogate != 0)) {
+      throw Exception(Exception::InvalidUtf8Sequence,
+                      "Unexpected \\uXXXX escape sequence (high surrogate without low surrogate)");
     }
   }
 }
