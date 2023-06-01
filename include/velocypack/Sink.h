@@ -91,6 +91,12 @@ struct StringSinkImpl final : public Sink {
     buffer->reserve(checkOverflow(length));
   }
 
+
+  void setBuffer(T* buf) noexcept { buffer = buf; }
+  
+  T* getBuffer() const noexcept { return buffer; }
+
+ private:
   T* buffer;
 };
 
