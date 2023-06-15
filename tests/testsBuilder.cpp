@@ -3814,11 +3814,12 @@ TEST(BuilderTest, TestBoundariesWithPaddingButContainingNones) {
 }
 
 TEST(BuilderTest, getSharedSliceEmpty) {
+  SharedSlice ss;
   Builder b;
   ASSERT_EQ(1, b.buffer().use_count());
   auto const sharedSlice = b.sharedSlice();
   ASSERT_EQ(1, b.buffer().use_count());
-  ASSERT_EQ(0, sharedSlice.buffer().use_count());
+  ASSERT_EQ(3, sharedSlice.buffer().use_count());
 }
 
 TEST(BuilderTest, getSharedSlice) {
@@ -3831,7 +3832,7 @@ TEST(BuilderTest, getSharedSlice) {
     ASSERT_FALSE(haveSameOwnership(b.buffer(), sharedSlice.buffer()));
     ASSERT_EQ(slice.byteSize(), sharedSlice.byteSize());
     ASSERT_EQ(
-        0, memcmp(slice.start(), sharedSlice.start(), slice.byteSize()));
+        0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
   };
 
   auto smallBuilder = Builder{};
@@ -3867,7 +3868,7 @@ TEST(BuilderTest, stealSharedSlice) {
     ASSERT_EQ(1, sharedSlice.buffer().use_count());
     ASSERT_EQ(slice.byteSize(), sharedSlice.byteSize());
     ASSERT_EQ(
-        0, memcmp(slice.start(), sharedSlice.start(), slice.byteSize()));
+        0, memcmp(slice.start(), sharedSlice.start().get(), slice.byteSize()));
   };
 
   auto smallBuilder = Builder{};
