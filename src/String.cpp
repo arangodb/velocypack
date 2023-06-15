@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// DISCLAIMER
 ///
-/// Copyright 2014-2020 ArangoDB GmbH, Cologne, Germany
+/// Copyright 2014-2023 ArangoDB GmbH, Cologne, Germany
 /// Copyright 2004-2014 triAGENS GmbH, Cologne, Germany
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,13 @@
 ///
 /// Copyright holder is ArangoDB GmbH, Cologne, Germany
 ///
-/// @author Tobias Gödderz
+/// @author Lars Maier
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <velocypack/SharedSlice.h>
+#include <velocypack/String.h>
 #include "SliceBase.tpp"
 
 namespace arangodb::velocypack {
-INSTANTIATE_TYPE(Slice, Slice)
-}
+INSTANTIATE_TYPE(String, Slice);
+INSTANTIATE_TYPE(pmr::String, Slice);
+}  // namespace arangodb::velocypack

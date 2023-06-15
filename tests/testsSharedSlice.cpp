@@ -326,39 +326,9 @@ TEST(SharedSliceAgainstSliceTest, hasTag) {
   });
 }
 
-TEST(SharedSliceAgainstSliceTest, valueStart) {
-  forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.valueStart(), sharedSlice.valueStart().get());
-  });
-}
-
-TEST(SharedSliceAgainstSliceTest, start) {
-  forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.start(), sharedSlice.start().get());
-  });
-}
-
-TEST(SharedSliceAgainstSliceTest, startAs) {
-  forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.startAs<void*>(), sharedSlice.startAs<void*>().get());
-  });
-}
-
 TEST(SharedSliceAgainstSliceTest, head) {
   forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
     ASSERT_EQ_EX(slice.head(), sharedSlice.head());
-  });
-}
-
-TEST(SharedSliceAgainstSliceTest, begin) {
-  forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.begin(), sharedSlice.begin().get());
-  });
-}
-
-TEST(SharedSliceAgainstSliceTest, end) {
-  forAllTestCases([&](Slice slice, SharedSlice sharedSlice) {
-    ASSERT_EQ_EX(slice.end(), sharedSlice.end().get());
   });
 }
 

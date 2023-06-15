@@ -93,7 +93,7 @@ add_library(velocypack STATIC
   src/asm-utf8check.cpp
   src/fpconv.cpp
   src/string-functions.cpp
-)
+        src/String.cpp)
 
 #Use xxhash, fasthash?
 if(HashType STREQUAL "xxhash")
