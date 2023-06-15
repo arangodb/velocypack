@@ -1319,7 +1319,7 @@ TEST(SharedSliceRefcountTest, aliasingCopyConstructor) {
     // shared slice...
     ASSERT_NE(sharedSliceRef.buffer(), sharedSlice.buffer());
     // ... but to the same memory the originating (raw) slice did, instead.
-    ASSERT_EQ(slice.start(), sharedSlice.start().get());
+    ASSERT_EQ(slice.start(), sharedSlice.start());
   });
 }
 
@@ -1387,7 +1387,7 @@ TEST(SharedSliceRefcountTest, aliasingMoveConstructor) {
     // shared slice...
     ASSERT_NE(origPointer, sharedSlice.buffer().get());
     // ... but to the same memory the originating (raw) slice did, instead.
-    ASSERT_EQ(slice.start(), sharedSlice.start().get());
+    ASSERT_EQ(slice.start(), sharedSlice.start());
   });
 }
 

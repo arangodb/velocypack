@@ -25,5 +25,5 @@
 #include "SliceBase.tpp"
 
 namespace arangodb::velocypack {
-INSTANTIATE_TYPE(Slice, Slice)
+INSTANTIATE_TYPE(SharedSlice, SharedSlice)
 }

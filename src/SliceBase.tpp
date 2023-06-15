@@ -48,7 +48,7 @@ constexpr int64_t maxValues[] = {
 
 // translates an integer key into a string
 template<typename DerivedType, typename SliceType>
-Slice SliceBase<DerivedType, SliceType>::translate() const {
+SliceType SliceBase<DerivedType, SliceType>::translate() const {
   if (VELOCYPACK_UNLIKELY(!isSmallInt() && !isUInt())) {
     throw Exception(Exception::InvalidValueType,
                     "Cannot translate key of this type");

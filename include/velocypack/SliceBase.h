@@ -580,7 +580,7 @@ struct SliceBase {
   bool isEmptyObject() const { return isObject() && length() == 0; }
 
   // translates an integer key into a string
-  Slice translate() const;
+  SliceType translate() const;
 
   // return the value for an Int object
   int64_t getInt() const;

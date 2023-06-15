@@ -74,6 +74,10 @@ class SharedSlice : public SliceBase<SharedSlice, SharedSlice> {
       _mem = std::move(SharedSlice({}, Slice::noneSliceData)._mem);
     }
   }
+  SharedSlice(std::shared_ptr<uint8_t const> mem)
+      : SharedSlice(std::static_pointer_cast<uint8_t const[]>(mem)) {}
+  SharedSlice(SharedSlice mem, Slice start)
+      : SharedSlice(std::move(mem._mem), start) {}
   SharedSlice(std::shared_ptr<uint8_t const[]> mem, Slice start)
       : _mem(std::move(mem), start.getDataPtr()) {}
   SharedSlice() = default;
@@ -103,5 +107,7 @@ class SharedSlice : public SliceBase<SharedSlice, SharedSlice> {
     return SharedSlice{parent->_mem, mem};
   }
 };
+
+extern template struct SliceBase<SharedSlice, SharedSlice>;
 
 }  // namespace arangodb::velocypack
