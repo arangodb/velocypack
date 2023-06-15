@@ -964,7 +964,7 @@ struct SliceBase {
   template<typename T, typename... Ts>
   std::tuple<T, Ts...> unpackTupleInternal(unpack_helper<T, Ts...>,
                                            std::size_t offset) const {
-    auto slice = DerivedType(this->ptr() + offset);
+    auto slice = SliceType(this->ptr() + offset);
     return std::tuple_cat(
         std::make_tuple(slice.template extract<T>()),
         unpackTupleInternal(unpack_helper<Ts...>{}, offset + slice.byteSize()));

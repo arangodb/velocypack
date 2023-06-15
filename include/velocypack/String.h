@@ -29,19 +29,30 @@
 namespace arangodb::velocypack {
 
 template<typename Allocator = std::allocator<uint8_t>>
-class BasicString : public SliceBase<BasicString<Allocator>, Slice> {
- public:
+struct BasicString : SliceBase<BasicString<Allocator>, Slice> {
+   using allocator_type = Allocator;
+
   explicit BasicString(uint8_t const* start)
       : _mem(start, Slice(start).byteSize()) {}
-  explicit BasicString(Slice s) : _mem(s.getDataPtr(), s.byteSize()) {}
+  BasicString(Slice s)
+      : _mem(s.getDataPtr(), s.byteSize()) {}
   BasicString(BasicString const&) = default;
   BasicString(BasicString&&) noexcept = default;
+  BasicString& operator=(BasicString const&) = default;
+  BasicString& operator=(BasicString&&) noexcept = default;
+  BasicString& operator=(Slice s) {
+    _mem.assign(s.getDataPtr(), s.byteSize());
+    return *this;
+  }
+  BasicString& operator=(uint8_t const* s) { return *this = Slice(s); }
+  BasicString() = default;
 
   uint8_t const* getDataPtr() const noexcept { return _mem.c_str(); }
 
   // similar to std::string we decay into Slice
   Slice slice() { return Slice{getDataPtr()}; }
   operator Slice() { return slice(); }
+  void set(uint8_t const* s) { *this = Slice(s); }
 
  private:
   std::basic_string<uint8_t, std::char_traits<uint8_t>, Allocator> _mem;
