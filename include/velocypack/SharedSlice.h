@@ -67,6 +67,13 @@ class SharedSlice : public SliceBase<SharedSlice, SharedSlice> {
   }
   SharedSlice(std::shared_ptr<uint8_t const[]> mem, uint8_t const* start)
       : _mem(std::move(mem), start) {}
+  SharedSlice(std::shared_ptr<uint8_t const[]> mem) {
+    if (mem) {
+      _mem = std::move(mem);
+    } else {
+      _mem = std::move(SharedSlice({}, Slice::noneSliceData)._mem);
+    }
+  }
   SharedSlice(std::shared_ptr<uint8_t const[]> mem, Slice start)
       : _mem(std::move(mem), start.getDataPtr()) {}
   SharedSlice() = default;
@@ -85,6 +92,8 @@ class SharedSlice : public SliceBase<SharedSlice, SharedSlice> {
 
   Slice slice() const { return Slice(getDataPtr()); }
   std::shared_ptr<uint8_t const[]> buffer() const { return _mem; }
+
+  auto use_count() const noexcept { return _mem.use_count(); }
 
  private:
   friend struct SliceBase<SharedSlice, SharedSlice>;

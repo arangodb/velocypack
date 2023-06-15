@@ -868,7 +868,8 @@ struct SliceBase {
   // representations, which differ on the binary level but will still resolve to
   // the same logical values. For example, smallint(1) and int(1) are logically
   // the same, but will resolve to either 0x31 or 0x28 0x01.
-  bool binaryEquals(SliceType other) const {
+  template<typename S, typename T>
+  bool binaryEquals(SliceBase<S, T> const& other) const {
     if (start() == other.start()) {
       // same underlying data, so the slices must be identical
       return true;
