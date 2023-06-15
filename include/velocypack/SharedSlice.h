@@ -67,6 +67,8 @@ class SharedSlice : public SliceBase<SharedSlice, SharedSlice> {
   }
   SharedSlice(std::shared_ptr<uint8_t const[]> mem, uint8_t const* start)
       : _mem(std::move(mem), start) {}
+  SharedSlice(std::shared_ptr<uint8_t const[]> mem, Slice start)
+      : _mem(std::move(mem), start.getDataPtr()) {}
   SharedSlice() = default;
 
   SharedSlice(Buffer<uint8_t> buffer) {

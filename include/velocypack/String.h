@@ -40,7 +40,8 @@ class BasicString : public SliceBase<BasicString<Allocator>, Slice> {
   uint8_t const* getDataPtr() const noexcept { return _mem.c_str(); }
 
   // similar to std::string we decay into Slice
-  operator Slice() { return Slice{getDataPtr()}; }
+  Slice slice() { return Slice{getDataPtr()}; }
+  operator Slice() { return slice(); }
 
  private:
   std::basic_string<uint8_t, std::char_traits<uint8_t>, Allocator> _mem;
