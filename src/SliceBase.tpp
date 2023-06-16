@@ -35,8 +35,6 @@
 #include "velocypack/Slice.h"
 #include "velocypack/ValueType.h"
 
-using namespace arangodb::velocypack;
-
 namespace {
 
 // maximum values for integers of different byte sizes
@@ -45,6 +43,8 @@ constexpr int64_t maxValues[] = {
     549755813888, 140737488355328, 36028797018963968};
 
 }  // namespace
+
+namespace arangodb::velocypack {
 
 // translates an integer key into a string
 template<typename DerivedType, typename SliceType>
@@ -948,7 +948,7 @@ ValueLength SliceBase<DerivedType, SliceType>::length() const {
   return readIntegerNonEmpty<ValueLength>(start() + end - offsetSize,
                                           offsetSize);
 }
-
+}  // namespace arangodb::velocypack
 #define INSTANTIATE_TYPE(Derived, SliceType)                                  \
   template struct SliceBase<Derived, SliceType>;                              \
   template SliceType SliceBase<Derived, SliceType>::searchObjectKeyBinary<1>( \

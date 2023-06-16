@@ -25,6 +25,8 @@
 #include <velocypack/Slice.h>
 #include "SliceBase.tpp"
 
+using namespace arangodb::velocypack;
+
 uint8_t const Slice::noneSliceData[] = {0x00};
 uint8_t const Slice::illegalSliceData[] = {0x17};
 uint8_t const Slice::nullSliceData[] = {0x18};

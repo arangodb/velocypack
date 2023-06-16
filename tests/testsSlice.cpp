@@ -33,7 +33,8 @@
 
 #include <velocypack/String.h>
 
-using SliceTypes = testing::Types<VPackSlice, VPackString>;
+using SliceTypes =
+    testing::Types<VPackSlice, VPackString, arangodb::velocypack::pmr::String>;
 template<class>
 struct SliceTest : testing::Test {};
 TYPED_TEST_SUITE(SliceTest, SliceTypes);
