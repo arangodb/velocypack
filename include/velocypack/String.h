@@ -63,9 +63,9 @@ struct BasicString : SliceBase<BasicString<Allocator>, Slice> {
   uint8_t const* getDataPtr() const noexcept { return _str.c_str(); }
 
   // similar to std::string we decay into Slice
-  operator Slice() { return slice(); }
+  operator Slice() const { return slice(); }
 
-  Slice slice() { return Slice{getDataPtr()}; }
+  Slice slice() const { return Slice{getDataPtr()}; }
   void set(uint8_t const* s) { *this = Slice(s); }
 
   using StringType =
