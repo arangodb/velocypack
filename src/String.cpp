@@ -26,5 +26,4 @@
 
 namespace arangodb::velocypack {
 INSTANTIATE_TYPE(String, Slice);
-INSTANTIATE_TYPE(pmr::String, Slice);
 }  // namespace arangodb::velocypack

@@ -22,14 +22,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#if defined(_LIBCPP_VERSION)
-#include <experimental/memory_resource>
-namespace std_pmr = std::experimental::pmr;
-#else
-#include <memory_resource>
-namespace std_pmr = std::pmr;
-#endif
-
 #include <velocypack/Slice.h>
 
 namespace arangodb::velocypack {
@@ -84,31 +76,17 @@ struct BasicString : SliceBase<BasicString<Allocator>, Slice> {
 
 using String = BasicString<>;
 
-namespace pmr {
-using String = BasicString<std_pmr::polymorphic_allocator<uint8_t>>;
-}
-
 extern template struct SliceBase<String, Slice>;
-extern template struct SliceBase<pmr::String, Slice>;
 }  // namespace arangodb::velocypack
 
 using VPackString = arangodb::velocypack::String;
 
 namespace std {
 // implementation of std::hash for a String object
-template<>
-struct hash<arangodb::velocypack::String> {
-  std::size_t operator()(arangodb::velocypack::String const& slice) const {
-#ifdef VELOCYPACK_32BIT
-    return static_cast<size_t>(slice.hash32());
-#else
-    return static_cast<std::size_t>(slice.hash());
-#endif
-  }
-};
-template<>
-struct hash<arangodb::velocypack::pmr::String> {
-  std::size_t operator()(arangodb::velocypack::pmr::String const& slice) const {
+template<typename Allocator>
+struct hash<arangodb::velocypack::BasicString<Allocator>> {
+  std::size_t operator()(
+      arangodb::velocypack::BasicString<Allocator> const& slice) const {
 #ifdef VELOCYPACK_32BIT
     return static_cast<size_t>(slice.hash32());
 #else

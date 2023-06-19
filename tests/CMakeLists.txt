@@ -32,7 +32,6 @@ set(Tests
     testsSink
     testsSlice
     testsSliceContainer
-    testsString
     testsType
     testsValidator
     testsVersion
