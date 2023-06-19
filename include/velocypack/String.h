@@ -22,7 +22,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#if defined(_LIBCPP_VERSION)
+#include <experimental/memory_resource>
+namespace std_pmr = std::experimental::pmr;
+#else
 #include <memory_resource>
+namespace std_pmr = std::pmr;
+#endif
 
 #include <velocypack/Slice.h>
 
@@ -79,7 +85,7 @@ struct BasicString : SliceBase<BasicString<Allocator>, Slice> {
 using String = BasicString<>;
 
 namespace pmr {
-using String = BasicString<std::pmr::polymorphic_allocator<uint8_t>>;
+using String = BasicString<std_pmr::polymorphic_allocator<uint8_t>>;
 }
 
 extern template struct SliceBase<String, Slice>;
