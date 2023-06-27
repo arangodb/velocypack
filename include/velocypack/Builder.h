@@ -613,6 +613,19 @@ class Builder {
     close();
     return *this;
   }
+  
+  void resetTo(std::size_t value) {
+    _pos = value;
+    VELOCYPACK_ASSERT(_bufferPtr != nullptr);
+    _bufferPtr->resetTo(value);
+  }
+
+  // move byte position x bytes ahead
+  void advance(std::size_t value) noexcept {
+    _pos += value;
+    VELOCYPACK_ASSERT(_bufferPtr != nullptr);
+    _bufferPtr->advance(value);
+  }
 
  private:
   void closeLevel() noexcept;
@@ -1032,19 +1045,6 @@ class Builder {
     _start[_pos++] = value;
     VELOCYPACK_ASSERT(_bufferPtr != nullptr);
     _bufferPtr->advance();
-  }
-
-  inline void resetTo(std::size_t value) {
-    _pos = value;
-    VELOCYPACK_ASSERT(_bufferPtr != nullptr);
-    _bufferPtr->resetTo(value);
-  }
-
-  // move byte position x bytes ahead
-  inline void advance(std::size_t value) noexcept {
-    _pos += value;
-    VELOCYPACK_ASSERT(_bufferPtr != nullptr);
-    _bufferPtr->advance(value);
   }
 
   // move byte position x bytes back
