@@ -90,6 +90,10 @@ struct StringSinkImpl final : public Sink {
     _buffer->reserve(checkOverflow(len));
   }
 
+  void setBuffer(T* buffer) noexcept { _buffer = buffer; }
+  
+  T* getBuffer() const noexcept { return _buffer; }
+
  private:
   T* _buffer;
 };
