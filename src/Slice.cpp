@@ -23,7 +23,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <velocypack/Slice.h>
-#include "SliceBase.tpp"
+#include <velocypack/SliceBase.tpp>
 
 using namespace arangodb::velocypack;
 

@@ -22,7 +22,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <velocypack/String.h>
-#include "SliceBase.tpp"
+#include <velocypack/SliceBase.tpp>
 
 namespace arangodb::velocypack {
 INSTANTIATE_TYPE(String, Slice);
