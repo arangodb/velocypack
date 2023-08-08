@@ -102,7 +102,6 @@ struct StringSinkImpl final : public Sink {
 
 typedef StringSinkImpl<std::string> StringSink;
 
-// only tracks the length of the generated output
 struct StringLengthSink final : public Sink {
   StringLengthSink() : length(0) {}
 
