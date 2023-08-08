@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+namespace arangodb::velocypack {
+
 extern std::size_t (*JSONStringCopy)(uint8_t*, uint8_t const*, std::size_t);
 
 // Now a version which also stops at high bit set bytes:
@@ -38,9 +40,7 @@ extern std::size_t (*JSONSkipWhiteSpace)(uint8_t const*, std::size_t);
 // check string for invalid utf-8 sequences
 extern bool (*ValidateUtf8String)(uint8_t const*, std::size_t);
 
-namespace arangodb::velocypack {
-
-void enableNativeStringFunctions();
-void enableBuiltinStringFunctions();
+void enableNativeStringFunctions() noexcept;
+void enableBuiltinStringFunctions() noexcept;
 
 }  // namespace arangodb::velocypack

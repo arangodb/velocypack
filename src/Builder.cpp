@@ -1050,8 +1050,11 @@ uint8_t* Builder::set(Value const& item) {
         appendByteUnchecked(0xbf);
         appendLengthUnchecked<8>(size);
       }
-      std::memcpy(_start + _pos, p, size);
-      advance(size);
+      if (size != 0) {
+        VELOCYPACK_ASSERT(p != nullptr);
+        std::memcpy(_start + _pos, p, size);
+        advance(size);
+      }
       break;
     }
     case ValueType::Array: {
@@ -1102,9 +1105,12 @@ uint8_t* Builder::set(Value const& item) {
         size = strlen(p);
       }
       appendUInt(size, 0xbf);
-      reserve(size);
-      std::memcpy(_start + _pos, p, checkOverflow(size));
-      advance(size);
+      if (size != 0) {
+        reserve(size);
+        VELOCYPACK_ASSERT(p != nullptr);
+        std::memcpy(_start + _pos, p, checkOverflow(size));
+        advance(size);
+      }
       break;
     }
     case ValueType::External: {
@@ -1168,9 +1174,12 @@ uint8_t* Builder::set(Slice const& item) {
   }
 
   ValueLength const l = item.byteSize();
-  reserve(l);
-  std::memcpy(_start + _pos, item.start(), checkOverflow(l));
-  advance(l);
+  if (l != 0) {
+    reserve(l);
+    VELOCYPACK_ASSERT(item.start() != nullptr);
+    std::memcpy(_start + _pos, item.start(), checkOverflow(l));
+    advance(l);
+  }
   return _start + _pos - l;
 }
 
@@ -1197,17 +1206,21 @@ uint8_t* Builder::set(ValuePair const& pair) {
       reserve(1 + size);
       appendByteUnchecked(static_cast<uint8_t>(0x40 + size));
     }
-    VELOCYPACK_ASSERT(pair.getStart() != nullptr);
-    std::memcpy(_start + _pos, pair.getStart(), checkOverflow(size));
-    advance(size);
+    if (size != 0) {
+      VELOCYPACK_ASSERT(pair.getStart() != nullptr);
+      std::memcpy(_start + _pos, pair.getStart(), checkOverflow(size));
+      advance(size);
+    }
     return _start + oldPos;
   } else if (pair.valueType() == ValueType::Binary) {
     uint64_t v = pair.getSize();
     reserve(9 + v);
     appendUInt(v, 0xbf);
-    VELOCYPACK_ASSERT(pair.getStart() != nullptr);
-    std::memcpy(_start + _pos, pair.getStart(), checkOverflow(v));
-    advance(v);
+    if (v != 0) {
+      VELOCYPACK_ASSERT(pair.getStart() != nullptr);
+      std::memcpy(_start + _pos, pair.getStart(), checkOverflow(v));
+      advance(v);
+    }
     return _start + oldPos;
   } else if (pair.valueType() == ValueType::Custom) {
     if (options->disallowCustom) {

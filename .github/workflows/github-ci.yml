@@ -1,6 +1,7 @@
 name: velocypack-test
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
@@ -17,12 +18,12 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-latest, compiler: gcc, version:  '9',
-             build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '11',
              build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '12',
+             build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Debug, hash_type: xxhash,
              flags: '-O0 -fno-inline --coverage', coverage: true}
@@ -32,11 +33,15 @@ jobs:
              ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=address-use-after-scope -fno-omit-frame-pointer'}
 
           # Clang builds
-          - {os: ubuntu-latest, compiler: clang, version: '10',
+          - {os: ubuntu-20.04, compiler: clang, version: '10',
              build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: clang, version: '11',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: clang, version: '12',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: clang, version: '13',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: clang, version: '14',
              build_type: Release, hash_type: xxhash }
 
           # Windows builds
@@ -57,7 +62,7 @@ jobs:
 
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup environment
       run: |
         echo "SANITIZER=${{ matrix.sanitizer }}" >> ${GITHUB_ENV}
@@ -68,16 +73,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++-${{ matrix.version }}
         echo "CXX=g++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        echo "CC=gcc-${{ matrix.version }}" >> ${GITHUB_ENV}
     - name: Install clang
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
       run: |
-        export CODENAME=`lsb_release -c | sed 's/Codename:\t//'`
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | sudo apt-key add -
-        sudo add-apt-repository "deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${{ matrix.version }} main"
         sudo apt-get update
-        sudo apt-get install clang-${{ matrix.version }}
-        echo "CC=clang-${{ matrix.version }}" >> ${GITHUB_ENV}
-        echo "CXX=clang++-${{ matrix.version }}" >> ${GITHUB_ENV}
+        sudo apt-get install libunwind-dev
+        sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        version=${{ matrix.version }}
+        if [[ $version -ge 13 ]]; then
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main"
+        fi
+        sudo apt-get update
+        sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
+        echo "CC=clang-$version" >> ${GITHUB_ENV}
+        echo "CXX=clang++-$version" >> ${GITHUB_ENV}
+        echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
     - name: Initialize MSVC ${{ matrix.version }}
       if: startsWith(matrix.os, 'windows-')
@@ -87,7 +98,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHashType=${{ matrix.hash_type }} -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=${{env.CXX_STANDARD}} -DCMAKE_CXX_FLAGS="${{ matrix.flags }}" -DCMAKE_LINKER_FLAGS="${{ matrix.ld_flags }}"
+      run: cmake -B${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHashType=${{ matrix.hash_type }} -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=${{env.CXX_STANDARD}} -DCMAKE_CXX_FLAGS="${{ matrix.flags }}" -DCMAKE_C_FLAGS="${{ matrix.flags }}" -DCMAKE_LINKER_FLAGS="${{ matrix.ld_flags }}"
 
     - name: Build
       # Build your program with the given configuration
@@ -101,7 +112,7 @@ jobs:
       if: matrix.coverage == true
       run: |
         sudo apt-get install lcov
-        scripts/collect-coverage.sh
+        CXX=g++-${{ matrix.version }} scripts/collect-coverage.sh
 
     - name: Coveralls Upload
       if: matrix.coverage == true
