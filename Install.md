@@ -1,4 +1,4 @@
-Compling and Installing the VPack library
+Compiling and Installing the VPack library
 =========================================
 
 Prerequisites
