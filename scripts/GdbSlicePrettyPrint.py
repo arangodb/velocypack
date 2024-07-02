@@ -126,7 +126,7 @@ class SlicePrinter (object):
     b = bytearray(length)
     for i in range(0, length):
       b[i] = int(vpack[i])
-    p = subprocess.Popen(["arangovpack", "--print-non-json"], 
+    p = subprocess.Popen(["arangovpack", "--output-type", "json"],
                                          stdin=subprocess.PIPE,
                                          stdout=subprocess.PIPE)
     s, e = p.communicate(b)
