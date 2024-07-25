@@ -322,6 +322,9 @@ struct SliceBase {
   // number type
   template<typename T>
   bool isNumber() const noexcept {
+    if (!isInteger() && !isDouble()) {
+      return false;
+    }
     try {
       if constexpr (std::is_integral_v<T>) {
         if constexpr (std::is_signed_v<T>) {
