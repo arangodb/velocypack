@@ -322,9 +322,6 @@ struct SliceBase {
   // number type
   template<typename T>
   bool isNumber() const noexcept {
-    if (!isInteger() && !isDouble()) {
-      return false;
-    }
     try {
       if constexpr (std::is_integral_v<T>) {
         if constexpr (std::is_signed_v<T>) {
@@ -341,9 +338,12 @@ struct SliceBase {
                    v <= kMax;
           }
 
-          int64_t v = getInt();
-          return (v >= static_cast<int64_t>((std::numeric_limits<T>::min)()) &&
-                  v <= static_cast<int64_t>((std::numeric_limits<T>::max)()));
+          if (isInteger()) {
+            int64_t v = getInt();
+            return (v >= static_cast<int64_t>((std::numeric_limits<T>::min)()) &&
+                    v <= static_cast<int64_t>((std::numeric_limits<T>::max)()));
+          }
+          return false;
         } else {
           // unsigned integral type
           if (isDouble()) {
@@ -357,9 +357,12 @@ struct SliceBase {
             return 0.0 <= v && v <= kMax;
           }
 
-          // may throw if value is < 0
-          uint64_t v = getUInt();
-          return (v <= static_cast<uint64_t>((std::numeric_limits<T>::max)()));
+          if (isInteger()) {
+            // may throw if value is < 0
+            uint64_t v = getUInt();
+            return (v <= static_cast<uint64_t>((std::numeric_limits<T>::max)()));
+          }
+          return false;
         }
       } else {
         // floating point type
