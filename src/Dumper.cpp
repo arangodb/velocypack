@@ -221,7 +221,7 @@ void Dumper::appendDouble(double v) {
     return;
   }
   for (size_t i = 0; i < len; ++i) {
-    if (temp[i] == '.') {
+    if (temp[i] == '.' || temp[i] == 'e' || temp[i] == 'E') {
       return;
     }
   }
