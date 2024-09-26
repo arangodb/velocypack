@@ -217,6 +217,11 @@ void Dumper::appendDouble(double v) {
   char temp[24];
   int len = fpconv_dtoa(v, &temp[0]);
   _sink->append(&temp[0], static_cast<ValueLength>(len));
+  for (size_t i = 0; i < len; ++i) {
+    if (temp[i] == '.') {
+      return;
+    }
+  }
   _sink->append(".0", 2);
 }
 
