@@ -215,17 +215,34 @@ void Dumper::appendUInt(uint64_t v) {
 
 void Dumper::appendDouble(double v) {
   char temp[24];
-  int len = fpconv_dtoa(v, &temp[0]);
-  _sink->append(&temp[0], static_cast<ValueLength>(len));
-  if (fabs(v) < ldexpl(1.0, 53)) {
+  double a = fabs(v);
+  if (a >= ldexpl(1.0, 53) && a < ldexpl(1.0, 64)) {
+    // This is a special case which we want to handle separately, because
+    // of two reasons:
+    //  (1) The function fpconv_dtoa below only guarantees to write a
+    //      decimal representation which gives the same double value when
+    //      parsed back into a double. It can write a wrong integer.
+    //      Therefore we want to use the integer code in this case.
+    //  (2) The function fpconv_dtoa will write a normal integer
+    //      representation in this case without a decimal point. If we
+    //      parse this back to vpack later, we end up in a different
+    //      representation (uint64_t or int64_t), so we want to append
+    //      ".0" to the string in this case.
+    // Note that this automatically excludes all infinities and NaNs,
+    // which will be handled in the function fpconv_dtoa below.
+    uint64_t u;
+    if (v < 0) {
+      u = static_cast<uint64_t>(-v);
+      _sink->append("-", 1);
+    } else {
+      u = static_cast<uint64_t>(v);
+    }
+    appendUInt(u);
+    _sink->append(".0", 2);
     return;
   }
-  for (size_t i = 0; i < len; ++i) {
-    if (temp[i] == '.' || temp[i] == 'e' || temp[i] == 'E') {
-      return;
-    }
-  }
-  _sink->append(".0", 2);
+  int len = fpconv_dtoa(v, &temp[0]);
+  _sink->append(&temp[0], static_cast<ValueLength>(len));
 }
 
 void Dumper::dumpUnicodeCharacter(uint16_t value) {
