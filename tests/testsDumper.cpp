@@ -490,8 +490,9 @@ TEST(StringDumperTest, SuppressControlChars) {
 
 TEST(StringDumperTest, EscapeControlChars) {
   Builder b;
-  b.add(Value(
-      "Before\nAfter\r\t\v\f\b\x01\x02/\u00B0\uf0f9\u9095\uf0f9\u90b6\v\n\\\""));
+  b.add(
+      Value("Before\nAfter\r\t\v\f\b\x01\x02/"
+            "\u00B0\uf0f9\u9095\uf0f9\u90b6\v\n\\\""));
   Options options;
   options.escapeControl = true;
   ASSERT_EQ(std::string("\"Before\\nAfter\\r\\t\\u000B\\f\\b\\u0001\\u0002/"
@@ -1958,3 +1959,95 @@ int main(int argc, char* argv[]) {
 
   return RUN_ALL_TESTS();
 }
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf60Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 60)));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("1152921504606846976.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf60Plus1Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 60) + 1.0));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("1152921504606846976.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, MinusTwoToThePowerOf60Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(-ldexp(1.0, 60)));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("-1152921504606846976.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, MinusTwoToThePowerOf60Plus1Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(-ldexp(1.0, 60) + 1.0));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("-1152921504606846976.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf52Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 52)));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("4503599627370496", buffer);
+}
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf53Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 53)));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("9007199254740992.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf63Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 63)));
+  dumper.dump(builder.slice());
+  ASSERT_EQ("9223372036854775808.0", buffer);
+}
+
+TEST(DumperLargeDoubleTest, TwoToThePowerOf64Double) {
+  Options options;
+  std::string buffer;
+  StringSink sink(&buffer);
+  Dumper dumper(&sink, &options);
+  Builder builder;
+  builder.add(Value(ldexp(1.0, 64)));
+  dumper.dump(builder.slice());
+  // Note that this is, strictly speaking, not correct. But since this is
+  // at least 2^64, it will be parsed back to double anywa and then we
+  // get back the actual result. This is a sacrifice we make for performance.
+  ASSERT_EQ("18446744073709552000", buffer);
+}
+

@@ -54,8 +54,7 @@ void Dumper::dump(Slice slice) {
   dumpValue(slice);
 }
 
-/*static*/ void Dumper::dump(Slice slice, Sink* sink,
-                             Options const* options) {
+/*static*/ void Dumper::dump(Slice slice, Sink* sink, Options const* options) {
   Dumper dumper(sink, options);
   dumper.dump(slice);
 }
@@ -65,8 +64,7 @@ void Dumper::dump(Slice slice) {
   dump(*slice, sink, options);
 }
 
-/*static*/ std::string Dumper::toString(Slice slice,
-                                        Options const* options) {
+/*static*/ std::string Dumper::toString(Slice slice, Options const* options) {
   std::string buffer;
   StringSink sink(&buffer);
   dump(slice, &sink, options);
@@ -217,6 +215,32 @@ void Dumper::appendUInt(uint64_t v) {
 
 void Dumper::appendDouble(double v) {
   char temp[24];
+  double a = fabs(v);
+  if (a >= ldexpl(1.0, 53) && a < ldexpl(1.0, 64)) {
+    // This is a special case which we want to handle separately, because
+    // of two reasons:
+    //  (1) The function fpconv_dtoa below only guarantees to write a
+    //      decimal representation which gives the same double value when
+    //      parsed back into a double. It can write a wrong integer.
+    //      Therefore we want to use the integer code in this case.
+    //  (2) The function fpconv_dtoa will write a normal integer
+    //      representation in this case without a decimal point. If we
+    //      parse this back to vpack later, we end up in a different
+    //      representation (uint64_t or int64_t), so we want to append
+    //      ".0" to the string in this case.
+    // Note that this automatically excludes all infinities and NaNs,
+    // which will be handled in the function fpconv_dtoa below.
+    uint64_t u;
+    if (v < 0) {
+      u = static_cast<uint64_t>(-v);
+      _sink->append("-", 1);
+    } else {
+      u = static_cast<uint64_t>(v);
+    }
+    appendUInt(u);
+    _sink->append(".0", 2);
+    return;
+  }
   int len = fpconv_dtoa(v, &temp[0]);
   _sink->append(&temp[0], static_cast<ValueLength>(len));
 }
@@ -545,8 +569,7 @@ void Dumper::dumpValue(Slice slice, Slice const* base) {
         base = &slice;
       }
 
-      Slice external(
-          reinterpret_cast<uint8_t const*>(slice.getExternal()));
+      Slice external(reinterpret_cast<uint8_t const*>(slice.getExternal()));
       dumpValue(external, base);
       break;
     }
@@ -624,8 +647,8 @@ void Dumper::handleUnsupportedType(Slice slice) {
     return;
   } else if (options->unsupportedTypeBehavior ==
              Options::ConvertUnsupportedType) {
-    _sink->append(std::string("\"(non-representable type ") +
-                  slice.typeName() + ")\"");
+    _sink->append(std::string("\"(non-representable type ") + slice.typeName() +
+                  ")\"");
     return;
   }
 
