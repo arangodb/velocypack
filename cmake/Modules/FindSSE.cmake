@@ -3,7 +3,7 @@
 
 if(ARCH MATCHES "i386" OR ARCH MATCHES "x86_64")
   if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    exec_program(cat ARGS "/proc/cpuinfo" OUTPUT_VARIABLE CPUINFO)
+    file(READ "/proc/cpuinfo" CPUINFO)
 
     string(REGEX REPLACE "^.*(sse2).*$" "\\1" SSE_THERE ${CPUINFO})
     string(COMPARE EQUAL "sse2" "${SSE_THERE}" SSE2_TRUE)
