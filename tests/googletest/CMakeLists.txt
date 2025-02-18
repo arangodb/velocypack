@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.21)
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
   add_definitions(-std=c++11)
