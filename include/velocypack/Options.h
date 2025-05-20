@@ -157,7 +157,7 @@ struct Options {
 
   // max recursion level for object/array nesting. checked by Parser and
   // Validator.
-  uint32_t nestingLimit = std::numeric_limits<uint32_t>::max();
+  uint32_t nestingLimit = (std::numeric_limits<uint32_t>::max)();
 
   // default options with the above settings
   static Options Defaults;
