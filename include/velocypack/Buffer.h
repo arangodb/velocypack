@@ -132,7 +132,7 @@ class Buffer {
     return *this;
   }
 
-  ~Buffer() {
+  virtual ~Buffer() {
     if (_buffer != _local) {
       velocypack_free(_buffer);
     }
