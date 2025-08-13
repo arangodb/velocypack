@@ -1146,7 +1146,7 @@ struct ArrayBuilder final : public BuilderContainer,
 
 }  // namespace arangodb::velocypack
 
-using VPackBuilder            = arangodb::velocypack::Builder<arangodb::velocypack::Buffer<uint8_t>>;
+using VPackBuilder = arangodb::velocypack::Builder<arangodb::velocypack::Buffer<uint8_t>>;
 using VPackBuilderNonDeleter = arangodb::velocypack::BuilderNonDeleter;
 using VPackBuilderContainer = arangodb::velocypack::BuilderContainer;
 using VPackObjectBuilder = arangodb::velocypack::ObjectBuilder;

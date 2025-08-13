@@ -298,7 +298,8 @@ arangodb::velocypack::Builder<BufferType>::Builder(Builder const& that)
 }
 
 template<typename BufferType>
-arangodb::velocypack::Builder& arangodb::velocypack::Builder<BufferType>::operator=(Builder const& that) {
+arangodb::velocypack::Builder<BufferType>&
+arangodb::velocypack::Builder<BufferType>::operator=(arangodb::velocypack::Builder<BufferType> const& that) {
   if (this != &that) {
     if (that._buffer == nullptr) {
       _buffer.reset();
