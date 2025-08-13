@@ -194,7 +194,7 @@ class Buffer {
 
   // Steal external memory; only allowed when the buffer is not local,
   // i.e. !usesLocalMemory()
-  T* steal() noexcept {
+  virtual T* steal() noexcept {
     VELOCYPACK_ASSERT(!usesLocalMemory());
 
     auto buffer = _buffer;
@@ -284,7 +284,7 @@ class Buffer {
   inline void poison(T*, ValueLength) noexcept {}
 #endif
 
-  void grow(ValueLength len) {
+  virtual void grow(ValueLength len) {
     VELOCYPACK_ASSERT(_size + len >= sizeof(_local));
 
     // need reallocation

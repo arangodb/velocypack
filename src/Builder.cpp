@@ -33,20 +33,20 @@
 #include "velocypack/Iterator.h"
 #include "velocypack/Sink.h"
 
-using namespace arangodb::velocypack;
+
 
 namespace {
 
 // checks whether a memmove operation is allowed to get rid of the padding
-bool isAllowedToMemmove(Options const* options, uint8_t const* start,
-                        std::vector<ValueLength>::iterator indexStart,
-                        std::vector<ValueLength>::iterator indexEnd,
-                        ValueLength offsetSize) {
+bool isAllowedToMemmove(arangodb::velocypack::Options const* options, uint8_t const* start,
+                        std::vector<arangodb::velocypack::ValueLength>::iterator indexStart,
+                        std::vector<arangodb::velocypack::ValueLength>::iterator indexEnd,
+                        arangodb::velocypack::ValueLength offsetSize) {
   VELOCYPACK_ASSERT(offsetSize == 1 || offsetSize == 2);
 
-  if (options->paddingBehavior == Options::PaddingBehavior::NoPadding ||
+  if (options->paddingBehavior == arangodb::velocypack::Options::PaddingBehavior::NoPadding ||
       (offsetSize == 1 &&
-       options->paddingBehavior == Options::PaddingBehavior::Flexible)) {
+       options->paddingBehavior == arangodb::velocypack::Options::PaddingBehavior::Flexible)) {
     std::size_t const distance = std::distance(indexStart, indexEnd);
     std::size_t const n = (std::min)(std::size_t(8 - 2 * offsetSize), distance);
     for (std::size_t i = 0; i < n; i++) {
@@ -60,7 +60,7 @@ bool isAllowedToMemmove(Options const* options, uint8_t const* start,
   return false;
 }
 
-uint8_t determineArrayType(bool needIndexTable, ValueLength offsetSize) {
+uint8_t determineArrayType(bool needIndexTable, arangodb::velocypack::ValueLength offsetSize) {
   uint8_t type;
   // Now build the table:
   if (needIndexTable) {
@@ -79,7 +79,7 @@ uint8_t determineArrayType(bool needIndexTable, ValueLength offsetSize) {
   return type;
 }
 
-constexpr ValueLength linearAttributeUniquenessCutoff = 4;
+constexpr arangodb::velocypack::ValueLength linearAttributeUniquenessCutoff = 4;
 
 // struct used when sorting index tables for objects:
 struct SortEntry {
@@ -129,16 +129,16 @@ uint8_t const* findAttrName(uint8_t const* base, uint64_t& len) {
   return findAttrName(arangodb::velocypack::Slice(base).makeKey().start(), len);
 }
 
-bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
+bool checkAttributeUniquenessUnsortedBrute(arangodb::velocypack::ObjectIterator& it) {
   std::array<std::string_view, linearAttributeUniquenessCutoff> keys;
 
   do {
     // key(true) guarantees a String as returned type
     std::string_view key = it.key(true).stringView();
 
-    ValueLength index = it.index();
+    arangodb::velocypack::ValueLength index = it.index();
     // compare with all other already looked-at keys
-    for (ValueLength i = 0; i < index; ++i) {
+    for (arangodb::velocypack::ValueLength i = 0; i < index; ++i) {
       if (VELOCYPACK_UNLIKELY(keys[i] == key)) {
         return false;
       }
@@ -151,7 +151,7 @@ bool checkAttributeUniquenessUnsortedBrute(ObjectIterator& it) {
   return true;
 }
 
-bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
+bool checkAttributeUniquenessUnsortedSet(arangodb::velocypack::ObjectIterator& it) {
 #ifndef VELOCYPACK_NO_THREADLOCALS
   std::unique_ptr<std::unordered_set<std::string_view>>& tmp = ::duplicateKeys;
 
@@ -165,7 +165,7 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
 #endif
 
   do {
-    Slice key = it.key(true);
+    arangodb::velocypack::Slice key = it.key(true);
     // key(true) guarantees a String as returned type
     VELOCYPACK_ASSERT(key.isString());
     if (VELOCYPACK_UNLIKELY(!tmp->emplace(key.stringView()).second)) {
@@ -181,8 +181,9 @@ bool checkAttributeUniquenessUnsortedSet(ObjectIterator& it) {
 }  // namespace
 
 // create an empty Builder, using default Options
-Builder::Builder()
-    : _buffer(std::make_shared<Buffer<uint8_t>>()),
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder()
+    : _buffer(std::make_shared<BufferType>()),
       _bufferPtr(_buffer.get()),
       _start(_bufferPtr->data()),
       _pos(0),
@@ -195,7 +196,8 @@ Builder::Builder()
 }
 
 // create an empty Builder, using Options
-Builder::Builder(Options const* opts) : Builder() {
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(arangodb::velocypack::Options const* opts) : Builder() {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
   }
@@ -203,7 +205,8 @@ Builder::Builder(Options const* opts) : Builder() {
 }
 
 // create an empty Builder, using an existing buffer and default Options
-Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer)
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(std::shared_ptr<BufferType> buffer)
     : _buffer(std::move(buffer)),
       _bufferPtr(_buffer.get()),
       _start(nullptr),
@@ -223,7 +226,9 @@ Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer)
 }
 
 // create an empty Builder, using an existing buffer
-Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer, Options const* opts)
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(std::shared_ptr<BufferType> buffer,
+                             Options const* opts)
     : Builder(std::move(buffer)) {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
@@ -233,7 +238,8 @@ Builder::Builder(std::shared_ptr<Buffer<uint8_t>> buffer, Options const* opts)
 
 // create a Builder that uses an existing Buffer and options.
 // the Builder will not claim ownership for its Buffer
-Builder::Builder(Buffer<uint8_t>& buffer) noexcept
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(BufferType& buffer) noexcept
     : _bufferPtr(&buffer),
       _start(_bufferPtr->data()),
       _pos(buffer.size()),
@@ -247,7 +253,8 @@ Builder::Builder(Buffer<uint8_t>& buffer) noexcept
 
 // create a Builder that uses an existing Buffer. the Builder will not
 // claim ownership for its Buffer
-Builder::Builder(Buffer<uint8_t>& buffer, Options const* opts)
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(BufferType& buffer, Options const* opts)
     : Builder(buffer) {
   if (VELOCYPACK_UNLIKELY(opts == nullptr)) {
     throw Exception(Exception::InternalError, "Options cannot be a nullptr");
@@ -256,11 +263,13 @@ Builder::Builder(Buffer<uint8_t>& buffer, Options const* opts)
 }
 
 // populate a Builder from a Slice
-Builder::Builder(Slice slice, Options const* options) : Builder(options) {
+arangodb::velocypack::Builder<BufferType>::Builder(Slice slice, Options const* options)
+    : Builder(options) {
   add(slice);
 }
 
-Builder::Builder(Builder const& that)
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(Builder const& that)
     : _bufferPtr(nullptr),
       _start(nullptr),
       _pos(that._pos),
@@ -276,7 +285,7 @@ Builder::Builder(Builder const& that)
   if (that._buffer == nullptr) {
     _bufferPtr = that._bufferPtr;
   } else {
-    _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+    _buffer = std::make_shared<BufferType>(*that._buffer);
     _bufferPtr = _buffer.get();
   }
 
@@ -288,13 +297,14 @@ Builder::Builder(Builder const& that)
   _stack.reserve(arenaSize / sizeof(decltype(_stack)::value_type));
 }
 
-Builder& Builder::operator=(Builder const& that) {
+template<typename BufferType>
+arangodb::velocypack::Builder& arangodb::velocypack::Builder<BufferType>::operator=(Builder const& that) {
   if (this != &that) {
     if (that._buffer == nullptr) {
       _buffer.reset();
       _bufferPtr = that._bufferPtr;
     } else {
-      _buffer = std::make_shared<Buffer<uint8_t>>(*that._buffer);
+      _buffer = std::make_shared<BufferType>(*that._buffer);
       _bufferPtr = _buffer.get();
     }
     if (_bufferPtr == nullptr) {
@@ -312,7 +322,8 @@ Builder& Builder::operator=(Builder const& that) {
   return *this;
 }
 
-Builder::Builder(Builder&& that) noexcept
+template<typename BufferType>
+arangodb::velocypack::Builder<BufferType>::Builder(Builder&& that) noexcept
     : _buffer(std::move(that._buffer)),
       _bufferPtr(nullptr),
       _start(nullptr),
@@ -339,7 +350,8 @@ Builder::Builder(Builder&& that) noexcept
   that.clear();
 }
 
-Builder& Builder::operator=(Builder&& that) noexcept {
+template<typename BufferType>
+arangodb::velocypack::Builder& Builder<BufferType>::operator=(arangodb::velocypack::Builder&& that) noexcept {
   if (this != &that) {
     _buffer = std::move(that._buffer);
     if (_buffer != nullptr) {
@@ -366,7 +378,7 @@ Builder& Builder::operator=(Builder&& that) noexcept {
   return *this;
 }
 
-std::string Builder::toString() const {
+std::string Builder<BufferType>::toString() const {
   Options opts;
   opts.prettyPrint = true;
 
@@ -376,14 +388,14 @@ std::string Builder::toString() const {
   return buffer;
 }
 
-std::string Builder::toJson() const {
+std::string Builder<BufferType>::toJson() const {
   std::string buffer;
   StringSink sink(&buffer);
   Dumper::dump(slice(), &sink);
   return buffer;
 }
 
-void Builder::sortObjectIndexShort(
+void Builder<BufferType>::sortObjectIndexShort(
     uint8_t* objBase, std::vector<ValueLength>::iterator indexStart,
     std::vector<ValueLength>::iterator indexEnd) const {
   std::sort(indexStart, indexEnd,
@@ -407,7 +419,7 @@ void Builder::sortObjectIndexShort(
             });
 }
 
-void Builder::sortObjectIndexLong(
+void Builder<BufferType>::sortObjectIndexLong(
     uint8_t* objBase, std::vector<ValueLength>::iterator indexStart,
     std::vector<ValueLength>::iterator indexEnd) const {
 #ifndef VELOCYPACK_NO_THREADLOCALS
@@ -456,7 +468,8 @@ void Builder::sortObjectIndexLong(
   }
 }
 
-Builder& Builder::closeEmptyArrayOrObject(ValueLength pos, bool isArray) {
+Builder& Builder<BufferType>::closeEmptyArrayOrObject(ValueLength pos,
+                                                      bool isArray) {
   // empty Array or Object
   _start[pos] = (isArray ? 0x01 : 0x0a);
   VELOCYPACK_ASSERT(_pos == pos + 9);
@@ -465,7 +478,7 @@ Builder& Builder::closeEmptyArrayOrObject(ValueLength pos, bool isArray) {
   return *this;
 }
 
-bool Builder::closeCompactArrayOrObject(
+bool Builder<BufferType>::closeCompactArrayOrObject(
     ValueLength pos, bool isArray,
     std::vector<ValueLength>::iterator indexStart,
     std::vector<ValueLength>::iterator indexEnd) {
@@ -523,9 +536,9 @@ bool Builder::closeCompactArrayOrObject(
   return false;
 }
 
-Builder& Builder::closeArray(ValueLength pos,
-                             std::vector<ValueLength>::iterator indexStart,
-                             std::vector<ValueLength>::iterator indexEnd) {
+Builder& Builder<BufferType>::closeArray(
+    ValueLength pos, std::vector<ValueLength>::iterator indexStart,
+    std::vector<ValueLength>::iterator indexEnd) {
   std::size_t const n = std::distance(indexStart, indexEnd);
   VELOCYPACK_ASSERT(n > 0);
 
@@ -672,7 +685,7 @@ Builder& Builder::closeArray(ValueLength pos,
   return *this;
 }
 
-Builder& Builder::close() {
+Builder& Builder<BufferType>::close() {
   if (VELOCYPACK_UNLIKELY(isClosed())) {
     throw Exception(Exception::BuilderNeedOpenCompound);
   }
@@ -854,12 +867,12 @@ Builder& Builder::close() {
 }
 
 // checks whether an Object value has a specific key attribute
-bool Builder::hasKey(std::string_view key) const {
+bool Builder<BufferType>::hasKey(std::string_view key) const {
   return !getKey(key).isNone();
 }
 
 // return the value for a specific key of an Object value
-Slice Builder::getKey(std::string_view key) const {
+Slice Builder<BufferType>::getKey(std::string_view key) const {
   if (VELOCYPACK_UNLIKELY(_stack.empty())) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
@@ -882,7 +895,7 @@ Slice Builder::getKey(std::string_view key) const {
   return Slice();
 }
 
-void Builder::appendTag(uint64_t tag) {
+void Builder<BufferType>::appendTag(uint64_t tag) {
   if (options->disallowTags) {
     // Tagged values explicitly disallowed
     throw Exception(Exception::BuilderTagsDisallowed);
@@ -898,7 +911,7 @@ void Builder::appendTag(uint64_t tag) {
   }
 }
 
-uint8_t* Builder::set(Value const& item) {
+uint8_t* Builder<BufferType>::set(Value const& item) {
   auto const oldPos = _pos;
   auto ctype = item.cType();
 
@@ -1165,7 +1178,7 @@ uint8_t* Builder::set(Value const& item) {
   return _start + oldPos;
 }
 
-uint8_t* Builder::set(Slice const& item) {
+uint8_t* Builder<BufferType>::set(Slice const& item) {
   checkKeyHasValidType(item);
 
   if (VELOCYPACK_UNLIKELY(options->disallowCustom && item.isCustom())) {
@@ -1183,7 +1196,7 @@ uint8_t* Builder::set(Slice const& item) {
   return _start + _pos - l;
 }
 
-uint8_t* Builder::set(ValuePair const& pair) {
+uint8_t* Builder<BufferType>::set(ValuePair const& pair) {
   // This method builds a single further VPack item at the current
   // append position. This is the case for ValueType::String,
   // ValueType::Binary, or ValueType::Custom, which can be built
@@ -1242,7 +1255,7 @@ uint8_t* Builder::set(ValuePair const& pair) {
                   "ValueType::Custom are valid for ValuePair argument");
 }
 
-uint8_t* Builder::set(IStringFromParts const& parts) {
+uint8_t* Builder<BufferType>::set(IStringFromParts const& parts) {
   // This method builds a single VPack String item composed of the 2 parts.
   auto const oldPos = _pos;
 
@@ -1269,13 +1282,13 @@ uint8_t* Builder::set(IStringFromParts const& parts) {
   return _start + oldPos;
 }
 
-void Builder::cleanupAdd() noexcept {
+void Builder<BufferType>::cleanupAdd() noexcept {
   VELOCYPACK_ASSERT(!_stack.empty());
   VELOCYPACK_ASSERT(!_indexes.empty());
   _indexes.pop_back();
 }
 
-void Builder::reportAdd() {
+void Builder<BufferType>::reportAdd() {
   VELOCYPACK_ASSERT(!_stack.empty());
   if (_indexes.capacity() == 0) {
     // make an initial reservation for several items at
@@ -1286,14 +1299,14 @@ void Builder::reportAdd() {
   _indexes.push_back(_pos - _stack.back().startPos);
 }
 
-void Builder::closeLevel() noexcept {
+void Builder<BufferType>::closeLevel() noexcept {
   VELOCYPACK_ASSERT(!_stack.empty());
   ValueLength const indexStartPos = _stack.back().indexStartPos;
   _stack.pop_back();
   _indexes.erase(_indexes.begin() + indexStartPos, _indexes.end());
 }
 
-bool Builder::checkAttributeUniqueness(Slice obj) const {
+bool Builder<BufferType>::checkAttributeUniqueness(Slice obj) const {
   VELOCYPACK_ASSERT(options->checkAttributeUniqueness == true);
   VELOCYPACK_ASSERT(obj.isObject());
   VELOCYPACK_ASSERT(obj.length() >= 2);
@@ -1306,7 +1319,7 @@ bool Builder::checkAttributeUniqueness(Slice obj) const {
   return checkAttributeUniquenessUnsorted(obj);
 }
 
-bool Builder::checkAttributeUniquenessSorted(Slice obj) const {
+bool Builder<BufferType>::checkAttributeUniquenessSorted(Slice obj) const {
   ObjectIterator it(obj, false);
 
   // fetch initial key
@@ -1338,7 +1351,7 @@ bool Builder::checkAttributeUniquenessSorted(Slice obj) const {
   return true;
 }
 
-bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
+bool Builder<BufferType>::checkAttributeUniquenessUnsorted(Slice obj) const {
   // cutoff value for linear attribute uniqueness scan
   // unsorted objects with this amount of attributes (or less) will
   // be validated using a non-allocating scan over the attributes
@@ -1355,7 +1368,7 @@ bool Builder::checkAttributeUniquenessUnsorted(Slice obj) const {
 
 // Add all subkeys and subvalues into an object from an ObjectIterator
 // and leaves open the object intentionally
-uint8_t* Builder::add(ObjectIterator&& sub) {
+uint8_t* Builder<BufferType>::add(ObjectIterator&& sub) {
   if (VELOCYPACK_UNLIKELY(_stack.empty())) {
     throw Exception(Exception::BuilderNeedOpenObject);
   }
@@ -1378,7 +1391,7 @@ uint8_t* Builder::add(ObjectIterator&& sub) {
 
 // Add all subkeys and subvalues into an object from an ArrayIterator
 // and leaves open the array intentionally
-uint8_t* Builder::add(ArrayIterator&& sub) {
+uint8_t* Builder<BufferType>::add(ArrayIterator&& sub) {
   if (VELOCYPACK_UNLIKELY(_stack.empty())) {
     throw Exception(Exception::BuilderNeedOpenArray);
   }
@@ -1394,16 +1407,21 @@ uint8_t* Builder::add(ArrayIterator&& sub) {
   return _start + oldPos;
 }
 
-ValueLength Builder::effectivePaddingForOneByteMembers() const noexcept {
+ValueLength Builder<BufferType>::effectivePaddingForOneByteMembers()
+    const noexcept {
   // 8 bytes - object length (1 byte) - number of items (1 byte) = 6 bytes
   return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 6
                                                                            : 0);
 }
 
-ValueLength Builder::effectivePaddingForTwoByteMembers() const noexcept {
+ValueLength Builder<BufferType>::effectivePaddingForTwoByteMembers()
+    const noexcept {
   // 8 bytes - object length (2 bytes) - number of items (2 bytes) = 4 bytes
   return (options->paddingBehavior == Options::PaddingBehavior::UsePadding ? 4
                                                                            : 0);
 }
 
 static_assert(sizeof(double) == 8, "double is not 8 bytes");
+// remember instantiate template
+
+template class arangodb::velocypack::Builder<arangodb::velocypack::Buffer<uint8_t>>;
