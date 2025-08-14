@@ -50,7 +50,6 @@ namespace arangodb::velocypack {
 class ArrayIterator;
 class ObjectIterator;
 
-template<typename BufferType = Buffer<uint8_t>>
 class Builder {
   friend class Parser;  // The parser needs access to internals.
 
@@ -75,12 +74,12 @@ class Builder {
   // buffer. Whenever the stack is empty, one can use the start,
   // size and slice methods to get out the ready built VPack
   // object(s).
- public:
-  using buffer_type = BufferType;
 
  private:
-  std::shared_ptr<BufferType> _buffer;
-  BufferType* _bufferPtr;
+  // Here we collect the result
+  std::shared_ptr<Buffer<uint8_t>> _buffer;
+  // used for quicker access than shared_ptr
+  Buffer<uint8_t>* _bufferPtr;
   // Always points to the start of _buffer
   uint8_t* _start;
   // the append position
@@ -115,19 +114,19 @@ class Builder {
   explicit Builder(Options const* options);
 
   // create an empty Builder, using an existing buffer and default Options
-  explicit Builder(std::shared_ptr<BufferType> buffer);
+  explicit Builder(std::shared_ptr<Buffer<uint8_t>> buffer);
 
   // create an empty Builder, using an existing buffer and Options
-  explicit Builder(std::shared_ptr<BufferType> buffer,
+  explicit Builder(std::shared_ptr<Buffer<uint8_t>> buffer,
                    Options const* options);
 
   // create a Builder that uses an existing Buffer and default Options.
   // the Builder will not claim ownership for its Buffer
-  explicit Builder(BufferType& buffer) noexcept;
+  explicit Builder(Buffer<uint8_t>& buffer) noexcept;
 
   // create a Builder that uses an existing Buffer. the Builder will not
   // claim ownership for this Buffer
-  explicit Builder(BufferType& buffer, Options const* options);
+  explicit Builder(Buffer<uint8_t>& buffer, Options const* options);
 
   // populate a Builder from a Slice
   explicit Builder(Slice slice, Options const* options = &Options::Defaults);
@@ -142,9 +141,9 @@ class Builder {
   // get a reference to the Builder's Buffer object
   // note: this object may be a nullptr if the buffer was already stolen
   // from the Builder, or if the Builder has no ownership for the Buffer
-  std::shared_ptr<BufferType> const& buffer() const { return _buffer; }
+  std::shared_ptr<Buffer<uint8_t>> const& buffer() const { return _buffer; }
 
-  BufferType& bufferRef() const {
+  Buffer<uint8_t>& bufferRef() const {
     if (_bufferPtr == nullptr) {
       throw Exception(Exception::InternalError, "Builder has no Buffer");
     }
@@ -154,9 +153,9 @@ class Builder {
   // steal the Builder's Buffer object. afterwards the Builder
   // is unusable - note: this may return a nullptr if the Builder does not
   // own the Buffer!
-  std::shared_ptr<BufferType> steal() {
+  std::shared_ptr<Buffer<uint8_t>> steal() {
     // After a steal the Builder is broken!
-    std::shared_ptr<BufferType> res(std::move(_buffer));
+    std::shared_ptr<Buffer<uint8_t>> res(std::move(_buffer));
     _bufferPtr = nullptr;
     _start = nullptr;
     clear();
@@ -614,7 +613,7 @@ class Builder {
     close();
     return *this;
   }
-
+  
   void resetTo(std::size_t value) {
     _pos = value;
     VELOCYPACK_ASSERT(_bufferPtr != nullptr);
@@ -1146,7 +1145,7 @@ struct ArrayBuilder final : public BuilderContainer,
 
 }  // namespace arangodb::velocypack
 
-using VPackBuilder = arangodb::velocypack::Builder<arangodb::velocypack::Buffer<uint8_t>>;
+using VPackBuilder = arangodb::velocypack::Builder;
 using VPackBuilderNonDeleter = arangodb::velocypack::BuilderNonDeleter;
 using VPackBuilderContainer = arangodb::velocypack::BuilderContainer;
 using VPackObjectBuilder = arangodb::velocypack::ObjectBuilder;
