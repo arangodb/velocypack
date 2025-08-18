@@ -18,28 +18,28 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-latest, compiler: gcc, version: '11',
-             build_type: Release, hash_type: fasthash }
-          - {os: ubuntu-latest, compiler: gcc, version: '12',
-             build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: gcc, version: '13',
              build_type: Release, hash_type: fasthash }
-          - {os: ubuntu-latest, compiler: gcc, version: '11',
+          - {os: ubuntu-latest, compiler: gcc, version: '14',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '15',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: gcc, version: '13',
              build_type: Debug, hash_type: xxhash,
              flags: '-O0 -fno-inline --coverage', coverage: true}
-          - {os: ubuntu-latest, compiler: gcc, version: '11',
+          - {os: ubuntu-latest, compiler: gcc, version: '13',
              build_type: Debug, hash_type: xxhash, sanitizer: true,
              flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer',
              ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer'}
 
           # Clang builds
-          - {os: ubuntu-latest, compiler: clang, version: '14',
-             build_type: Release, hash_type: xxhash }
-          - {os: ubuntu-latest, compiler: clang, version: '15',
-             build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: clang, version: '16',
              build_type: Release, hash_type: xxhash }
           - {os: ubuntu-latest, compiler: clang, version: '17',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: clang, version: '18',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: clang, version: '19',
              build_type: Release, hash_type: fasthash }
 
           # Windows builds (removed windows-2019 as it's deprecated)
