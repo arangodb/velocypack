@@ -14,39 +14,36 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-latest, compiler: gcc, version: '10',
+          - {os: ubuntu-latest, compiler: gcc, version: '11',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: gcc, version: '12',
+             build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: gcc, version: '13',
              build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: gcc, version: '11',
-             build_type: Release, hash_type: xxhash }
-          - {os: ubuntu-latest, compiler: gcc, version: '12',
-             build_type: Release, hash_type: fasthash }
-          - {os: ubuntu-latest, compiler: gcc, version: '10',
              build_type: Debug, hash_type: xxhash,
              flags: '-O0 -fno-inline --coverage', coverage: true}
-          - {os: ubuntu-latest, compiler: gcc, version: '10',
+          - {os: ubuntu-latest, compiler: gcc, version: '11',
              build_type: Debug, hash_type: xxhash, sanitizer: true,
              flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer',
-             ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize=address-use-after-scope -fno-omit-frame-pointer'}
+             ld_flags: '-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer'}
 
           # Clang builds
-          - {os: ubuntu-20.04, compiler: clang, version: '10',
-             build_type: Release, hash_type: xxhash }
-          - {os: ubuntu-latest, compiler: clang, version: '11',
-             build_type: Release, hash_type: fasthash }
-          - {os: ubuntu-latest, compiler: clang, version: '12',
-             build_type: Release, hash_type: xxhash }
-          - {os: ubuntu-latest, compiler: clang, version: '13',
-             build_type: Release, hash_type: fasthash }
           - {os: ubuntu-latest, compiler: clang, version: '14',
              build_type: Release, hash_type: xxhash }
-
-          # Windows builds
-          - {os: windows-2019,   compiler: msvc,
+          - {os: ubuntu-latest, compiler: clang, version: '15',
+             build_type: Release, hash_type: fasthash }
+          - {os: ubuntu-latest, compiler: clang, version: '16',
              build_type: Release, hash_type: xxhash }
+          - {os: ubuntu-latest, compiler: clang, version: '17',
+             build_type: Release, hash_type: fasthash }
+
+          # Windows builds (removed windows-2019 as it's deprecated)
           - {os: windows-latest, compiler: msvc,
              build_type: Release, hash_type: xxhash }
 
@@ -54,47 +51,38 @@ jobs:
           - {os: macos-latest, compiler: clang,
              build_type: Release, hash_type: xxhash }
 
-          # This seems to trigger a bug, so re-enable it after it is
-          # fixed
-          # - {os: macos-latest, compiler: clang,
-          #    build_type: Release, hash_type: xxhash,
-          #    flags: '-O0 -fno-inline --coverage', coverage: true}
-
       fail-fast: false
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup environment
       run: |
         echo "SANITIZER=${{ matrix.sanitizer }}" >> ${GITHUB_ENV}
     - name: Install gcc
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'gcc'
       run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt-get update
-        sudo apt-get install g++-${{ matrix.version }}
+        sudo apt-get install g++-${{ matrix.version }} -y
         echo "CXX=g++-${{ matrix.version }}" >> ${GITHUB_ENV}
         echo "CC=gcc-${{ matrix.version }}" >> ${GITHUB_ENV}
     - name: Install clang
       if: startsWith(matrix.os, 'ubuntu-') && matrix.compiler == 'clang'
       run: |
         sudo apt-get update
-        sudo apt-get install libunwind-dev
+        sudo apt-get install libunwind-dev -y
         sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         version=${{ matrix.version }}
-        if [[ $version -ge 13 ]]; then
-          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main"
+        if [[ $version -ge 14 ]]; then
+          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main" -y
         fi
         sudo apt-get update
-        sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
+        sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev -y
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
-        echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
-    - name: Initialize MSVC ${{ matrix.version }}
+    - name: Initialize MSVC
       if: startsWith(matrix.os, 'windows-')
       uses: ilammy/msvc-dev-cmd@v1
-      with:
-        toolset: ${{ matrix.version }}
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
@@ -111,7 +99,7 @@ jobs:
     - name: Coverage
       if: matrix.coverage == true
       run: |
-        sudo apt-get install lcov
+        sudo apt-get install lcov -y
         CXX=g++-${{ matrix.version }} scripts/collect-coverage.sh
 
     - name: Coveralls Upload
