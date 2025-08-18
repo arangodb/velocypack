@@ -181,7 +181,7 @@ class Buffer {
     _size -= value;
   }
 
-  void clear() noexcept {
+  virtual void clear() noexcept {
     _size = 0;
     if (_buffer != _local) {
       velocypack_free(_buffer);
