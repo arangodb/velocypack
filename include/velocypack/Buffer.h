@@ -284,6 +284,8 @@ class Buffer {
   inline void poison(T*, ValueLength) noexcept {}
 #endif
 
+ protected:
+
   virtual void grow(ValueLength len) {
     VELOCYPACK_ASSERT(_size + len >= sizeof(_local));
 
@@ -318,6 +320,8 @@ class Buffer {
 
     VELOCYPACK_ASSERT(_size <= _capacity);
   }
+
+ private:
 
   T* _buffer;
   ValueLength _capacity;
