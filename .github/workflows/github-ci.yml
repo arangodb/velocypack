@@ -81,8 +81,8 @@ jobs:
         sudo apt-get install libunwind-dev
         # Detect the Ubuntu distribution codename
         DIST_CODENAME=$(lsb_release -cs)
-        if [[ "$DIST_CODENAME" = "noble" && "$version" -le 12 ]]; then
-  	      DIST_CODENAME="jammy"
+        if [[ "$DIST_CODENAME" = "noble" && "$version" -le 12 ]]; then                                                                             
+          DIST_CODENAME="jammy"
         fi
         sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         version=${{ matrix.version }}
