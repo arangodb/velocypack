@@ -79,16 +79,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libunwind-dev
+         # Detect the Ubuntu version codename
+        DIST_CODENAME=$(lsb_release -cs)
         sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         version=${{ matrix.version }}
-        if [[ $version -ge 13 ]]; then
-          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$version main"
-        fi
+        sudo add-apt-repository "deb http://apt.llvm.org/$DIST_CODENAME/ llvm-toolchain-$DIST_CODENAME-$version main"
         sudo apt-get update
         sudo apt-get install clang-$version lld libc++-$version-dev libc++abi-$version-dev  
         echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "CXX=clang++-$version" >> ${GITHUB_ENV}
-        echo "CC=clang-$version" >> ${GITHUB_ENV}
         echo "LDFLAGS=-fuse-ld=lld" >> ${GITHUB_ENV}
     - name: Initialize MSVC ${{ matrix.version }}
       if: startsWith(matrix.os, 'windows-')
