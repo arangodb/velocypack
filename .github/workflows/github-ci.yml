@@ -82,7 +82,7 @@ jobs:
         # Detect the Ubuntu distribution codename
         DIST_CODENAME=$(lsb_release -cs)
         if [[ "$DIST_CODENAME" = "noble" && "$version" -le 12 ]]; then                                                                             
-          DIST_CODENAME="jammy"
+          DIST_CODENAME="focal"
         fi
         sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         version=${{ matrix.version }}
