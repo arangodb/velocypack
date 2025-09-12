@@ -132,7 +132,7 @@ class Buffer {
     return *this;
   }
 
-  ~Buffer() {
+  virtual ~Buffer() {
     if (_buffer != _local) {
       velocypack_free(_buffer);
     }
@@ -181,7 +181,7 @@ class Buffer {
     _size -= value;
   }
 
-  void clear() noexcept {
+  virtual void clear() noexcept {
     _size = 0;
     if (_buffer != _local) {
       velocypack_free(_buffer);
@@ -194,7 +194,7 @@ class Buffer {
 
   // Steal external memory; only allowed when the buffer is not local,
   // i.e. !usesLocalMemory()
-  T* steal() noexcept {
+  virtual T* steal() noexcept {
     VELOCYPACK_ASSERT(!usesLocalMemory());
 
     auto buffer = _buffer;
@@ -284,7 +284,9 @@ class Buffer {
   inline void poison(T*, ValueLength) noexcept {}
 #endif
 
-  void grow(ValueLength len) {
+ protected:
+
+  virtual void grow(ValueLength len) {
     VELOCYPACK_ASSERT(_size + len >= sizeof(_local));
 
     // need reallocation
@@ -318,6 +320,8 @@ class Buffer {
 
     VELOCYPACK_ASSERT(_size <= _capacity);
   }
+
+ private:
 
   T* _buffer;
   ValueLength _capacity;
