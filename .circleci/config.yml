@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   win: circleci/windows@5.1
+  coveralls: coveralls/coveralls@2.2.1
 
 jobs:
   build-and-test-linux:
@@ -47,7 +48,7 @@ jobs:
           name: Install dependencies
           command: |
             apt-get update
-            apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev lcov
+            apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev lcov curl
             apt-get install -y gcc-10 g++-10
       - run:
           name: Configure CMake with coverage
@@ -66,6 +67,8 @@ jobs:
           command: |
             export CXX=g++-10
             ./scripts/collect-coverage.sh
+      - coveralls/upload:
+          coverage_file: ./coverage.info
 
   build-and-test-windows:
     executor:
