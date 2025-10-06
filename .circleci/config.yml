@@ -2,7 +2,6 @@ version: 2.1
 
 orbs:
   win: circleci/windows@5.1
-  coveralls: coveralls/coveralls@2.2.1
 
 jobs:
   build-and-test-linux:
@@ -67,8 +66,6 @@ jobs:
           command: |
             export CXX=g++-10
             ./scripts/collect-coverage.sh
-      - coveralls/upload:
-          coverage_file: ./coverage.info
 
   build-and-test-windows:
     executor:
