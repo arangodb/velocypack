@@ -2379,6 +2379,19 @@ TYPED_TEST(SliceTest, NormalizedHashDouble) {
   ASSERT_EQ(13690116699997059692ULL, b2.slice().normalizedHash());
 }
 
+TYPED_TEST(SliceTest, NormalizedHashSignedZero) {
+  Builder bn;
+  bn.add(Value(-0.0));
+  TypeParam neg_zero = bn.slice();
+
+  Builder bp;
+  bp.add(Value(0.0));
+  TypeParam pos_zero = bp.slice();
+
+  ASSERT_EQ(neg_zero.normalizedHash(), pos_zero.normalizedHash());
+  ASSERT_EQ(neg_zero.normalizedHash32(), pos_zero.normalizedHash32());
+}
+
 TYPED_TEST(SliceTest, NormalizedHashArray) {
   Options options;
 
@@ -2565,6 +2578,19 @@ TYPED_TEST(SliceTest, NormalizedHashDouble) {
 
   ASSERT_EQ(65589186907022834ULL, b1.slice().normalizedHash());
   ASSERT_EQ(65589186907022834ULL, b2.slice().normalizedHash());
+}
+
+TYPED_TEST(SliceTest, NormalizedHashSignedZero) {
+  Builder bn;
+  bn.add(Value(-0.0));
+  TypeParam neg_zero = bn.slice();
+
+  Builder bp;
+  bp.add(Value(0.0));
+  TypeParam pos_zero = bp.slice();
+
+  ASSERT_EQ(neg_zero.normalizedHash(), pos_zero.normalizedHash());
+  ASSERT_EQ(neg_zero.normalizedHash32(), pos_zero.normalizedHash32());
 }
 
 TYPED_TEST(SliceTest, NormalizedHashArray) {
