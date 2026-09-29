@@ -25,8 +25,16 @@
 
 #include <ostream>
 #include <string>
+#include <cstring>
+#include <memory>
 
 #include "tests-common.h"
+
+static bool validateExact(Validator& validator, std::string const& value) {
+  auto data = std::make_unique<uint8_t[]>(value.size());
+  std::memcpy(data.get(), value.data(), value.size());
+  return validator.validate(data.get(), value.size());
+}
 
 TEST(ValidatorTest, NoOptions) {
   ASSERT_VELOCYPACK_EXCEPTION(Validator(nullptr), Exception::InternalError);
@@ -708,6 +716,53 @@ TEST(ValidatorTest, LongStringLongerThanSpecified2) {
                               Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, BinaryEmpty) {
+  Validator validator;
+  for (uint8_t head = 0xc0; head <= 0xc7; ++head) {
+    std::size_t const lengthFieldSize = head - 0xbf;
+    std::string value(1 + lengthFieldSize, '\x00');
+    value[0] = static_cast<char>(head);
+    ASSERT_TRUE(validateExact(validator, value));
+  }
+}
+
+TEST(ValidatorTest, BinaryNonEmpty) {
+  std::string const value("\xc0\x01\x41", 3);
+
+  Validator validator;
+  ASSERT_TRUE(validateExact(validator, value));
+}
+
+TEST(ValidatorTest, BinaryTooShort) {
+  // the length field is cut short, so it must not be read
+  Validator validator;
+  for (uint8_t head = 0xc0; head <= 0xc7; ++head) {
+    std::size_t const lengthFieldSize = head - 0xbf;
+    for (std::size_t size = 1; size <= lengthFieldSize; ++size) {
+      std::string value(size, '\x2a');
+      value[0] = static_cast<char>(head);
+      ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
+                                  Exception::ValidatorInvalidLength);
+    }
+  }
+}
+
+TEST(ValidatorTest, BinaryShorterThanSpecified) {
+  std::string const value("\xc0\x03\x41\x42", 4);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
+                              Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, BinaryLongerThanSpecified) {
+  std::string const value("\xc0\x01\x41\x42", 4);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
+                              Exception::ValidatorInvalidLength);
+}
+
 TEST(ValidatorTest, Custom1ByteDisallowed) {
   std::string value("\xf0\x00", 2);
 
@@ -1370,6 +1425,22 @@ TEST(ValidatorTest, ArrayOneByteTooShortBytesize1) {
 
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()),
+                              Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ArrayOneByteBinaryMember) {
+  std::string const value("\x02\x04\xc0\x00", 4);
+
+  Validator validator;
+  ASSERT_TRUE(validateExact(validator, value));
+}
+
+TEST(ValidatorTest, ArrayOneByteBinaryMemberTooShort) {
+  // the member's length field is missing, so it must not be read
+  std::string const value("\x02\x03\xc5", 3);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
                               Exception::ValidatorInvalidLength);
 }
 
@@ -2246,6 +2317,15 @@ TEST(ValidatorTest, ArrayCompactTooShort9) {
                               Exception::ValidatorInvalidLength);
 }
 
+TEST(ValidatorTest, ArrayCompactTooShort10) {
+  // byte length never ends inside the buffer
+  std::string const value("\x13\x80\x80\x80", 4);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
+                              Exception::ValidatorInvalidLength);
+}
+
 TEST(ValidatorTest, ArrayCompactEmpty) {
   std::string const value("\x13\x04\x18\x00", 4);
 
@@ -2517,6 +2597,15 @@ TEST(ValidatorTest, ObjectCompactTooShort3) {
 
   Validator validator;
   ASSERT_VELOCYPACK_EXCEPTION(validator.validate(value.c_str(), value.size()),
+                              Exception::ValidatorInvalidLength);
+}
+
+TEST(ValidatorTest, ObjectCompactTooShort4) {
+  // byte length never ends inside the buffer
+  std::string const value("\x14\x80\x80\x80\x80", 5);
+
+  Validator validator;
+  ASSERT_VELOCYPACK_EXCEPTION(validateExact(validator, value),
                               Exception::ValidatorInvalidLength);
 }
 

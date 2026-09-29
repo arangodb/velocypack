@@ -104,7 +104,6 @@ void Validator::validatePart(uint8_t const* ptr, std::size_t length,
     case ValueType::UInt:
     case ValueType::Double:
     case ValueType::UTCDate:
-    case ValueType::Binary:
     case ValueType::Illegal: {
       break;
     }
@@ -147,6 +146,13 @@ void Validator::validatePart(uint8_t const* ptr, std::size_t length,
       }
       validateObject(ptr, length);
       --_nesting;
+      break;
+    }
+
+    case ValueType::Binary: {
+      // head 0xc0..0xc7 -> length field is 1..8 bytes
+      ValueLength const lengthFieldSize = head - 0xbfU;
+      validateBufferLength(1 + lengthFieldSize, length, true);
       break;
     }
 
@@ -281,7 +287,7 @@ void Validator::validateCompactArray(uint8_t const* ptr, std::size_t length) {
 
   uint8_t const* p = ptr + 1;
   // read byteLength
-  ValueLength const byteSize = ReadVariableLengthValue<false>(p, p + length);
+  ValueLength const byteSize = ReadVariableLengthValue<false>(p, ptr + length);
   if (byteSize > length || byteSize < 4) {
     throw Exception(Exception::ValidatorInvalidLength,
                     "Array length value is out of bounds");
@@ -499,7 +505,7 @@ void Validator::validateCompactObject(uint8_t const* ptr, std::size_t length) {
 
   uint8_t const* p = ptr + 1;
   // read byteLength
-  ValueLength const byteSize = ReadVariableLengthValue<false>(p, p + length);
+  ValueLength const byteSize = ReadVariableLengthValue<false>(p, ptr + length);
   if (byteSize > length || byteSize < 5) {
     throw Exception(Exception::ValidatorInvalidLength,
                     "Object length value is out of bounds");
