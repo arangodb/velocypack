@@ -1,0 +1,160 @@
+version: 2.1
+
+orbs:
+  win: circleci/windows@5.1
+
+jobs:
+  build-and-test-linux:
+    docker:
+      - image: ubuntu:22.04
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      CXX_STANDARD: 20
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev lcov
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+            echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main" > /etc/apt/sources.list.d/llvm.list
+            apt-get update
+            apt-get install -y clang-19 lld-19 libc++-19-dev libc++abi-19-dev
+            update-alternatives --install /usr/bin/ld ld /usr/bin/lld-19 100
+      - run:
+          name: Configure CMake
+          command: |
+            export CC=clang-19
+            export CXX=clang++-19
+            cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20 -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld-19" -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld-19"
+      - run:
+          name: Build
+          command: cmake --build build --config Release
+      - run:
+          name: Test
+          command: ./scripts/execute-test.sh
+
+  build-and-test-linux-coverage:
+    docker:
+      - image: ubuntu:22.04
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      CXX_STANDARD: 20
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev lcov curl
+            apt-get install -y gcc-10 g++-10
+      - run:
+          name: Configure CMake with coverage
+          command: |
+            export CC=gcc-10
+            export CXX=g++-10
+            cmake -Bbuild -DCMAKE_BUILD_TYPE=Debug -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-O0 -fno-inline --coverage" -DCMAKE_C_FLAGS="-O0 -fno-inline --coverage"
+      - run:
+          name: Build
+          command: cmake --build build --config Debug
+      - run:
+          name: Test
+          command: ./scripts/execute-test.sh
+      - run:
+          name: Coverage
+          command: |
+            export CXX=g++-10
+            ./scripts/collect-coverage.sh
+
+  build-and-test-windows:
+    executor:
+      name: win/default
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      CXX_STANDARD: 20
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          shell: powershell.exe
+          command: |
+            choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+      - run:
+          name: Configure CMake
+          shell: powershell.exe
+          command: |
+            cmake -Bbuild -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20
+      - run:
+          name: Build
+          shell: powershell.exe
+          command: cmake --build build --config Release
+      - run:
+          name: Test
+          shell: powershell.exe
+          command: scripts\execute-test.sh
+
+  build-and-test-linux-sanitizer:
+    docker:
+      - image: ubuntu:22.04
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      CXX_STANDARD: 20
+      SANITIZER: "true"
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update
+            apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+            echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main" > /etc/apt/sources.list.d/llvm.list
+            apt-get update
+            apt-get install -y clang-19 lld-19 libc++-19-dev libc++abi-19-dev
+            update-alternatives --install /usr/bin/ld ld /usr/bin/lld-19 100
+      - run:
+          name: Configure CMake with sanitizers
+          command: |
+            export CC=clang-19
+            export CXX=clang++-19
+            cmake -Bbuild -DCMAKE_BUILD_TYPE=Debug -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer" -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld-19 -fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer" -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld-19 -fsanitize=address -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fno-omit-frame-pointer"
+      - run:
+          name: Build
+          command: cmake --build build --config Debug
+      - run:
+          name: Test
+          command: ./scripts/execute-test.sh
+
+  build-and-test-macos:
+    macos:
+      xcode: "14.3.1"
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      CXX_STANDARD: 20
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            # Skip brew update to avoid potential network issues
+            brew install cmake ninja || (brew update && brew install cmake ninja)
+      - run:
+          name: Configure CMake
+          command: |
+            cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20
+      - run:
+          name: Build
+          command: cmake --build build --config Release
+      - run:
+          name: Test
+          command: ./scripts/execute-test.sh
+
+workflows:
+  build_and_test:
+    jobs:
+      - build-and-test-linux
+      - build-and-test-linux-coverage
+      - build-and-test-linux-sanitizer
+      - build-and-test-windows
+      - build-and-test-macos

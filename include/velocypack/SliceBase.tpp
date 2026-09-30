@@ -22,6 +22,7 @@
 /// @author Max Neunhoeffer
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <cmath>
 #include <ostream>
 
 #include "velocypack/velocypack-common.h"
@@ -180,8 +181,11 @@ uint64_t SliceBase<DerivedType, SliceType>::normalizedHash(
   uint64_t value;
 
   if (isNumber()) {
-    // upcast integer values to double
+    // upcast integer values to double; normalize -0.0 to 0.0 (hash/equality invariant)
     double v = getNumericValue<double>();
+    if (std::signbit(v) && v == 0.0) {
+      v = 0.0;
+    }
     value = VELOCYPACK_HASH(&v, sizeof(v), seed);
   } else if (isArray()) {
     // normalize arrays by hashing array length and iterating
@@ -221,8 +225,11 @@ uint32_t SliceBase<DerivedType, SliceType>::normalizedHash32(
   uint32_t value;
 
   if (isNumber()) {
-    // upcast integer values to double
+    // upcast integer values to double; normalize -0.0 to 0.0 (hash/equality invariant)
     double v = getNumericValue<double>();
+    if (std::signbit(v) && v == 0.0) {
+      v = 0.0;
+    }
     value = VELOCYPACK_HASH32(&v, sizeof(v), seed);
   } else if (isArray()) {
     // normalize arrays by hashing array length and iterating
