@@ -24,13 +24,59 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Parser.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
 #include "asm-functions.h"
 
-#include <cstdlib>
+#include <algorithm>
+#include <charconv>
+#include <cstdint>
+#include <string_view>
 
 using namespace arangodb::velocypack;
+
+namespace {
+
+// number is a valid JSON number that from_chars reported as out of range
+bool isOverflow(std::string_view number) {
+  std::size_t const ePos = number.find_first_of("eE");
+  std::string_view const mantissa = number.substr(0, ePos);
+  std::size_t const dotPos = std::min(mantissa.find('.'), mantissa.size());
+  std::size_t const firstDigit = mantissa.find_first_not_of("-0.");
+  VELOCYPACK_ASSERT(firstDigit != std::string_view::npos);
+  int64_t const magnitude =
+      firstDigit < dotPos ? static_cast<int64_t>(dotPos - firstDigit)
+                          : -static_cast<int64_t>(firstDigit - dotPos - 1);
+  if (ePos == std::string_view::npos) {
+    return magnitude > 0;
+  }
+
+  std::string_view exponentText = number.substr(ePos + 1);
+  if (exponentText.front() == '+') {
+    exponentText.remove_prefix(1);
+  }
+  int64_t exponent = 0;
+  auto const result = std::from_chars(
+      exponentText.data(), exponentText.data() + exponentText.size(), exponent);
+  if (result.ec == std::errc::result_out_of_range) {
+    return exponentText.front() != '-';
+  }
+  return exponent > -magnitude;
+}
+
+double parseDouble(char const* begin, char const* end) {
+  double value = 0.0;
+  auto const [ptr, ec] = std::from_chars(begin, end, value);
+  if (ec == std::errc::result_out_of_range) {
+    if (isOverflow(std::string_view(begin, end - begin))) {
+      throw Exception(Exception::NumberOutOfRange);
+    }
+    return *begin == '-' ? -0.0 : 0.0;
+  }
+
+  VELOCYPACK_ASSERT(ec == std::errc() && ptr == end);
+  return value;
+}
+
+}  // namespace
 
 // The following function does the actual parse. It gets bytes
 // via peek, consume and reset appends the result to the Builder
@@ -133,7 +179,7 @@ void Parser::decreaseNesting() noexcept {
 
 // parses a number value
 void Parser::parseNumber() {
-  std::size_t startPos = _pos;
+  char const* begin = reinterpret_cast<char const*>(_start) + _pos;
   ParsedNumber numberValue;
   bool negative = false;
   int i = consume();
@@ -151,91 +197,43 @@ void Parser::parseNumber() {
     unconsume();
     scanDigits(numberValue);
   }
+  bool isDouble = !numberValue.isInteger;
   i = consume();
-  if (i < 0 || (i != '.' && i != 'e' && i != 'E')) {
-    if (i >= 0) {
-      unconsume();
-    }
-    if (!numberValue.isInteger) {
-      if (negative) {
-        _builderPtr->addDouble(-numberValue.doubleValue);
-      } else {
-        _builderPtr->addDouble(numberValue.doubleValue);
-      }
-    } else if (negative) {
-      if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
-        _builderPtr->addInt(-static_cast<int64_t>(numberValue.intValue));
-      } else if (numberValue.intValue == toUInt64(INT64_MIN)) {
-        _builderPtr->addInt(INT64_MIN);
-      } else {
-        _builderPtr->addDouble(-static_cast<double>(numberValue.intValue));
-      }
-    } else {
-      _builderPtr->addUInt(numberValue.intValue);
-    }
-    return;
-  }
-
-  double fractionalPart;
   if (i == '.') {
-    // fraction. skip over '.'
     i = getOneOrThrow("Incomplete number");
     if (i < '0' || i > '9') {
       throw Exception(Exception::ParseError, "Incomplete number");
     }
-    unconsume();
-    fractionalPart = scanDigitsFractional();
-    if (negative) {
-      fractionalPart = -numberValue.asDouble() - fractionalPart;
-    } else {
-      fractionalPart = numberValue.asDouble() + fractionalPart;
-    }
+    skipDigits();
+    isDouble = true;
     i = consume();
-    if (i < 0) {
-      _builderPtr->addDouble(fractionalPart);
-      return;
-    }
-  } else {
-    if (negative) {
-      fractionalPart = -numberValue.asDouble();
-    } else {
-      fractionalPart = numberValue.asDouble();
-    }
   }
-  if (i != 'e' && i != 'E') {
-    unconsume();
-    // use conventional atof() conversion here, to avoid precision loss
-    // when interpreting and multiplying the single digits of the input stream
-    // _builderPtr->addDouble(fractionalPart);
-    _builderPtr->addDouble(
-        atof(reinterpret_cast<char const*>(_start) + startPos));
-    return;
-  }
-  i = getOneOrThrow("Incomplete number");
-  negative = false;
-  if (i == '+' || i == '-') {
-    negative = (i == '-');
+  if (i == 'e' || i == 'E') {
     i = getOneOrThrow("Incomplete number");
+    if (i == '+' || i == '-') {
+      i = getOneOrThrow("Incomplete number");
+    }
+    if (i < '0' || i > '9') {
+      throw Exception(Exception::ParseError, "Incomplete number");
+    }
+    skipDigits();
+    isDouble = true;
+  } else if (i >= 0) {
+    unconsume();
   }
-  if (i < '0' || i > '9') {
-    throw Exception(Exception::ParseError, "Incomplete number");
-  }
-  unconsume();
-  ParsedNumber exponent;
-  scanDigits(exponent);
-  if (negative) {
-    fractionalPart *= pow(10, -exponent.asDouble());
+
+  if (isDouble) {
+    _builderPtr->addDouble(
+        parseDouble(begin, reinterpret_cast<char const*>(_start) + _pos));
+  } else if (!negative) {
+    _builderPtr->addUInt(numberValue.intValue);
+  } else if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
+    _builderPtr->addInt(-static_cast<int64_t>(numberValue.intValue));
+  } else if (numberValue.intValue == toUInt64(INT64_MIN)) {
+    _builderPtr->addInt(INT64_MIN);
   } else {
-    fractionalPart *= pow(10, exponent.asDouble());
+    _builderPtr->addDouble(-static_cast<double>(numberValue.intValue));
   }
-  if (std::isnan(fractionalPart) || !std::isfinite(fractionalPart)) {
-    throw Exception(Exception::NumberOutOfRange);
-  }
-  // use conventional atof() conversion here, to avoid precision loss
-  // when interpreting and multiplying the single digits of the input stream
-  // _builderPtr->addDouble(fractionalPart);
-  _builderPtr->addDouble(
-      atof(reinterpret_cast<char const*>(_start) + startPos));
 }
 
 void Parser::parseString() {
@@ -278,7 +276,7 @@ void Parser::parseString() {
               checkOverflow(len));
       _builderPtr->advance(8);
     }
-    
+
     switch (i) {
       case '"':
         ValueLength len;
