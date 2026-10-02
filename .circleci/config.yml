@@ -48,12 +48,12 @@ jobs:
           command: |
             apt-get update
             apt-get install -y wget gnupg cmake ninja-build build-essential libunwind-dev lcov curl
-            apt-get install -y gcc-10 g++-10
+            apt-get install -y gcc-11 g++-11
       - run:
           name: Configure CMake with coverage
           command: |
-            export CC=gcc-10
-            export CXX=g++-10
+            export CC=gcc-11
+            export CXX=g++-11
             cmake -Bbuild -DCMAKE_BUILD_TYPE=Debug -DHashType=xxhash -DBuildTests=ON -DBuildLargeTests=OFF -DBuildVelocyPackExamples=ON -DBuildTools=ON -DEnableSSE=OFF -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_FLAGS="-O0 -fno-inline --coverage" -DCMAKE_C_FLAGS="-O0 -fno-inline --coverage"
       - run:
           name: Build
@@ -64,7 +64,7 @@ jobs:
       - run:
           name: Coverage
           command: |
-            export CXX=g++-10
+            export CXX=g++-11
             ./scripts/collect-coverage.sh
 
   build-and-test-windows:
@@ -128,7 +128,7 @@ jobs:
 
   build-and-test-macos:
     macos:
-      xcode: "14.3.1"
+      xcode: "26.6"
     environment:
       CMAKE_BUILD_PARALLEL_LEVEL: 4
       CXX_STANDARD: 20

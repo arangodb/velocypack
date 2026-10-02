@@ -42,37 +42,22 @@ class Parser {
   // blocks of memory. It builds the result using the Builder.
 
   struct ParsedNumber {
-    ParsedNumber() : intValue(0), doubleValue(0.0), isInteger(true) {}
+    ParsedNumber() : intValue(0), isInteger(true) {}
 
     void addDigit(int i) {
-      if (isInteger) {
-        // check if adding another digit to the int will make it overflow
-        if (intValue < 1844674407370955161ULL ||
-            (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
-          // int won't overflow
-          intValue = intValue * 10 + (i - '0');
-          return;
-        }
-        // int would overflow
-        doubleValue = static_cast<double>(intValue);
-        isInteger = false;
+      if (!isInteger) {
+        return;
       }
-
-      doubleValue = doubleValue * 10.0 + (i - '0');
-      if (std::isnan(doubleValue) || !std::isfinite(doubleValue)) {
-        throw Exception(Exception::NumberOutOfRange);
+      // check if adding another digit to the int will make it overflow
+      if (intValue < 1844674407370955161ULL ||
+          (intValue == 1844674407370955161ULL && (i - '0') <= 5)) {
+        intValue = intValue * 10 + (i - '0');
+        return;
       }
-    }
-
-    double asDouble() const {
-      if (isInteger) {
-        return static_cast<double>(intValue);
-      }
-      return doubleValue;
+      isInteger = false;
     }
 
     uint64_t intValue;
-    double doubleValue;
     bool isInteger;
   };
 
@@ -270,20 +255,16 @@ class Parser {
     }
   }
 
-  double scanDigitsFractional() {
-    double pot = 0.1;
-    double x = 0.0;
+  void skipDigits() {
     while (true) {
       int i = consume();
       if (i < 0) {
-        return x;
+        return;
       }
       if (i < '0' || i > '9') {
         unconsume();
-        return x;
+        return;
       }
-      x = x + pot * (i - '0');
-      pot /= 10.0;
     }
   }
 
