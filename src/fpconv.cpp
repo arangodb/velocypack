@@ -235,7 +235,7 @@ static int emit_digits(char* digits, int ndigits, char* dest, int K, bool neg) {
   int exp = absv(K + ndigits - 1);
 
   /* write plain integer */
-  if (K >= 0 && (exp < (ndigits + 7))) {
+  if (K >= 0 && (exp < (ndigits + 7 - neg))) {
     memcpy(dest, digits, ndigits);
     // intentionally fill with '0', not 0 (NUL byte) because
     // we want the string representation of the number zero
