@@ -26,53 +26,22 @@
 #include "velocypack/Parser.h"
 #include "asm-functions.h"
 
-#include <algorithm>
-#include <charconv>
-#include <cstdint>
-#include <string_view>
+#include <fast_float.h>
+
+#include <cmath>
 
 using namespace arangodb::velocypack;
 
 namespace {
 
-// number is a valid JSON number that from_chars reported as out of range
-bool isOverflow(std::string_view number) {
-  std::size_t const ePos = number.find_first_of("eE");
-  std::string_view const mantissa = number.substr(0, ePos);
-  std::size_t const dotPos = std::min(mantissa.find('.'), mantissa.size());
-  std::size_t const firstDigit = mantissa.find_first_not_of("-0.");
-  VELOCYPACK_ASSERT(firstDigit != std::string_view::npos);
-  int64_t const magnitude =
-      firstDigit < dotPos ? static_cast<int64_t>(dotPos - firstDigit)
-                          : -static_cast<int64_t>(firstDigit - dotPos - 1);
-  if (ePos == std::string_view::npos) {
-    return magnitude > 0;
-  }
-
-  std::string_view exponentText = number.substr(ePos + 1);
-  if (exponentText.front() == '+') {
-    exponentText.remove_prefix(1);
-  }
-  int64_t exponent = 0;
-  auto const result = std::from_chars(
-      exponentText.data(), exponentText.data() + exponentText.size(), exponent);
-  if (result.ec == std::errc::result_out_of_range) {
-    return exponentText.front() != '-';
-  }
-  return exponent > -magnitude;
-}
-
 double parseDouble(char const* begin, char const* end) {
   double value = 0.0;
-  auto const [ptr, ec] = std::from_chars(begin, end, value);
-  if (ec == std::errc::result_out_of_range) {
-    if (isOverflow(std::string_view(begin, end - begin))) {
-      throw Exception(Exception::NumberOutOfRange);
-    }
-    return *begin == '-' ? -0.0 : 0.0;
+  auto const [ptr, ec] = fast_float::from_chars(begin, end, value);
+  if (ec == std::errc::result_out_of_range && std::isinf(value)) {
+    throw Exception(Exception::NumberOutOfRange);
   }
 
-  VELOCYPACK_ASSERT(ec == std::errc() && ptr == end);
+  VELOCYPACK_ASSERT(ec != std::errc::invalid_argument && ptr == end);
   return value;
 }
 
