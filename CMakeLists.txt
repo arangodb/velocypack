@@ -111,6 +111,7 @@ message(STATUS "VelocyPack Building with hash type: ${HashType}")
 target_include_directories(
   velocypack
   PRIVATE ${PROJECT_SOURCE_DIR}/src
+  PRIVATE ${PROJECT_SOURCE_DIR}/external/fast_float
   PUBLIC ${PROJECT_SOURCE_DIR}/include
 )
  

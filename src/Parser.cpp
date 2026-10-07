@@ -24,13 +24,28 @@
 
 #include "velocypack/velocypack-common.h"
 #include "velocypack/Parser.h"
-#include "velocypack/Value.h"
-#include "velocypack/ValueType.h"
 #include "asm-functions.h"
 
-#include <cstdlib>
+#include <fast_float.h>
+
+#include <cmath>
 
 using namespace arangodb::velocypack;
+
+namespace {
+
+double parseDouble(char const* begin, char const* end) {
+  double value = 0.0;
+  auto const [ptr, ec] = fast_float::from_chars(begin, end, value);
+  if (ec == std::errc::result_out_of_range && std::isinf(value)) {
+    throw Exception(Exception::NumberOutOfRange);
+  }
+
+  VELOCYPACK_ASSERT(ec != std::errc::invalid_argument && ptr == end);
+  return value;
+}
+
+}  // namespace
 
 // The following function does the actual parse. It gets bytes
 // via peek, consume and reset appends the result to the Builder
@@ -133,7 +148,7 @@ void Parser::decreaseNesting() noexcept {
 
 // parses a number value
 void Parser::parseNumber() {
-  std::size_t startPos = _pos;
+  char const* begin = reinterpret_cast<char const*>(_start) + _pos;
   ParsedNumber numberValue;
   bool negative = false;
   int i = consume();
@@ -151,91 +166,43 @@ void Parser::parseNumber() {
     unconsume();
     scanDigits(numberValue);
   }
+  bool isDouble = !numberValue.isInteger;
   i = consume();
-  if (i < 0 || (i != '.' && i != 'e' && i != 'E')) {
-    if (i >= 0) {
-      unconsume();
-    }
-    if (!numberValue.isInteger) {
-      if (negative) {
-        _builderPtr->addDouble(-numberValue.doubleValue);
-      } else {
-        _builderPtr->addDouble(numberValue.doubleValue);
-      }
-    } else if (negative) {
-      if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
-        _builderPtr->addInt(-static_cast<int64_t>(numberValue.intValue));
-      } else if (numberValue.intValue == toUInt64(INT64_MIN)) {
-        _builderPtr->addInt(INT64_MIN);
-      } else {
-        _builderPtr->addDouble(-static_cast<double>(numberValue.intValue));
-      }
-    } else {
-      _builderPtr->addUInt(numberValue.intValue);
-    }
-    return;
-  }
-
-  double fractionalPart;
   if (i == '.') {
-    // fraction. skip over '.'
     i = getOneOrThrow("Incomplete number");
     if (i < '0' || i > '9') {
       throw Exception(Exception::ParseError, "Incomplete number");
     }
-    unconsume();
-    fractionalPart = scanDigitsFractional();
-    if (negative) {
-      fractionalPart = -numberValue.asDouble() - fractionalPart;
-    } else {
-      fractionalPart = numberValue.asDouble() + fractionalPart;
-    }
+    skipDigits();
+    isDouble = true;
     i = consume();
-    if (i < 0) {
-      _builderPtr->addDouble(fractionalPart);
-      return;
-    }
-  } else {
-    if (negative) {
-      fractionalPart = -numberValue.asDouble();
-    } else {
-      fractionalPart = numberValue.asDouble();
-    }
   }
-  if (i != 'e' && i != 'E') {
-    unconsume();
-    // use conventional atof() conversion here, to avoid precision loss
-    // when interpreting and multiplying the single digits of the input stream
-    // _builderPtr->addDouble(fractionalPart);
-    _builderPtr->addDouble(
-        atof(reinterpret_cast<char const*>(_start) + startPos));
-    return;
-  }
-  i = getOneOrThrow("Incomplete number");
-  negative = false;
-  if (i == '+' || i == '-') {
-    negative = (i == '-');
+  if (i == 'e' || i == 'E') {
     i = getOneOrThrow("Incomplete number");
+    if (i == '+' || i == '-') {
+      i = getOneOrThrow("Incomplete number");
+    }
+    if (i < '0' || i > '9') {
+      throw Exception(Exception::ParseError, "Incomplete number");
+    }
+    skipDigits();
+    isDouble = true;
+  } else if (i >= 0) {
+    unconsume();
   }
-  if (i < '0' || i > '9') {
-    throw Exception(Exception::ParseError, "Incomplete number");
-  }
-  unconsume();
-  ParsedNumber exponent;
-  scanDigits(exponent);
-  if (negative) {
-    fractionalPart *= pow(10, -exponent.asDouble());
+
+  if (isDouble) {
+    _builderPtr->addDouble(
+        parseDouble(begin, reinterpret_cast<char const*>(_start) + _pos));
+  } else if (!negative) {
+    _builderPtr->addUInt(numberValue.intValue);
+  } else if (numberValue.intValue <= static_cast<uint64_t>(INT64_MAX)) {
+    _builderPtr->addInt(-static_cast<int64_t>(numberValue.intValue));
+  } else if (numberValue.intValue == toUInt64(INT64_MIN)) {
+    _builderPtr->addInt(INT64_MIN);
   } else {
-    fractionalPart *= pow(10, exponent.asDouble());
+    _builderPtr->addDouble(-static_cast<double>(numberValue.intValue));
   }
-  if (std::isnan(fractionalPart) || !std::isfinite(fractionalPart)) {
-    throw Exception(Exception::NumberOutOfRange);
-  }
-  // use conventional atof() conversion here, to avoid precision loss
-  // when interpreting and multiplying the single digits of the input stream
-  // _builderPtr->addDouble(fractionalPart);
-  _builderPtr->addDouble(
-      atof(reinterpret_cast<char const*>(_start) + startPos));
 }
 
 void Parser::parseString() {
@@ -278,7 +245,7 @@ void Parser::parseString() {
               checkOverflow(len));
       _builderPtr->advance(8);
     }
-    
+
     switch (i) {
       case '"':
         ValueLength len;

@@ -632,6 +632,97 @@ TEST(ParserTest, DoublePrecision3) {
   ASSERT_DOUBLE_EQ(0.67, s.getDouble());
 }
 
+static double parsedDouble(char const* json, std::size_t length) {
+  std::shared_ptr<Builder> builder = Parser::fromJson(json, length);
+  Slice s(builder->start());
+  EXPECT_TRUE(s.isDouble());
+  return s.getDouble();
+}
+
+static double parsedDouble(std::string const& json) {
+  return parsedDouble(json.data(), json.size());
+}
+
+TEST(ParserTest, DoubleFractionAtEndOfInputIsExact) {
+  ASSERT_EQ(0.3, parsedDouble("0.3"));
+  ASSERT_EQ(-0.3, parsedDouble("-0.3"));
+  ASSERT_EQ(0.7, parsedDouble("0.7"));
+  ASSERT_EQ(0.375, parsedDouble("0.375"));
+  ASSERT_EQ(0.015625, parsedDouble("0.015625"));
+  ASSERT_EQ(0.1234567, parsedDouble("0.1234567"));
+}
+
+TEST(ParserTest, DoubleIntegerBeyondUInt64IsExact) {
+  ASSERT_EQ(391249510134149350000.0, parsedDouble("391249510134149350000"));
+  ASSERT_EQ(100000000000000010000.0, parsedDouble("100000000000000010000"));
+  ASSERT_EQ(-184467440737095516161.0, parsedDouble("-184467440737095516161"));
+}
+
+TEST(ParserTest, DoubleDoesNotReadBeyondInput) {
+  ASSERT_EQ(2.5e-3, parsedDouble("2.5e-30", 6));
+  ASSERT_EQ(2.5e-3, parsedDouble("2.5e-3999", 6));
+  ASSERT_EQ(1e5, parsedDouble("1e5123", 3));
+  ASSERT_EQ(-3.5767597641555764e+16,
+            parsedDouble("-3.5767597641555764e+163", 23));
+  ASSERT_EQ(0.3, parsedDouble("0.3999", 3));
+}
+
+TEST(ParserTest, DoubleSubnormal) {
+  ASSERT_EQ(1e-308, parsedDouble("1e-308"));
+  ASSERT_EQ(5e-324, parsedDouble("5e-324"));
+}
+
+TEST(ParserTest, DoubleUnderflowIsSignedZero) {
+  double const positive = parsedDouble("1e-400");
+  ASSERT_EQ(0.0, positive);
+  ASSERT_FALSE(std::signbit(positive));
+
+  double const negative = parsedDouble("-1e-400");
+  ASSERT_EQ(0.0, negative);
+  ASSERT_TRUE(std::signbit(negative));
+}
+
+TEST(ParserTest, DoubleOverflowJustAboveMax) {
+  ASSERT_EQ(1.7976931348623157e308, parsedDouble("1.7976931348623157e308"));
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson("1.7976931348623159e308"),
+                              Exception::NumberOutOfRange);
+}
+
+TEST(ParserTest, DoubleZeroWithLargeExponent) {
+  ASSERT_EQ(0.0, parsedDouble("0e400"));
+  ASSERT_EQ(0.0, parsedDouble("0.0e400"));
+  ASSERT_TRUE(std::signbit(parsedDouble("-0e400")));
+}
+
+TEST(ParserTest, DoubleSmallMantissaWithLargeExponent) {
+  ASSERT_EQ(1e304, parsedDouble("0.00001e309"));
+  ASSERT_EQ(1e9, parsedDouble("0." + std::string(400, '0') + "1e410"));
+}
+
+TEST(ParserTest, DoubleLargeMantissaWithSmallExponent) {
+  ASSERT_EQ(1e-300, parsedDouble("1" + std::string(400, '0') + "e-700"));
+}
+
+TEST(ParserTest, DoubleOverflowWithSmallMantissa) {
+  ASSERT_VELOCYPACK_EXCEPTION(
+      Parser::fromJson("0." + std::string(400, '0') + "1e800"),
+      Exception::NumberOutOfRange);
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson("1" + std::string(400, '0')),
+                              Exception::NumberOutOfRange);
+}
+
+TEST(ParserTest, DoubleUnderflowWithLargeMantissa) {
+  double const value = parsedDouble("-1" + std::string(400, '0') + "e-800");
+  ASSERT_EQ(0.0, value);
+  ASSERT_TRUE(std::signbit(value));
+}
+
+TEST(ParserTest, DoubleHugeExponent) {
+  ASSERT_VELOCYPACK_EXCEPTION(Parser::fromJson("1e99999999999999999999"),
+                              Exception::NumberOutOfRange);
+  ASSERT_EQ(0.0, parsedDouble("1e-99999999999999999999"));
+}
+
 TEST(ParserTest, DoubleBroken1) {
   std::string const value("1234.");
 
